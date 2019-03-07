@@ -1,19 +1,22 @@
+package start20180123.Java;
+
 import java.util.*;
 public class Test5{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÄãµÄĞÔ±ğÊÇ£¿");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½Ô±ï¿½ï¿½Ç£ï¿½");
 		String sex=in.next();
-		if(sex.equals("ÄĞ")){
-			System.out.println("ÄãµÄÄêÁäÊÇ¶àÉÙ");
+		if(sex.equals("ï¿½ï¿½")){
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½ï¿½ï¿½");
 			int age=in.nextInt();
 			if(age>=18){
-				System.out.println("ÄãÒÑ³ÉÄê");	
+				System.out.println("ï¿½ï¿½ï¿½Ñ³ï¿½ï¿½ï¿½");	
 			}else{
-				System.out.println("Î´³ÉÄê");
+				System.out.println("Î´ï¿½ï¿½ï¿½ï¿½");
 			}
 		}else{
-			System.out.println("Ô­À´ÊÇ¸öÅ®µÄ");
+			System.out.println("Ô­ï¿½ï¿½ï¿½Ç¸ï¿½Å®ï¿½ï¿½");
 		}
 	}
 }

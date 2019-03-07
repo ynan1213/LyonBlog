@@ -1,23 +1,26 @@
+package start20180123.Java;
+
 import java.util.Scanner;
 public class Student_Score {
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÇëÊäÈëÑ§Éú¸öÊı");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		int StuNum=in.nextInt();
-		System.out.println("ÇëÊäÈë¿Î³ÌÊıÄ¿");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î³ï¿½ï¿½ï¿½Ä¿");
 		int CourseNum=in.nextInt();
 		String[] CourseName=new String[CourseNum];
 		String[] StuName=new String[StuNum];
 		
 		for(int i=1;i<=CourseNum;i++){
-			System.out.println("ÇëÊäÈëµÚ"+i+"ÃÅ¿Î³ÌÃû³Æ");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"+i+"ï¿½Å¿Î³ï¿½ï¿½ï¿½ï¿½ï¿½");
 			CourseName[i]=in.next();
 		}
 		for(int i=1;i<=StuNum;i++){
-			System.out.println("ÇëÊäÈëµÚÒ»¸öÑ§ÉúµÄĞÕÃû");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ñ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 			StuName[i]=in.next();
 			for(int j=1;j<=CourseNum;j++){
-				System.out.println("ÇëÊäÈë"+StuName[i]+"µÄ"+CourseName[j]+"³É¼¨");
+				System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"+StuName[i]+"ï¿½ï¿½"+CourseName[j]+"ï¿½É¼ï¿½");
 				
 			}
 		}

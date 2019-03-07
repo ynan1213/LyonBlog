@@ -1,17 +1,20 @@
+package start20180123.Java;
+
 import java.util.*;
 public class Test8{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÇëÊäÈëÑ§Éú¸öÊı");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		int Number=in.nextInt();
 		int num=1;
 		double sum=0;
 		while(num<=Number){
-			System.out.println("ÇëÊäÈë"+num+"ºÅÑ§Éú³É¼¨");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"+num+"ï¿½ï¿½Ñ§ï¿½ï¿½ï¿½É¼ï¿½");
 			sum=sum+in.nextDouble();
 			num++;
 		}
 		double Avg=sum/(double)Number;
-		System.out.println("È«°àÆ½¾ù·ÖÊÇ"+Avg);
+		System.out.println("È«ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"+Avg);
 	}
 }

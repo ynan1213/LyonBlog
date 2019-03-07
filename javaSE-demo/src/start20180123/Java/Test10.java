@@ -1,3 +1,5 @@
+package start20180123.Java;
+
 public class Test10{
 	public static void main(String[] args){
 		/*

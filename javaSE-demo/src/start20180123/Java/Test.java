@@ -1,3 +1,5 @@
+package start20180123.Java;
+
 public class Test{
 	public static void main(String[] args){
 		boolean[] arr=new boolean[500];

@@ -1,40 +1,44 @@
-import java.util.*;
+package start20180123.Java;
+
+import java.util.Scanner;
+
 public class Guess{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("¿Â×ÓÓå£¬Çë³öÈ­£¨1¡¢¼ôµ¶  2¡¢Ê¯Í·  3¡¢²¼£©");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½å£¬ï¿½ï¿½ï¿½È­ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  2ï¿½ï¿½Ê¯Í·  3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		int person=in.nextInt();
 		int computer=(int)(Math.random()*3)+1;
-		String Marks="±£ÃÜ";
-		String Marks1="±£ÃÜ";
+		String Marks="ï¿½ï¿½ï¿½ï¿½";
+		String Marks1="ï¿½ï¿½ï¿½ï¿½";
 		switch(person){
 			case 1:
-			Marks="¼ôµ¶";
+			Marks="ï¿½ï¿½ï¿½ï¿½";
 			break;
 			case 2:
 			Marks="Ê¯Í·";
 			break;
 			case 3:
-			Marks="²¼";
+			Marks="ï¿½ï¿½";
 			break;
 		}
 		switch(computer){
 			case 1:
-			Marks1="¼ôµ¶";
+			Marks1="ï¿½ï¿½ï¿½ï¿½";
 			break;
 			case 2:
 			Marks1="Ê¯Í·";
 			break;
 			case 3:
-			Marks1="²¼";
+			Marks1="ï¿½ï¿½";
 			break;
 		}
 		if(person==computer){
-			System.out.println("Äã³öµÄÊÇ:"+Marks+"  µçÄÔ³öµÄÊÇ:"+Marks1+"  ºÇºÇ£¬Æ½¾Ö");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:"+Marks+"  ï¿½ï¿½ï¿½Ô³ï¿½ï¿½ï¿½ï¿½ï¿½:"+Marks1+"  ï¿½ÇºÇ£ï¿½Æ½ï¿½ï¿½");
 		}else if(person==1&&computer==2||person==2&&computer==3||person==3&&computer==1){
-			System.out.println("Äã³öµÄÊÇ:"+Marks+"  µçÄÔ³öµÄÊÇ:"+Marks1+"  ÄãÊäÁË");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:"+Marks+"  ï¿½ï¿½ï¿½Ô³ï¿½ï¿½ï¿½ï¿½ï¿½:"+Marks1+"  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		}else{
-			System.out.println("Äã³öµÄÊÇ:"+Marks+"  µçÄÔ³öµÄÊÇ:"+Marks1+"  ÄãÓ®ÁË");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:"+Marks+"  ï¿½ï¿½ï¿½Ô³ï¿½ï¿½ï¿½ï¿½ï¿½:"+Marks1+"  ï¿½ï¿½Ó®ï¿½ï¿½");
 		}
 	}
 }

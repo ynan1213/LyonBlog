@@ -1,7 +1,7 @@
 package start20180123.Java;
 
 import java.util.Scanner;
-public class Test111{
+public class Test11{
 	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner Nan=new Scanner(System.in);

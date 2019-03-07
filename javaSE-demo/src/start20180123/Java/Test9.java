@@ -1,20 +1,23 @@
+package start20180123.Java;
+
 import java.util.*;
 public class Test9{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
 		Random MyRandom=new Random();
 		int computer=MyRandom.nextInt(5);
 		int num;
 		do{
-			System.out.println("Çë²ÂÒ»ÏÂµçÄÔËæ»úÉú³ÉµÄÊı£¨1-5£©");
+			System.out.println("ï¿½ï¿½ï¿½Ò»ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Éµï¿½ï¿½ï¿½ï¿½ï¿½1-5ï¿½ï¿½");
 			num=in.nextInt();
 			if(num<computer){
-				System.out.println("Ğ¡ÁË");
+				System.out.println("Ğ¡ï¿½ï¿½");
 			}else if(num>computer){
-				System.out.println("´óÁË");
+				System.out.println("ï¿½ï¿½ï¿½ï¿½");
 			}
 		}while(num!=computer);{
-			System.out.println("¹§Ï²Äã²Â¶ÔÁË");
+			System.out.println("ï¿½ï¿½Ï²ï¿½ï¿½Â¶ï¿½ï¿½ï¿½");
 		}
 	}
 }

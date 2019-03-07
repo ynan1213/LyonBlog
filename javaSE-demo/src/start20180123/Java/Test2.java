@@ -1,11 +1,14 @@
+package start20180123.Java;
+
 import java.util.Scanner;
 public class Test2{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÇëÊäÈëÄãµÄ³É¼¨£º");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä³É¼ï¿½ï¿½ï¿½");
 		int score=in.nextInt();
 		if(score>90==false){
-			System.out.println("½±ÀøÒ»¸ù°ô°ôÌÇ");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		}
 	}
 }

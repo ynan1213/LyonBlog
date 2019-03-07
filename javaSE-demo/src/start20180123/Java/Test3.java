@@ -1,13 +1,16 @@
+package start20180123.Java;
+
 import java.util.Scanner;
 public class Test3{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÇëÊäÈëjava³É¼¨:");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½javaï¿½É¼ï¿½:");
 		int Java=in.nextInt();
-		System.out.println("ÇëÊäÈëSQL³É¼¨:");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½SQLï¿½É¼ï¿½:");
 		int SQL=in.nextInt();
 		if(Java>90&&SQL>90){
-			System.out.println("½±ÀøÒ»Æª½±×´");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½Ò»Æªï¿½ï¿½×´");
 		}
 	}
 }

@@ -1,20 +1,23 @@
+package start20180123.Java;
+
 import java.util.*;
 public class Test6{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÄãµÄÃû´Î");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 		int mingci=in.nextInt();
 		switch(mingci){
 			case 1:
-			System.out.println("ÎäÁÖÃËÖ÷");
+			System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
 			break;
 
 			case 2:
-			System.out.println("Îäµ±ÕÆÃÅ");
+			System.out.println("ï¿½äµ±ï¿½ï¿½ï¿½ï¿½");
 			break;
 			
 			default:
-			System.out.println("Öğ³öÊ¦ÃÅ");
+			System.out.println("ï¿½ï¿½ï¿½Ê¦ï¿½ï¿½");
 		}
 	}
 }

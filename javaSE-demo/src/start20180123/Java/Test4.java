@@ -1,13 +1,16 @@
+package start20180123.Java;
+
 import java.util.*;
 public class Test4{
+	@SuppressWarnings("resource")
 	public static void main(String[] args){
 		Scanner in=new Scanner(System.in);
-		System.out.println("ÇëÊäÈë³É¼¨");
+		System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¼ï¿½");
 		int year=in.nextInt();
 		if(year%4==0&&year%100!=0||year%400==0){
-			System.out.println(year+"ÊÇ¸öÈğÄê");
+			System.out.println(year+"ï¿½Ç¸ï¿½ï¿½ï¿½ï¿½ï¿½");
 		}else {
-			System.out.println(year+"ÊÇ¸öÆ½Äê");
+			System.out.println(year+"ï¿½Ç¸ï¿½Æ½ï¿½ï¿½");
 		}
 	}
 }

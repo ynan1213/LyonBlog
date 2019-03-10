@@ -1,18 +1,32 @@
 package com.sqsoft.controller;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.Controller;
 
-public class HelloWorldController implements Controller {
+import com.sqsoft.entity.User;
 
-	@Override
-	public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
+@Controller
+public class HelloWorldController {
+
+	@RequestMapping("/hello")
+	public ModelAndView handleRequest() {
 		ModelAndView mv = new ModelAndView("hello");
 		mv.addObject("ABC", "Hello---World!");
 		return mv;
+	}
+	
+	@RequestMapping("/login")
+	public String login() {
+		return "login";
+	}
+	
+	@RequestMapping("/submit")
+	public String submit(User user,Model model) {
+		System.out.println(user);
+		model.addAttribute("username", user.getUsername());
+		return "success";
 	}
 
 }

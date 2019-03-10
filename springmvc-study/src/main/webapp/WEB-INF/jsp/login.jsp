@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+    pageEncoding="UTF-8"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -7,7 +7,14 @@
 <title>Insert title here</title>
 </head>
 <body>
-	<h1>COSO.jsp</h1>
-	<h1>${ABC}</h1>
+	<h1>Login Page</h1>
+	
+	<hr/>
+	
+	<form action="${pageContext.request.contextPath }/submit">
+		username:<input type="text" name="username"></input><br/>
+		password:<input type="password" name="password"></input><br/>
+		<input type="submit" value="提交">
+	</form>
 </body>
 </html>

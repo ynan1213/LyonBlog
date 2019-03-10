@@ -7,11 +7,10 @@
 <title>Insert title here</title>
 </head>
 <body>
-	<h1>Hello Page</h1>
-	<h1>${ABC}</h1>
+	<h1>Success Page</h1>
 	
 	<hr/>
 	
-	<a href="${pageContext.request.contextPath}/login">登录</a>
+	<h1>Welcome,${username }</h1>
 </body>
 </html>

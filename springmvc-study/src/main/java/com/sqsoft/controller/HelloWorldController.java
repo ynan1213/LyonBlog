@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 
 import com.sqsoft.entity.User;
 
@@ -39,9 +40,10 @@ public class HelloWorldController {
 	}
 	
 	@RequestMapping("/submit")
-	public String submit(User user,Model model) {
+	public String submit( User user,Model model,SessionStatus ss) {
 		System.out.println(user);
 		model.addAttribute("username", user.getUsername());
+		ss.isComplete();
 		return "success";
 	}
 	

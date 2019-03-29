@@ -1,14 +1,12 @@
 package com.sqsoft.controller;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.ModelAndView;
 
-@Controller
-@SessionAttributes(value= {"attr1","attr2"})
+//@Controller
+//@SessionAttributes(value= {"attr1","attr2"})
 public class ControllerSessionAttributes {
 	
 	@RequestMapping("/index1")

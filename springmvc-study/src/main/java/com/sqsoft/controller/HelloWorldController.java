@@ -1,13 +1,12 @@
 package com.sqsoft.controller;
 
-
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttributes;
-import org.springframework.web.bind.support.SessionStatus;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.sqsoft.entity.User;
 
@@ -15,10 +14,10 @@ import com.sqsoft.entity.User;
 @SessionAttributes("user")
 public class HelloWorldController {
 	
-	@InitBinder
-	public void initBinder() {
-		System.out.println("controller 类中的 initBinder() 方法");
-	}
+//	@InitBinder
+//	public void initBinder() {
+//		System.out.println("controller 类中的 initBinder() 方法");
+//	}
 	
 	@ModelAttribute
 	public User modelAttribute() {
@@ -29,26 +28,24 @@ public class HelloWorldController {
 	}
 	
 	@RequestMapping("/hello")
-	public String handleRequest(Model model) {
-		model.addAttribute("ABC", "Hello---World!");
+	public String hello(Model model) {
 		return "hello";
 	}
 	
+	@RequestMapping("/hello1")
+	public String hello1(RedirectAttributes ra) {
+		ra.addFlashAttribute("ABC", "Hello---World!");
+		return "redirect:hello";
+	}
+	
 	@RequestMapping("/login")
-	public String login() {
-		return "login";
+	@ResponseBody
+	public User login() {
+		User user = new User();
+		user.setUsername("xxxxxxxxx");
+		user.setPassword("ssss");
+		return user;
 	}
 	
-	@RequestMapping("/submit")
-	public String submit( User user,Model model,SessionStatus ss) {
-		System.out.println(user);
-		model.addAttribute("username", user.getUsername());
-		ss.isComplete();
-		return "success";
-	}
-	
-	public String xxxx() {
-		return "success";
-	}
 
 }

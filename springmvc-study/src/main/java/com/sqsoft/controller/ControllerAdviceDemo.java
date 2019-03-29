@@ -5,7 +5,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -14,7 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import com.sqsoft.entity.User;
 
 @SuppressWarnings("rawtypes")
-@ControllerAdvice(assignableTypes=HelloWorldController.class)
+//@ControllerAdvice()
 public class ControllerAdviceDemo implements ResponseBodyAdvice{
 	
 	@ModelAttribute  

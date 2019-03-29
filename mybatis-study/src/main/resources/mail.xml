@@ -22,7 +22,7 @@
 	</sql>
 
 	<insert id="insertMail" parameterType="Mail" useGeneratedKeys="true"
-		keyProperty="id">
+		keyProperty="id" >
 		insert into mail(
 		<include refid="fields" />
 		) values(

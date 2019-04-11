@@ -2,10 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="MailMapper">
+<mapper namespace="com.sqsoft.dao.MailDao">
+	
+	<cache/>
 	
 	<resultMap type="Mail" id="MailResultMap">
-		<result column="id" property="id" />
+		<id column="id" property="id" />
 		<result column="create_time" property="createTime" />
 		<result column="modify_time" property="modifyTime" />
 		<result column="web_id" property="webId" />
@@ -21,13 +23,10 @@
 		null, now(), now(), #{webId}, #{mail}, #{useFor}
 	</sql>
 
-	<insert id="insertMail" parameterType="Mail" useGeneratedKeys="true"
-		keyProperty="id" >
+	<insert id="insertMail" >
 		insert into mail(
 		<include refid="fields" />
-		) values(
-		<include refid="fields_value" />
-		);
+		) values( null, now(), now(), #{mail.webId}, #{mail.mail}, #{mail.useFor});
 	</insert>
 
 	<delete id="deleteMail" parameterType="java.lang.Long">

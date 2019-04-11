@@ -26,12 +26,12 @@ public class TestMyBatis {
 
 	@Test
 	public void testInsert() {
-		Mail mail1 = new Mail(1, "123@sina.com", "个人使用");
-		Mail mail2 = new Mail(2, "123@qq.com", "企业使用");
-		Mail mail3 = new Mail(3, "123@sohu.com", "注册账号使用");
-		System.out.println(mailDao.insertMail(mail1));
-		System.out.println(mailDao.insertMail(mail2));
-		System.out.println(mailDao.insertMail(mail3));
+//		Mail mail1 = new Mail(1, "123@sina.com", "个人使用");
+//		Mail mail2 = new Mail(2, "123@qq.com", "企业使用");
+//		Mail mail3 = new Mail(3, "123@sohu.com", "注册账号使用");
+//		System.out.println(mailDao.insertMail(mail1));
+//		System.out.println(mailDao.insertMail(mail2));
+//		System.out.println(mailDao.insertMail(mail3));
 	}
 
 	@Test

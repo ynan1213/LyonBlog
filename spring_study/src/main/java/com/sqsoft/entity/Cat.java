@@ -4,16 +4,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Dog implements Animal{
+public class Cat implements Animal{
 	
-	@Value("${dogName}")
+	@Value("${catName}")
 	private String name;
 
 	@Override
 	public void call() {
-		System.out.println("dog: "+name+"汪汪汪");
+		System.out.println("cat: "+name+"喵喵喵");
 		
 	}
-	
 	
 }

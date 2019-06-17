@@ -5,12 +5,11 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<script type="text/javascript" src="${pageContext.request.contextPath}/js/jquery-2.1.1.min.js"></script>
-	<title>欢迎页面</title>
+	<title>错误页面111</title>
 </head>
 <body>
-	<h1>欢迎页面</h1>
+	<h1>错误页面111</h1>
 	<hr />
 
-	<a href="${pageContext.request.contextPath}/login">登录</a>
 </body>
 </html>

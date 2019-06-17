@@ -15,45 +15,51 @@
 		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
 		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd">
 
-		<mvc:annotation-driven />
-		
-<!-- 		<mvc:interceptors> -->
-<!-- 			<mvc:interceptor> -->
-<!-- 				<mvc:mapping path="/**"/> -->
-<!-- 				<mvc:exclude-mapping path="/index.html"/> -->
-<!-- 				<bean class="com.sqsoft.interceptor.HandlerInterceptor3" /> -->
-<!-- 			</mvc:interceptor> -->
-<!-- 		</mvc:interceptors> -->
-		
-		<context:component-scan base-package="com.sqsoft" use-default-filters="false" >
-			<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
-			<context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
-		</context:component-scan>
-		
-		<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-			<property name="prefix" value="/WEB-INF/jsp/"></property>
-			<property name="suffix" value=".jsp"></property>
-		</bean>
-	
-<!-- 		<aop:aspectj-autoproxy></aop:aspectj-autoproxy> -->
-		
- 	<!-- Spring3.1之前的注解 HandlerMapping --> 
-<!-- 	<bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping" /> -->
-<!-- 	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" /> -->
+	<mvc:annotation-driven />
 
- 	<!--Spring3.1开始的注解 HandlerMapping --> 
-<!-- 	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" /> -->
-<!-- 	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter" /> -->
+	<mvc:resources location="/js/*" mapping="/js/**" />
+
+	<context:component-scan base-package="com.sqsoft" use-default-filters="false">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+		<context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+	</context:component-scan>
+
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/jsp/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+
+<!-- 	<aop:aspectj-autoproxy></aop:aspectj-autoproxy> -->
+
+<!-- 	<mvc:interceptors> -->
+<!-- 		<mvc:interceptor> -->
+<!-- 			<mvc:mapping path="/**" /> -->
+<!-- 			<mvc:exclude-mapping path="/index.html" /> -->
+<!-- 			<bean class="com.sqsoft.interceptor.HandlerInterceptor3" /> -->
+<!-- 		</mvc:interceptor> -->
+<!-- 	</mvc:interceptors> -->
+
+	<!-- Spring3.1之前的注解 HandlerMapping -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping" 
+		/> -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter" 
+		/> -->
+
+	<!--Spring3.1开始的注解 HandlerMapping -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" 
+		/> -->
+	<!-- <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter" 
+		/> -->
 
 
 	<!-- 以下为 spring2.5之前配置文件的方式 spring2.5以后为注解方式 -->
-<!-- 	<bean name="/hello" class="com.sqsoft.controller.HelloWorldController"></bean> -->
+	<!-- <bean name="/hello" class="com.sqsoft.controller.HelloWorldController"></bean> -->
 
-	<bean id="handlerInterceptor1" class="com.sqsoft.interceptor.HandlerInterceptor1" />
-	<bean id="handlerInterceptor2" class="com.sqsoft.interceptor.HandlerInterceptor2" />
+<!-- 	<bean id="handlerInterceptor1" class="com.sqsoft.interceptor.HandlerInterceptor1" /> -->
+<!-- 	<bean id="handlerInterceptor2" class="com.sqsoft.interceptor.HandlerInterceptor2" /> -->
 
 <!-- 	<bean -->
-<!-- 		class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"> -->
+<!-- 		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"> -->
 <!-- 		<property name="interceptors"> -->
 <!-- 			<list> -->
 <!-- 				<ref bean="handlerInterceptor1" /> -->

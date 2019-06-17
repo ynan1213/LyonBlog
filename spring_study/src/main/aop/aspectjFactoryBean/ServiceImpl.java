@@ -4,17 +4,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ServiceImpl implements Service {
-
+	
 	@Override
-	public void select() {
-		System.out.println("执行目标方法 select()-------------------------");
+	public String select(String str) throws Exception {
+		System.out.println("执行目标方法 ,参数值为：");
+		throw new FileNotException();
 	}
-
-	@Override
-	public void insert() throws Throwable {
-		System.out.println("执行目标方法 insert()-------------------------");
-		throw new Exception("aaaaaaaaaaa");
-	}
-
 
 }

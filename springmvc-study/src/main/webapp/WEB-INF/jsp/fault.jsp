@@ -4,13 +4,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>成功页面</title>
+<title>异常页面</title>
 </head>
 <body>
-	<h1>成功页面</h1>
+	<h1>异常页面</h1>
 	
 	<hr/>
 	
-	<h1>Welcome,${username}</h1>
+	<h1>Welcome,${username }</h1>
 </body>
 </html>

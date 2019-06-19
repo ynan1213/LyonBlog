@@ -7,18 +7,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class ControllerAdviceDemo {
 	
 	@ExceptionHandler(UserException.class)
-	public String ex() {
+	public String ex(UserException u) {
+		System.out.println(u);
+		System.out.println(u.getMessage());
 		return "error2";
 	}
-	
-	@ExceptionHandler(RuntimeException.class)
-	public String ex1() {
-		return "error2";
-	}
-	
-	@ExceptionHandler(Exception.class)
-	public String ex2() {
-		return "error2";
-	}
-	
 }

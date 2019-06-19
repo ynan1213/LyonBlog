@@ -10,7 +10,7 @@ public class HelloWorldController {
 	
 	@RequestMapping(value={"/hello"})
 	public String hello() {
-		throw new UserException();
+		throw new UserException("xxxxxx");
 	}
 	
 	@RequestMapping(value={"/login"})

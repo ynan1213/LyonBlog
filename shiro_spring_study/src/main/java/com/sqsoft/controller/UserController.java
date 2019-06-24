@@ -1,21 +1,36 @@
 package com.sqsoft.controller;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.sqsoft.entity.User;
 
 @Controller
 public class UserController {
 	
 	@GetMapping("/login")
-	public String toLoginPage() {
+	public String toLoginPage(HttpServletRequest r) {
+		Subject subject = SecurityUtils.getSubject();
+		Session session = subject.getSession();
+		session.setAttribute("user", new User());
 		return "login";
+	}
+	
+	@RequestMapping("/user")
+	@RequiresPermissions("add")
+	public String user() {
+		return "success";
 	}
 	
 	@GetMapping("/errer")

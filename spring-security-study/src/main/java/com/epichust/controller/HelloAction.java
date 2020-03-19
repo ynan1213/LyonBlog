@@ -1,30 +1,14 @@
 package com.epichust.controller;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Controller;
-
-import com.epichust.entity.Student;
-import com.epichust.service.StudentService;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@Scope("prototype")
 public class HelloAction
 {
-	@Autowired
-	private StudentService serivce;
-	
-	public String hello()
+	@RequestMapping("/index")
+	public String toIndex()
 	{
-		List<Student> list = serivce.getAll();
-		for (Student stu : list)
-		{
-			System.out.println(stu);
-		}
-		System.out.println("Hello World!");
-		return "success";
+		return "index";
 	}
-
 }

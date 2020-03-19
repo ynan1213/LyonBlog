@@ -3,29 +3,30 @@ package com.sqsoft.tx.service.impl;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.sqsoft.tx.dao.BookDao;
 import com.sqsoft.tx.entity.Book;
 import com.sqsoft.tx.service.BookService;
 
-public class BookServiceImpl implements BookService {
+
+public class BookServiceImpl implements BookService{
 	
 	@Autowired
-	private BookDao dao;
+	@Qualifier("bookServiceImpl2")
+	private BookService bookImpl2;
 	
-	@Override
-	public int insert(Book book) {
-		return dao.insert(book);
+	@Transactional
+	public int insert(Book book) throws Exception {
+		return bookImpl2.insert(book);
 	}
 
-	@Override
+	@Transactional
 	public Book select(int id) {
-		return dao.select(id);
+		return bookImpl2.select(id);
 	}
 
-	@Override
 	public List<Book> selectAll() {
-		return dao.selectAll();
+		return null;
 	}
-
 }

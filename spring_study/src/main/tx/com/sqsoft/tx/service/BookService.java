@@ -6,7 +6,7 @@ import com.sqsoft.tx.entity.Book;
 
 public interface BookService {
 
-	int insert(Book book);
+	int insert(Book book) throws Exception;
 
 	Book select(int id);
 

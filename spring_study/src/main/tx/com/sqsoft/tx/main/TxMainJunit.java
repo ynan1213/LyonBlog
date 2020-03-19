@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.sqsoft.tx.entity.Book;
 import com.sqsoft.tx.service.BookService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -24,9 +23,6 @@ public class TxMainJunit {
 	
 	@Test
 	public void insert() {
-		Book book = new Book("c++",50);
-		int i = bookServiceProxy.insert(book);
-		System.out.println(i);
 	}
 	
 }

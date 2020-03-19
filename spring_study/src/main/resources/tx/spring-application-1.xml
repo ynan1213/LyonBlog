@@ -10,11 +10,13 @@
          http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
          http://www.springframework.org/schema/aop 
          http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
-
+	
+	<!-- 基于事物工厂的配置方式 -->
+	
 	<import resource="spring-mybatis.xml" />
 
 	<!-- 目标对象 -->
-	<bean id="bookServiceImpl" class="com.sqsoft.tx.service.impl.BookServiceImpl" autowire="byType"></bean>
+	<bean id="bookServiceImpl" class="com.sqsoft.tx.service.impl.BookServiceImpl"></bean>
 
 	<!-- 代理对象 -->
 	<bean id="proxyFactoryBeanProxy" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">

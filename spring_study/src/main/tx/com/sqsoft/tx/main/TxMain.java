@@ -24,7 +24,7 @@ public class TxMain {
 
 		BookService bs =(BookService) ac.getBean("bookServiceImpl");
 		
-		Book book = new Book("444",100);
+		Book book = new Book("11111",900);
 		
 		try
 		{
@@ -36,5 +36,4 @@ public class TxMain {
 		
 		ac.close();
 	}
-	
 }

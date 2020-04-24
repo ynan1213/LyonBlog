@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+    "http://struts.apache.org/dtds/struts-2.3.dtd">
+
+<struts>
+	
+	<constant name="struts.enable.DynamicMethodInvocation" value="true"></constant>
+	
+	<package name="hello" namespace="/hello" extends="struts-default,json-default" >
+		
+		<!--跳转到jsp页面 -->
+		<action name="jsp" class="com.epichust.action.JspAction" method="fun">
+			<result name="world">/world.jsp</result>
+		</action>
+		
+		<!--跳转到html页面 -->
+		<action name="html" class="com.epichust.action.HtmlAction" >
+			<result name="html">/index.html</result>
+		</action>
+		
+		<!-- 返回json数据：  原生respone方法  -->
+		<action name="getUser1" class="com.epichust.action.JsonAction2" method="getUserInfo"></action>
+		
+		<!-- 返回json数据  -->
+		<action name="getUser" class="com.epichust.action.JsonAction1" method="getUserInfo">
+			<result name="success" type="json">
+				<param name="root">user</param>
+			</result>
+		</action>
+		
+		<!-- 返回json数据：list数据  -->
+		<action name="getCarList" class="com.epichust.action.JsonAction3" method="getCarInfo">
+			<result name="success" type="json">
+				<param name="root">car</param>
+			</result>
+		</action>
+		
+		<action name="dynamic" class="com.epichust.dynamic.action.DynamicAction">
+			<result name="login">/login.jsp</result>
+			<result name="register">/register.jsp</result>
+<!-- 			<allowed-methods>login,register</allowed-methods> -->
+			<allowed-methods >regex:.*</allowed-methods>
+		</action>
+		
+	</package>
+	
+</struts>

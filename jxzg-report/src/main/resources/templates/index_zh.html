@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+<meta charset="UTF-8">
+<title>报表管理</title>
+<link rel="icon" href="data:;base64,=">
+<link href="css/styles-content.css" rel="stylesheet" type="text/css" />
+<link href="css/demo.css" rel="stylesheet" type="text/css" />
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+
+</head>
+<body>
+	<div class="username">
+		欢迎您：<span th:text="${username}"></span> 
+		<span class="logout"> 
+			<a style="color: white;" th:href="@{/logout}">退出</a>
+		</span>
+	</div>
+	<div class='left'>
+		<div class='login_title'>
+			<span>质量管理</span>
+		</div>
+		<div class="live">
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCenterFtqBWI');">工作中心FTQ</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCellFtqBWI');">工作单元FTQ</a></li>
+		</div>
+	</div>
+	<div class='center'>
+		<div class='login_title'>
+			<span>生产统计</span>
+		</div>
+		<div class="live">
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCenterOeeBWI');">工作中心OE</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCellOeeBWI');">工作单元OE</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCenterYieldBWI');">工作中心产量</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCellYieldBWI');">工作单元产量</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCenterWorkingHoursBWI');">工时</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCelldetailsOfBeat');">节拍</a></li>
+		</div>
+	</div>
+	<div class='right'>
+		<div class='login_title'>
+			<span>异常处理</span>
+		</div>
+		<div class="live">
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCellExceptionState');">单设备停机率</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCenterExceptionState');">工作中心停机率</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCellExceptionType');">单设备故障类型</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCellMTTR');">单设备MTTR/MTBF</a></li>
+			<li><a href="javascript:void(0)"
+				onclick="javascript:goPage('workCenterMTTR');">工作中心MTTR/MTBF</a></li>
+		</div>
+	</div>
+
+	<script type="text/javascript" th:inline="javascript">
+			var path = "http://" + [[${reportServerIP}]] + "/WebReport/ReportServer?fr_locale=zh_CN&reportlet=";
+			function goPage(url){
+				window.open(path + url + ".cpt");
+			}
+		</script>
+</body>
+</html>

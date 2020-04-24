@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>登录</title>
+<link rel="icon" href="data:;base64,=">
+<link href="css/styles.css" rel="stylesheet" type="text/css" />
+<link href="css/demo.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+	<div class='login' id="app">
+		<div class='login_title'>
+			<span>京西重工报表系统</span>
+		</div>
+		<div class='login_fields'>
+			<div class='login_fields__user'>
+				<div class='icon'>
+					<img alt="" src='img/user_icon_copy.png'>
+				</div>
+				<input name="login" placeholder='用户名' maxlength="16" type='text' 
+					autocomplete="off" v-model="username" @input="hiddenErrorMsg"/>
+				<div class='validation'>
+					<img alt="" src='img/tick.png'>
+				</div>
+			</div>
+			<div class='login_fields__password'>
+				<div class='icon'>
+					<img alt="" src='img/lock_icon_copy.png'>
+				</div>
+				<input name="pwd" placeholder='密码' maxlength="16" type='password'
+					autocomplete="off" v-model="password" @input="hiddenErrorMsg">
+				<div class='validation'>
+					<img alt="" src='img/tick.png'>
+				</div>
+			</div>
+			<div class='success'>
+				<p v-text="errorMessage"></p>
+			</div>
+			<div class='login_fields__submit'>
+				<input type='button' value='登录' @click="submit">
+			</div>
+			
+			<div class="lang-radio">
+				<label>
+					语言：
+				</label>
+				<label>
+					<input type="radio" name="lang" class="demoHidden" value="zh_CN" v-model='locale'/>
+					<span class="radioInput"></span>简体中文
+				</label>
+				<label>
+					<input type="radio" name="lang" class="demoHidden" value="en_US" v-model='locale'/>
+					<span class="radioInput"></span>English
+				</label>
+			</div>
+			
+		</div>
+		<div class='disclaimer'>
+			<p></p>
+		</div>
+	</div>
+
+	<script src="js/vue.js"></script>
+	<script src="js/axios.min.js"></script>
+	<script type="text/javascript">
+			const vm = new Vue({
+				el: '#app',
+				data: {
+					errorMessage:'',
+					username:'',
+					password:'',
+					locale:'zh_CN'
+				},
+				created:function(){
+					var _this = this;
+				    document.addEventListener("keydown", _this.watchEnter);
+				},
+				methods: {
+					submit() {
+						if(!this.username){
+							alert("请输入用户名");
+							return;
+						}
+						if(!this.password){
+							alert("密码不能为空");
+							return;
+						}
+						var that = this;
+						axios.post("/doSubmit",{
+								username:this.username,
+								password:this.password,
+								locale:this.locale
+							}).then(function(response){
+								var dataStr = JSON.stringify(response.data);
+								if(response.data.state == 'success'){
+									window.open(response.data.message,"_self")	
+								}else{
+									that.errorMessage = response.data.message
+								}
+							}).catch(function (error) {
+								alert("服务器连接超时");
+							})
+					},
+					watchEnter(e) {
+						var keyNum = window.event ? e.keyCode : e.which;
+						if (keyNum == 13) {
+							this.submit();
+						}
+					},
+					hiddenErrorMsg(){
+						this.errorMessage = '';
+					}
+				}
+			})
+		</script>
+
+</body>
+</html>

@@ -1,83 +1,87 @@
 package com.epichust.entity;
 
+import java.util.Date;
+
 public class Student
 {
-	private String name;
-	private Integer age;
-	private int num;
-	
-	private Teacher teacher;
-	
-	public Student()
-	{
-		super();
-		// TODO Auto-generated constructor stub
-	}
+    private String name;
+    private Integer age;
+    private int num;
+    private Date birthday;
 
-	public Student(String name)
-	{
-		super();
-		this.name = name;
-	}
+    public Date getBirthday()
+    {
+        return birthday;
+    }
 
-	public Student(Integer age)
-	{
-		super();
-		this.age = age;
-	}
+    public void setBirthday(Date birthday)
+    {
+        this.birthday = birthday;
+    }
 
-	public Student(String name, Integer age, int num)
-	{
-		super();
-		this.name = name;
-		this.age = age;
-		this.num = num;
-	}
+    public Student()
+    {
+        super();
+    }
 
-	public String getName()
-	{
-		return name;
-	}
+    public Student(String name)
+    {
+        super();
+        this.name = name;
+    }
 
-	public void setName(String name)
-	{
-		this.name = name;
-	}
+    public Student(Integer age)
+    {
+        super();
+        this.age = age;
+    }
 
-	public Integer getAge()
-	{
-		return age;
-	}
+    public Student(String name, Integer age, int num, Date birthday)
+    {
+        this.name = name;
+        this.age = age;
+        this.num = num;
+        this.birthday = birthday;
+    }
 
-	public void setAge(Integer age)
-	{
-		this.age = age;
-	}
+    public String getName()
+    {
+        return name;
+    }
 
-	public int getNum()
-	{
-		return num;
-	}
+    public void setName(String name)
+    {
+        this.name = name;
+    }
 
-	public void setNum(int num)
-	{
-		this.num = num;
-	}
+    public Integer getAge()
+    {
+        return age;
+    }
 
-	public Teacher getTeacher()
-	{
-		return teacher;
-	}
+    public void setAge(Integer age)
+    {
+        this.age = age;
+    }
 
-	public void setTeacher(Teacher teacher)
-	{
-		this.teacher = teacher;
-	}
+    public int getNum()
+    {
+        return num;
+    }
 
-	@Override
-	public String toString()
-	{
-		return "Student [name=" + name + ", age=" + age + ", num=" + num + ", teacher=" + teacher + "]";
-	}
-	
+    public void setNum(int num)
+    {
+        this.num = num;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Student{" +
+                "name='" + name + '\'' +
+                ", age=" + age +
+                ", num=" + num +
+                ", birthday=" + birthday +
+                '}';
+    }
 }

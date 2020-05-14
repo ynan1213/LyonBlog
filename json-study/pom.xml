@@ -4,16 +4,21 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.epichust</groupId>
     <artifactId>json-study</artifactId>
+    <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
+    <modules>
+        <module>../httpClient-study</module>
+    </modules>
 
     <dependencies>
-        <!--net.sf.json依赖-->
-        <!--		<dependency>-->
-        <!--			<groupId>net.sf.json-lib</groupId>-->
-        <!--			<artifactId>json-lib</artifactId>-->
-        <!--			<version>2.4</version>-->
-        <!--			<classifier>jdk15</classifier>-->
-        <!--		</dependency>-->
+        <!-- net.sf.json依赖-->
+        <!--<dependency>
+            <groupId>net.sf.json-lib</groupId>
+            <artifactId>json-lib</artifactId>
+            <version>2.4</version>
+            <classifier>jdk15</classifier>
+        </dependency>-->
+
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -36,6 +41,11 @@
             <artifactId>jackson-annotations</artifactId>
             <version>2.6.6</version>
         </dependency>-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13</version>
+        </dependency>
     </dependencies>
 
     <build>

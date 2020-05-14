@@ -1,5 +1,8 @@
 package com.epichust.entity;
 
+
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.util.Date;
 
 public class Student
@@ -8,16 +11,6 @@ public class Student
     private Integer age;
     private int num;
     private Date birthday;
-
-    public Date getBirthday()
-    {
-        return birthday;
-    }
-
-    public void setBirthday(Date birthday)
-    {
-        this.birthday = birthday;
-    }
 
     public Student()
     {
@@ -42,6 +35,12 @@ public class Student
         this.age = age;
         this.num = num;
         this.birthday = birthday;
+    }
+    public Student(String name, Integer age, int num)
+    {
+        this.name = name;
+        this.age = age;
+        this.num = num;
     }
 
     public String getName()
@@ -74,6 +73,15 @@ public class Student
         this.num = num;
     }
 
+    public Date getBirthday()
+    {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday)
+    {
+        this.birthday = birthday;
+    }
     @Override
     public String toString()
     {

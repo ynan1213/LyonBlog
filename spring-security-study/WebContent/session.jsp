@@ -7,6 +7,6 @@
 <title>Insert title here</title>
 </head>
 <body>
-	<h1>login failer page</h1>
+	<h1>session timeout page</h1>
 </body>
 </html>

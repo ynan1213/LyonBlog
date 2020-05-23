@@ -1,5 +1,8 @@
 package com.epichust.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 
 import javax.servlet.Filter;
@@ -9,33 +12,27 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class CustomFilter implements Filter
 {
-
 	Logger log = LoggerFactory.getLogger(CustomFilter.class);
-	
+
 	@Override
-	public void destroy()
+	public void init(FilterConfig filterConfig)
 	{
-		// TODO Auto-generated method stub
-		
+		log.info("CustomerFilter init ......");
 	}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException
 	{
-		log.debug("CustomFilter doFilter ............");
+		log.info("CustomerFilter doFilter ......");
 		chain.doFilter(request, response);
 	}
 
 	@Override
-	public void init(FilterConfig filterConfig) throws ServletException
+	public void destroy()
 	{
-		// TODO Auto-generated method stub
-		
+
 	}
 
 }

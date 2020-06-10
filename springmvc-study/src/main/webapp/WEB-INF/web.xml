@@ -6,10 +6,6 @@
 	id="WebApp_ID" version="2.5">
 	<display-name>Archetype Created Web Application</display-name>
 
-	<welcome-file-list>
-		<welcome-file>coso.jsp</welcome-file>
-	</welcome-file-list>
-
 	<!-- <context-param> -->
 	<!-- <param-name>contextConfigLocation</param-name> -->
 	<!-- <param-value>/springContext.xml</param-value> -->
@@ -25,11 +21,7 @@
 		<load-on-startup>1</load-on-startup>
 		<init-param>
 			<param-name>contextConfigLocation</param-name>
-			<param-value>/springmvc.xml</param-value>
-		</init-param>
-		<init-param>
-			<param-name>xxx</param-name>
-			<param-value>bbb</param-value>
+			<param-value>classpath:springmvc.xml</param-value>
 		</init-param>
 	</servlet>
 
@@ -39,7 +31,7 @@
 	</servlet-mapping>
 
 	<servlet-mapping>
-		<servlet-name>default</servlet-name>
-		<url-pattern>*.js</url-pattern>
-	</servlet-mapping>
+	<servlet-name>default</servlet-name>
+	<url-pattern>*.js</url-pattern>
+</servlet-mapping>
 </web-app>

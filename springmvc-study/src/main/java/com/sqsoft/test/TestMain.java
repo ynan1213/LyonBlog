@@ -9,6 +9,7 @@ public class TestMain {
 		System.out.println(d);
 		BeanWrapperImpl bw = new BeanWrapperImpl(d);
 		bw.setPropertyValue("sex", "1");
+		bw.setPropertyValue("age", 20);
 		System.out.println(d);
 	}
 	

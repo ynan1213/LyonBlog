@@ -22,4 +22,13 @@ public class UserController
         return result;
     }
 
+    @RequestMapping("/info")
+    @ResponseBody
+    public String getInfo()
+    {
+        User user = userService.getInfo(11111,new User("张三",23));
+        System.out.println(user);
+        return "result";
+    }
+
 }

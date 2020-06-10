@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import com.sqsoft.service.UserService;
 
 @Service
-@EnableAspectJAutoProxy
+//@EnableAspectJAutoProxy
 public class UserServiceImpl implements UserService {
 
 	@Override

@@ -14,4 +14,11 @@ public class UserService
         return "Hello : " + msg + " " + user.getUsername();
     }
 
+
+    @Cacheable(value = "user", keyGenerator = "springCacheKeyGenerator")
+    public User getInfo(Integer msg, User user)
+    {
+        return new User("李四", 24);
+    }
+
 }

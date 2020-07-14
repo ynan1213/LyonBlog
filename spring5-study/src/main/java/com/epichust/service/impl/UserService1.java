@@ -3,7 +3,7 @@ package com.epichust.service.impl;
 import com.epichust.service.UserService;
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 public class UserService1 implements UserService
 {
     @Override

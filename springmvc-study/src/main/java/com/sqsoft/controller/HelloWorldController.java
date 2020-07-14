@@ -24,6 +24,11 @@ public class HelloWorldController
     @ResponseBody
     public String login()
     {
+        StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
+        for (StackTraceElement s : stackTrace)
+        {
+            System.out.println(s.getClassName() +" ====== "+s.getMethodName());
+        }
         return "redirect:login";
     }
 

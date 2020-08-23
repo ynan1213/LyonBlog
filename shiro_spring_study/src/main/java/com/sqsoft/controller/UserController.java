@@ -2,6 +2,7 @@ package com.sqsoft.controller;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.sun.deploy.net.HttpResponse;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
@@ -10,9 +11,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import com.sqsoft.entity.User;
 
@@ -28,13 +27,14 @@ public class UserController {
 	}
 	
 	@RequestMapping("/user")
-	@RequiresPermissions("add")
 	public String user() {
+		int i = 1/0;
 		return "success";
 	}
 	
 	@GetMapping("/errer")
-	public String toErrerPage() {
+	public String toErrerPage(@ModelAttribute("errMessage") String errMessage) {
+		System.out.println(errMessage);
 		return "errer";
 	}
 	

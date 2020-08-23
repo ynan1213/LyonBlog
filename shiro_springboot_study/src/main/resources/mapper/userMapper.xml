@@ -4,14 +4,14 @@
 
 	<resultMap id="BaseResultMap" type="com.sqsoft.entity.User">
 		<constructor>
-			<idArg column="uid" jdbcType="INTEGER" javaType="java.lang.Integer" />
+			<idArg column="id" jdbcType="INTEGER" javaType="java.lang.Integer" />
 			<arg column="username" jdbcType="VARCHAR" javaType="java.lang.String" />
 			<arg column="password" jdbcType="VARCHAR" javaType="java.lang.String" />
 		</constructor>
 	</resultMap>
 
 	<resultMap type="com.sqsoft.entity.User" id="userMap">
-		<id property="uid" column="uid" />
+		<id property="uid" column="id" />
 		<result property="username" column="username" />
 		<result property="password" column="password" />
 		<collection property="roles" ofType="com.sqsoft.entity.Role">
@@ -25,7 +25,7 @@
 	</resultMap>
 
 	<sql id="Base_Column_List">
-		uid, username, password
+		id, username, password
 	</sql>
 
 	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
@@ -33,24 +33,30 @@
 		select
 		<include refid="Base_Column_List" />
 		from user
-		where uid = #{uid,jdbcType=INTEGER}
+		where id = #{uid,jdbcType=INTEGER}
 	</select>
 
+	<select id="queryUserName" parameterType="string" resultMap="BaseResultMap">
+		select <include refid="Base_Column_List"></include>
+		from user where username = #{xxxx}
+	</select>
+<!--
 	<select id="queryUserName" parameterType="string" resultMap="userMap">
-		SELECT u.*,r.*,m.* FROM user u inner join user_role ur on ur.uid=u.uid
+		SELECT u.*,r.*,m.* FROM user u inner join user_role ur on ur.uid=u.id
 		inner join role r on r.rid=ur.rid
 		inner join module_role mr on mr.rid=r.rid
 		inner join module m on mr.mid=m.mid
 		WHERE username=#{username};
 	</select>
+-->
 
 	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
 		delete from user
-		where uid = #{uid,jdbcType=INTEGER}
+		where id = #{uid,jdbcType=INTEGER}
 	</delete>
 
 	<insert id="insert" parameterType="com.sqsoft.entity.User">
-		insert into user (uid, username, password)
+		insert into user (id, username, password)
 		values (#{uid,jdbcType=INTEGER}, #{username,jdbcType=VARCHAR},
 		#{password,jdbcType=VARCHAR})
 	</insert>
@@ -59,7 +65,7 @@
 		insert into user
 		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="uid != null">
-				uid,
+				id,
 			</if>
 			<if test="username != null">
 				username,

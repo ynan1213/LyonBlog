@@ -3,17 +3,20 @@
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.sqsoft.dao.UserDao">
-	
+	<!--<cache-ref namespace="ArticleDao"/>-->
 	<cache />
-	
-	<resultMap type="UserDO" id="UserResultMap" autoMapping="true">
-		<id column="id" property="uid"/>
-<!-- 		<result column="name" property="uname"/> -->
+
+	<resultMap type="User" id="UserResultMap" autoMapping="true">
+		<id column="uid" property="uid"/>
+		<result column="name" property="uname"/>
 		<result column="age" property="uage"/>
 		<result column="addr" property="addr"/>
-<!-- 		<result column="school" property="school"/> -->
 	</resultMap>
-	
+
+	<select id="getById" resultMap="UserResultMap">
+		select * from user where uid = #{xxxx}
+	</select>
+
 	<select id="selectByCondition" resultMap="UserResultMap" >
 		select * from user
 		<where> 
@@ -41,7 +44,7 @@
 	</select>
 	
 	<insert id="insert" useGeneratedKeys="true" keyProperty="uid" >
-		insert into user(name, age, addr, school) values(#{uname},1,#{addr},#{school})
+		insert into user(name, age, addr, school) values(#{uname},#{uage},#{addr},#{school})
 	</insert>
 	
 	<insert id="insert1">

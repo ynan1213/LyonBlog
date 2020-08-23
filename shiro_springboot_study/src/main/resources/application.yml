@@ -4,9 +4,9 @@ spring:
     encoding: utf-8
     cache: false
   datasource:
-    url: jdbc:mysql://localhost:3306/springboot_shiro?useUnicode=true&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3306/shiro?useUnicode=true&characterEncoding=UTF-8
     username: root
-    password: root
+    password: 123456
     driver-class-name: com.mysql.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
 mybatis:

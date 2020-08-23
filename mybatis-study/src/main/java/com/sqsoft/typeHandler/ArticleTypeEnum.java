@@ -1,6 +1,7 @@
 package com.sqsoft.typeHandler;
 
 public enum ArticleTypeEnum {
+
 	JAVA(1),DUBBO(2),SPRING(4),MYBATIS(8);
 	
 	private int code;

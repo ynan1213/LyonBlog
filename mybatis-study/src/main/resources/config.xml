@@ -37,17 +37,18 @@
 		</environment>
 	</environments>
 	
-<!-- 	<databaseIdProvider type="DB_VENDOR"> -->
-<!-- 		<property name="SQL Server" value="sqlserver"/> -->
-<!-- 		<property name="DB2" value="db2"/> -->
-<!-- 		<property name="Oracle" value="oracle"/> -->
-<!-- 		<property name="MySQL" value="mysql"/> -->
-<!-- 	</databaseIdProvider> -->
+ 	<databaseIdProvider type="DB_VENDOR">
+ 		<property name="SQL Server" value="sqlserver"/>
+ 		<property name="DB2" value="db2"/>
+ 		<property name="Oracle" value="oracle"/>
+ 		<property name="MySQL" value="mysql"/>
+ 	</databaseIdProvider>
 
 	<mappers>
 <!-- 		<mapper resource="mapper/ArticleMapper.xml" /> -->
 <!-- 		<mapper resource="mapper/AuthorMapper.xml" /> -->
 		<mapper resource="mapper/UserMapper.xml" />
+		<!--<package name="com.sqsoft.dao"/>-->
 	</mappers>
 	
 </configuration>

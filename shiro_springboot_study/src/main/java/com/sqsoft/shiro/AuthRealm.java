@@ -73,7 +73,7 @@ public class AuthRealm extends AuthorizingRealm{
 	}
 	
 	public static void main(String[] args) {
-		SimpleHash simpleHash = new SimpleHash("MD5", "lisi", ByteSource.Util.bytes("lisi"), 1024);
+		SimpleHash simpleHash = new SimpleHash("MD5", "123456", ByteSource.Util.bytes("zhangsan"), 1024);
 		System.out.println(simpleHash.toString());
 	}
 }

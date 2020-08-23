@@ -7,10 +7,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @ControllerAdvice
 public class UserExceptionHandler {
 	
-	@ExceptionHandler(Exception.class)
+	@ExceptionHandler(RuntimeException.class)
 	public String String(Exception ex,RedirectAttributes ra) {
 		ra.addFlashAttribute("errMessage", ex.getMessage());
 		return "redirect:errer";
 	}
-	
+
 }

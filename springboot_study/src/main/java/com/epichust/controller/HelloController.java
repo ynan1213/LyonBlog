@@ -19,7 +19,7 @@ public class HelloController
     private Bean1 bean;
 
 
-    @RequestMapping("/")
+    @RequestMapping("/xxx")
     @ResponseBody
     public String login()
     {

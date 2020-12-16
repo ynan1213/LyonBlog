@@ -41,11 +41,11 @@
 
 		<!-- 热加载 将注释放开后，支持热部署 .pom.xml可能报错，不用管 -->
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<optional>true</optional>
-			<scope>true</scope>
-		</dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-devtools</artifactId>
+		<optional>true</optional>
+		<scope>true</scope>
+	</dependency>
 
 		<!--spring切面aop依赖 -->
 		<dependency>

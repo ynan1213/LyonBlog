@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+//apply plugin: 'idea'
+
+group 'org.springframework'
+version '5.3.2'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile(project(":spring-context"))
+    compile(project(":spring-web"))
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+task copyTestResources(type: Copy) {
+    from "${projectDir}/src/test/resources"
+    into "${buildDir}/classes/test"
+}

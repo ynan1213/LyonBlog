@@ -12,3 +12,5 @@ target/
 .settings
 out
 out/
+netty-demo/
+rocketmq-demo/

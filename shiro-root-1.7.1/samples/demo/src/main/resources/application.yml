@@ -1,0 +1,21 @@
+spring:
+  thymeleaf:
+    mode: HTML
+    encoding: utf-8
+    cache: false
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/shiro?useUnicode=true&characterEncoding=UTF-8
+#    username: root
+#    password: 123456
+#    driver-class-name: com.mysql.jdbc.Driver
+#    type: com.alibaba.druid.pool.DruidDataSource
+#mybatis:
+#  mapper-locations: classpath:mapper/*.xml
+#  type-aliases-package: com.epichust.entity
+
+
+# 原理是AbstractShiroWebFilterConfiguration在创建ShiroFilterFactoryBean时读取了配置文件
+shiro:
+  loginUrl: /login
+  successUrl: /
+  unauthorizedUrl: /login

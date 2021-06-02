@@ -1,0 +1,9 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration = \
+  org.apache.shiro.spring.boot.autoconfigure.ShiroBeanAutoConfiguration,\
+  org.apache.shiro.spring.boot.autoconfigure.ShiroAutoConfiguration,\
+  org.apache.shiro.spring.boot.autoconfigure.ShiroAnnotationProcessorAutoConfiguration
+
+
+# 异常分析
+org.springframework.boot.diagnostics.FailureAnalyzer = \
+  org.apache.shiro.spring.boot.autoconfigure.ShiroNoRealmConfiguredFailureAnalyzer

@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8868
+        # namespace: namespace-01
+  application:
+    name: provider2
+server:
+  port: 8002

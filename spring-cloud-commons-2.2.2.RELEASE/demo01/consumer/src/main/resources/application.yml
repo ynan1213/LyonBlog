@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8868
+        group: xxxx-group
+  application:
+    name: consumer
+server:
+  port: 9001

@@ -1,0 +1,7 @@
+server:
+  port: 9001
+
+rsa:
+  key:
+    pubKeyFile: E:\GitProjects\Java-Study\springboot-security-study\auth_key\id_key_rsa.pub
+    priKeyFile: E:\GitProjects\Java-Study\springboot-security-study\auth_key\id_key_rsa

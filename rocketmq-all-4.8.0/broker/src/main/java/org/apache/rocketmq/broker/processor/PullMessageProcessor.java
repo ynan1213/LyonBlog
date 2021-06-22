@@ -94,6 +94,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
         return false;
     }
 
+    // 处理consumer端的消息拉取请求
     private RemotingCommand processRequest(final Channel channel, RemotingCommand request, boolean brokerAllowSuspend) throws RemotingCommandException
     {
         RemotingCommand response = RemotingCommand.createResponseCommand(PullMessageResponseHeader.class);
@@ -156,8 +157,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
 
         if (requestHeader.getQueueId() < 0 || requestHeader.getQueueId() >= topicConfig.getReadQueueNums())
         {
-            String errorInfo = String.format("queueId[%d] is illegal, topic:[%s] topicConfig.readQueueNums:[%d] consumer:[%s]",
-                    requestHeader.getQueueId(), requestHeader.getTopic(), topicConfig.getReadQueueNums(), channel.remoteAddress());
+            String errorInfo = String.format("queueId[%d] is illegal, topic:[%s] topicConfig.readQueueNums:[%d] consumer:[%s]", requestHeader.getQueueId(), requestHeader.getTopic(), topicConfig.getReadQueueNums(), channel.remoteAddress());
             log.warn(errorInfo);
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark(errorInfo);
@@ -174,9 +174,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
                 // 如果不是TAG模式，则构建过滤数据 ConsumerFilterData
                 if (!ExpressionType.isTagType(subscriptionData.getExpressionType()))
                 {
-                    consumerFilterData = ConsumerFilterManager.build(
-                            requestHeader.getTopic(), requestHeader.getConsumerGroup(), requestHeader.getSubscription(), requestHeader.getExpressionType(), requestHeader.getSubVersion()
-                    );
+                    consumerFilterData = ConsumerFilterManager.build(requestHeader.getTopic(), requestHeader.getConsumerGroup(), requestHeader.getSubscription(), requestHeader.getExpressionType(), requestHeader.getSubVersion());
                     assert consumerFilterData != null;
                 }
             } catch (Exception e)
@@ -258,8 +256,15 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
             messageFilter = new ExpressionMessageFilter(subscriptionData, consumerFilterData, this.brokerController.getConsumerFilterManager());
         }
 
-        final GetMessageResult getMessageResult = this.brokerController.getMessageStore().getMessage(requestHeader.getConsumerGroup(),
-                requestHeader.getTopic(), requestHeader.getQueueId(), requestHeader.getQueueOffset(), requestHeader.getMaxMsgNums(), messageFilter);
+        // 查找消息
+        final GetMessageResult getMessageResult = this.brokerController.getMessageStore().getMessage(
+                requestHeader.getConsumerGroup(),// 消费组
+                requestHeader.getTopic(),
+                requestHeader.getQueueId(),
+                requestHeader.getQueueOffset(), // 偏移量
+                requestHeader.getMaxMsgNums(), // 最大消息条数
+                messageFilter// 消息过滤器
+        );
         if (getMessageResult != null)
         {
             response.setRemark(getMessageResult.getStatus().name());
@@ -341,8 +346,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
                     break;
                 case OFFSET_OVERFLOW_BADLY:
                     response.setCode(ResponseCode.PULL_OFFSET_MOVED);
-                    log.info("the request offset: {} over flow badly, broker max offset: {}, consumer: {}",
-                            requestHeader.getQueueOffset(), getMessageResult.getMaxOffset(), channel.remoteAddress());
+                    log.info("the request offset: {} over flow badly, broker max offset: {}, consumer: {}", requestHeader.getQueueOffset(), getMessageResult.getMaxOffset(), channel.remoteAddress());
                     break;
                 case OFFSET_OVERFLOW_ONE:
                     response.setCode(ResponseCode.PULL_NOT_FOUND);
@@ -486,8 +490,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
                         responseHeader.setSuggestWhichBrokerId(subscriptionGroupConfig.getBrokerId());
                         response.setCode(ResponseCode.PULL_RETRY_IMMEDIATELY);
                         log.warn("PULL_OFFSET_MOVED:none correction. topic={}, groupId={}, requestOffset={}, suggestBrokerId={}",
-                                requestHeader.getTopic(), requestHeader.getConsumerGroup(), requestHeader.getQueueOffset(),
-                                responseHeader.getSuggestWhichBrokerId());
+                                requestHeader.getTopic(), requestHeader.getConsumerGroup(), requestHeader.getQueueOffset(), responseHeader.getSuggestWhichBrokerId());
                     }
 
                     break;

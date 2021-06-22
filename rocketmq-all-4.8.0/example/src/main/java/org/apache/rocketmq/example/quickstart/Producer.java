@@ -16,12 +16,15 @@
  */
 package org.apache.rocketmq.example.quickstart;
 
+import ch.qos.logback.core.util.TimeUtil;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class demonstrates how to send messages to brokers using provided {@link DefaultMQProducer}.
@@ -34,18 +37,25 @@ public class Producer
 
         //producer.setNamespace("");
         //producer.setProducerGroup("producerGroup");
-
+        //producer.setClientIP("127.0.0.1");
         //producer.setUnitName("ccc");
 
         //producer.setNamesrvAddr("name-server1-ip:9876;name-server2-ip:9876");
         producer.setNamesrvAddr("127.0.0.1:9876");
 
-        //producer.setClientIP("127.0.0.1");
+        // 发送的超时时间，默认 3s
         //producer.setSendMsgTimeout(6000);
+
+        // 轮询nameserver的时间间隔，单位ms，默认30s
         //producer.setPollNameServerInterval(30000);
+
+        // 向broker发送心跳的时间间隔，单位ms
         //producer.setHeartbeatBrokerInterval(30000);
 
+        // 自动创建topic队列数量，默认4
         //producer.setDefaultTopicQueueNums(6);
+
+        //producer.setRetryTimesWhenSendFailed();
         //producer.setRetryTimesWhenSendAsyncFailed();
 
         producer.start();
@@ -54,7 +64,7 @@ public class Producer
         {
             try
             {
-                Message msg = new Message("topic000001", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg = new Message("topic02", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
 
                 // key用于建立索引，之后可以通过命令工具/API/或者管理平台查询key，可以为一个消息设置多个key，用空格""进行分割
                 // key存在properties中，
@@ -63,25 +73,27 @@ public class Producer
                 // 延迟消息
                 //msg.setDelayTimeLevel(2);
 
-                // 同步发送
+                //同步发送
                 SendResult sendResult = producer.send(msg);
                 System.out.printf("%s%n", sendResult);
 
                 // 异步发送
-                // producer.send(msg, new SendCallback()
-                // {
-                //     @Override
-                //     public void onSuccess(SendResult sendResult)
-                //     {
-                //
-                //     }
-                //
-                //     @Override
-                //     public void onException(Throwable e)
-                //     {
-                //
-                //     }
-                // });
+                // TimeUnit.SECONDS.sleep(3);
+                producer.send(msg, new SendCallback()
+                {
+                    @Override
+                    public void onSuccess(SendResult sendResult)
+                    {
+                        System.out.println("异步发送成功");
+                    }
+
+                    @Override
+                    public void onException(Throwable e)
+                    {
+                        System.out.println("异步发送失败：" + e.getMessage());
+                    }
+                });
+                System.out.println("main线程走完...........");
 
                 // 单向发送
                 //producer.sendOneway(msg);
@@ -90,7 +102,7 @@ public class Producer
                 //producer.sendMessageInTransaction()
 
                 // 批量消息
-                //producer.send()
+                //producer.send(Collection<Message> msgs)
 
             } catch (Exception e)
             {

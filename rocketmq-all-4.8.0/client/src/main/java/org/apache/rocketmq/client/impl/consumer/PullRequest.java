@@ -18,47 +18,57 @@ package org.apache.rocketmq.client.impl.consumer;
 
 import org.apache.rocketmq.common.message.MessageQueue;
 
-public class PullRequest {
+public class PullRequest
+{
     private String consumerGroup;
     private MessageQueue messageQueue;// 待拉取消费队列
     private ProcessQueue processQueue;// 消费处理队列，从Broker拉取到的消息先存入这里，再提交到消费者消费线程池消费
     private long nextOffset;// 待拉取的MessageQueue偏移量
     private boolean lockedFirst = false;// 是否被锁定
 
-    public boolean isLockedFirst() {
+    public boolean isLockedFirst()
+    {
         return lockedFirst;
     }
 
-    public void setLockedFirst(boolean lockedFirst) {
+    public void setLockedFirst(boolean lockedFirst)
+    {
         this.lockedFirst = lockedFirst;
     }
 
-    public String getConsumerGroup() {
+    public String getConsumerGroup()
+    {
         return consumerGroup;
     }
 
-    public void setConsumerGroup(String consumerGroup) {
+    public void setConsumerGroup(String consumerGroup)
+    {
         this.consumerGroup = consumerGroup;
     }
 
-    public MessageQueue getMessageQueue() {
+    public MessageQueue getMessageQueue()
+    {
         return messageQueue;
     }
 
-    public void setMessageQueue(MessageQueue messageQueue) {
+    public void setMessageQueue(MessageQueue messageQueue)
+    {
         this.messageQueue = messageQueue;
     }
 
-    public long getNextOffset() {
+    public long getNextOffset()
+    {
         return nextOffset;
     }
 
-    public void setNextOffset(long nextOffset) {
+    public void setNextOffset(long nextOffset)
+    {
         this.nextOffset = nextOffset;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((consumerGroup == null) ? 0 : consumerGroup.hashCode());
@@ -67,7 +77,8 @@ public class PullRequest {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj)
+    {
         if (this == obj)
             return true;
         if (obj == null)
@@ -75,12 +86,14 @@ public class PullRequest {
         if (getClass() != obj.getClass())
             return false;
         PullRequest other = (PullRequest) obj;
-        if (consumerGroup == null) {
+        if (consumerGroup == null)
+        {
             if (other.consumerGroup != null)
                 return false;
         } else if (!consumerGroup.equals(other.consumerGroup))
             return false;
-        if (messageQueue == null) {
+        if (messageQueue == null)
+        {
             if (other.messageQueue != null)
                 return false;
         } else if (!messageQueue.equals(other.messageQueue))
@@ -89,15 +102,18 @@ public class PullRequest {
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "PullRequest [consumerGroup=" + consumerGroup + ", messageQueue=" + messageQueue + ", nextOffset=" + nextOffset + "]";
     }
 
-    public ProcessQueue getProcessQueue() {
+    public ProcessQueue getProcessQueue()
+    {
         return processQueue;
     }
 
-    public void setProcessQueue(ProcessQueue processQueue) {
+    public void setProcessQueue(ProcessQueue processQueue)
+    {
         this.processQueue = processQueue;
     }
 }

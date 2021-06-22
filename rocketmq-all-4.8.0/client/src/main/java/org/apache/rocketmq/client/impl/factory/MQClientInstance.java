@@ -156,10 +156,7 @@ public class MQClientInstance
         this.consumerStatsManager = new ConsumerStatsManager(this.scheduledExecutorService);
 
         log.info("Created a new client Instance, InstanceIndex:{}, ClientID:{}, ClientConfig:{}, ClientVersion:{}, SerializerType:{}",
-                this.instanceIndex,
-                this.clientId,
-                this.clientConfig,
-                MQVersion.getVersionDesc(MQVersion.CURRENT_VERSION), RemotingCommand.getSerializeTypeConfigInThisServer());
+                this.instanceIndex, this.clientId, this.clientConfig, MQVersion.getVersionDesc(MQVersion.CURRENT_VERSION), RemotingCommand.getSerializeTypeConfigInThisServer());
     }
 
     public static TopicPublishInfo topicRouteData2TopicPublishInfo(final String topic, final TopicRouteData route)
@@ -249,20 +246,27 @@ public class MQClientInstance
             switch (this.serviceState)
             {
                 case CREATE_JUST:
+
                     this.serviceState = ServiceState.START_FAILED;
+
                     // If not specified,looking address from name server
                     if (null == this.clientConfig.getNamesrvAddr())
                     {
                         this.mQClientAPIImpl.fetchNameServerAddr();
                     }
+
                     // Start request-response channel
                     this.mQClientAPIImpl.start();
-                    // Start various schedule tasks
+
+                    // 启动各种定时任务，包括：间隔30s获取主题路由信息、间隔30s发送心跳到broker
                     this.startScheduledTask();
-                    // 消息拉取服务，单线程执行
+
+                    // 消息拉取服务，单线程执行，内部是循环从pullRequestQueue无界阻塞队列获取拉取任务pullRequest，pullRequest什么时候被放进去呢？
                     this.pullMessageService.start();
+
                     // Start rebalance service
                     this.rebalanceService.start();
+
                     // Start push service
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);
                     log.info("the client factory [{}] start OK", this.clientId);
@@ -1111,9 +1115,9 @@ public class MQClientInstance
     public boolean registerProducer(final String group, final DefaultMQProducerImpl producer)
     {
         if (null == group || null == producer)
-    {
-        return false;
-    }
+        {
+            return false;
+        }
 
         MQProducerInner prev = this.producerTable.putIfAbsent(group, producer);
         if (prev != null)

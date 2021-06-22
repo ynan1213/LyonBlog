@@ -66,8 +66,7 @@ public class BrokerStartup
         {
             controller.start();
 
-            String tip = "The broker[" + controller.getBrokerConfig().getBrokerName() + ", "
-                    + controller.getBrokerAddr() + "] boot success. serializeType=" + RemotingCommand.getSerializeTypeConfigInThisServer();
+            String tip = "The broker[" + controller.getBrokerConfig().getBrokerName() + ", " + controller.getBrokerAddr() + "] boot success. serializeType=" + RemotingCommand.getSerializeTypeConfigInThisServer();
 
             if (null != controller.getBrokerConfig().getNamesrvAddr())
             {
@@ -180,6 +179,7 @@ public class BrokerStartup
                 }
             }
 
+            // 只要配置了 ASYNC_MASTER 或者 SYNC_MASTER 就会将brokerId自动设置为0
             switch (messageStoreConfig.getBrokerRole())
             {
                 case ASYNC_MASTER:
@@ -192,7 +192,6 @@ public class BrokerStartup
                         System.out.printf("Slave's brokerId must be > 0");
                         System.exit(-3);
                     }
-
                     break;
                 default:
                     break;

@@ -47,6 +47,7 @@ public class PullMessageService extends ServiceThread
         this.mQClientFactory = mQClientFactory;
     }
 
+    // 延迟添加拉取任务到任务队列中
     public void executePullRequestLater(final PullRequest pullRequest, final long timeDelay)
     {
         if (!isStopped())
@@ -65,6 +66,7 @@ public class PullMessageService extends ServiceThread
         }
     }
 
+    // 立即添加拉取任务到任务队列中
     public void executePullRequestImmediately(final PullRequest pullRequest)
     {
         try

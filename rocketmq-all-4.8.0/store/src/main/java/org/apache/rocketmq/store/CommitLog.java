@@ -683,7 +683,7 @@ public class CommitLog
                     msg.setDelayTimeLevel(this.defaultMessageStore.getScheduleMessageService().getMaxDelayLevel());
                 }
 
-                topic = TopicValidator.RMQ_SYS_SCHEDULE_TOPIC;
+                topic = TopicValidator.RMQ_SYS_SCHEDULE_TOPIC;// 延迟消息主题统一为：SCHEDULE_TOPIC_XXXX
                 queueId = ScheduleMessageService.delayLevel2QueueId(msg.getDelayTimeLevel());
 
                 // Backup real topic, queueId
@@ -723,6 +723,7 @@ public class CommitLog
                 return CompletableFuture.completedFuture(new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, null));
             }
             //将消息存储到ByteBuffer中，但这里并没有刷写到磁盘，刷盘操作在后面
+            // 还有一点需要注意的是，消息添加到commitlog之前会生成一个全局唯一的消息ID，返回的result中含有此ID
             result = mappedFile.appendMessage(msg, this.appendMessageCallback);
             switch (result.getStatus())
             {
@@ -778,8 +779,11 @@ public class CommitLog
         storeStatsService.getSinglePutMessageTopicTimesTotal(msg.getTopic()).incrementAndGet();
         storeStatsService.getSinglePutMessageTopicSizeTotal(topic).addAndGet(result.getWroteBytes());
 
+        // 提交刷盘任务
         CompletableFuture<PutMessageStatus> flushResultFuture = submitFlushRequest(result, msg);
+        // 这是提交啥任务???
         CompletableFuture<PutMessageStatus> replicaResultFuture = submitReplicaRequest(result, msg);
+        // thenCombine：等待前面两个任务执行完毕并将两个任务的执行结果作为方法入参传递到指定方法中
         return flushResultFuture.thenCombine(replicaResultFuture, (flushStatus, replicaStatus) -> {
             if (flushStatus != PutMessageStatus.PUT_OK)
             {
@@ -790,8 +794,7 @@ public class CommitLog
                 putMessageResult.setPutMessageStatus(replicaStatus);
                 if (replicaStatus == PutMessageStatus.FLUSH_SLAVE_TIMEOUT)
                 {
-                    log.error("do sync transfer other node, wait return, but failed, topic: {} tags: {} client address: {}",
-                            msg.getTopic(), msg.getTags(), msg.getBornHostNameString());
+                    log.error("do sync transfer other node, wait return, but failed, topic: {} tags: {} client address: {}", msg.getTopic(), msg.getTags(), msg.getBornHostNameString());
                 }
             }
             return putMessageResult;
@@ -1097,8 +1100,7 @@ public class CommitLog
             {
                 if (service.isSlaveOK(result.getWroteBytes() + result.getWroteOffset()))
                 {
-                    GroupCommitRequest request = new GroupCommitRequest(result.getWroteOffset() + result.getWroteBytes(),
-                            this.defaultMessageStore.getMessageStoreConfig().getSyncFlushTimeout());
+                    GroupCommitRequest request = new GroupCommitRequest(result.getWroteOffset() + result.getWroteBytes(), this.defaultMessageStore.getMessageStoreConfig().getSyncFlushTimeout());
                     service.putRequest(request);
                     service.getWaitNotifyObject().wakeupAll();
                     return request.future();

@@ -247,8 +247,10 @@ public abstract class NettyRemotingAbstract
                                 }
                             }
                         };
+
                         if (pair.getObject1() instanceof AsyncNettyRequestProcessor)
                         {
+                            // 支持异步，首选异步处理
                             AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor) pair.getObject1();
                             processor.asyncProcessRequest(ctx, cmd, callback);
                         } else
@@ -271,11 +273,11 @@ public abstract class NettyRemotingAbstract
                 }
             };
 
-            // 拒绝策略拒绝请求
+            // 拒绝策略拒绝请求，可以通过设置该processor拒绝请求，来缓解服务器压力，但是通过什么途经可以设置该processor呢？不同的processor有不同的实现
+            // 1.SendMessageProcessor是通过判断 getMessageStore().isOSPageCacheBusy() || getMessageStore().isTransientStorePoolDeficient()
             if (pair.getObject1().rejectRequest())
             {
-                final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY,
-                        "[REJECTREQUEST]system busy, start flow control for a while");
+                final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY, "[REJECTREQUEST]system busy, start flow control for a while");
                 response.setOpaque(opaque);
                 ctx.writeAndFlush(response);
                 return;
@@ -284,21 +286,19 @@ public abstract class NettyRemotingAbstract
             try
             {
                 final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
+                // 提交给线程池
                 pair.getObject2().submit(requestTask);
             } catch (RejectedExecutionException e)
             {
                 // todo 这是什么意思？？？ 每10秒打印一次？？？
                 if ((System.currentTimeMillis() % 10000) == 0)
                 {
-                    log.warn(RemotingHelper.parseChannelRemoteAddr(ctx.channel())
-                            + ", too many requests and system thread pool busy, RejectedExecutionException "
-                            + pair.getObject2().toString() + " request code: " + cmd.getCode());
+                    log.warn(RemotingHelper.parseChannelRemoteAddr(ctx.channel()) + ", too many requests and system thread pool busy, RejectedExecutionException " + pair.getObject2().toString() + " request code: " + cmd.getCode());
                 }
 
                 if (!cmd.isOnewayRPC())
                 {
-                    final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY,
-                            "[OVERLOAD]system busy, start flow control for a while");
+                    final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY, "[OVERLOAD]system busy, start flow control for a while");
                     response.setOpaque(opaque);
                     ctx.writeAndFlush(response);
                 }
@@ -344,6 +344,8 @@ public abstract class NettyRemotingAbstract
             }
         } else
         {
+            // 什么情况下 responseFuture 会为空的，可能是被 scanResponseTable 定时任务给移除了
+            System.out.println("receive response, but not matched any request, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
             log.warn("receive response, but not matched any request, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
             log.warn(cmd.toString());
         }
@@ -452,6 +454,8 @@ public abstract class NettyRemotingAbstract
 
             if ((rep.getBeginTimestamp() + rep.getTimeoutMillis() + 1000) <= System.currentTimeMillis())
             {
+                System.out.println("移除超时回调：" + rep.getBeginTimestamp());
+                System.out.println("移除超时回调：" + rep.getOpaque());
                 rep.release();
                 it.remove();
                 rfList.add(rep);
@@ -520,7 +524,7 @@ public abstract class NettyRemotingAbstract
                     throw new RemotingSendRequestException(RemotingHelper.parseSocketAddressAddr(addr), responseFuture.getCause());
                 }
             }
-            // responseCommand 不为空说明已经接收到了nameServer的返回数据
+            // responseCommand又远程服务器返回消息时设置，不为空说明已经接收到了nameServer的返回数据
             return responseCommand;
         } finally
         {
@@ -528,8 +532,7 @@ public abstract class NettyRemotingAbstract
         }
     }
 
-    public void invokeAsyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis,
-                                final InvokeCallback invokeCallback)
+    public void invokeAsyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis, final InvokeCallback invokeCallback)
             throws InterruptedException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException
     {
         long beginStartTime = System.currentTimeMillis();
@@ -539,11 +542,12 @@ public abstract class NettyRemotingAbstract
         {
             final SemaphoreReleaseOnlyOnce once = new SemaphoreReleaseOnlyOnce(this.semaphoreAsync);
             long costTime = System.currentTimeMillis() - beginStartTime;
-            if (timeoutMillis < costTime)
-            {
-                once.release();
-                throw new RemotingTimeoutException("invokeAsyncImpl call timeout");
-            }
+            // todo 先注掉
+            // if (timeoutMillis < costTime)
+            // {
+            //     once.release();
+            //     throw new RemotingTimeoutException("invokeAsyncImpl call timeout");
+            // }
 
             final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis - costTime, invokeCallback, once);
             this.responseTable.put(opaque, responseFuture);

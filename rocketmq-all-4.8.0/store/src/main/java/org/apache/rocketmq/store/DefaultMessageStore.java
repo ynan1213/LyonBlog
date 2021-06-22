@@ -491,7 +491,7 @@ public class DefaultMessageStore implements MessageStore
     @Override
     public CompletableFuture<PutMessageResult> asyncPutMessage(MessageExtBrokerInner msg)
     {
-        //Broker校验：当前Broker是否停止工作，是否为SAVLE角色，是否支持写入
+        // 如果当前Broker停止工作或为SAVLE角色或不支持写入，则拒绝消息写入
         PutMessageStatus checkStoreStatus = this.checkStoreStatus();
         if (checkStoreStatus != PutMessageStatus.PUT_OK)
         {
@@ -655,8 +655,7 @@ public class DefaultMessageStore implements MessageStore
         return commitLog;
     }
 
-    public GetMessageResult getMessage(final String group, final String topic, final int queueId, final long offset,
-                                       final int maxMsgNums, final MessageFilter messageFilter)
+    public GetMessageResult getMessage(final String group, final String topic, final int queueId, final long offset, final int maxMsgNums, final MessageFilter messageFilter)
     {
         if (this.shutdown)
         {

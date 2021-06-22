@@ -376,25 +376,23 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner
                             if (pullResult.getMsgFoundList() == null || pullResult.getMsgFoundList().isEmpty())
                             {
                                 // 如果为空，则立即将PullRequest放入队列进行再次拉取
-                                // 为什么返回结果为 FOUND，这里的 msgFoundList 还会为空呢？ 前面进行了TAG过滤
+                                // 为什么返回结果为 FOUND，这里的 msgFoundList 还会为空呢？ 因为前面进行了TAG过滤
                                 DefaultMQPushConsumerImpl.this.executePullRequestImmediately(pullRequest);
                             } else
                             {
                                 firstMsgOffset = pullResult.getMsgFoundList().get(0).getQueueOffset();
 
-                                DefaultMQPushConsumerImpl.this.getConsumerStatsManager().incPullTPS(pullRequest.getConsumerGroup(),
-                                        pullRequest.getMessageQueue().getTopic(), pullResult.getMsgFoundList().size());
+                                DefaultMQPushConsumerImpl.this.getConsumerStatsManager().incPullTPS(pullRequest.getConsumerGroup(), pullRequest.getMessageQueue().getTopic(), pullResult.getMsgFoundList().size());
 
                                 // 将拉取到的消息存入ProcessQueue
                                 boolean dispatchToConsume = processQueue.putMessage(pullResult.getMsgFoundList());
                                 // 消息存入ProcessQueue后再提交到consumeMessageService中供消费者消费
                                 // 方法什么时候返回呢？
-                                //      并发消费模式：遍历消息集合，每个包装成 ConsumeRequest 后再提交给异步消费线程池（大小20），
+                                //      并发消费模式：遍历消息集合，一次取一条，包装成 ConsumeRequest 后再提交给异步消费线程池（大小20），
                                 //                    这种情况的消息是被多个线程同时消费。提交完后不用等消费结果，整个方法直接返回
                                 //      顺序消费模式：全部封装为 ConsumeRequest 一次性提交给异步消费线程池（大小20），这种情况是由
                                 //                    一个线程就进行消费，并且消费的过程中还会对processQueue进行加锁。
-                                DefaultMQPushConsumerImpl.this.consumeMessageService.submitConsumeRequest(
-                                        pullResult.getMsgFoundList(), processQueue, pullRequest.getMessageQueue(), dispatchToConsume);
+                                DefaultMQPushConsumerImpl.this.consumeMessageService.submitConsumeRequest(pullResult.getMsgFoundList(), processQueue, pullRequest.getMessageQueue(), dispatchToConsume);
 
                                 // 拉取间隔，默认为0，表示立即拉取
                                 if (DefaultMQPushConsumerImpl.this.defaultMQPushConsumer.getPullInterval() > 0)
@@ -410,8 +408,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner
 
                             if (pullResult.getNextBeginOffset() < prevRequestOffset || firstMsgOffset < prevRequestOffset)
                             {
-                                log.warn("[BUG] pull message result maybe data wrong, nextBeginOffset: {} firstMsgOffset: {} prevRequestOffset: {}",
-                                        pullResult.getNextBeginOffset(), firstMsgOffset, prevRequestOffset);
+                                log.warn("[BUG] pull message result maybe data wrong, nextBeginOffset: {} firstMsgOffset: {} prevRequestOffset: {}", pullResult.getNextBeginOffset(), firstMsgOffset, prevRequestOffset);
                             }
 
                             break;
@@ -679,14 +676,12 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner
         switch (this.serviceState)
         {
             case CREATE_JUST:
-                log.info("the consumer [{}] start beginning. messageModel={}, isUnitMode={}",
-                        this.defaultMQPushConsumer.getConsumerGroup(),
-                        this.defaultMQPushConsumer.getMessageModel(),
-                        this.defaultMQPushConsumer.isUnitMode());
+                log.info("the consumer [{}] start beginning. messageModel={}, isUnitMode={}", this.defaultMQPushConsumer.getConsumerGroup(), this.defaultMQPushConsumer.getMessageModel(), this.defaultMQPushConsumer.isUnitMode());
                 this.serviceState = ServiceState.START_FAILED;
 
                 this.checkConfig();
 
+                // 每个消费者默认会订阅 (%RETRY% + 消费组名) 的重试主题，重试主题是以消费者组为单位
                 this.copySubscription();
 
                 if (this.defaultMQPushConsumer.getMessageModel() == MessageModel.CLUSTERING)
@@ -727,7 +722,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner
                     }
                     this.defaultMQPushConsumer.setOffsetStore(this.offsetStore);
                 }
-                this.offsetStore.load();
+                this.offsetStore.load();// 只有 LocalFileOffsetStore 实现了该方法
 
                 // 根据是否是顺序消费，创建消费端消费线程服务
                 if (this.getMessageListenerInner() instanceof MessageListenerOrderly)
@@ -739,9 +734,10 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner
                     this.consumeOrderly = false;
                     this.consumeMessageService = new ConsumeMessageConcurrentlyService(this, (MessageListenerConcurrently) this.getMessageListenerInner());
                 }
-                // consumeMessageService负责消息消费，内部维护一个线程池
+                // consumeMessageService 负责消息消费，内部维护一个线程池
                 this.consumeMessageService.start();
 
+                // 同一个mQClientFactory对象也就是同一个JVM中，相同的group只能注册一次，否则抛异常
                 boolean registerOK = mQClientFactory.registerConsumer(this.defaultMQPushConsumer.getConsumerGroup(), this);
                 if (!registerOK)
                 {
@@ -941,7 +937,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner
                     break;
                 case CLUSTERING:
                     // 消息重试主题是 %RETRY% + 消费组名，说明消费重试是以消费组为单位
-                    // 消费者在启动的时候就会自动订阅该重试主题
+                    // 每个消费者在启动的时候就会自动订阅该重试主题
                     final String retryTopic = MixAll.getRetryTopic(this.defaultMQPushConsumer.getConsumerGroup());
                     SubscriptionData subscriptionData = FilterAPI.buildSubscriptionData(this.defaultMQPushConsumer.getConsumerGroup(), retryTopic, SubscriptionData.SUB_ALL);
                     this.rebalanceImpl.getSubscriptionInner().put(retryTopic, subscriptionData);

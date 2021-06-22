@@ -255,8 +255,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer
      * @param customizedTraceTopic The name value of message trace topic.If you don't config,you can use the default
      *                             trace topic name.
      */
-    public DefaultMQProducer(final String namespace, final String producerGroup, RPCHook rpcHook,
-                             boolean enableMsgTrace, final String customizedTraceTopic)
+    public DefaultMQProducer(final String namespace, final String producerGroup, RPCHook rpcHook, boolean enableMsgTrace, final String customizedTraceTopic)
     {
         this.namespace = namespace;
         this.producerGroup = producerGroup;

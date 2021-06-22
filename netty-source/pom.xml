@@ -622,11 +622,11 @@
                 <version>3.6.0</version>
                 <configuration>
                     <compilerVersion>1.8</compilerVersion>
-                    <fork>true</fork>
+                    <!--<fork>true</fork>-->
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
-                    <debug>true</debug>
-                    <optimize>true</optimize>
+                    <!--<debug>true</debug>
+                    <optimize>true</optimize>-->
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
                     <compilerArgument>-Xlint:-options</compilerArgument>
@@ -741,61 +741,61 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.12.1</version>
-                <executions>
-                    <execution>
-                        <id>check-style</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-<!--                            <consoleOutput>true</consoleOutput>-->
-<!--                            <logViolationsToConsole>true</logViolationsToConsole>-->
-<!--                            <failsOnError>true</failsOnError>-->
-<!--                            <failOnViolation>true</failOnViolation>-->
-<!--                            <configLocation>io/netty/checkstyle.xml</configLocation>-->
-<!--                            <includeTestSourceDirectory>true</includeTestSourceDirectory>-->
-                            <skip>true</skip>
-                        </configuration>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>${project.groupId}</groupId>
-                        <artifactId>netty-build</artifactId>
-                        <version>${netty.build.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>xml-maven-plugin</artifactId>
-                <version>1.0.1</version>
-                <executions>
-                    <execution>
-                        <id>check-style</id>
-                        <goals>
-                            <goal>check-format</goal>
-                        </goals>
-                        <phase>validate</phase>
-                    </execution>
-                </executions>
-                <configuration>
-<!--                    <formatFileSets>-->
-<!--                        <formatFileSet>-->
-<!--                            <directory>${project.basedir}</directory>-->
-<!--                            <includes>-->
-<!--                                <include>**/pom.xml</include>-->
-<!--                            </includes>-->
-<!--                        </formatFileSet>-->
-<!--                    </formatFileSets>-->
-<!--                    <useDefaultFormatFileSet>false</useDefaultFormatFileSet>-->
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <artifactId>maven-checkstyle-plugin</artifactId>-->
+<!--                <version>2.12.1</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>check-style</id>-->
+<!--                        <goals>-->
+<!--                            <goal>check</goal>-->
+<!--                        </goals>-->
+<!--                        <phase>validate</phase>-->
+<!--                        <configuration>-->
+<!--&lt;!&ndash;                            <consoleOutput>true</consoleOutput>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <logViolationsToConsole>true</logViolationsToConsole>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <failsOnError>true</failsOnError>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <failOnViolation>true</failOnViolation>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <configLocation>io/netty/checkstyle.xml</configLocation>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <includeTestSourceDirectory>true</includeTestSourceDirectory>&ndash;&gt;-->
+<!--                            <skip>true</skip>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <dependencies>-->
+<!--                    <dependency>-->
+<!--                        <groupId>${project.groupId}</groupId>-->
+<!--                        <artifactId>netty-build</artifactId>-->
+<!--                        <version>${netty.build.version}</version>-->
+<!--                    </dependency>-->
+<!--                </dependencies>-->
+<!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.codehaus.mojo</groupId>-->
+<!--                <artifactId>xml-maven-plugin</artifactId>-->
+<!--                <version>1.0.1</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>check-style</id>-->
+<!--                        <goals>-->
+<!--                            <goal>check-format</goal>-->
+<!--                        </goals>-->
+<!--                        <phase>validate</phase>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <configuration>-->
+<!--&lt;!&ndash;                    <formatFileSets>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <formatFileSet>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <directory>${project.basedir}</directory>&ndash;&gt;-->
+<!--&lt;!&ndash;                            <includes>&ndash;&gt;-->
+<!--&lt;!&ndash;                                <include>**/pom.xml</include>&ndash;&gt;-->
+<!--&lt;!&ndash;                            </includes>&ndash;&gt;-->
+<!--&lt;!&ndash;                        </formatFileSet>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </formatFileSets>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <useDefaultFormatFileSet>false</useDefaultFormatFileSet>&ndash;&gt;-->
+<!--                    <skip>true</skip>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <!-- Download the npn-boot.jar in advance to add it to the boot classpath. -->
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -932,17 +932,17 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
-                <configuration>
-                    <detectOfflineLinks>false</detectOfflineLinks>
-                    <breakiterator>true</breakiterator>
-                    <version>false</version>
-                    <author>false</author>
-                    <keywords>true</keywords>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <artifactId>maven-javadoc-plugin</artifactId>-->
+<!--                <version>2.10.4</version>-->
+<!--                <configuration>-->
+<!--                    <detectOfflineLinks>false</detectOfflineLinks>-->
+<!--                    <breakiterator>true</breakiterator>-->
+<!--                    <version>false</version>-->
+<!--                    <author>false</author>-->
+<!--                    <keywords>true</keywords>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>

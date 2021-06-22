@@ -218,6 +218,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
             {
                 try
                 {
+                    // 清理超时的ResponseFuture
                     NettyRemotingClient.this.scanResponseTable();
                 } catch (Throwable e)
                 {
@@ -628,8 +629,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void invokeAsync(String addr, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback)
-            throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException,
-            RemotingSendRequestException
+            throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException
     {
         long beginStartTime = System.currentTimeMillis();
         final Channel channel = this.getAndCreateChannel(addr);
@@ -639,10 +639,11 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
             {
                 doBeforeRpcHooks(addr, request);
                 long costTime = System.currentTimeMillis() - beginStartTime;
-                if (timeoutMillis < costTime)
-                {
-                    throw new RemotingTooMuchRequestException("invokeAsync call timeout");
-                }
+                // todo 先注掉
+                // if (timeoutMillis < costTime)
+                // {
+                //     throw new RemotingTooMuchRequestException("invokeAsync call timeout");
+                // }
                 this.invokeAsyncImpl(channel, request, timeoutMillis - costTime, invokeCallback);
             } catch (RemotingSendRequestException e)
             {
@@ -658,8 +659,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     }
 
     @Override
-    public void invokeOneway(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException,
-            RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException
+    public void invokeOneway(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException
     {
         final Channel channel = this.getAndCreateChannel(addr);
         if (channel != null && channel.isActive())

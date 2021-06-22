@@ -28,8 +28,7 @@ public class BrokerStartupTest {
     private String storePathRootDir = ".";
 
     @Test
-    public void testProperties2SystemEnv() throws NoSuchMethodException, InvocationTargetException,
-        IllegalAccessException {
+    public void testProperties2SystemEnv() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Properties properties = new Properties();
         Class<BrokerStartup> clazz = BrokerStartup.class;
         Method method = clazz.getDeclaredMethod("properties2SystemEnv", Properties.class);

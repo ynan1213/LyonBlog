@@ -17,14 +17,17 @@
 package org.apache.rocketmq.remoting.netty;
 
 import io.netty.channel.Channel;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.rocketmq.remoting.InvokeCallback;
 import org.apache.rocketmq.remoting.common.SemaphoreReleaseOnlyOnce;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
-public class ResponseFuture {
+public class ResponseFuture
+{
     private final int opaque;
     private final Channel processChannel;
     private final long timeoutMillis;
@@ -39,8 +42,8 @@ public class ResponseFuture {
     private volatile boolean sendRequestOK = true;
     private volatile Throwable cause;
 
-    public ResponseFuture(Channel channel, int opaque, long timeoutMillis, InvokeCallback invokeCallback,
-        SemaphoreReleaseOnlyOnce once) {
+    public ResponseFuture(Channel channel, int opaque, long timeoutMillis, InvokeCallback invokeCallback, SemaphoreReleaseOnlyOnce once)
+    {
         this.opaque = opaque;
         this.processChannel = channel;
         this.timeoutMillis = timeoutMillis;
@@ -48,89 +51,109 @@ public class ResponseFuture {
         this.once = once;
     }
 
-    public void executeInvokeCallback() {
-        if (invokeCallback != null) {
-            if (this.executeCallbackOnlyOnce.compareAndSet(false, true)) {
+    public void executeInvokeCallback()
+    {
+        if (invokeCallback != null)
+        {
+            if (this.executeCallbackOnlyOnce.compareAndSet(false, true))
+            {
                 invokeCallback.operationComplete(this);
             }
         }
     }
 
-    public void release() {
-        if (this.once != null) {
+    public void release()
+    {
+        if (this.once != null)
+        {
             this.once.release();
         }
     }
 
-    public boolean isTimeout() {
+    public boolean isTimeout()
+    {
         long diff = System.currentTimeMillis() - this.beginTimestamp;
         return diff > this.timeoutMillis;
     }
 
-    public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException {
+    public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException
+    {
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         return this.responseCommand;
     }
 
-    public void putResponse(final RemotingCommand responseCommand) {
+    public void putResponse(final RemotingCommand responseCommand)
+    {
         this.responseCommand = responseCommand;
         this.countDownLatch.countDown();
     }
 
-    public long getBeginTimestamp() {
+    public long getBeginTimestamp()
+    {
         return beginTimestamp;
     }
 
-    public boolean isSendRequestOK() {
+    public boolean isSendRequestOK()
+    {
         return sendRequestOK;
     }
 
-    public void setSendRequestOK(boolean sendRequestOK) {
+    public void setSendRequestOK(boolean sendRequestOK)
+    {
         this.sendRequestOK = sendRequestOK;
     }
 
-    public long getTimeoutMillis() {
+    public long getTimeoutMillis()
+    {
         return timeoutMillis;
     }
 
-    public InvokeCallback getInvokeCallback() {
+    public InvokeCallback getInvokeCallback()
+    {
         return invokeCallback;
     }
 
-    public Throwable getCause() {
+    public Throwable getCause()
+    {
         return cause;
     }
 
-    public void setCause(Throwable cause) {
+    public void setCause(Throwable cause)
+    {
         this.cause = cause;
     }
 
-    public RemotingCommand getResponseCommand() {
+    public RemotingCommand getResponseCommand()
+    {
         return responseCommand;
     }
 
-    public void setResponseCommand(RemotingCommand responseCommand) {
+    public void setResponseCommand(RemotingCommand responseCommand)
+    {
         this.responseCommand = responseCommand;
     }
 
-    public int getOpaque() {
+    public int getOpaque()
+    {
         return opaque;
     }
 
-    public Channel getProcessChannel() {
+    public Channel getProcessChannel()
+    {
         return processChannel;
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
         return "ResponseFuture [responseCommand=" + responseCommand
-            + ", sendRequestOK=" + sendRequestOK
-            + ", cause=" + cause
-            + ", opaque=" + opaque
-            + ", processChannel=" + processChannel
-            + ", timeoutMillis=" + timeoutMillis
-            + ", invokeCallback=" + invokeCallback
-            + ", beginTimestamp=" + beginTimestamp
-            + ", countDownLatch=" + countDownLatch + "]";
+                + ", sendRequestOK=" + sendRequestOK
+                + ", cause=" + cause
+                + ", opaque=" + opaque
+                + ", processChannel=" + processChannel
+                + ", timeoutMillis=" + timeoutMillis
+                + ", invokeCallback=" + invokeCallback
+                + ", beginTimestamp=" + beginTimestamp
+                + ", countDownLatch=" + countDownLatch + "]";
     }
 }

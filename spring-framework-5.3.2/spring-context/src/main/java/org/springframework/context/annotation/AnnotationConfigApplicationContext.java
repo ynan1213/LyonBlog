@@ -66,7 +66,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 */
 	public AnnotationConfigApplicationContext() {
 		StartupStep createAnnotatedBeanDefReader = this.getApplicationStartup().start("spring.context.annotated-bean-reader.create");
-		// 初始化注解模式下的bean定义扫描器
+		// 初始化注解模式下的bean定义扫描器，把一个class生成BeanDefinition注册进factory
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		createAnnotatedBeanDefReader.end();
 		// 初始化classPath类型的bean定义扫描器, 就是用来扫描我们classpath下的标注了@Service @Component @Respository @Controller

@@ -710,8 +710,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      * @throws MQBrokerException    if there is any broker error.
      * @throws InterruptedException if the thread is interrupted.
      * @throws MQClientException    if there is any client error.
-     *
-     * 如果消息消费失败，重新发送给broker
+     *                              <p>
+     *                              如果消息消费失败，重新发送给broker
      */
     @Deprecated
     @Override
@@ -735,8 +735,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      * @throws MQBrokerException    if there is any broker error.
      * @throws InterruptedException if the thread is interrupted.
      * @throws MQClientException    if there is any client error.
-     *
-     * 如果消息消费失败，重新发送给broker
+     *                              <p>
+     *                              如果消息消费失败，重新发送给broker
      */
     @Deprecated
     @Override

@@ -116,6 +116,7 @@ public class EventListenerMethodProcessor implements SmartInitializingSingleton,
 	}
 
 
+	// 当所有单例 bean 都初始化完成以后， Spring的IOC容器会回调该接口的 afterSingletonsInstantiated()方法。
 	@Override
 	public void afterSingletonsInstantiated() {
 		ConfigurableListableBeanFactory beanFactory = this.beanFactory;
@@ -162,15 +163,11 @@ public class EventListenerMethodProcessor implements SmartInitializingSingleton,
 	}
 
 	private void processBean(final String beanName, final Class<?> targetType) {
-		if (!this.nonAnnotatedClasses.contains(targetType) &&
-				AnnotationUtils.isCandidateClass(targetType, EventListener.class) &&
-				!isSpringContainerClass(targetType)) {
+		if (!this.nonAnnotatedClasses.contains(targetType) && AnnotationUtils.isCandidateClass(targetType, EventListener.class) && !isSpringContainerClass(targetType)) {
 
 			Map<Method, EventListener> annotatedMethods = null;
 			try {
-				annotatedMethods = MethodIntrospector.selectMethods(targetType,
-						(MethodIntrospector.MetadataLookup<EventListener>) method ->
-								AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class));
+				annotatedMethods = MethodIntrospector.selectMethods(targetType, (MethodIntrospector.MetadataLookup<EventListener>) method -> AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class));
 			}
 			catch (Throwable ex) {
 				// An unresolvable type in a method signature, probably from a lazy bean - let's ignore it.

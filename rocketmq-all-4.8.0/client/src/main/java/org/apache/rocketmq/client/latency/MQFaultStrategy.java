@@ -89,6 +89,10 @@ public class MQFaultStrategy {
         return tpInfo.selectOneMessageQueue(lastBrokerName);
     }
 
+    /**
+     * isolation：如果发送成功但是延迟高这个值传入的false，如果是因为发送抛了异常这个值传入的为true
+     * 也就是说，如果是因为发生了异常进入这里至少会被隔离600s，也就是10分钟
+     */
     public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         if (this.sendLatencyFaultEnable) {
             long duration = computeNotAvailableDuration(isolation ? 30000 : currentLatency);

@@ -1,13 +1,17 @@
 pluginManagement {
 	repositories {
 		gradlePluginPortal()
-		maven { url 'https://repo.spring.io/plugins-release' }
+		//maven { url 'https://repo.spring.io/plugins-release' }
+		maven { url 'https://maven.aliyun.com/repository/spring'}
+		maven { url 'https://maven.aliyun.com/repository/public'}
+		maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+		maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'}
 	}
 }
 
 plugins {
 	id "com.gradle.enterprise" version "3.2"
-	id "io.spring.gradle-enterprise-conventions" version "0.0.2"
+    //id "io.spring.gradle-enterprise-conventions" version "0.0.2"
 }
 
 include "spring-aop"
@@ -65,4 +69,8 @@ settings.gradle.projectsLoaded {
 include '01-接口体系'
 include '02-事物'
 include '03-mvc'
+include '05-fatherAndSon'
+include '06-listener'
+include '04-postProcessor'
+include '07-beanFactoryPostProcessor'
 

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.logging.InternalLogger;
@@ -33,10 +34,11 @@ import org.apache.rocketmq.namesrv.NamesrvController;
  * 1.加载namesrvController指定的kvConfig配置文件(常为xxx/kvConfig.json)到内存,进行读取、增加、删除kvConfig记录;
  * 2.将内存记录的配置,持久化到文件;
  * 3.打印所有kvConfig配置;
- *
+ * <p>
  * 疑问：kvConfig.json保存了什么配置？？？
  */
-public class KVConfigManager {
+public class KVConfigManager
+{
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
     private final NamesrvController namesrvController;
@@ -44,160 +46,205 @@ public class KVConfigManager {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final HashMap<String/* Namespace */, HashMap<String/* Key */, String/* Value */>> configTable = new HashMap<String, HashMap<String, String>>();
 
-    public KVConfigManager(NamesrvController namesrvController) {
+    public KVConfigManager(NamesrvController namesrvController)
+    {
         this.namesrvController = namesrvController;
     }
 
-    public void load() {
+    public void load()
+    {
         String content = null;
-        try {
+        try
+        {
             content = MixAll.file2String(this.namesrvController.getNamesrvConfig().getKvConfigPath());
-        } catch (IOException e) {
+        } catch (IOException e)
+        {
             log.warn("Load KV config table exception", e);
         }
-        if (content != null) {
-            KVConfigSerializeWrapper kvConfigSerializeWrapper =
-                KVConfigSerializeWrapper.fromJson(content, KVConfigSerializeWrapper.class);
-            if (null != kvConfigSerializeWrapper) {
+        if (content != null)
+        {
+            KVConfigSerializeWrapper kvConfigSerializeWrapper = KVConfigSerializeWrapper.fromJson(content, KVConfigSerializeWrapper.class);
+            if (null != kvConfigSerializeWrapper)
+            {
                 this.configTable.putAll(kvConfigSerializeWrapper.getConfigTable());
                 log.info("load KV config table OK");
             }
         }
     }
 
-    public void putKVConfig(final String namespace, final String key, final String value) {
-        try {
+    public void putKVConfig(final String namespace, final String key, final String value)
+    {
+        try
+        {
             this.lock.writeLock().lockInterruptibly();
-            try {
+            try
+            {
                 HashMap<String, String> kvTable = this.configTable.get(namespace);
-                if (null == kvTable) {
+                if (null == kvTable)
+                {
                     kvTable = new HashMap<String, String>();
                     this.configTable.put(namespace, kvTable);
                     log.info("putKVConfig create new Namespace {}", namespace);
                 }
 
                 final String prev = kvTable.put(key, value);
-                if (null != prev) {
+                if (null != prev)
+                {
                     log.info("putKVConfig update config item, Namespace: {} Key: {} Value: {}",
-                        namespace, key, value);
-                } else {
+                            namespace, key, value);
+                } else
+                {
                     log.info("putKVConfig create new config item, Namespace: {} Key: {} Value: {}",
-                        namespace, key, value);
+                            namespace, key, value);
                 }
-            } finally {
+            } finally
+            {
                 this.lock.writeLock().unlock();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             log.error("putKVConfig InterruptedException", e);
         }
 
         this.persist();
     }
 
-    public void persist() {
-        try {
+    public void persist()
+    {
+        try
+        {
             this.lock.readLock().lockInterruptibly();
-            try {
+            try
+            {
                 KVConfigSerializeWrapper kvConfigSerializeWrapper = new KVConfigSerializeWrapper();
                 kvConfigSerializeWrapper.setConfigTable(this.configTable);
 
                 String content = kvConfigSerializeWrapper.toJson();
 
-                if (null != content) {
+                if (null != content)
+                {
                     MixAll.string2File(content, this.namesrvController.getNamesrvConfig().getKvConfigPath());
                 }
-            } catch (IOException e) {
+            } catch (IOException e)
+            {
                 log.error("persist kvconfig Exception, "
-                    + this.namesrvController.getNamesrvConfig().getKvConfigPath(), e);
-            } finally {
+                        + this.namesrvController.getNamesrvConfig().getKvConfigPath(), e);
+            } finally
+            {
                 this.lock.readLock().unlock();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             log.error("persist InterruptedException", e);
         }
 
     }
 
-    public void deleteKVConfig(final String namespace, final String key) {
-        try {
+    public void deleteKVConfig(final String namespace, final String key)
+    {
+        try
+        {
             this.lock.writeLock().lockInterruptibly();
-            try {
+            try
+            {
                 HashMap<String, String> kvTable = this.configTable.get(namespace);
-                if (null != kvTable) {
+                if (null != kvTable)
+                {
                     String value = kvTable.remove(key);
                     log.info("deleteKVConfig delete a config item, Namespace: {} Key: {} Value: {}",
-                        namespace, key, value);
+                            namespace, key, value);
                 }
-            } finally {
+            } finally
+            {
                 this.lock.writeLock().unlock();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             log.error("deleteKVConfig InterruptedException", e);
         }
 
         this.persist();
     }
 
-    public byte[] getKVListByNamespace(final String namespace) {
-        try {
+    public byte[] getKVListByNamespace(final String namespace)
+    {
+        try
+        {
             this.lock.readLock().lockInterruptibly();
-            try {
+            try
+            {
                 HashMap<String, String> kvTable = this.configTable.get(namespace);
-                if (null != kvTable) {
+                if (null != kvTable)
+                {
                     KVTable table = new KVTable();
                     table.setTable(kvTable);
                     return table.encode();
                 }
-            } finally {
+            } finally
+            {
                 this.lock.readLock().unlock();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             log.error("getKVListByNamespace InterruptedException", e);
         }
 
         return null;
     }
 
-    public String getKVConfig(final String namespace, final String key) {
-        try {
+    public String getKVConfig(final String namespace, final String key)
+    {
+        try
+        {
             this.lock.readLock().lockInterruptibly();
-            try {
+            try
+            {
                 HashMap<String, String> kvTable = this.configTable.get(namespace);
-                if (null != kvTable) {
+                if (null != kvTable)
+                {
                     return kvTable.get(key);
                 }
-            } finally {
+            } finally
+            {
                 this.lock.readLock().unlock();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             log.error("getKVConfig InterruptedException", e);
         }
 
         return null;
     }
 
-    public void printAllPeriodically() {
-        try {
+    public void printAllPeriodically()
+    {
+        try
+        {
             this.lock.readLock().lockInterruptibly();
-            try {
+            try
+            {
                 log.info("--------------------------------------------------------");
 
                 {
                     log.info("configTable SIZE: {}", this.configTable.size());
                     Iterator<Entry<String, HashMap<String, String>>> it = this.configTable.entrySet().iterator();
-                    while (it.hasNext()) {
+                    while (it.hasNext())
+                    {
                         Entry<String, HashMap<String, String>> next = it.next();
                         Iterator<Entry<String, String>> itSub = next.getValue().entrySet().iterator();
-                        while (itSub.hasNext()) {
+                        while (itSub.hasNext())
+                        {
                             Entry<String, String> nextSub = itSub.next();
                             log.info("configTable NS: {} Key: {} Value: {}", next.getKey(), nextSub.getKey(), nextSub.getValue());
                         }
                     }
                 }
-            } finally {
+            } finally
+            {
                 this.lock.readLock().unlock();
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e)
+        {
             log.error("printAllPeriodically InterruptedException", e);
         }
     }

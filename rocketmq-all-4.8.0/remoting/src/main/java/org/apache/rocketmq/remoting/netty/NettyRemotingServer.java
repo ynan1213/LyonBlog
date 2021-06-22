@@ -201,9 +201,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private boolean useEpoll()
     {
-        return RemotingUtil.isLinuxPlatform()
-                && nettyServerConfig.isUseEpollNativeSelector()
-                && Epoll.isAvailable();
+        return RemotingUtil.isLinuxPlatform() && nettyServerConfig.isUseEpollNativeSelector() && Epoll.isAvailable();
     }
 
     @Override
@@ -222,6 +220,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                         return new Thread(r, "NettyServerCodecThread_" + this.threadIndex.incrementAndGet());
                     }
                 });
+
         // 初始化 handler
         prepareSharableHandlers();
 
@@ -235,6 +234,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                         .childOption(ChannelOption.SO_SNDBUF, nettyServerConfig.getServerSocketSndBufSize())
                         .childOption(ChannelOption.SO_RCVBUF, nettyServerConfig.getServerSocketRcvBufSize())
                         .localAddress(new InetSocketAddress(this.nettyServerConfig.getListenPort()))
+                        //.localAddress(new InetSocketAddress(0))
                         .childHandler(new ChannelInitializer<SocketChannel>()
                         {
                             @Override
@@ -246,8 +246,10 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                                                 encoder,
                                                 new NettyDecoder(),
                                                 new IdleStateHandler(0, 0, nettyServerConfig.getServerChannelMaxIdleTimeSeconds()),
-                                                connectionManageHandler,// 通道监听器
-                                                serverHandler // 请求处理器
+                                                // 通道监听器，nameserver配置的是BrokerHousekeepingService，当通道关闭或者异常的时候更新相应的路由信息
+                                                connectionManageHandler,
+                                                // 处理通道读事件
+                                                serverHandler
                                         );
                             }
                         });
@@ -261,6 +263,8 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         {
             ChannelFuture sync = this.serverBootstrap.bind().sync();
             InetSocketAddress addr = (InetSocketAddress) sync.channel().localAddress();
+            // 这里为什么要这样写而不是直接将前面配置的port赋值给this.port呢？
+            // 群里有个人同样问到了这里，原因就是如果前面手工配置的port为0，相当于没有配置，这里bind过后就会随机取一个端口，然后这里返回的就是实际的端口，但不会为0
             this.port = addr.getPort();
         } catch (InterruptedException e1)
         {
@@ -415,7 +419,6 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
     @ChannelHandler.Sharable
     class HandshakeHandler extends SimpleChannelInboundHandler<ByteBuf>
     {
-
         private final TlsMode tlsMode;
 
         private static final byte HANDSHAKE_MAGIC_CODE = 0x16;
@@ -428,7 +431,6 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception
         {
-
             // mark the current position so that we can peek the first byte to determine if the content is starting with
             // TLS handshake
             // 标记当前位置，以便我们可以查看第一个字节以确定内容是否以TLS握手开始

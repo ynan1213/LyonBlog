@@ -66,6 +66,7 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
+    // lastBrokerName 为上一次发送失败的brokername，lastBrokerName不为空，说明现在是进入了重发
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
@@ -76,10 +77,12 @@ public class TopicPublishInfo {
                 if (pos < 0)
                     pos = 0;
                 MessageQueue mq = this.messageQueueList.get(pos);
+                // 避开上次发送失败的broker
                 if (!mq.getBrokerName().equals(lastBrokerName)) {
                     return mq;
                 }
             }
+            // 避不开就就正常选择一个算了，采用的是轮循算法。
             return selectOneMessageQueue();
         }
     }

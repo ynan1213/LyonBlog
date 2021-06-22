@@ -67,12 +67,14 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
         super(brokerController);
     }
 
+    // 同步处理，尚不清楚何时被调用
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException
     {
         RemotingCommand response = null;
         try
         {
+            // 同步和异步的区别就是这里会get阻塞进行等待
             response = asyncProcessRequest(ctx, request).get();
         } catch (InterruptedException | ExecutionException e)
         {
@@ -81,10 +83,18 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
         return response;
     }
 
+    // 实现了 AsyncNettyRequestProcessor 接口，默认以该方法处理请求
     @Override
     public void asyncProcessRequest(ChannelHandlerContext ctx, RemotingCommand request, RemotingResponseCallback responseCallback) throws Exception
     {
+        // thenAcceptAsync:CompletableFuture类的方法，接收前一个任务的执行结果作为参数，无返回值
         asyncProcessRequest(ctx, request).thenAcceptAsync(responseCallback::callback, this.brokerController.getSendMessageExecutor());
+
+        // 上面的写法等价于下面
+        // asyncProcessRequest(ctx, request).thenAcceptAsync(command -> {
+        //     responseCallback.callback(command);
+        // }, this.brokerController.getSendMessageExecutor());
+
     }
 
     public CompletableFuture<RemotingCommand> asyncProcessRequest(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException
@@ -98,6 +108,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
                 SendMessageRequestHeader requestHeader = parseRequestHeader(request);
                 if (requestHeader == null)
                 {
+                    // CompletableFuture.completedFuture:直接返回一个已经完成任务的对象
                     return CompletableFuture.completedFuture(null);
                 }
                 mqtraceContext = buildMsgContext(ctx, requestHeader);
@@ -275,8 +286,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
     }
 
 
-    private CompletableFuture<RemotingCommand> asyncSendMessage(ChannelHandlerContext ctx, RemotingCommand request,
-                                                                SendMessageContext mqtraceContext, SendMessageRequestHeader requestHeader)
+    private CompletableFuture<RemotingCommand> asyncSendMessage(ChannelHandlerContext ctx, RemotingCommand request, SendMessageContext mqtraceContext, SendMessageRequestHeader requestHeader)
     {
         //构造响应体，用于返回数据
         final RemotingCommand response = preSend(ctx, request, requestHeader);
@@ -527,8 +537,8 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
                 break;
             case SERVICE_NOT_AVAILABLE:
                 response.setCode(ResponseCode.SERVICE_NOT_AVAILABLE);
-                response.setRemark( "service not available now. It may be caused by one of the following reasons: " +
-                                "the broker's disk is full [" + diskUtil() + "], messages are put to the slave, message store has been shut down, etc.");
+                response.setRemark("service not available now. It may be caused by one of the following reasons: " +
+                        "the broker's disk is full [" + diskUtil() + "], messages are put to the slave, message store has been shut down, etc.");
                 break;
             case OS_PAGECACHE_BUSY:
                 response.setCode(ResponseCode.SYSTEM_ERROR);
@@ -553,6 +563,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
 
             response.setRemark(null);
 
+            // 这里会将生成的MsgId返回给前台
             responseHeader.setMsgId(putMessageResult.getAppendMessageResult().getMsgId());
             responseHeader.setQueueId(queueIdInt);
             responseHeader.setQueueOffset(putMessageResult.getAppendMessageResult().getLogicsOffset());

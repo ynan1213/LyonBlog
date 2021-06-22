@@ -32,6 +32,9 @@ public class Consumer
 {
     public static void main(String[] args) throws InterruptedException, MQClientException
     {
+
+        System.setProperty("rocketmq.client.logUseSlf4j", "true");
+
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("ns02", "consume-group-001");
 
         // 消费组模式，集群还是广播，默认集群
@@ -42,7 +45,12 @@ public class Consumer
         // 默认是 CONSUME_FROM_LAST_OFFSET
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 
+        // 可以订阅多个
         consumer.subscribe("TOPIC_01", "*");
+        consumer.subscribe("TOPIC_02", "*");
+
+        // 取消主题订阅
+        // consumer.unsubscribe("TOPIC_02");
 
         // 注册消息消费钩子函数
         //consumer.getDefaultMQPushConsumerImpl().registerConsumeMessageHook(hook)
@@ -53,11 +61,12 @@ public class Consumer
             System.out.println("消息条数：" + msgs.size());
             return ConsumeConcurrentlyStatus.RECONSUME_LATER;
         });
-        // 顺序消费
-        consumer.registerMessageListener((MessageListenerOrderly) (msgs, context) -> {
 
-            return ConsumeOrderlyStatus.SUCCESS;
-        });
+        // 顺序消费
+        // consumer.registerMessageListener((MessageListenerOrderly) (msgs, context) -> {
+        //     return ConsumeOrderlyStatus.SUCCESS;
+        // });
+
         consumer.start();
 
         System.out.printf("Consumer Started.%n");

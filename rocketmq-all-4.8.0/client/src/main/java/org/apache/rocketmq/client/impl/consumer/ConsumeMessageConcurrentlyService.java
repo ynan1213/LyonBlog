@@ -522,8 +522,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService
                 ConsumeMessageConcurrentlyService.this.defaultMQPushConsumerImpl.executeHookAfter(consumeMessageContext);
             }
 
-            ConsumeMessageConcurrentlyService.this.getConsumerStatsManager()
-                    .incConsumeRT(ConsumeMessageConcurrentlyService.this.consumerGroup, messageQueue.getTopic(), consumeRT);
+            ConsumeMessageConcurrentlyService.this.getConsumerStatsManager().incConsumeRT(ConsumeMessageConcurrentlyService.this.consumerGroup, messageQueue.getTopic(), consumeRT);
 
             // 再次验证，如果为true，不对结果进行处理
             // 刚进入run方法的时候做了验证，这里又做一次验证，是为了防止在这个过程中进行的负载将该processQueue分配给了别的消费者

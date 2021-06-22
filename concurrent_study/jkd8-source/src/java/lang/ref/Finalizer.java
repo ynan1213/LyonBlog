@@ -39,14 +39,16 @@ final class Finalizer extends FinalReference<Object> { /* Package-private; must 
     private static Finalizer unfinalized = null;
     private static final Object lock = new Object();
 
-    private Finalizer
-        next = null,
-        prev = null;
+    private Finalizer next = null, prev = null;
 
     private boolean hasBeenFinalized() {
         return (next == this);
     }
 
+    // unfinalized是类属性，所以不同的Finalizer调用add方法，都会追加到unfinalized后面形成一个双向链表
+    //
+    // 注意：unfinalized 是static修饰，会存在方法区中，根据gc roots定义，unfinalized也属于一个gc roots，
+    // 所以执行add方法后，Finalizer就不会被回收了。除非主动断开。
     private void add() {
         synchronized (lock) {
             if (unfinalized != null) {
@@ -217,10 +219,9 @@ final class Finalizer extends FinalReference<Object> { /* Package-private; must 
 
     static {
         ThreadGroup tg = Thread.currentThread().getThreadGroup();
-        for (ThreadGroup tgn = tg;
-             tgn != null;
-             tg = tgn, tgn = tg.getParent());
+        for (ThreadGroup tgn = tg; tgn != null; tg = tgn, tgn = tg.getParent());
         Thread finalizer = new FinalizerThread(tg);
+        // 线程默认值优先级为5，这个线程的优先级为8，比默认的高
         finalizer.setPriority(Thread.MAX_PRIORITY - 2);
         finalizer.setDaemon(true);
         finalizer.start();

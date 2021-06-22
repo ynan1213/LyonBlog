@@ -327,8 +327,7 @@ public final class Class<T> implements java.io.Serializable,
      * @since     1.2
      */
     @CallerSensitive
-    public static Class<?> forName(String name, boolean initialize,
-                                   ClassLoader loader)
+    public static Class<?> forName(String name, boolean initialize, ClassLoader loader)
         throws ClassNotFoundException
     {
         Class<?> caller = null;

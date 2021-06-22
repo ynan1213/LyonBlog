@@ -172,7 +172,7 @@ class Thread implements Runnable {
     private AccessControlContext inheritedAccessControlContext;
 
     /* For autonumbering anonymous threads. */
-    // threadInitNumber++ 操作为什么不用考虑并发问题？
+    // synchronized修饰
     private static int threadInitNumber;
     private static synchronized int nextThreadNum() {
         return threadInitNumber++;
@@ -954,8 +954,8 @@ class Thread implements Runnable {
      * returning false.
      *
      * @return  <code>true</code> if this thread has been interrupted;
-     *          <code>false</code> otherwise.
-     * @see     #interrupted()
+     *      *          <code>false</code> otherwise.
+     *      * @see     #interrupted()
      * @revised 6.0
      */
     public boolean isInterrupted() {
@@ -1438,8 +1438,7 @@ class Thread implements Runnable {
             return null;
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            ClassLoader.checkClassLoaderPermission(contextClassLoader,
-                                                   Reflection.getCallerClass());
+            ClassLoader.checkClassLoaderPermission(contextClassLoader, Reflection.getCallerClass());
         }
         return contextClassLoader;
     }

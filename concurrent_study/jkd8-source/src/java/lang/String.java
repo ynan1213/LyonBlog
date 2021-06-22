@@ -112,8 +112,7 @@ import java.util.regex.PatternSyntaxException;
  */
 
 
-public final class String
-    implements java.io.Serializable, Comparable<String>, CharSequence {
+public final class String implements java.io.Serializable, Comparable<String>, CharSequence {
     /** The value is used for character storage. */
     private final char value[];
 
@@ -1468,10 +1467,25 @@ public final class String
      */
     public int hashCode() {
         int h = hash;
+        /**
+         * 什么 h == 0 时进行 hashCode（）计算呢？h 是一个 int 类型的值，默认值为 0，因此 0 可以表示可能未执行过 hash 计算，
+         * 但不能表示一定未执行过 hash 计算，原因是我们现在还不确定 hash 计算后是否会产生 0 值；
+         *
+         * 执行 hash 计算后，会不会产生值为 0 的 hash呢？根据 hash 的计算逻辑，当 val[0] = 0 时，根据公式 h = 31 * h + val[i];
+         * 进行计算， h 的值等于 0。
+         *
+         * val[0] = 0 怎么解释呢？查看 ASCII 表发现， null 的 ASCII 值为 0 。显然 val[0]中永远不可能存放 null，因此 hash 计算后不会产生 0 值，
+         * h == 0 可以作为是否进行过 hash 计算的判定条件。
+         */
         if (h == 0 && value.length > 0) {
             char val[] = value;
 
             for (int i = 0; i < value.length; i++) {
+                /**
+                 * 为什么是 31 呢，为什么不是 32 呢？因为 31 是一个素数。什么是素数，为什么选择素数？
+                 * 1. 31 是一个素数，与素数相乘得到的结果比其他方式更容易产生唯一性。
+                 * 2. Java 中如果相乘的数字太大会导致内存溢出问题，从而导致数据丢失。
+                 */
                 h = 31 * h + val[i];
             }
             hash = h;

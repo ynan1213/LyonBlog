@@ -88,6 +88,10 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * NEW -> COMPLETING -> EXCEPTIONAL
      * NEW -> CANCELLED
      * NEW -> INTERRUPTING -> INTERRUPTED
+     *
+     * 任务的中间状态是一个瞬态，它非常的短暂。
+     * 而且任务的中间态并不代表任务正在执行，而是任务已经执行完了，正在设置最终的返回结果，所以可以这么说：
+     * 只要state不处于 NEW 状态，就说明任务已经执行完毕
      */
     private volatile int state; // state属性代表了任务的状态
     private static final int NEW          = 0;// 初始状态
@@ -396,8 +400,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * @param nanos time to wait, if timed
      * @return state upon completion
      */
-    private int awaitDone(boolean timed, long nanos)
-        throws InterruptedException {
+    private int awaitDone(boolean timed, long nanos) throws InterruptedException {
         final long deadline = timed ? System.nanoTime() + nanos : 0L;
         WaitNode q = null;
         boolean queued = false;
@@ -418,8 +421,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
             else if (q == null)
                 q = new WaitNode();
             else if (!queued)
-                queued = UNSAFE.compareAndSwapObject(this, waitersOffset,
-                                                     q.next = waiters, q);
+                queued = UNSAFE.compareAndSwapObject(this, waitersOffset, q.next = waiters, q);
             else if (timed) {
                 nanos = deadline - System.nanoTime();
                 if (nanos <= 0L) {

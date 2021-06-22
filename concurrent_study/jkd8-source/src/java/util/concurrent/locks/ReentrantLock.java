@@ -130,7 +130,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
             final Thread current = Thread.currentThread();
             int c = getState();
             if (c == 0) {
-                // 和公平锁唯一的区别就是直接CAS，没有判断队列中是否有线程在前面
+                // 和公平锁的第二处区别在这里：直接CAS，没有判断队列中是否有线程在前面
                 if (compareAndSetState(0, acquires)) {
                     setExclusiveOwnerThread(current);
                     return true;
@@ -143,6 +143,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
                 setState(nextc);
                 return true;
             }
+            // 如果到这里，说明没有获取到锁
             return false;
         }
 
@@ -188,8 +189,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         /**
          * Reconstitutes the instance from a stream (that is, deserializes it).
          */
-        private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
+        private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
             s.defaultReadObject();
             setState(0); // reset to unlocked state
         }
@@ -206,6 +206,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * acquire on failure.
          */
         final void lock() {
+            // 和公平锁有两处区别，第一处是这里：
+            // 这里先进行了一次compareAndSetState，不成功再acquire
             if (compareAndSetState(0, 1))
                 setExclusiveOwnerThread(Thread.currentThread());
             else
@@ -251,16 +253,17 @@ public class ReentrantLock implements Lock, java.io.Serializable {
                     setExclusiveOwnerThread(current);
                     return true;
                 }
-            }else if (current == getExclusiveOwnerThread()) {
+            } else if (current == getExclusiveOwnerThread()) {
                 // 进入这个else if分支，说明是重入了，需要操作：state=state+1
                 // 这里不会存在并发问题，因为只有当前线程能够进来
                 int nextc = c + acquires;
+                // Integer.MAX_VALUE + 1 = Integer.MIN_VALUE
                 if (nextc < 0)
                     throw new Error("Maximum lock count exceeded");
                 setState(nextc);
                 return true;
             }
-            // 如果到这里，说明前面的if和else if都没有返回true，说明没有获取到锁
+            // 如果到这里，说明没有获取到锁
             return false;
         }
     }

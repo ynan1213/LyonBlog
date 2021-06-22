@@ -54,8 +54,7 @@ public class AtomicReference<V> implements java.io.Serializable {
 
     static {
         try {
-            valueOffset = unsafe.objectFieldOffset
-                (AtomicReference.class.getDeclaredField("value"));
+            valueOffset = unsafe.objectFieldOffset(AtomicReference.class.getDeclaredField("value"));
         } catch (Exception ex) { throw new Error(ex); }
     }
 
@@ -195,8 +194,7 @@ public class AtomicReference<V> implements java.io.Serializable {
      * @return the previous value
      * @since 1.8
      */
-    public final V getAndAccumulate(V x,
-                                    BinaryOperator<V> accumulatorFunction) {
+    public final V getAndAccumulate(V x, BinaryOperator<V> accumulatorFunction) {
         V prev, next;
         do {
             prev = get();

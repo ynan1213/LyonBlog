@@ -50,11 +50,18 @@ public class AtomicIntegerArray implements java.io.Serializable {
     private static final long serialVersionUID = 2862133569453604235L;
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
+
+    // 数组对象头到数组首元素间的地址偏移量
     private static final int base = unsafe.arrayBaseOffset(int[].class);
+
+    // 数组中相邻元素的地址偏移量的位移表示形式(若shift=x，那么相邻元素的偏移量就是"1<<shift")
     private static final int shift;
+
+    // 实际存放元素的数组
     private final int[] array;
 
     static {
+        // 表示相邻元素的地址偏移量
         int scale = unsafe.arrayIndexScale(int[].class);
         if ((scale & (scale - 1)) != 0)
             throw new Error("data type scale not a power of two");

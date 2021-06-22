@@ -121,8 +121,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     private void ensureCapacityInternal(int minimumCapacity) {
         // overflow-conscious code
         if (minimumCapacity - value.length > 0) {
-            value = Arrays.copyOf(value,
-                    newCapacity(minimumCapacity));
+            value = Arrays.copyOf(value, newCapacity(minimumCapacity));
         }
     }
 
@@ -151,9 +150,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
         if (newCapacity - minCapacity < 0) {
             newCapacity = minCapacity;
         }
-        return (newCapacity <= 0 || MAX_ARRAY_SIZE - newCapacity < 0)
-            ? hugeCapacity(minCapacity)
-            : newCapacity;
+        return (newCapacity <= 0 || MAX_ARRAY_SIZE - newCapacity < 0) ? hugeCapacity(minCapacity) : newCapacity;
     }
 
     private int hugeCapacity(int minCapacity) {
@@ -446,6 +443,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
             return appendNull();
         int len = str.length();
         ensureCapacityInternal(count + len);
+        // 将str内部的数组0-len的内容复制到value，从count开始
         str.getChars(0, len, value, count);
         count += len;
         return this;
@@ -668,8 +666,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
             append("-2147483648");
             return this;
         }
-        int appendedLength = (i < 0) ? Integer.stringSize(-i) + 1
-                                     : Integer.stringSize(i);
+        int appendedLength = (i < 0) ? Integer.stringSize(-i) + 1 : Integer.stringSize(i);
         int spaceNeeded = count + appendedLength;
         ensureCapacityInternal(spaceNeeded);
         Integer.getChars(i, spaceNeeded, value);
@@ -694,8 +691,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
             append("-9223372036854775808");
             return this;
         }
-        int appendedLength = (l < 0) ? Long.stringSize(-l) + 1
-                                     : Long.stringSize(l);
+        int appendedLength = (l < 0) ? Long.stringSize(-l) + 1 : Long.stringSize(l);
         int spaceNeeded = count + appendedLength;
         ensureCapacityInternal(spaceNeeded);
         Long.getChars(l, spaceNeeded, value);

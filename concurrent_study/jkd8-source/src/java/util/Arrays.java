@@ -110,8 +110,7 @@ public class Arrays {
      */
     private static void rangeCheck(int arrayLength, int fromIndex, int toIndex) {
         if (fromIndex > toIndex) {
-            throw new IllegalArgumentException(
-                    "fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+            throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
         }
         if (fromIndex < 0) {
             throw new ArrayIndexOutOfBoundsException(fromIndex);
@@ -3207,11 +3206,8 @@ public class Arrays {
      */
     public static <T,U> T[] copyOf(U[] original, int newLength, Class<? extends T[]> newType) {
         @SuppressWarnings("unchecked")
-        T[] copy = ((Object)newType == (Object)Object[].class)
-            ? (T[]) new Object[newLength]
-            : (T[]) Array.newInstance(newType.getComponentType(), newLength);
-        System.arraycopy(original, 0, copy, 0,
-                         Math.min(original.length, newLength));
+        T[] copy = ((Object)newType == (Object)Object[].class) ? (T[]) new Object[newLength] : (T[]) Array.newInstance(newType.getComponentType(), newLength);
+        System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
         return copy;
     }
 
@@ -3234,8 +3230,7 @@ public class Arrays {
      */
     public static byte[] copyOf(byte[] original, int newLength) {
         byte[] copy = new byte[newLength];
-        System.arraycopy(original, 0, copy, 0,
-                         Math.min(original.length, newLength));
+        System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
         return copy;
     }
 
@@ -3258,8 +3253,7 @@ public class Arrays {
      */
     public static short[] copyOf(short[] original, int newLength) {
         short[] copy = new short[newLength];
-        System.arraycopy(original, 0, copy, 0,
-                         Math.min(original.length, newLength));
+        System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
         return copy;
     }
 
@@ -3803,8 +3797,7 @@ public class Arrays {
     /**
      * @serial include
      */
-    private static class ArrayList<E> extends AbstractList<E>
-        implements RandomAccess, java.io.Serializable
+    private static class ArrayList<E> extends AbstractList<E> implements RandomAccess, java.io.Serializable
     {
         private static final long serialVersionUID = -2764017481108945198L;
         private final E[] a;
@@ -3828,8 +3821,7 @@ public class Arrays {
         public <T> T[] toArray(T[] a) {
             int size = size();
             if (a.length < size)
-                return Arrays.copyOf(this.a, size,
-                                     (Class<? extends T[]>) a.getClass());
+                return Arrays.copyOf(this.a, size, (Class<? extends T[]>) a.getClass());
             System.arraycopy(this.a, 0, a, 0, size);
             if (a.length > size)
                 a[size] = null;

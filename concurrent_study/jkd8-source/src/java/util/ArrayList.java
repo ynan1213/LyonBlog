@@ -104,8 +104,7 @@ import sun.misc.SharedSecrets;
  * @since   1.2
  */
 
-public class ArrayList<E> extends AbstractList<E>
-        implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
     private static final long serialVersionUID = 8683452581122892189L;
 
@@ -177,7 +176,10 @@ public class ArrayList<E> extends AbstractList<E>
     public ArrayList(Collection<? extends E> c) {
         elementData = c.toArray();
         if ((size = elementData.length) != 0) {
-            // c.toArray might (incorrectly) not return Object[] (see 6260652)
+            /**
+             * c.toArray might (incorrectly) not return Object[] (see 6260652)
+             * 相当于做了一次强转
+             */
             if (elementData.getClass() != Object[].class)
                 elementData = Arrays.copyOf(elementData, size, Object[].class);
         } else {
@@ -225,7 +227,7 @@ public class ArrayList<E> extends AbstractList<E>
             return Math.max(DEFAULT_CAPACITY, minCapacity);
         }
         return minCapacity;
-        }
+    }
 
     private void ensureCapacityInternal(int minCapacity) {
         ensureExplicitCapacity(calculateCapacity(elementData, minCapacity));
@@ -500,8 +502,7 @@ public class ArrayList<E> extends AbstractList<E>
 
         int numMoved = size - index - 1;
         if (numMoved > 0)
-            System.arraycopy(elementData, index+1, elementData, index,
-                             numMoved);
+            System.arraycopy(elementData, index+1, elementData, index, numMoved);
         elementData[--size] = null; // clear to let GC do its work
 
         return oldValue;
@@ -545,8 +546,7 @@ public class ArrayList<E> extends AbstractList<E>
         modCount++;
         int numMoved = size - index - 1;
         if (numMoved > 0)
-            System.arraycopy(elementData, index+1, elementData, index,
-                             numMoved);
+            System.arraycopy(elementData, index+1, elementData, index, numMoved);
         elementData[--size] = null; // clear to let GC do its work
     }
 
@@ -844,8 +844,14 @@ public class ArrayList<E> extends AbstractList<E>
      * An optimized version of AbstractList.Itr
      */
     private class Itr implements Iterator<E> {
-        int cursor;       // index of next element to return
-        int lastRet = -1; // index of last element returned; -1 if no such
+
+        // 下一个元素的索引位置
+        int cursor;
+
+        // 上一个元素索引的位置
+        int lastRet = -1;
+
+        //modCount 用于记录ArrayList集合的修改次数,赋值给expectedModCount 用于checkForComodification()方法判断ArrayList在迭代过程中是否发生修改
         int expectedModCount = modCount;
 
         Itr() {}
@@ -873,9 +879,12 @@ public class ArrayList<E> extends AbstractList<E>
             checkForComodification();
 
             try {
+                // 调用ArrayList的remove方法
                 ArrayList.this.remove(lastRet);
+                // 将上一次索引赋值给下一次索引，即cursor位置前移
                 cursor = lastRet;
                 lastRet = -1;
+                // 将ArrayList的modCount赋值给expectedModCount 这样就不会报错
                 expectedModCount = modCount;
             } catch (IndexOutOfBoundsException ex) {
                 throw new ConcurrentModificationException();

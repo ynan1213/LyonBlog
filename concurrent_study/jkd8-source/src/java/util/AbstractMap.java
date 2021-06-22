@@ -327,6 +327,8 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     transient Set<K>        keySet;
     transient Collection<V> values;
 
+    public abstract Set<Entry<K,V>> entrySet();
+
     /**
      * {@inheritDoc}
      *
@@ -445,7 +447,7 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
         return vals;
     }
 
-    public abstract Set<Entry<K,V>> entrySet();
+
 
 
     // Comparison and hashing

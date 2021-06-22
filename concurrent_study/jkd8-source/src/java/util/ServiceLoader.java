@@ -320,10 +320,8 @@ public final class ServiceLoader<S>
 
     // Private inner class implementing fully-lazy provider lookup
     //
-    private class LazyIterator
-        implements Iterator<S>
+    private class LazyIterator implements Iterator<S>
     {
-
         Class<S> service;
         ClassLoader loader;
         Enumeration<URL> configs = null;
@@ -504,8 +502,7 @@ public final class ServiceLoader<S>
      *
      * @return A new service loader
      */
-    public static <S> ServiceLoader<S> load(Class<S> service,
-                                            ClassLoader loader)
+    public static <S> ServiceLoader<S> load(Class<S> service, ClassLoader loader)
     {
         return new ServiceLoader<>(service, loader);
     }
@@ -534,6 +531,8 @@ public final class ServiceLoader<S>
      * @return A new service loader
      */
     public static <S> ServiceLoader<S> load(Class<S> service) {
+        // 通过从线程上下文（ThreadContext）获取 classloader，不要和Thread.currentThread().getClassLoader()搞混了
+        // 通过Launcher类构造方法可以发现，Thread.currentThread().getContextClassLoader()返回的是AppClassLoader
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         return ServiceLoader.load(service, cl);
     }

@@ -89,8 +89,7 @@ package java.util;
  * @since   1.2
  */
 
-public class TreeSet<E> extends AbstractSet<E>
-    implements NavigableSet<E>, Cloneable, java.io.Serializable
+public class TreeSet<E> extends AbstractSet<E> implements NavigableSet<E>, Cloneable, java.io.Serializable
 {
     /**
      * The backing map.

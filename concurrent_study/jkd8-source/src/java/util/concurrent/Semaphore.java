@@ -178,8 +178,10 @@ public class Semaphore implements java.io.Serializable {
             for (;;) {
                 int available = getState();
                 int remaining = available - acquires;
-                if (remaining < 0 ||
-                    compareAndSetState(available, remaining))
+                // 什么情况下 remaining 会 <0 ?  当acquires大于1的时候 或者 当available=0，acquires=1的时候
+                // 这里难道不存在并发问题吗？ 比如两个线程同时运行到if处，然后顺序执行 compareAndSetState
+                // 后面想想其实并不会，因为 compareAndSetState 会校验 available
+                if (remaining < 0 || compareAndSetState(available, remaining))
                     return remaining;
             }
         }
@@ -246,8 +248,7 @@ public class Semaphore implements java.io.Serializable {
                     return -1;
                 int available = getState();
                 int remaining = available - acquires;
-                if (remaining < 0 ||
-                    compareAndSetState(available, remaining))
+                if (remaining < 0 || compareAndSetState(available, remaining))
                     return remaining;
             }
         }

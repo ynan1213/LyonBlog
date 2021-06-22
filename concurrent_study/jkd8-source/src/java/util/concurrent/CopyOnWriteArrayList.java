@@ -89,8 +89,7 @@ import sun.misc.SharedSecrets;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
-public class CopyOnWriteArrayList<E>
-    implements List<E>, RandomAccess, Cloneable, java.io.Serializable {
+public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable, java.io.Serializable {
     private static final long serialVersionUID = 8673264195747942595L;
 
     /** The lock protecting all mutators */
@@ -460,8 +459,7 @@ public class CopyOnWriteArrayList<E>
             Object[] elements = getArray();
             int len = elements.length;
             if (index > len || index < 0)
-                throw new IndexOutOfBoundsException("Index: "+index+
-                                                    ", Size: "+len);
+                throw new IndexOutOfBoundsException("Index: " + index+ ", Size: "+len);
             Object[] newElements;
             int numMoved = len - index;
             if (numMoved == 0)
@@ -469,8 +467,7 @@ public class CopyOnWriteArrayList<E>
             else {
                 newElements = new Object[len + 1];
                 System.arraycopy(elements, 0, newElements, 0, index);
-                System.arraycopy(elements, index, newElements, index + 1,
-                                 numMoved);
+                System.arraycopy(elements, index, newElements, index + 1, numMoved);
             }
             newElements[index] = element;
             setArray(newElements);

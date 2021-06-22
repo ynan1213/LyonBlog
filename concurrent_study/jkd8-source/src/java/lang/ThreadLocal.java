@@ -344,6 +344,7 @@ public class ThreadLocal<T> {
 
         /**
          * Set the resize threshold to maintain at worst a 2/3 load factor.
+         * 这里其实可以转成位运算
          */
         private void setThreshold(int len) {
             threshold = len * 2 / 3;
@@ -371,8 +372,7 @@ public class ThreadLocal<T> {
         ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
             // 初始大小16
             table = new Entry[INITIAL_CAPACITY];
-
-            // 用firstKey的threadLocalHashCode与初始大小 16-1 取模得到哈希值
+            // 用firstKey的threadLocalHashCode与初始大小 16-1 取模得到哈希值，这里和hashMap一样，将取模改成了位运算
             int i = firstKey.threadLocalHashCode & (INITIAL_CAPACITY - 1);
             // 初始化该节点
             table[i] = new Entry(firstKey, firstValue);
@@ -423,6 +423,13 @@ public class ThreadLocal<T> {
          * @return the entry associated with key, or null if no such
          *
          * 该方法被threadLocal.get实例方法调用，所以进入到该方法的key肯定不为null
+         *
+         * 总结：
+         *  1. 计算出key对象的下标，如果当前下标命中，直接返回；
+         *  2. 如果未命中，向后遍历；
+         *  3. 如果向后遍历过程命中，返回；
+         *  4. 如果向后遍历过程找到无效的Entry，会将无效Entry后面的都清理一遍；
+         *  5. 如果遍历到一个空slot，则返回null
          */
         private Entry getEntry(ThreadLocal<?> key) {
             // hash函数计算hash值
@@ -430,13 +437,13 @@ public class ThreadLocal<T> {
             Entry e = table[i];
 
             if (e != null && e.get() == key) {
-                // 对应的entry不为空且key是同一个，命中返回
+                // 命中返回，这里和hashMap有一点不一样：直接使用 == ，hashMap里是 == || equals
                 return e;
             }
             else
                 // 到else这里的情况：
-                //      1、entry为空；getEntryAfterMiss的逻辑是直接返回null
-                //      2、entry不为空，但是key不相等，说明有了hash冲突；getEntryAfterMiss的逻辑是往后找，找到就返回，找不到的话碰到一个空slot就返回null
+                //   1、entry为空；getEntryAfterMiss的逻辑是直接返回null
+                //   2、entry不为空，但是key不相等，说明有了hash冲突；getEntryAfterMiss的逻辑是往后找，找到就返回，找不到的话碰到一个空slot就返回null
                 return getEntryAfterMiss(key, i, e);
         }
 
@@ -450,21 +457,23 @@ public class ThreadLocal<T> {
          * @return the entry associated with key, or null if no such
          *
          * 调用getEntry未直接命中的时候调用此方法，并且该方法唯一被调用的地方就在getEntry方法中
-         *      1、entry为空；
-         *      2、entry不为空，但是key不相等，说明有了hash冲突，往后找
+         *   1、entry为空；
+         *   2、entry不为空，但是key不相等，说明有了hash冲突，往后找
          */
         private Entry getEntryAfterMiss(ThreadLocal<?> key, int i, Entry e) {
             Entry[] tab = table;
             int len = tab.length;
 
             while (e != null) {
+                // 弱引用
                 ThreadLocal<?> k = e.get();
+
                 // 找到目标
                 if (k == key)
                     return e;
 
                 if (k == null)
-                    // 该entry对应的ThreadLocal已经被回收，调用expungeStaleEntry来清理无效的entry
+                    // entry!=null但是key==null说明该entry对应的ThreadLocal已经被回收，entry无效，调用expungeStaleEntry清理
                     // 关键点在里面，除了会将当前entry和value置为null外，还会进行一次rehash
                     expungeStaleEntry(i);
                 else
@@ -472,9 +481,10 @@ public class ThreadLocal<T> {
                     i = nextIndex(i, len);
                 e = tab[i];
             }
-            // 找到第一个空slot就返回null
+
+            // 来到这里有两种情况：e一进来就是空 或者 在while循环内找到第一个空slot
             // 一开始有个疑问，如果当前slot为null，但是后面的slot也许和当前key相等呢？
-            // 其实是不会出现这种情况的，因为就在 expungeStaleEntry 方法里
+            //   其实是不会出现这种情况的，因为就在 expungeStaleEntry 方法里
             return null;
         }
 
@@ -502,7 +512,7 @@ public class ThreadLocal<T> {
             for (Entry e = tab[i]; e != null; e = tab[i = nextIndex(i, len)]) {
                 ThreadLocal<?> k = e.get();
 
-                // ①：找到了相同ThreadLocal对象，覆盖，并返回
+                // ①：找到了相同ThreadLocal对象，覆盖，并返回，这里key不可能为null
                 if (k == key) {
                     e.value = value;
                     return;
@@ -514,14 +524,15 @@ public class ThreadLocal<T> {
                     return;
                 }
             }
+
             // 走到这里说明碰到了下标i的slot为null
             // ③：创建entry
             tab[i] = new Entry(key, value);
             int sz = ++size;
 
             /**
-             * ①和②是替换，③是新增，只有③才会走到这里，新增完要先进行cleanSomeSlots清除失效的entry，cleanSomeSlots用于清除失效的entry
-             * 如果没有清除任何entry,并且当前使用量达到了负载因子所定义(长度的2/3)，那么进行rehash()
+             * ①和②是替换，③是新增，只有③才会走到这里，新增完要先进行cleanSomeSlots清除失效的entry
+             * 如果没有清除任何entry，并且当前使用量达到了负载因子所定义(长度的2/3)，那么进行rehash()
              */
             if (!cleanSomeSlots(i, sz) && sz >= threshold)
                 rehash();
@@ -536,7 +547,9 @@ public class ThreadLocal<T> {
             int i = key.threadLocalHashCode & (len-1);
             for (Entry e = tab[i]; e != null; e = tab[i = nextIndex(i, len)]) {
                 if (e.get() == key) {
+                    // 弱引用清空
                     e.clear();
+                    // 当前i为null，则清理
                     expungeStaleEntry(i);
                     return;
                 }
@@ -555,6 +568,14 @@ public class ThreadLocal<T> {
          *
          * 能进入该方法，说明下标 staleSlot 的 entry 的key为null
          * 但是该方法并不是立即替换，而是往后查找看有没有匹配的key，但是最后该staleSlot下标都会被填充该key-value
+         *
+         * 总结：
+         *  1. 从staleSlot往前遍历，找到最后一个无效的entry，记录下下标 slotToExpunge，有可能不存在，slotToExpunge 就等于 staleSlot
+         *  2. 从staleSlot往后遍历，如果找到当前key相等的entry，先覆盖，然后将entry和staleSlot下标的值兑换，清理后返回；
+         *  3. 如果经过slotToExpunge还是等于staleSlot就说明staleSlot前面没有无效entry，在2的过程中如果找到无效entry，则会将下标赋给slotToExpunge，否则，slotToExpunge仍等于staleSlot
+         *  4. 如果2中没有找到相同的key，则会走完for循环，创建个Entry插入在后面的null槽
+         *  5. 然后根据slotToExpunge是否等于staleSlot就可以判断出前面过程有没有碰到无效entry，有的话就清理cleanSomeSlots(expungeStaleEntry(slotToExpunge), len)
+         *
          */
         private void replaceStaleEntry(ThreadLocal<?> key, Object value, int staleSlot) {
             Entry[] tab = table;
@@ -563,8 +584,7 @@ public class ThreadLocal<T> {
 
             int slotToExpunge = staleSlot;
 
-            // 从当前的staleSlot位置向前遍历，直到遍历到第一个空slot就停止，此时的slotToExpunge为空slot后第一个key为null的entry的下标
-            // slotToExpunge 是用来判断当前过期槽位staleSlot之前是否还有过期元素。
+            // 从当前的staleSlot位置向前遍历，直到遍历到第一个空slot就停止，此时的slotToExpunge为空slot后第一个失效entry的下标
             for (int i = prevIndex(staleSlot, len); (e = tab[i]) != null; i = prevIndex(i, len)){
                 // 此时的e.get()返回的是key
                 if (e.get() == null)
@@ -572,18 +592,23 @@ public class ThreadLocal<T> {
             }
 
             // 从当前的staleSlot位置向后遍历（不包含staleSlot），找到了k==key的slot则进行替换，未找到的情况下到entry=null停止
+            // 往后遍历的过程中，只会出现 key==null 和 key != null 的情况，这里只找k == key的值然后和staleSlot的slot对换
             for (int i = nextIndex(staleSlot, len); (e = tab[i]) != null; i = nextIndex(i, len)) {
                 ThreadLocal<?> k = e.get();
                 // 找到了key，将其与无效的slot交换
                 if (k == key) {
+                    // 覆盖
                     e.value = value;
+                    // 交换值，之后staleSlot是有效的值，i是无效的值
                     tab[i] = tab[staleSlot];
                     tab[staleSlot] = e;
 
-                    // slotToExpunge代表的是需要清理的起点，如果向前查找没有找到无效entry，则更新slotToExpunge为当前值i
+                    // slotToExpunge 代表的是需要清理的起点，如果向前查找没有找到无效entry，则说明staleSlot前面没有需要清理的entry
+                    // 又因为i和staleSlot位置的元素进行了交换，更新slotToExpunge为当前值i，因为此时i的所在的entry的key为null
                     if (slotToExpunge == staleSlot)
                         slotToExpunge = i;
 
+                    // expungeStaleEntry：从slotToExpunge 位置开始清除无效entry，并返回往后遍历碰到的第一个null slot的下标，也就是说返回值前面的段没有无效entry
                     cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);
                     return;
                 }
@@ -600,7 +625,7 @@ public class ThreadLocal<T> {
             tab[staleSlot] = new Entry(key, value);
 
             // If there are any other stale entries in run, expunge them
-            // 不相等说明有key=null的entry，
+            // 不相等说明有key=null的entry，因为slotToExpunge初始化赋值等于staleSlot
             if (slotToExpunge != staleSlot)
                 cleanSomeSlots(expungeStaleEntry(slotToExpunge), len);
         }
@@ -616,10 +641,15 @@ public class ThreadLocal<T> {
          * (all between staleSlot and this slot will have been checked
          * for expunging).
          *
+         *  expunge：删除
+         *  Stale：  过期的
+         *
          * 方法总结：
          *  1、将staleSlot下标的slot置为null，并从staleSlot往后遍历，碰到slot为null就退出，并将 下标 i 返回；
          *  2、从staleSlot往后遍历，删除entry的key为null的entry；
-         *  3、从staleSlot往后遍历，如果entry的key不为null，做一次rehash
+         *  3、从staleSlot往后遍历，如果entry的key不为null，做一次rehash，保证该entry到实际的index中间没有null。
+         *
+         *  经过该方法后，staleSlot下标到null下标中间没有无效的entry，并且每一个entry到实际的index中间没有null
          */
         private int expungeStaleEntry(int staleSlot) {
             Entry[] tab = table;
@@ -636,18 +666,20 @@ public class ThreadLocal<T> {
             for (i = nextIndex(staleSlot, len); (e = tab[i]) != null; i = nextIndex(i, len)) {
                 ThreadLocal<?> k = e.get();
                 if (k == null) {
-                    //key为null说明被清理了,直接将value置为null
-                    e.value = null;// 将value引用置为null，此时的entry还存在引用
-                    tab[i] = null;// 将entry引用置为null
+                    //key为null说明被清理了,直接将value置为null，继续往后遍历
+                    e.value = null;
+                    tab[i] = null;
                     size--;
                 } else {
-                    //对于还没有被回收的情况，需要做一次rehash。这样可以保证和实际hash值h之间没有空的slot
+                    // 对于还没有被回收的情况，需要做一次rehash。这样可以保证和实际hash值h之间没有空的slot
+                    // 当前下标i所在的entry计算出来的下标是h，如果i==h，说明当前entry没有发生冲突，没有必要移位，如果h!=i，说明存储之前发生了冲突
                     int h = k.threadLocalHashCode & (len - 1);
                     if (h != i) {
-                        // 如果当前entry的下标h不等于i，说明存储之前发生了冲突，存储到了h的后面，但此时可能前面空出了位置
+                        // 如果当前entry的下标h不等于i，说明存储之前发生了冲突
                         tab[i] = null;
 
-                        // 从h往后找，找到第一个空slot（又有可能回到现在的位置）
+                        // 但为什么是往后遍历呢？不是往前遍历吗？
+                        // 是我看错了，h是计算出来的下标，i是当前的下标，所以是从h往后遍历，找到第一个空slot，有可能回到现在的位置
                         while (tab[h] != null)
                             h = nextIndex(h, len);
                         tab[h] = e;
@@ -655,7 +687,7 @@ public class ThreadLocal<T> {
                 }
             }
 
-            // 返回值 i 代表后面第一个slot为null 的下标
+            // 返回值 i 代表后面遍历到的第一个null slot
             return i;
         }
 
@@ -685,9 +717,11 @@ public class ThreadLocal<T> {
          *
          * 启发式的扫描清除，扫描次数由传入的参数n决定
          * 从i向后开始扫描（不包括i，因为索引为i的Slot肯定不为null）
-         * n 控制扫描次数，正常情况下为 log2(n) ，如果找到了无效entry，会将n重置为table的长度len,进行段清除。
+         * n 控制扫描次数，正常情况下为 log2(n) ，如果找到了无效entry，会将n重置为table的长度len，进行段清除。
          *
          * map.set()调用的时候传入的是元素个数，replaceStaleEntry()调用的时候传入的是table的长度le
+         *
+         * 这个清理的过程只是覆盖了一段范围，并不是全部区间。
          */
         private boolean cleanSomeSlots(int i, int n) {
             boolean removed = false;
@@ -715,7 +749,7 @@ public class ThreadLocal<T> {
             expungeStaleEntries();
 
             // Use lower threshold for doubling to avoid hysteresis
-            // 清理完陈旧数据，如果>= 3/4阀值,就执行扩容，避免迟滞
+            // 清理完陈旧数据，如果 >= 3/4阀值，就执行扩容，避免迟滞
             if (size >= threshold - threshold / 4)
                 resize();
         }

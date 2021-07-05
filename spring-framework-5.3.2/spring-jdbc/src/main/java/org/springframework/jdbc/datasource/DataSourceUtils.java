@@ -178,7 +178,7 @@ public abstract class DataSourceUtils {
 
 		boolean debugEnabled = logger.isDebugEnabled();
 		// Set read-only flag.
-		// 如果配置了 @Transactional(readOnly = trye)，在这里设置 con.setReadOnly(true);
+		// 如果配置了 @Transactional(readOnly = true)，在这里设置 con.setReadOnly(true);
 		if (definition != null && definition.isReadOnly()) {
 			try {
 				if (debugEnabled) {

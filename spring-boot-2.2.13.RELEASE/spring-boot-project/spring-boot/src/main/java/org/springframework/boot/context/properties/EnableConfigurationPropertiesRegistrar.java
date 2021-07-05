@@ -37,17 +37,21 @@ class EnableConfigurationPropertiesRegistrar implements ImportBeanDefinitionRegi
 	public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
 		registerInfrastructureBeans(registry);
 		ConfigurationPropertiesBeanRegistrar beanRegistrar = new ConfigurationPropertiesBeanRegistrar(registry);
+		// 获取@EnableConfigurationProperties配置的class生成BeanDefinition注入到容器中
+		// 所以这里会和@Component重复注入
 		getTypes(metadata).forEach(beanRegistrar::register);
 	}
 
+	// 收集 @EnableConfigurationProperties 注解的值，可以配置多个
 	private Set<Class<?>> getTypes(AnnotationMetadata metadata) {
 		return metadata.getAnnotations().stream(EnableConfigurationProperties.class)
 				.flatMap((annotation) -> Arrays.stream(annotation.getClassArray(MergedAnnotation.VALUE)))
-				.filter((type) -> void.class != type).collect(Collectors.toSet());
-	}
+			.filter((type) -> void.class != type).collect(Collectors.toSet());
+}
 
 	@SuppressWarnings("deprecation")
 	static void registerInfrastructureBeans(BeanDefinitionRegistry registry) {
+		// 注册ConfigurationPropertiesBindingPostProcessor，不会重复注册
 		ConfigurationPropertiesBindingPostProcessor.register(registry);
 		ConfigurationBeanFactoryMetadata.register(registry);
 	}

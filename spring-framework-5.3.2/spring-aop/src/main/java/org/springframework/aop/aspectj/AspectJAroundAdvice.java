@@ -38,9 +38,7 @@ import org.springframework.lang.Nullable;
 @SuppressWarnings("serial")
 public class AspectJAroundAdvice extends AbstractAspectJAdvice implements MethodInterceptor, Serializable {
 
-	public AspectJAroundAdvice(
-			Method aspectJAroundAdviceMethod, AspectJExpressionPointcut pointcut, AspectInstanceFactory aif) {
-
+	public AspectJAroundAdvice(Method aspectJAroundAdviceMethod, AspectJExpressionPointcut pointcut, AspectInstanceFactory aif) {
 		super(aspectJAroundAdviceMethod, pointcut, aif);
 	}
 
@@ -66,9 +64,14 @@ public class AspectJAroundAdvice extends AbstractAspectJAdvice implements Method
 		if (!(mi instanceof ProxyMethodInvocation)) {
 			throw new IllegalStateException("MethodInvocation is not a Spring ProxyMethodInvocation: " + mi);
 		}
+
 		ProxyMethodInvocation pmi = (ProxyMethodInvocation) mi;
+
+		// 包装一下
 		ProceedingJoinPoint pjp = lazyGetProceedingJoinPoint(pmi);
+
 		JoinPointMatch jpm = getJoinPointMatch(pmi);
+
 		return invokeAdviceMethod(pjp, jpm, null, null);
 	}
 

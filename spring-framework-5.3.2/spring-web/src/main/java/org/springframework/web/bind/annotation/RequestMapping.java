@@ -180,6 +180,7 @@ public @interface RequestMapping {
 	 */
 	String[] consumes() default {};
 
+
 	/**
 	 * Narrows the primary mapping by media types that can be produced by the
 	 * mapped handler. Consists of one or more media types one of which must

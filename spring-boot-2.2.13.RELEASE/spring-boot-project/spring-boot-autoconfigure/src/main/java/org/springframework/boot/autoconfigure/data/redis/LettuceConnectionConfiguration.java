@@ -48,9 +48,7 @@ import org.springframework.util.StringUtils;
 @ConditionalOnClass(RedisClient.class)
 class LettuceConnectionConfiguration extends RedisConnectionConfiguration {
 
-	LettuceConnectionConfiguration(RedisProperties properties,
-			ObjectProvider<RedisSentinelConfiguration> sentinelConfigurationProvider,
-			ObjectProvider<RedisClusterConfiguration> clusterConfigurationProvider) {
+	LettuceConnectionConfiguration(RedisProperties properties, ObjectProvider<RedisSentinelConfiguration> sentinelConfigurationProvider, ObjectProvider<RedisClusterConfiguration> clusterConfigurationProvider) {
 		super(properties, sentinelConfigurationProvider, clusterConfigurationProvider);
 	}
 
@@ -62,11 +60,8 @@ class LettuceConnectionConfiguration extends RedisConnectionConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean(RedisConnectionFactory.class)
-	LettuceConnectionFactory redisConnectionFactory(
-			ObjectProvider<LettuceClientConfigurationBuilderCustomizer> builderCustomizers,
-			ClientResources clientResources) throws UnknownHostException {
-		LettuceClientConfiguration clientConfig = getLettuceClientConfiguration(builderCustomizers, clientResources,
-				getProperties().getLettuce().getPool());
+	LettuceConnectionFactory redisConnectionFactory(ObjectProvider<LettuceClientConfigurationBuilderCustomizer> builderCustomizers, ClientResources clientResources) throws UnknownHostException {
+		LettuceClientConfiguration clientConfig = getLettuceClientConfiguration(builderCustomizers, clientResources, getProperties().getLettuce().getPool());
 		return createLettuceConnectionFactory(clientConfig);
 	}
 

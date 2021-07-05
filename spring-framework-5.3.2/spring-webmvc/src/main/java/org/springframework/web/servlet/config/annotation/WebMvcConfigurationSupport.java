@@ -217,8 +217,7 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 		ClassLoader classLoader = WebMvcConfigurationSupport.class.getClassLoader();
 		romePresent = ClassUtils.isPresent("com.rometools.rome.feed.WireFeed", classLoader);
 		jaxb2Present = ClassUtils.isPresent("javax.xml.bind.Binder", classLoader);
-		jackson2Present = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader) &&
-				ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
+		jackson2Present = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader) && ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
 		jackson2XmlPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.xml.XmlMapper", classLoader);
 		jackson2SmilePresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.smile.SmileFactory", classLoader);
 		jackson2CborPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.cbor.CBORFactory", classLoader);
@@ -368,11 +367,8 @@ public class WebMvcConfigurationSupport implements ApplicationContextAware, Serv
 	 * {@link HandlerMapping} instances with.
 	 * <p>This method cannot be overridden; use {@link #addInterceptors} instead.
 	 */
-	protected final Object[] getInterceptors(
-			FormattingConversionService mvcConversionService,
-			ResourceUrlProvider mvcResourceUrlProvider)
+	protected final Object[] getInterceptors(FormattingConversionService mvcConversionService, ResourceUrlProvider mvcResourceUrlProvider)
 	{
-
 		if (this.interceptors == null)
 		{
 			InterceptorRegistry registry = new InterceptorRegistry();

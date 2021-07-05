@@ -79,29 +79,36 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Cache of singleton objects: bean name to bean instance.
+	 *
+	 * 一级缓存
 	 */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
 	/**
 	 * Cache of singleton factories: bean name to ObjectFactory.
+	 *
+	 * 三级缓存
 	 */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 	/**
 	 * Cache of early singleton objects: bean name to bean instance.
+	 *
+	 * 二级缓存
 	 */
 	private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
 
 	/**
 	 * Set of registered singletons, containing the bean names in registration order.
+	 *
+	 * 保存单例对象的bean name
 	 */
 	private final Set<String> registeredSingletons = new LinkedHashSet<>(256);
 
 	/**
 	 * Names of beans that are currently in creation.
 	 */
-	private final Set<String> singletonsCurrentlyInCreation =
-			Collections.newSetFromMap(new ConcurrentHashMap<>(16));
+	private final Set<String> singletonsCurrentlyInCreation = Collections.newSetFromMap(new ConcurrentHashMap<>(16));
 
 	/**
 	 * Names of beans currently excluded from in creation checks.
@@ -169,9 +176,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	{
 		synchronized (this.singletonObjects)
 		{
-			this.singletonObjects.put(beanName, singletonObject);
-			this.singletonFactories.remove(beanName);
-			this.earlySingletonObjects.remove(beanName);
+			this.singletonObjects.put(beanName, singletonObject);// 一级缓存
+			this.singletonFactories.remove(beanName);// 三级缓存
+			this.earlySingletonObjects.remove(beanName);// 二级缓存
 			this.registeredSingletons.add(beanName);
 		}
 	}
@@ -219,9 +226,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	protected Object getSingleton(String beanName, boolean allowEarlyReference)
 	{
 		// Quick check for existing instance without full singleton lock
+		// 一级缓存取
 		Object singletonObject = this.singletonObjects.get(beanName);
+
+		// 如果缓存不存在，但是正在正在创建，就去三级和二级缓存获取
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName))
 		{
+			// 二级缓存取
 			singletonObject = this.earlySingletonObjects.get(beanName);
 			if (singletonObject == null && allowEarlyReference)
 			{
@@ -238,7 +249,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 							if (singletonFactory != null)
 							{
 								singletonObject = singletonFactory.getObject();
+								// 存到二级缓存
 								this.earlySingletonObjects.put(beanName, singletonObject);
+								// 删除三级缓存
 								this.singletonFactories.remove(beanName);
 							}
 						}
@@ -257,6 +270,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param singletonFactory the ObjectFactory to lazily create the singleton
 	 *                         with, if necessary
 	 * @return the registered singleton object
+	 *
+	 * 从一级缓存获取，获取不到用 singletonFactory 创建
 	 */
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory)
 	{
@@ -268,9 +283,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 			{
 				if (this.singletonsCurrentlyInDestruction)
 				{
-					throw new BeanCreationNotAllowedException(beanName,
-							"Singleton bean creation not allowed while singletons of this factory are in destruction " +
-									"(Do not request a bean from a BeanFactory in a destroy method implementation!)");
+					throw new BeanCreationNotAllowedException(beanName, "Singleton bean creation not allowed while singletons of this factory are in destruction (Do not request a bean from a BeanFactory in a destroy method implementation!)");
 				}
 				if (logger.isDebugEnabled())
 				{
@@ -514,6 +527,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 		synchronized (this.dependentBeanMap)
 		{
+			// computeIfAbsent：如果key对应的value不为空，则立即返回，如果为空，执行后面的表达式得到一个值保存进去并返回
 			Set<String> dependentBeans = this.dependentBeanMap.computeIfAbsent(canonicalName, k -> new LinkedHashSet<>(8));
 			if (!dependentBeans.add(dependentBeanName))
 			{

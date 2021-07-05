@@ -1,12 +1,13 @@
 package com.epichust.config;
 
 import com.epichust.interceptor.MyInterceptor;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-@Component
+@Configuration
 public class MvcConfiguration implements WebMvcConfigurer
 {
 	/**
@@ -26,4 +27,5 @@ public class MvcConfiguration implements WebMvcConfigurer
 	{
 		registry.addInterceptor(new MyInterceptor());
 	}
+
 }

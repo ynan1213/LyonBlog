@@ -334,8 +334,7 @@ public abstract class AopUtils {
 	 * @throws org.springframework.aop.AopInvocationException in case of a reflection error
 	 */
 	@Nullable
-	public static Object invokeJoinpointUsingReflection(@Nullable Object target, Method method, Object[] args)
-			throws Throwable {
+	public static Object invokeJoinpointUsingReflection(@Nullable Object target, Method method, Object[] args) throws Throwable {
 
 		// Use reflection to invoke the method.
 		try {
@@ -348,8 +347,7 @@ public abstract class AopUtils {
 			throw ex.getTargetException();
 		}
 		catch (IllegalArgumentException ex) {
-			throw new AopInvocationException("AOP configuration seems to be invalid: tried calling method [" +
-					method + "] on target [" + target + "]", ex);
+			throw new AopInvocationException("AOP configuration seems to be invalid: tried calling method [" + method + "] on target [" + target + "]", ex);
 		}
 		catch (IllegalAccessException ex) {
 			throw new AopInvocationException("Could not access method [" + method + "]", ex);

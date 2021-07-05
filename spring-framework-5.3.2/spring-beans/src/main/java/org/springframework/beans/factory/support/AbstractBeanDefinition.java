@@ -479,8 +479,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 		}
 		if (!(beanClassObject instanceof Class))
 		{
-			throw new IllegalStateException(
-					"Bean class name [" + beanClassObject + "] has not been resolved into an actual Class");
+			throw new IllegalStateException("Bean class name [" + beanClassObject + "] has not been resolved into an actual Class");
 		}
 		return (Class<?>) beanClassObject;
 	}

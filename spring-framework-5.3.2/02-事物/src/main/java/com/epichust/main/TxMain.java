@@ -27,15 +27,14 @@ public class TxMain
 		AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(AppConfig.class);
 		BookService bs = (BookService) ac.getBean("bookServiceImpl");
 
-		Book book = new Book("4444", 4444);
+		Book book = new Book("1111", 222222);
 
 		try
 		{
-			int result = bs.insert(book);
-			System.out.println(result);
+			bs.insert(book);
 		} catch (Exception e)
 		{
-			e.printStackTrace();
+			System.out.println("主方法抛出异常:" + e.getMessage());
 		}
 
 		ac.close();

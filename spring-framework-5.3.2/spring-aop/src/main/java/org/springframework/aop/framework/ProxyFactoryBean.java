@@ -89,8 +89,7 @@ import org.springframework.util.ObjectUtils;
  * @see Advised
  */
 @SuppressWarnings("serial")
-public class ProxyFactoryBean extends ProxyCreatorSupport
-		implements FactoryBean<Object>, BeanClassLoaderAware, BeanFactoryAware {
+public class ProxyFactoryBean extends ProxyCreatorSupport implements FactoryBean<Object>, BeanClassLoaderAware, BeanFactoryAware {
 
 	/**
 	 * This suffix in a value in an interceptor list indicates to expand globals.
@@ -253,8 +252,7 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 		}
 		else {
 			if (this.targetName == null) {
-				logger.info("Using non-singleton proxies with singleton targets is often undesirable. " +
-						"Enable prototype proxies by setting the 'targetName' property.");
+				logger.info("Using non-singleton proxies with singleton targets is often undesirable. Enable prototype proxies by setting the 'targetName' property.");
 			}
 			return newPrototypeInstance();
 		}
@@ -408,8 +406,7 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 		}
 		// Treat it as an target bean if we can't tell.
 		if (logger.isDebugEnabled()) {
-			logger.debug("Could not determine type of bean with name '" + beanName +
-					"' - assuming it is neither an Advisor nor an Advice");
+			logger.debug("Could not determine type of bean with name '" + beanName + "' - assuming it is neither an Advisor nor an Advice");
 		}
 		return false;
 	}
@@ -427,13 +424,11 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 
 		if (!ObjectUtils.isEmpty(this.interceptorNames)) {
 			if (this.beanFactory == null) {
-				throw new IllegalStateException("No BeanFactory available anymore (probably due to serialization) " +
-						"- cannot resolve interceptor names " + Arrays.asList(this.interceptorNames));
+				throw new IllegalStateException("No BeanFactory available anymore (probably due to serialization) - cannot resolve interceptor names " + Arrays.asList(this.interceptorNames));
 			}
 
 			// Globals can't be last unless we specified a targetSource using the property...
-			if (this.interceptorNames[this.interceptorNames.length - 1].endsWith(GLOBAL_SUFFIX) &&
-					this.targetName == null && this.targetSource == EMPTY_TARGET_SOURCE) {
+			if (this.interceptorNames[this.interceptorNames.length - 1].endsWith(GLOBAL_SUFFIX) && this.targetName == null && this.targetSource == EMPTY_TARGET_SOURCE) {
 				throw new AopConfigException("Target required after globals");
 			}
 
@@ -441,11 +436,9 @@ public class ProxyFactoryBean extends ProxyCreatorSupport
 			for (String name : this.interceptorNames) {
 				if (name.endsWith(GLOBAL_SUFFIX)) {
 					if (!(this.beanFactory instanceof ListableBeanFactory)) {
-						throw new AopConfigException(
-								"Can only use global advisors or interceptors with a ListableBeanFactory");
+						throw new AopConfigException("Can only use global advisors or interceptors with a ListableBeanFactory");
 					}
-					addGlobalAdvisors((ListableBeanFactory) this.beanFactory,
-							name.substring(0, name.length() - GLOBAL_SUFFIX.length()));
+					addGlobalAdvisors((ListableBeanFactory) this.beanFactory, name.substring(0, name.length() - GLOBAL_SUFFIX.length()));
 				}
 
 				else {

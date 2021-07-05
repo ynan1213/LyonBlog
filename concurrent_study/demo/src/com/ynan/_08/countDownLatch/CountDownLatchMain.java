@@ -7,11 +7,29 @@ public class CountDownLatchMain
     public static void main(String[] args) throws InterruptedException
     {
         // 构造一个资源
-        CountDownLatch latch = new CountDownLatch(2);
+        CountDownLatch latch = new CountDownLatch(1000);
 
-        // 释放一个资源
-        latch.countDown();
+        Demo demo = new Demo();
 
+        for (int i = 0; i < 1000; i++)
+        {
+            new Thread(() -> {
+               // i++;
+            }).start();
+        }
         latch.await();
+
+    }
+}
+
+class Demo
+{
+    private int i;
+
+    public void increment()
+    {
+        new Thread(() -> {
+            i++;
+        }).start();
     }
 }

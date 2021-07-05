@@ -41,8 +41,7 @@ import org.springframework.util.Assert;
  * @author Madhura Bhave
  * @since 1.0.0
  */
-public class ConfigurationPropertiesBindingPostProcessor
-		implements BeanPostProcessor, PriorityOrdered, ApplicationContextAware, InitializingBean {
+public class ConfigurationPropertiesBindingPostProcessor implements BeanPostProcessor, PriorityOrdered, ApplicationContextAware, InitializingBean {
 
 	/**
 	 * The bean name that this post-processor is registered with.
@@ -101,8 +100,7 @@ public class ConfigurationPropertiesBindingPostProcessor
 		if (bean == null || hasBoundValueObject(bean.getName())) {
 			return;
 		}
-		Assert.state(bean.getBindMethod() == BindMethod.JAVA_BEAN, "Cannot bind @ConfigurationProperties for bean '"
-				+ bean.getName() + "'. Ensure that @ConstructorBinding has not been applied to regular bean");
+		Assert.state(bean.getBindMethod() == BindMethod.JAVA_BEAN, "Cannot bind @ConfigurationProperties for bean '" + bean.getName() + "'. Ensure that @ConstructorBinding has not been applied to regular bean");
 		try {
 			this.binder.bind(bean);
 		}
@@ -112,8 +110,7 @@ public class ConfigurationPropertiesBindingPostProcessor
 	}
 
 	private boolean hasBoundValueObject(String beanName) {
-		return this.registry.containsBeanDefinition(beanName) && this.registry
-				.getBeanDefinition(beanName) instanceof ConfigurationPropertiesValueObjectBeanDefinition;
+		return this.registry.containsBeanDefinition(beanName) && this.registry.getBeanDefinition(beanName) instanceof ConfigurationPropertiesValueObjectBeanDefinition;
 	}
 
 	/**

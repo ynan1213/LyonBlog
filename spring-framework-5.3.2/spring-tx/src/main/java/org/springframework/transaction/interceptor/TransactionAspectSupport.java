@@ -341,8 +341,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 		if (this.reactiveAdapterRegistry != null && tm instanceof ReactiveTransactionManager) {
 			boolean isSuspendingFunction = KotlinDetector.isSuspendingFunction(method);
-			boolean hasSuspendingFlowReturnType = isSuspendingFunction &&
-					COROUTINES_FLOW_CLASS_NAME.equals(new MethodParameter(method, -1).getParameterType().getName());
+			boolean hasSuspendingFlowReturnType = isSuspendingFunction && COROUTINES_FLOW_CLASS_NAME.equals(new MethodParameter(method, -1).getParameterType().getName());
 			if (isSuspendingFunction && !(invocation instanceof CoroutinesInvocationCallback)) {
 				throw new IllegalStateException("Coroutines invocation not supported: " + method);
 			}
@@ -352,8 +351,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				Class<?> reactiveType = (isSuspendingFunction ? (hasSuspendingFlowReturnType ? Flux.class : Mono.class) : method.getReturnType());
 				ReactiveAdapter adapter = this.reactiveAdapterRegistry.getAdapter(reactiveType);
 				if (adapter == null) {
-					throw new IllegalStateException("Cannot apply reactive transaction to non-reactive return type: " +
-							method.getReturnType());
+					throw new IllegalStateException("Cannot apply reactive transaction to non-reactive return type: " + method.getReturnType());
 				}
 				return new ReactiveTransactionSupport(adapter);
 			});
@@ -365,8 +363,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			Object result = txSupport.invokeWithinTransaction(method, targetClass, callback, txAttr, (ReactiveTransactionManager) tm);
 			if (corInv != null) {
 				Publisher<?> pr = (Publisher<?>) result;
-				return (hasSuspendingFlowReturnType ? KotlinDelegate.asFlow(pr) :
-						KotlinDelegate.awaitSingleOrNull(pr, corInv.getContinuation()));
+				return (hasSuspendingFlowReturnType ? KotlinDelegate.asFlow(pr) : KotlinDelegate.awaitSingleOrNull(pr, corInv.getContinuation()));
 			}
 			return result;
 		}
@@ -380,7 +377,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			// ①：执行自己的业务逻辑之前，先获取事物信息，具体步骤：
 			// 	  1、由 PlatformTransactionManager 根据txAttr获取 TransactionStatus
 			// 	  2、封装 TransactionStatus 为 TransactionInfo 对象
-			// 	  3、绑定 TransactionInfo 到线程私有域
+			// 	  3、绑定 TransactionInfo 到线程私有域，将原先的 TransactionInfo 返回
 			TransactionInfo txInfo = createTransactionIfNecessary(ptm, txAttr, joinpointIdentification);
 			Object retVal;
 			try {
@@ -396,7 +393,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				throw ex;
 			}
 			finally {
-				// 将 线程私有域中的 TransactionInfo 恢复为之前的对象
+				// 将线程私有域中的 TransactionInfo 恢复为之前的对象
 				cleanupTransactionInfo(txInfo);
 			}
 
@@ -576,8 +573,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * @see #getTransactionAttributeSource()
 	 */
 	@SuppressWarnings("serial")
-	protected TransactionInfo createTransactionIfNecessary(@Nullable PlatformTransactionManager tm,
-														   @Nullable TransactionAttribute txAttr, final String joinpointIdentification) {
+	protected TransactionInfo createTransactionIfNecessary(@Nullable PlatformTransactionManager tm, @Nullable TransactionAttribute txAttr, final String joinpointIdentification) {
 		// If no name specified, apply method identification as transaction name.
 		if (txAttr != null && txAttr.getName() == null) {
 			txAttr = new DelegatingTransactionAttribute(txAttr) {
@@ -591,7 +587,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionStatus status = null;
 		if (txAttr != null) {
 			if (tm != null) {
-				// 获取事物状态，由 PlatformTransactionManager 实现（只需要接收一个事物定义既可以获取到事物状态，内部还用到了ThreadLocal）
+				// 获取事物状态，由 PlatformTransactionManager 实现（只需要接收一个事物定义即可以获取到事物状态，内部还用到了ThreadLocal）
 				status = tm.getTransaction(txAttr);
 			}
 			else {
@@ -612,8 +608,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * @param status the TransactionStatus for the current transaction
 	 * @return the prepared TransactionInfo object
 	 */
-	protected TransactionInfo prepareTransactionInfo(@Nullable PlatformTransactionManager tm,
-			@Nullable TransactionAttribute txAttr, String joinpointIdentification, @Nullable TransactionStatus status) {
+	protected TransactionInfo prepareTransactionInfo(@Nullable PlatformTransactionManager tm, @Nullable TransactionAttribute txAttr, String joinpointIdentification, @Nullable TransactionStatus status) {
 
 		TransactionInfo txInfo = new TransactionInfo(tm, txAttr, joinpointIdentification);
 		if (txAttr != null) {

@@ -291,8 +291,7 @@ public abstract class WebApplicationContextUtils {
 	 * @see org.springframework.core.env.PropertySource.StubPropertySource
 	 * @see org.springframework.core.env.ConfigurableEnvironment#getPropertySources()
 	 */
-	public static void initServletPropertySources(MutablePropertySources sources,
-			@Nullable ServletContext servletContext, @Nullable ServletConfig servletConfig) {
+	public static void initServletPropertySources(MutablePropertySources sources, @Nullable ServletContext servletContext, @Nullable ServletConfig servletConfig) {
 
 		Assert.notNull(sources, "'propertySources' must not be null");
 		String name = StandardServletEnvironment.SERVLET_CONTEXT_PROPERTY_SOURCE_NAME;
@@ -346,8 +345,7 @@ public abstract class WebApplicationContextUtils {
 		public ServletResponse getObject() {
 			ServletResponse response = currentRequestAttributes().getResponse();
 			if (response == null) {
-				throw new IllegalStateException("Current servlet response not available - " +
-						"consider using RequestContextFilter instead of RequestContextListener");
+				throw new IllegalStateException("Current servlet response not available - consider using RequestContextFilter instead of RequestContextListener");
 			}
 			return response;
 		}

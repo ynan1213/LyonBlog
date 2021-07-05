@@ -53,6 +53,8 @@ import org.apache.commons.compress.archivers.zip.UnixStat;
  * @author Phillip Webb
  * @author Andy Wilkinson
  * @since 1.0.0
+ *
+ * 当执行gradle build或mvn package时，会使用JarWriter重新生成jar文件。JarWrite构造函数中，会首先将启动脚本写入文件，并设置文件的可执行属性。
  */
 public class JarWriter implements LoaderClassesWriter, AutoCloseable {
 

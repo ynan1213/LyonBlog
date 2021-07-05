@@ -441,6 +441,8 @@ public class SpringApplication
 		Set<Object> sources = getAllSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
 		// 注册启动类到容器，只对 @Component 注解的类有效，@SpringBootApplication -> @SpringBootConfiguration -> @Configuration
+		// 从这里可以看出，对于main方法所在的类，并不需要一定就要@SpringBootApplication注解，我们完全可以放在一个配置类上，然后再main方法内设置进去
+		// 但是这里有个问题，就是componentScan就扫描不到默认包了
 		load(context, sources.toArray(new Object[0]));
 
 		// 广播 contextLoaded 事件

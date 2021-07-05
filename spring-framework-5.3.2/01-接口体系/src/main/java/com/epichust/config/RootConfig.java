@@ -25,4 +25,10 @@ public class RootConfig
 		}
 	}
 
+	// @Bean("xxxx")
+	// public UserService getUserService()
+	// {
+	// 	return new UserService1();
+	// }
+
 }

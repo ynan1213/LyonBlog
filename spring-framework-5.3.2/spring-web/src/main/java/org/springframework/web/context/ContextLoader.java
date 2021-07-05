@@ -523,8 +523,7 @@ public class ContextLoader
 			Class<?> clazz = ClassUtils.forName(className, ClassUtils.getDefaultClassLoader());
 			if (!ApplicationContextInitializer.class.isAssignableFrom(clazz))
 			{
-				throw new ApplicationContextException(
-						"Initializer class does not implement ApplicationContextInitializer interface: " + clazz);
+				throw new ApplicationContextException("Initializer class does not implement ApplicationContextInitializer interface: " + clazz);
 			}
 			return (Class<ApplicationContextInitializer<ConfigurableApplicationContext>>) clazz;
 		} catch (ClassNotFoundException ex)

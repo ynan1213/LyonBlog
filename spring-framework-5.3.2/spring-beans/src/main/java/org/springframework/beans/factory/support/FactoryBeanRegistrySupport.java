@@ -116,8 +116,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
-								throw new BeanCreationException(beanName,
-										"Post-processing of FactoryBean's singleton object failed", ex);
+								throw new BeanCreationException(beanName, "Post-processing of FactoryBean's singleton object failed", ex);
 							}
 							finally {
 								afterSingletonCreation(beanName);
@@ -180,8 +179,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 		// initialized yet: Many FactoryBeans just return null then.
 		if (object == null) {
 			if (isSingletonCurrentlyInCreation(beanName)) {
-				throw new BeanCurrentlyInCreationException(
-						beanName, "FactoryBean which is currently in creation returned null from getObject");
+				throw new BeanCurrentlyInCreationException(beanName, "FactoryBean which is currently in creation returned null from getObject");
 			}
 			object = new NullBean();
 		}

@@ -77,12 +77,19 @@ public class AspectJAfterReturningAdvice extends AbstractAspectJAdvice
 	 * @return whether to invoke the advice method for the given return value
 	 */
 	private boolean shouldInvokeOnReturnValueOf(Method method, @Nullable Object returnValue) {
+		/**
+		 *  @AfterReturning(pointcut = "xxxx()", returning = "user")
+		 * 	public void logAfterReturning(JoinPoint point, User user){
+		 * 		Object[] args = point.getArgs();
+		 * 		System.out.println("============== afterReturning ==============");
+		 *  }
+		 *
+		 *  下面的type 和 genericType就是注释上returning指定的参数user对应的入参的类型
+		 */
 		Class<?> type = getDiscoveredReturningType();
 		Type genericType = getDiscoveredReturningGenericType();
 		// If we aren't dealing with a raw type, check if generic parameters are assignable.
-		return (matchesReturnValue(type, method, returnValue) &&
-				(genericType == null || genericType == type ||
-						TypeUtils.isAssignable(genericType, method.getGenericReturnType())));
+		return (matchesReturnValue(type, method, returnValue) && (genericType == null || genericType == type || TypeUtils.isAssignable(genericType, method.getGenericReturnType())));
 	}
 
 	/**

@@ -270,8 +270,7 @@ public class HashMap<K,V>
         if (initialCapacity > MAXIMUM_CAPACITY)
             initialCapacity = MAXIMUM_CAPACITY;
         if (loadFactor <= 0 || Float.isNaN(loadFactor))
-            throw new IllegalArgumentException("Illegal load factor: " +
-                                               loadFactor);
+            throw new IllegalArgumentException("Illegal load factor: " + loadFactor);
 
         // Find a power of 2 >= initialCapacity
         int capacity = 1;
@@ -281,8 +280,7 @@ public class HashMap<K,V>
         this.loadFactor = loadFactor;
         threshold = (int)Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
         table = new Entry[capacity];
-        useAltHashing = sun.misc.VM.isBooted() &&
-                (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+        useAltHashing = sun.misc.VM.isBooted() && (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
         init();
     }
 
@@ -315,8 +313,7 @@ public class HashMap<K,V>
      * @throws  NullPointerException if the specified map is null
      */
     public HashMap(Map<? extends K, ? extends V> m) {
-        this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
-                      DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
+        this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1, DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
         putAllForCreate(m);
     }
 

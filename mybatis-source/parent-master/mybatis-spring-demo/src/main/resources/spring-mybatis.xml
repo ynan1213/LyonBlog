@@ -16,7 +16,7 @@
 
     <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
         <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
-        <property name="basePackage" value="com.epichust.dao"/>
+        <property name="basePackage" value="com.ynan.dao"/>
     </bean>
 
     <!-- DriverManagerDataSource只是作为一个成熟的连接池的简单替代，实现相同的标准接口，不支持连接池，每次连接数据库都是创建新的连接对象 -->

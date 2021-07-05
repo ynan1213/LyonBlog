@@ -1047,8 +1047,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see RequestContextHolder#setRequestAttributes
 	 */
 	@Nullable
-	protected ServletRequestAttributes buildRequestAttributes(HttpServletRequest request,
-			@Nullable HttpServletResponse response, @Nullable RequestAttributes previousAttributes) {
+	protected ServletRequestAttributes buildRequestAttributes(HttpServletRequest request, @Nullable HttpServletResponse response, @Nullable RequestAttributes previousAttributes) {
 
 		if (previousAttributes == null || previousAttributes instanceof ServletRequestAttributes) {
 			return new ServletRequestAttributes(request, response);
@@ -1058,8 +1057,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		}
 	}
 
-	private void initContextHolders(HttpServletRequest request,
-			@Nullable LocaleContext localeContext, @Nullable RequestAttributes requestAttributes) {
+	private void initContextHolders(HttpServletRequest request, @Nullable LocaleContext localeContext, @Nullable RequestAttributes requestAttributes) {
 
 		if (localeContext != null) {
 			LocaleContextHolder.setLocaleContext(localeContext, this.threadContextInheritable);

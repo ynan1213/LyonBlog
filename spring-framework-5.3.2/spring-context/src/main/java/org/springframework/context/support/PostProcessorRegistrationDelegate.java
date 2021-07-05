@@ -216,7 +216,7 @@ final class PostProcessorRegistrationDelegate
 		// 更重要的是：最终所有的BeanPostProcessor的执行都会从这个List里面拿出来执行
 		// 所以这一步很关键：那就是按照顺序，把`BeanPostProcessor`们都实例化好，然后添加进List里
 		// 因此顺序是关键~~~~~如果某些Bean提前被实例化，它就很有可能不能被所有的`BeanPostProcessor`处理到了
-		// 这也是我们BeanPostProcessorChecker的作用，它就是检查这个然后输出日志的~
+		// 这也是我们 BeanPostProcessorChecker 的作用，它就是检查这个然后输出日志的~
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when

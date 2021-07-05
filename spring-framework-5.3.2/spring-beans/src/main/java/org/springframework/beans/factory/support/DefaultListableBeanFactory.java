@@ -128,8 +128,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	{
 		try
 		{
-			javaxInjectProviderClass =
-					ClassUtils.forName("javax.inject.Provider", DefaultListableBeanFactory.class.getClassLoader());
+			javaxInjectProviderClass = ClassUtils.forName("javax.inject.Provider", DefaultListableBeanFactory.class.getClassLoader());
 		} catch (ClassNotFoundException ex)
 		{
 			// JSR-330 API not available - Provider interface simply not supported then.
@@ -404,6 +403,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return getBean(requiredType, (Object[]) null);
 	}
 
+	// 带参数的getBean还未找到使用场景
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getBean(Class<T> requiredType, @Nullable Object... args) throws BeansException
@@ -1114,6 +1114,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						{
 							isEagerInit = (factory instanceof SmartFactoryBean && ((SmartFactoryBean<?>) factory).isEagerInit());
 						}
+						// 也就是说只有当实现了SmartFactoryBean接口并且isEagerInit方法返回true，才会预初始化，否则只会实例化工厂类
 						if (isEagerInit)
 						{
 							getBean(beanName);
@@ -1451,10 +1452,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	@SuppressWarnings("unchecked")
 	@Nullable
-	private <T> NamedBeanHolder<T> resolveNamedBean(
-			ResolvableType requiredType, @Nullable Object[] args, boolean nonUniqueAsNull) throws BeansException
+	private <T> NamedBeanHolder<T> resolveNamedBean(ResolvableType requiredType, @Nullable Object[] args, boolean nonUniqueAsNull) throws BeansException
 	{
-
 		Assert.notNull(requiredType, "Required type must not be null");
 		String[] candidateNames = getBeanNamesForType(requiredType);
 
@@ -1824,13 +1823,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * @see #autowireByType
 	 * @see #autowireConstructor
 	 */
-	protected Map<String, Object> findAutowireCandidates(
-			@Nullable String beanName, Class<?> requiredType, DependencyDescriptor descriptor)
+	protected Map<String, Object> findAutowireCandidates(@Nullable String beanName, Class<?> requiredType, DependencyDescriptor descriptor)
 	{
 
-		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
-				this, requiredType, true, descriptor.isEager());
+		String[] candidateNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this, requiredType, true, descriptor.isEager());
 		Map<String, Object> result = CollectionUtils.newLinkedHashMap(candidateNames.length);
+		/**
+		 * 当注入HttpServletRequest的时候，requiredType值是HttpServletRequest.class，我们还记得在resolvableDependencies中放入了ServletRequest.class这个key。
+		 * 所以 if (autowiringType.isAssignableFrom(requiredType)) 这个判断会返回true，接着会取得RequestObjectFactory这个对象。
+		 */
 		for (Map.Entry<Class<?>, Object> classObjectEntry : this.resolvableDependencies.entrySet())
 		{
 			Class<?> autowiringType = classObjectEntry.getKey();
@@ -1859,8 +1860,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			DependencyDescriptor fallbackDescriptor = descriptor.forFallbackMatch();
 			for (String candidate : candidateNames)
 			{
-				if (!isSelfReference(beanName, candidate) && isAutowireCandidate(candidate, fallbackDescriptor) &&
-						(!multiple || getAutowireCandidateResolver().hasQualifier(descriptor)))
+				if (!isSelfReference(beanName, candidate) && isAutowireCandidate(candidate, fallbackDescriptor) && (!multiple || getAutowireCandidateResolver().hasQualifier(descriptor)))
 				{
 					addCandidateEntry(result, candidate, descriptor, requiredType);
 				}
@@ -1871,9 +1871,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				// but in the case of a dependency collection, not the very same bean itself.
 				for (String candidate : candidateNames)
 				{
-					if (isSelfReference(beanName, candidate) &&
-							(!(descriptor instanceof MultiElementDescriptor) || !beanName.equals(candidate)) &&
-							isAutowireCandidate(candidate, fallbackDescriptor))
+					if (isSelfReference(beanName, candidate) && (!(descriptor instanceof MultiElementDescriptor) || !beanName.equals(candidate)) && isAutowireCandidate(candidate, fallbackDescriptor))
 					{
 						addCandidateEntry(result, candidate, descriptor, requiredType);
 					}
@@ -1887,8 +1885,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * Add an entry to the candidate map: a bean instance if available or just the resolved
 	 * type, preventing early bean initialization ahead of primary candidate selection.
 	 */
-	private void addCandidateEntry(Map<String, Object> candidates, String candidateName,
-								   DependencyDescriptor descriptor, Class<?> requiredType)
+	private void addCandidateEntry(Map<String, Object> candidates, String candidateName,  DependencyDescriptor descriptor, Class<?> requiredType)
 	{
 
 		if (descriptor instanceof MultiElementDescriptor)

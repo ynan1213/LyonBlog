@@ -48,8 +48,7 @@ public class RedisReactiveAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(name = "reactiveRedisTemplate")
 	@ConditionalOnBean(ReactiveRedisConnectionFactory.class)
-	public ReactiveRedisTemplate<Object, Object> reactiveRedisTemplate(
-			ReactiveRedisConnectionFactory reactiveRedisConnectionFactory, ResourceLoader resourceLoader) {
+	public ReactiveRedisTemplate<Object, Object> reactiveRedisTemplate(ReactiveRedisConnectionFactory reactiveRedisConnectionFactory, ResourceLoader resourceLoader) {
 		JdkSerializationRedisSerializer jdkSerializer = new JdkSerializationRedisSerializer(
 				resourceLoader.getClassLoader());
 		RedisSerializationContext<Object, Object> serializationContext = RedisSerializationContext

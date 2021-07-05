@@ -86,6 +86,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 	@Override
 	@Nullable
 	public Object proceed() throws Throwable {
+		// 克隆一份再执行
 		return this.methodInvocation.invocableClone().proceed();
 	}
 
@@ -94,9 +95,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 	public Object proceed(Object[] arguments) throws Throwable {
 		Assert.notNull(arguments, "Argument array passed to proceed cannot be null");
 		if (arguments.length != this.methodInvocation.getArguments().length) {
-			throw new IllegalArgumentException("Expecting " +
-					this.methodInvocation.getArguments().length + " arguments to proceed, " +
-					"but was passed " + arguments.length + " arguments");
+			throw new IllegalArgumentException("Expecting " + this.methodInvocation.getArguments().length + " arguments to proceed, but was passed " + arguments.length + " arguments");
 		}
 		this.methodInvocation.setArguments(arguments);
 		return this.methodInvocation.invocableClone(arguments).proceed();

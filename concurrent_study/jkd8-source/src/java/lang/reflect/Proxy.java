@@ -407,8 +407,7 @@ public class Proxy implements java.io.Serializable {
      * Generate a proxy class.  Must call the checkProxyAccess method
      * to perform permission checks before calling this.
      */
-    private static Class<?> getProxyClass0(ClassLoader loader,
-                                           Class<?>... interfaces) {
+    private static Class<?> getProxyClass0(ClassLoader loader, Class<?>... interfaces) {
         if (interfaces.length > 65535) {
             throw new IllegalArgumentException("interface limit exceeded");
         }
@@ -554,8 +553,7 @@ public class Proxy implements java.io.Serializable {
      * A factory function that generates, defines and returns the proxy class given
      * the ClassLoader and array of interfaces.
      */
-    private static final class ProxyClassFactory
-        implements BiFunction<ClassLoader, Class<?>[], Class<?>>
+    private static final class ProxyClassFactory implements BiFunction<ClassLoader, Class<?>[], Class<?>>
     {
         // prefix for all proxy class names
         private static final String proxyClassNamePrefix = "$Proxy";
@@ -636,11 +634,9 @@ public class Proxy implements java.io.Serializable {
             /*
              * Generate the specified proxy class.
              */
-            byte[] proxyClassFile = ProxyGenerator.generateProxyClass(
-                proxyName, interfaces, accessFlags);
+            byte[] proxyClassFile = ProxyGenerator.generateProxyClass(proxyName, interfaces, accessFlags);
             try {
-                return defineClass0(loader, proxyName,
-                                    proxyClassFile, 0, proxyClassFile.length);
+                return defineClass0(loader, proxyName, proxyClassFile, 0, proxyClassFile.length);
             } catch (ClassFormatError e) {
                 /*
                  * A ClassFormatError here means that (barring bugs in the
@@ -700,10 +696,7 @@ public class Proxy implements java.io.Serializable {
      *          {@code null}
      */
     @CallerSensitive
-    public static Object newProxyInstance(ClassLoader loader,
-                                          Class<?>[] interfaces,
-                                          InvocationHandler h)
-        throws IllegalArgumentException
+    public static Object newProxyInstance(ClassLoader loader, Class<?>[] interfaces, InvocationHandler h) throws IllegalArgumentException
     {
         Objects.requireNonNull(h);
 

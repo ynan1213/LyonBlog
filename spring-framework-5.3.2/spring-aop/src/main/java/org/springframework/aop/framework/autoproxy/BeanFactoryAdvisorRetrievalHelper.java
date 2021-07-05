@@ -96,8 +96,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 							String bceBeanName = bce.getBeanName();
 							if (bceBeanName != null && this.beanFactory.isCurrentlyInCreation(bceBeanName)) {
 								if (logger.isTraceEnabled()) {
-									logger.trace("Skipping advisor '" + name +
-											"' with dependency on currently created bean: " + ex.getMessage());
+									logger.trace("Skipping advisor '" + name + "' with dependency on currently created bean: " + ex.getMessage());
 								}
 								// Ignore: indicates a reference back to the bean we're trying to advise.
 								// We want to find advisors other than the currently created bean itself.

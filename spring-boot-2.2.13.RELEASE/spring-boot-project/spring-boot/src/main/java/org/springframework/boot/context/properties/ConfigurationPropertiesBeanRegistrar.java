@@ -49,8 +49,7 @@ final class ConfigurationPropertiesBeanRegistrar {
 	}
 
 	void register(Class<?> type) {
-		MergedAnnotation<ConfigurationProperties> annotation = MergedAnnotations
-				.from(type, SearchStrategy.TYPE_HIERARCHY).get(ConfigurationProperties.class);
+		MergedAnnotation<ConfigurationProperties> annotation = MergedAnnotations.from(type, SearchStrategy.TYPE_HIERARCHY).get(ConfigurationProperties.class);
 		register(type, annotation);
 	}
 
@@ -81,10 +80,8 @@ final class ConfigurationPropertiesBeanRegistrar {
 		return false;
 	}
 
-	private void registerBeanDefinition(String beanName, Class<?> type,
-			MergedAnnotation<ConfigurationProperties> annotation) {
-		Assert.state(annotation.isPresent(), () -> "No " + ConfigurationProperties.class.getSimpleName()
-				+ " annotation found on  '" + type.getName() + "'.");
+	private void registerBeanDefinition(String beanName, Class<?> type, MergedAnnotation<ConfigurationProperties> annotation) {
+		Assert.state(annotation.isPresent(), () -> "No " + ConfigurationProperties.class.getSimpleName() + " annotation found on  '" + type.getName() + "'.");
 		this.registry.registerBeanDefinition(beanName, createBeanDefinition(beanName, type));
 	}
 

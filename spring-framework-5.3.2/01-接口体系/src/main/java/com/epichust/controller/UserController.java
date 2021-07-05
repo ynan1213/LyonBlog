@@ -9,12 +9,11 @@ import org.springframework.stereotype.Controller;
 public class UserController
 {
 	@Autowired
-	//@Qualifier("userService1")
-	private UserService service;
+	private UserService userService2;
 
 	public void test()
 	{
-		service.print("service.print ==================");
+		userService2.print("service.print ==================");
 	}
 
 

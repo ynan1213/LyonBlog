@@ -158,8 +158,7 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 			HeadersRequestCondition headersCondition, ConsumesRequestCondition consumesCondition,
 			ProducesRequestCondition producesCondition, RequestConditionHolder customCondition) {
 
-		Assert.isTrue(pathPatternsCondition != null || patternsCondition != null,
-				"Neither PathPatterns nor String patterns condition");
+		Assert.isTrue(pathPatternsCondition != null || patternsCondition != null, "Neither PathPatterns nor String patterns condition");
 
 		this.name = (StringUtils.hasText(name) ? name : null);
 		this.pathPatternsCondition = pathPatternsCondition;
@@ -363,6 +362,8 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	 * patterns that match to the current request, sorted with best matching
 	 * patterns on top.
 	 * @return a new instance in case of a match; or {@code null} otherwise
+	 *
+	 * 有一个不匹配就返回null
 	 */
 	@Override
 	@Nullable
@@ -405,8 +406,7 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 		if (custom == null) {
 			return null;
 		}
-		return new RequestMappingInfo(
-				this.name, pathPatterns, patterns, methods, params, headers, consumes, produces, custom);
+		return new RequestMappingInfo(this.name, pathPatterns, patterns, methods, params, headers, consumes, produces, custom);
 	}
 
 	/**

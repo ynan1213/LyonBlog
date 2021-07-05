@@ -79,8 +79,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 */
 	private static final String SCOPED_TARGET_NAME_PREFIX = "scopedTarget.";
 
-	private static final HandlerMethod PREFLIGHT_AMBIGUOUS_MATCH =
-			new HandlerMethod(new EmptyHandler(), ClassUtils.getMethod(EmptyHandler.class, "handle"));
+	private static final HandlerMethod PREFLIGHT_AMBIGUOUS_MATCH = new HandlerMethod(new EmptyHandler(), ClassUtils.getMethod(EmptyHandler.class, "handle"));
 
 	private static final CorsConfiguration ALLOW_CORS_CONFIG = new CorsConfiguration();
 
@@ -365,8 +364,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	{
 		if (handler instanceof String)
 		{
-			return new HandlerMethod((String) handler,
-					obtainApplicationContext().getAutowireCapableBeanFactory(), method);
+			return new HandlerMethod((String) handler, obtainApplicationContext().getAutowireCapableBeanFactory(), method);
 		}
 		return new HandlerMethod(handler, method);
 	}
@@ -430,11 +428,16 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	protected HandlerMethod lookupHandlerMethod(String lookupPath, HttpServletRequest request) throws Exception
 	{
 		List<Match> matches = new ArrayList<>();
+
+		// 从 pathLookup 缓存获取，这里获取到的是没有通配符，有可能获取到多个，因为没有区分 method、headers等
 		List<T> directPathMatches = this.mappingRegistry.getMappingsByDirectPath(lookupPath);
 		if (directPathMatches != null)
 		{
+			// 上面的只是匹配 url，还需要进行methos、headers等属性，都匹配的值放在 matches 中
 			addMatchingMappings(directPathMatches, matches, request);
 		}
+
+		// 上面的的都是没有通配符的匹配，如果为空，再全部匹配一遍（this.mappingRegistry.getRegistrations()返回的就是全部的）
 		if (matches.isEmpty())
 		{
 			addMatchingMappings(this.mappingRegistry.getRegistrations().keySet(), matches, request);
@@ -442,8 +445,11 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 		if (!matches.isEmpty())
 		{
 			Match bestMatch = matches.get(0);
+
+			// 匹配到多个
 			if (matches.size() > 1)
 			{
+				// 排序找出最佳匹配，具体逻辑还不清楚
 				Comparator<Match> comparator = new MatchComparator(getMappingComparator(request));
 				matches.sort(comparator);
 				bestMatch = matches.get(0);
@@ -461,8 +467,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 					Method m1 = bestMatch.handlerMethod.getMethod();
 					Method m2 = secondBestMatch.handlerMethod.getMethod();
 					String uri = request.getRequestURI();
-					throw new IllegalStateException(
-							"Ambiguous handler methods mapped for '" + uri + "': {" + m1 + ", " + m2 + "}");
+					throw new IllegalStateException("Ambiguous handler methods mapped for '" + uri + "': {" + m1 + ", " + m2 + "}");
 				}
 			}
 			request.setAttribute(BEST_MATCHING_HANDLER_ATTRIBUTE, bestMatch.handlerMethod);
@@ -478,6 +483,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	{
 		for (T mapping : mappings)
 		{
+			// 实际类型是 RequestMappingInfo，如果method、headers、params、consumes、produces等有一个不匹配，就会返回false，否则就返回一个 RequestMappingInfo
 			T match = getMatchingMapping(mapping, request);
 			if (match != null)
 			{
@@ -507,10 +513,8 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	 * @throws ServletException in case of errors
 	 */
 	@Nullable
-	protected HandlerMethod handleNoMatch(Set<T> mappings, String lookupPath, HttpServletRequest request)
-			throws Exception
+	protected HandlerMethod handleNoMatch(Set<T> mappings, String lookupPath, HttpServletRequest request) throws Exception
 	{
-
 		return null;
 	}
 
@@ -625,7 +629,7 @@ public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMap
 	{
 
 		private final Map<T, MappingRegistration<T>> registry = new HashMap<>();
-
+		// 不带通配符，最优匹配
 		private final MultiValueMap<String, T> pathLookup = new LinkedMultiValueMap<>();
 
 		private final Map<String, List<HandlerMethod>> nameLookup = new ConcurrentHashMap<>();

@@ -17,16 +17,16 @@
     <typeAliases>
         <!-- 定义别名可以在实体类上注解 @Alisa -->
         <!-- 默认是类名小写 -->
-        <package name="com.epichust.entity"/>
+        <package name="com.ynan.entity"/>
 
         <!--
         <typeAlias alias="Mail" type="com.sqsoft.entity.Mail" />
         -->
     </typeAliases>
 
-    <!--<plugins>
-        <plugin interceptor="com.epichust.plugin.MySqlPagingPlugin"></plugin>
-    </plugins>-->
+    <plugins>
+        <plugin interceptor="com.ynan.plugin.MySqlPagingPlugin"></plugin>
+    </plugins>
 
     <environments default="development">
         <environment id="development">
@@ -51,7 +51,7 @@
         <!-- 		<mapper resource="mapper/ArticleMapper.xml" /> -->
         <!-- 		<mapper resource="mapper/AuthorMapper.xml" /> -->
         <mapper resource="mapper/UserMapper.xml"/>
-        <mapper resource="mapper/ResultMap.xml"/>
+        <!--<mapper resource="mapper/ResultMap.xml"/>-->
         <!--<package name="com.sqsoft.dao"/>-->
     </mappers>
 

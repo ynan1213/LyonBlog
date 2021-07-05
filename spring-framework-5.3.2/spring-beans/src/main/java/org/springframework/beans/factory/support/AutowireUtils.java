@@ -128,11 +128,12 @@ abstract class AutowireUtils {
 	 * @return the resolved value
 	 */
 	public static Object resolveAutowiringValue(Object autowiringValue, Class<?> requiredType) {
+		// 是否是ObjectFactory类型（注意这里不要和FactoryBean搞混了，比如request对应的RequestObjectFactory
 		if (autowiringValue instanceof ObjectFactory && !requiredType.isInstance(autowiringValue)) {
 			ObjectFactory<?> factory = (ObjectFactory<?>) autowiringValue;
 			if (autowiringValue instanceof Serializable && requiredType.isInterface()) {
-				autowiringValue = Proxy.newProxyInstance(requiredType.getClassLoader(),
-						new Class<?>[] {requiredType}, new ObjectFactoryDelegatingInvocationHandler(factory));
+				// 创建代理对象
+				autowiringValue = Proxy.newProxyInstance(requiredType.getClassLoader(), new Class<?>[] {requiredType}, new ObjectFactoryDelegatingInvocationHandler(factory));
 			}
 			else {
 				return factory.getObject();

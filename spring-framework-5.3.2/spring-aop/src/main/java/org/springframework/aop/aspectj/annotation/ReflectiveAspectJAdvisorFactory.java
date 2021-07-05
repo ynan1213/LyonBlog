@@ -72,8 +72,7 @@ import org.springframework.util.comparator.InstanceComparator;
 public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFactory implements Serializable {
 
 	// Exclude @Pointcut methods
-	private static final MethodFilter adviceMethodFilter = ReflectionUtils.USER_DECLARED_METHODS
-			.and(method -> (AnnotationUtils.getAnnotation(method, Pointcut.class) == null));
+	private static final MethodFilter adviceMethodFilter = ReflectionUtils.USER_DECLARED_METHODS.and(method -> (AnnotationUtils.getAnnotation(method, Pointcut.class) == null));
 
 	private static final Comparator<Method> adviceMethodComparator;
 
@@ -84,8 +83,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 		// invokes proceed() in a `try` block and only invokes the @After advice method
 		// in a corresponding `finally` block.
 		Comparator<Method> adviceKindComparator = new ConvertingComparator<>(
-				new InstanceComparator<>(
-						Around.class, Before.class, After.class, AfterReturning.class, AfterThrowing.class),
+				new InstanceComparator<>(Around.class, Before.class, After.class, AfterReturning.class, AfterThrowing.class),
 				(Converter<Method, Annotation>) method -> {
 					AspectJAnnotation<?> ann = AbstractAspectJAdvisorFactory.findAspectJAnnotationOnMethod(method);
 					return (ann != null ? ann.getAnnotation() : null);
@@ -128,8 +126,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 		// We need to wrap the MetadataAwareAspectInstanceFactory with a decorator
 		// so that it will only instantiate once.
-		MetadataAwareAspectInstanceFactory lazySingletonAspectInstanceFactory =
-				new LazySingletonAspectInstanceFactoryDecorator(aspectInstanceFactory);
+		MetadataAwareAspectInstanceFactory lazySingletonAspectInstanceFactory = new LazySingletonAspectInstanceFactoryDecorator(aspectInstanceFactory);
 
 		List<Advisor> advisors = new ArrayList<>();
 		for (Method method : getAdvisorMethods(aspectClass)) {

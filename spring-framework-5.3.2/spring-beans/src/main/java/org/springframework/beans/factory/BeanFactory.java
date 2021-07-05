@@ -252,6 +252,8 @@ public interface BeanFactory {
 	 * will be able to obtain an instance for the same name.
 	 * @param name the name of the bean to query
 	 * @return whether a bean with the given name is present
+	 *
+	 * 	包含Bean定义或者包含单例Bean实例，都会返回true（不管这个Bean是具体的还是抽象的、lazy的还是eager的，in scope or not 都会返回true）
 	 */
 	boolean containsBean(String name);
 

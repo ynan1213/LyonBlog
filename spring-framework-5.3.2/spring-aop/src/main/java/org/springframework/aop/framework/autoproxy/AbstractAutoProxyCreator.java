@@ -88,6 +88,11 @@ import org.springframework.util.StringUtils;
  * @see #getAdvicesAndAdvisorsForBean
  * @see BeanNameAutoProxyCreator
  * @see DefaultAdvisorAutoProxyCreator
+ *
+ * InstantiantionAwareBeanPostProcessor后置处理器两个方法：
+ * 	postProcessBeforeInstantiation：在bean对象被创建的之前回调用，若此方法返回的结果不为null，则会中断后面bean对象的创建过程。
+ * 	postProcessAfterInstantiation：是在对象被创建之后，属性注入之前，若该方法返回false，会中断属性的注入
+ *
  */
 @SuppressWarnings("serial")
 public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport implements SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware {
@@ -241,12 +246,22 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
+
+		// cacheKey规则：如果是FactoryBean，则是 & + beanName，否则就是beanName
 		Object cacheKey = getCacheKey(beanClass, beanName);
 
 		if (!StringUtils.hasLength(beanName) || !this.targetSourcedBeans.contains(beanName)) {
 			if (this.advisedBeans.containsKey(cacheKey)) {
 				return null;
 			}
+			/**
+			 * isInfrastructureClass：beanClass是否是基础组件类型，是的话加入advisedBeans缓存并置为false表示不做代理，哪些是基础组件类型？
+			 * 1、本类的逻辑：Advice、Advisor、Pointcut、AopInfrastructureBean类型
+			 * 2、子类继承的逻辑：@Aspect注解的类（aop）；
+			 *
+			 * shouldSkip：
+			 * 	AnnotationAwareAspectJAutoProxyCreator的逻辑是搜集容器中Advisor类型的bean，如果有@Aspect注解的类，也会将里面的切面类解析成Advisor类型，并进行配对
+			 */
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
@@ -305,8 +320,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 	 */
 	protected Object getCacheKey(Class<?> beanClass, @Nullable String beanName) {
 		if (StringUtils.hasLength(beanName)) {
-			return (FactoryBean.class.isAssignableFrom(beanClass) ?
-					BeanFactory.FACTORY_BEAN_PREFIX + beanName : beanName);
+			return (FactoryBean.class.isAssignableFrom(beanClass) ? BeanFactory.FACTORY_BEAN_PREFIX + beanName : beanName);
 		}
 		else {
 			return beanClass;
@@ -324,19 +338,28 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {
 			return bean;
 		}
+
+		// 前面对于基础组件的类加入到缓存中并置为false了，这里就不往后走
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
+
+		// 再走一遍
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);
 			return bean;
 		}
 
-		// Create proxy if we have advice.
+		// 将前面已经搜集好的Advisor进行匹配，主要就是Pointcut的匹配，将匹配的Advisor进行返回，里面有个很重要的排序
+		// 这里用了Object[]，具体的类型由子类去处理
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+
 		if (specificInterceptors != DO_NOT_PROXY) {
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+
+			// 创建代理，这里创建的代理对象拥有匹配全部的advisor，也就是会对所有的方法进行拦截，至于具体走不走切面方法是在方法执行时判断的
 			Object proxy = createProxy(bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+
 			this.proxyTypes.put(cacheKey, proxy.getClass());
 			return proxy;
 		}
@@ -403,8 +426,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 				if (ts != null) {
 					// Found a matching TargetSource.
 					if (logger.isTraceEnabled()) {
-						logger.trace("TargetSourceCreator [" + tsc +
-								"] found custom TargetSource for bean with name '" + beanName + "'");
+						logger.trace("TargetSourceCreator [" + tsc + "] found custom TargetSource for bean with name '" + beanName + "'");
 					}
 					return ts;
 				}
@@ -426,10 +448,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
 	 */
-	protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
-			@Nullable Object[] specificInterceptors, TargetSource targetSource) {
+	protected Object createProxy(Class<?> beanClass, @Nullable String beanName, @Nullable Object[] specificInterceptors, TargetSource targetSource) {
 
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
+			// 将bean原生的class对象存储到 BeanDefinition 的attribute中，key为 org.springframework.aop.framework.autoproxy.AutoProxyUtils.originalTargetClass，不知道有什么作用
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
 		}
 
@@ -437,10 +459,12 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 		proxyFactory.copyFrom(this);
 
 		if (!proxyFactory.isProxyTargetClass()) {
+			// 如果 ProxyTargetClass = true
 			if (shouldProxyTargetClass(beanClass, beanName)) {
 				proxyFactory.setProxyTargetClass(true);
 			}
 			else {
+				// 计算beanClass接口，设置到 proxyFactory
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
@@ -448,10 +472,12 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);
+		// 留给子类扩展
 		customizeProxyFactory(proxyFactory);
 
 		proxyFactory.setFrozen(this.freezeProxy);
 		if (advisorsPreFiltered()) {
+			// 不知道这个属性是干嘛的
 			proxyFactory.setPreFiltered(true);
 		}
 
@@ -468,8 +494,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 	 * @see AutoProxyUtils#shouldProxyTargetClass
 	 */
 	protected boolean shouldProxyTargetClass(Class<?> beanClass, @Nullable String beanName) {
-		return (this.beanFactory instanceof ConfigurableListableBeanFactory &&
-				AutoProxyUtils.shouldProxyTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName));
+		return (this.beanFactory instanceof ConfigurableListableBeanFactory && AutoProxyUtils.shouldProxyTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName));
 	}
 
 	/**
@@ -513,8 +538,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 		if (logger.isTraceEnabled()) {
 			int nrOfCommonInterceptors = commonInterceptors.length;
 			int nrOfSpecificInterceptors = (specificInterceptors != null ? specificInterceptors.length : 0);
-			logger.trace("Creating implicit proxy for bean '" + beanName + "' with " + nrOfCommonInterceptors +
-					" common interceptors and " + nrOfSpecificInterceptors + " specific interceptors");
+			logger.trace("Creating implicit proxy for bean '" + beanName + "' with " + nrOfCommonInterceptors + " common interceptors and " + nrOfSpecificInterceptors + " specific interceptors");
 		}
 
 		Advisor[] advisors = new Advisor[allInterceptors.size()];
@@ -571,7 +595,6 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 	 * @see #PROXY_WITHOUT_ADDITIONAL_INTERCEPTORS
 	 */
 	@Nullable
-	protected abstract Object[] getAdvicesAndAdvisorsForBean(Class<?> beanClass, String beanName,
-			@Nullable TargetSource customTargetSource) throws BeansException;
+	protected abstract Object[] getAdvicesAndAdvisorsForBean(Class<?> beanClass, String beanName, @Nullable TargetSource customTargetSource) throws BeansException;
 
 }

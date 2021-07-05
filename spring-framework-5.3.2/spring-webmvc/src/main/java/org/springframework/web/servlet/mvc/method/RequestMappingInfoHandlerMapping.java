@@ -233,8 +233,7 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 	 * but not by consumable/producible media types
 	 */
 	@Override
-	protected HandlerMethod handleNoMatch(
-			Set<RequestMappingInfo> infos, String lookupPath, HttpServletRequest request) throws ServletException {
+	protected HandlerMethod handleNoMatch(Set<RequestMappingInfo> infos, String lookupPath, HttpServletRequest request) throws ServletException {
 
 		PartialMatchHelper helper = new PartialMatchHelper(infos, request);
 		if (helper.isEmpty()) {

@@ -42,8 +42,7 @@ public abstract class AutoProxyUtils {
 	 * to its target class (even if AOP advices get applied through auto-proxying).
 	 * @see #shouldProxyTargetClass
 	 */
-	public static final String PRESERVE_TARGET_CLASS_ATTRIBUTE =
-			Conventions.getQualifiedAttributeName(AutoProxyUtils.class, "preserveTargetClass");
+	public static final String PRESERVE_TARGET_CLASS_ATTRIBUTE = Conventions.getQualifiedAttributeName(AutoProxyUtils.class, "preserveTargetClass");
 
 	/**
 	 * Bean definition attribute that indicates the original target class of an
@@ -52,8 +51,7 @@ public abstract class AutoProxyUtils {
 	 * @since 4.2.3
 	 * @see #determineTargetClass
 	 */
-	public static final String ORIGINAL_TARGET_CLASS_ATTRIBUTE =
-			Conventions.getQualifiedAttributeName(AutoProxyUtils.class, "originalTargetClass");
+	public static final String ORIGINAL_TARGET_CLASS_ATTRIBUTE = Conventions.getQualifiedAttributeName(AutoProxyUtils.class, "originalTargetClass");
 
 
 	/**
@@ -108,9 +106,7 @@ public abstract class AutoProxyUtils {
 	 * @param targetClass the corresponding target class
 	 * @since 4.2.3
 	 */
-	static void exposeTargetClass(
-			ConfigurableListableBeanFactory beanFactory, @Nullable String beanName, Class<?> targetClass) {
-
+	static void exposeTargetClass(ConfigurableListableBeanFactory beanFactory, @Nullable String beanName, Class<?> targetClass) {
 		if (beanName != null && beanFactory.containsBeanDefinition(beanName)) {
 			beanFactory.getMergedBeanDefinition(beanName).setAttribute(ORIGINAL_TARGET_CLASS_ATTRIBUTE, targetClass);
 		}
@@ -126,12 +122,10 @@ public abstract class AutoProxyUtils {
 	 * @see AutowireCapableBeanFactory#ORIGINAL_INSTANCE_SUFFIX
 	 */
 	static boolean isOriginalInstance(String beanName, Class<?> beanClass) {
-		if (!StringUtils.hasLength(beanName) || beanName.length() !=
-				beanClass.getName().length() + AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX.length()) {
+		if (!StringUtils.hasLength(beanName) || beanName.length() != beanClass.getName().length() + AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX.length()) {
 			return false;
 		}
-		return (beanName.startsWith(beanClass.getName()) &&
-				beanName.endsWith(AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX));
+		return (beanName.startsWith(beanClass.getName()) && beanName.endsWith(AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX));
 	}
 
 }

@@ -141,6 +141,7 @@ import org.springframework.web.util.UrlPathHelper;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnWebApplication(type = Type.SERVLET)
 @ConditionalOnClass({Servlet.class, DispatcherServlet.class, WebMvcConfigurer.class})
+// 如果容器有了WebMvcConfigurationSupport类型，该bean就不会生效
 @ConditionalOnMissingBean(WebMvcConfigurationSupport.class)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE + 10)
 @AutoConfigureAfter({DispatcherServletAutoConfiguration.class, TaskExecutionAutoConfiguration.class, ValidationAutoConfiguration.class})
@@ -190,8 +191,7 @@ public class WebMvcAutoConfiguration
 
 		private final ObjectProvider<HttpMessageConverters> messageConvertersProvider;
 
-		public WebMvcAutoConfigurationAdapter(WebMvcProperties mvcProperties, ListableBeanFactory beanFactory,
-											  ObjectProvider<HttpMessageConverters> messageConvertersProvider)
+		public WebMvcAutoConfigurationAdapter(WebMvcProperties mvcProperties, ListableBeanFactory beanFactory, ObjectProvider<HttpMessageConverters> messageConvertersProvider)
 		{
 			this.mvcProperties = mvcProperties;
 			this.beanFactory = beanFactory;
@@ -363,10 +363,8 @@ public class WebMvcAutoConfiguration
 				@Qualifier("mvcConversionService") FormattingConversionService conversionService,
 				@Qualifier("mvcValidator") Validator validator)
 		{
-			RequestMappingHandlerAdapter adapter = super.requestMappingHandlerAdapter(contentNegotiationManager,
-					conversionService, validator);
-			adapter.setIgnoreDefaultModelOnRedirect(
-					this.mvcProperties == null || this.mvcProperties.isIgnoreDefaultModelOnRedirect());
+			RequestMappingHandlerAdapter adapter = super.requestMappingHandlerAdapter(contentNegotiationManager, conversionService, validator);
+			adapter.setIgnoreDefaultModelOnRedirect(this.mvcProperties == null || this.mvcProperties.isIgnoreDefaultModelOnRedirect());
 			return adapter;
 		}
 

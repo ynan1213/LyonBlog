@@ -69,19 +69,19 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 	}
 
 	/**
-	 * Return the AopProxyFactory that this ProxyConfig uses.
-	 */
-	public AopProxyFactory getAopProxyFactory() {
-		return this.aopProxyFactory;
-	}
-
-	/**
 	 * Add the given AdvisedSupportListener to this proxy configuration.
 	 * @param listener the listener to register
 	 */
 	public void addListener(AdvisedSupportListener listener) {
 		Assert.notNull(listener, "AdvisedSupportListener must not be null");
 		this.listeners.add(listener);
+	}
+
+	/**
+	 * Return the AopProxyFactory that this ProxyConfig uses.
+	 */
+	public AopProxyFactory getAopProxyFactory() {
+		return this.aopProxyFactory;
 	}
 
 	/**

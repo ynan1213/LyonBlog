@@ -85,7 +85,7 @@ public abstract class TransactionSynchronizationManager {
 
 	private static final Log logger = LogFactory.getLog(TransactionSynchronizationManager.class);
 
-	// 线程同步器，通过 TransactionSynchronizationManager#registerSynchronization 来注册
+	// 事物同步器，通过 TransactionSynchronizationManager#registerSynchronization 来注册
 	// 可以理解为是回调钩子对象,内部含有beforeCommit, afterCommit, beforeCompletion等钩子方法。
 	// 我们自己如果需要的话也可以在业务方法或者切面中注册一些 TransactionSynchronization 对象用于追踪事务生命周期做一些自定义的事情。
 	private static final ThreadLocal<Set<TransactionSynchronization>> synchronizations = new NamedThreadLocal<>("Transaction synchronizations");
@@ -247,8 +247,7 @@ public abstract class TransactionSynchronizationManager {
 			value = null;
 		}
 		if (value != null && logger.isTraceEnabled()) {
-			logger.trace("Removed value [" + value + "] for key [" + actualKey + "] from thread [" +
-					Thread.currentThread().getName() + "]");
+			logger.trace("Removed value [" + value + "] for key [" + actualKey + "] from thread [" + Thread.currentThread().getName() + "]");
 		}
 		return value;
 	}

@@ -223,6 +223,8 @@ public abstract class AopProxyUtils {
 		if (ObjectUtils.isEmpty(arguments)) {
 			return new Object[0];
 		}
+
+		// 该方法是否有边长参数
 		if (method.isVarArgs()) {
 			if (method.getParameterCount() == arguments.length) {
 				Class<?>[] paramTypes = method.getParameterTypes();

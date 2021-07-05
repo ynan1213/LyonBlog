@@ -93,8 +93,7 @@ public interface HandlerInterceptor {
 	 * that this interceptor has already dealt with the response itself.
 	 * @throws Exception in case of errors
 	 */
-	default boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-			throws Exception {
+	default boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
 		return true;
 	}
@@ -119,8 +118,7 @@ public interface HandlerInterceptor {
 	 * (can also be {@code null})
 	 * @throws Exception in case of errors
 	 */
-	default void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-			@Nullable ModelAndView modelAndView) throws Exception {
+	default void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
 	}
 
 	/**
@@ -144,8 +142,7 @@ public interface HandlerInterceptor {
 	 * include exceptions that have been handled through an exception resolver
 	 * @throws Exception in case of errors
 	 */
-	default void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler,
-			@Nullable Exception ex) throws Exception {
+	default void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) throws Exception {
 	}
 
 }

@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import javax.crypto.Cipher;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.InitializingBean;
@@ -144,8 +145,8 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 	/**
 	 * Set the JDBC DataSource that this instance should manage transactions for.
-	 * <p>This will typically be a locally defined DataSource, for example an
 	 * Apache Commons DBCP connection pool. Alternatively, you can also drive
+	 * <p>This will typically be a locally defined DataSource, for example an
 	 * transactions for a non-XA J2EE DataSource fetched from JNDI. For an XA
 	 * DataSource, use JtaTransactionManager.
 	 * <p>The DataSource specified here should be the target DataSource to manage
@@ -243,7 +244,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 	 */
 	@Override
 	protected Object doGetTransaction() {
-		// DataSourceTransactionManager 事物管理器用 DataSourceTransactionObject 封装一个 connection 对象为 事物对象
+		// DataSourceTransactionManager 事物管理器用 DataSourceTransactionObject 封装一个 connection（具体是ConnectionHolder） 对象为事物对象
 		DataSourceTransactionObject txObject = new DataSourceTransactionObject();
 		txObject.setSavepointAllowed(isNestedTransactionAllowed());
 
@@ -323,7 +324,8 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 	}
 
 	/**
-	 * 挂起事物，就是将 ConnectionHolder 从线程私有域中删除
+	 * 挂起事物，就是将 ConnectionHolder 从线程私有域中删除，但是 ConnectionHolder 并没有被删除，而是保存到挂起的对象中
+	 * 但是 transaction 对应的 DataSourceTransactionObject 对象是没有用了的。
 	 */
 	@Override
 	protected Object doSuspend(Object transaction) {

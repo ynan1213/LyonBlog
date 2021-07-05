@@ -33,8 +33,12 @@ public class MainTest1Anno
 		// 方式三：指定类，无需手动刷新
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(RootConfig.class);
 
-        UserController userController = context.getBean("userController", UserController.class);
-        userController.test();
+        UserController userController = context.getBean(UserController.class);
+
+        // context.getBean("userController", UserController.class);
+		// context.getBean(UserController.class);
+
+		userController.test();
 //		BeanService bean = context.getBean(BeanService.class);
 //		bean.print();
 	}

@@ -1507,8 +1507,7 @@ public class DispatcherServlet extends FrameworkServlet
 				}
 			}
 		}
-		throw new ServletException("No adapter for handler [" + handler +
-				"]: The DispatcherServlet configuration needs to include a HandlerAdapter that supports this handler");
+		throw new ServletException("No adapter for handler [" + handler + "]: The DispatcherServlet configuration needs to include a HandlerAdapter that supports this handler");
 	}
 
 	/**

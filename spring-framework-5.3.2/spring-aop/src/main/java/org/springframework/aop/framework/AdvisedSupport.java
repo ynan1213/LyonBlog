@@ -470,6 +470,12 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 			cached = this.advisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice(this, method, targetClass);
 			this.methodCache.put(cacheKey, cached);
 		}
+
+		// 上面可以写成这样，lambda表达式
+		// this.methodCache.computeIfAbsent(cacheKey, key -> {
+		// 	return this.advisorChainFactory.getInterceptorsAndDynamicInterceptionAdvice(this, method, targetClass);
+		// });
+
 		return cached;
 	}
 

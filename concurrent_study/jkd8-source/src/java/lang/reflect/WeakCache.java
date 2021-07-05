@@ -107,9 +107,7 @@ final class WeakCache<K, P, V> {
         // lazily install the 2nd level valuesMap for the particular cacheKey
         ConcurrentMap<Object, Supplier<V>> valuesMap = map.get(cacheKey);
         if (valuesMap == null) {
-            ConcurrentMap<Object, Supplier<V>> oldValuesMap
-                = map.putIfAbsent(cacheKey,
-                                  valuesMap = new ConcurrentHashMap<>());
+            ConcurrentMap<Object, Supplier<V>> oldValuesMap = map.putIfAbsent(cacheKey, valuesMap = new ConcurrentHashMap<>());
             if (oldValuesMap != null) {
                 valuesMap = oldValuesMap;
             }

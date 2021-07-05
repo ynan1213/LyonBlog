@@ -51,6 +51,7 @@ public abstract class Launcher {
 		 * 		因为SpringBoot FatJar除包含传统Java Jar中的资源外还包含依赖的第三方Jar文件，
 		 * 		其内部的Jar文件是无法被JDK的默认实现sun.net.www.protocol.jar.Handler当做classpath的
 		 * 		所以利用 java.net.URLStreamHandler 的扩展机制注册了SpringBoot的自定义的可以解析嵌套jar的协议。
+		 * 注册一个自定义的Handler，处理“jar：”这样的协议，处理jar in jar 以及加载其他资源
 		 */
 		JarFile.registerUrlProtocolHandler();
 
@@ -107,17 +108,6 @@ public abstract class Launcher {
 	}
 
 	/**
-	 * Create the {@code MainMethodRunner} used to launch the application.
-	 * @param mainClass the main class
-	 * @param args the incoming arguments
-	 * @param classLoader the classloader
-	 * @return the main method runner
-	 */
-	protected MainMethodRunner createMainMethodRunner(String mainClass, String[] args, ClassLoader classLoader) {
-		return new MainMethodRunner(mainClass, args);
-	}
-
-	/**
 	 * Returns the main class that should be launched.
 	 * @return the name of the main class
 	 * @throws Exception if the main class cannot be obtained
@@ -130,6 +120,17 @@ public abstract class Launcher {
 	 * @throws Exception if the class path archives cannot be obtained
 	 */
 	protected abstract List<Archive> getClassPathArchives() throws Exception;
+
+	/**
+	 * Create the {@code MainMethodRunner} used to launch the application.
+	 * @param mainClass the main class
+	 * @param args the incoming arguments
+	 * @param classLoader the classloader
+	 * @return the main method runner
+	 */
+	protected MainMethodRunner createMainMethodRunner(String mainClass, String[] args, ClassLoader classLoader) {
+		return new MainMethodRunner(mainClass, args);
+	}
 
 	protected final Archive createArchive() throws Exception {
 		ProtectionDomain protectionDomain = getClass().getProtectionDomain();

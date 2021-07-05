@@ -105,8 +105,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	 * as far as was possibly statically. Passing an array might be about 10% faster,
 	 * but would complicate the code. And it would work only for static pointcuts.
 	 */
-	protected ReflectiveMethodInvocation(Object proxy, @Nullable Object target, Method method, @Nullable Object[] arguments,
-			@Nullable Class<?> targetClass, List<Object> interceptorsAndDynamicMethodMatchers) {
+	protected ReflectiveMethodInvocation(Object proxy, @Nullable Object target, Method method, @Nullable Object[] arguments, @Nullable Class<?> targetClass, List<Object> interceptorsAndDynamicMethodMatchers) {
 		this.proxy = proxy;
 		this.target = target;
 		this.targetClass = targetClass;
@@ -162,6 +161,8 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 		}
 
 		Object interceptorOrInterceptionAdvice = this.interceptorsAndDynamicMethodMatchers.get(++this.currentInterceptorIndex);
+
+		// 不知道该类型的应用场景
 		if (interceptorOrInterceptionAdvice instanceof InterceptorAndDynamicMethodMatcher) {
 			// Evaluate dynamic method matcher here: static part will already have
 			// been evaluated and found to match.
@@ -236,8 +237,7 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 			return clone;
 		}
 		catch (CloneNotSupportedException ex) {
-			throw new IllegalStateException(
-					"Should be able to clone object of type [" + getClass() + "]: " + ex);
+			throw new IllegalStateException("Should be able to clone object of type [" + getClass() + "]: " + ex);
 		}
 	}
 

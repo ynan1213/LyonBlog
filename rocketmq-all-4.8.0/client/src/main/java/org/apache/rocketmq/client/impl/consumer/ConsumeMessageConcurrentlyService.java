@@ -277,6 +277,9 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService
         }
     }
 
+    // 广播模式，无论是 SUCCESS 还是 LATER 都不做任何处理
+    // 集群模式，如果是 SUCCESS ,从processQueue中删除该消息，更新消息消费进度
+    // 集群模式，如果是 LATER，首先将该消息发送给broker延迟消息，发送失败，延迟5s提交给消费线程池进行消费
     public void processConsumeResult(final ConsumeConcurrentlyStatus status, final ConsumeConcurrentlyContext context, final ConsumeRequest consumeRequest)
     {
         int ackIndex = context.getAckIndex();

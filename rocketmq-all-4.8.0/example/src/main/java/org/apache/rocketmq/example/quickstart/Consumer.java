@@ -18,6 +18,7 @@ package org.apache.rocketmq.example.quickstart;
 
 import java.util.List;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.*;
 import org.apache.rocketmq.client.exception.MQClientException;
@@ -36,6 +37,7 @@ public class Consumer
         System.setProperty("rocketmq.client.logUseSlf4j", "true");
 
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("ns02", "consume-group-001");
+        //DefaultMQPullConsumer pullConsumer = new DefaultMQPullConsumer();
 
         // 消费组模式，集群还是广播，默认集群
         consumer.setMessageModel(MessageModel.CLUSTERING);
@@ -44,6 +46,12 @@ public class Consumer
 
         // 默认是 CONSUME_FROM_LAST_OFFSET
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+
+        // 从指定时间错开始消费
+        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
+        // 必须是按照下面格式   年月日时分秒 如：20200722110701
+        consumer.setConsumeTimestamp("20200722110701");
+
 
         // 可以订阅多个
         consumer.subscribe("TOPIC_01", "*");

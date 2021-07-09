@@ -292,6 +292,7 @@ public abstract class RebalanceImpl
             }
             case CLUSTERING:
             {
+                // topic对应的所有消息队列
                 Set<MessageQueue> mqSet = this.topicSubscribeInfoTable.get(topic);
                 // 向broker查询指定消费者组下的消费者集合
                 List<String> cidAll = this.mQClientFactory.findConsumerIdList(topic, consumerGroup);
@@ -352,8 +353,7 @@ public abstract class RebalanceImpl
                     if (changed)
                     {
                         log.info("rebalanced result changed. allocateMessageQueueStrategyName={}, group={}, topic={}, clientId={}, mqAllSize={}, cidAllSize={}, rebalanceResultSize={}, rebalanceResultSet={}",
-                                strategy.getName(), consumerGroup, topic, this.mQClientFactory.getClientId(), mqSet.size(), cidAll.size(),
-                                allocateResultSet.size(), allocateResultSet);
+                                strategy.getName(), consumerGroup, topic, this.mQClientFactory.getClientId(), mqSet.size(), cidAll.size(), allocateResultSet.size(), allocateResultSet);
                         this.messageQueueChanged(topic, mqSet, allocateResultSet);
                     }
                 }

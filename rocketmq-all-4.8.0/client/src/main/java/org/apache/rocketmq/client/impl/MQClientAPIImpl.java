@@ -586,11 +586,12 @@ public class MQClientAPIImpl
 
                         try
                         {
+                            // 调用业务代码
                             sendCallback.onSuccess(sendResult);
                         } catch (Throwable e)
                         {
                         }
-
+                        // 延迟故障优化
                         producer.updateFaultItem(brokerName, System.currentTimeMillis() - responseFuture.getBeginTimestamp(), false);
                     } catch (Exception e)
                     {

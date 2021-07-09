@@ -49,10 +49,11 @@ import org.springframework.data.repository.Repository;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Inherited
-@SpringBootConfiguration//标记当前类为配置类
+//标记当前类为配置类
+@SpringBootConfiguration
 @EnableAutoConfiguration
-@ComponentScan(excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
-		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
+// excludeFilters表示哪些类不用被扫描到
+@ComponentScan(excludeFilters = { @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class), @Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) })
 public @interface SpringBootApplication {
 
 	/**

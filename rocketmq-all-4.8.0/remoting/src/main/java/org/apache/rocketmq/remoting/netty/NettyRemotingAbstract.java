@@ -475,10 +475,8 @@ public abstract class NettyRemotingAbstract
         }
     }
 
-    public RemotingCommand invokeSyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis)
-            throws InterruptedException, RemotingSendRequestException, RemotingTimeoutException
+    public RemotingCommand invokeSyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis) throws InterruptedException, RemotingSendRequestException, RemotingTimeoutException
     {
-
         // 每个RemotingCommand的opaque都会不一样，AtomicInteger增加
         final int opaque = request.getOpaque();
         try
@@ -573,7 +571,7 @@ public abstract class NettyRemotingAbstract
                 log.warn("send a request command to channel <" + RemotingHelper.parseChannelRemoteAddr(channel) + "> Exception", e);
                 throw new RemotingSendRequestException(RemotingHelper.parseChannelRemoteAddr(channel), e);
             }
-        } else
+        } else // 进入else说明超过了异步并发数，默认65535
         {
             if (timeoutMillis <= 0)
             {

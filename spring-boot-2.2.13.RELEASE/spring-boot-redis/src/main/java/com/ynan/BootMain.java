@@ -3,6 +3,7 @@ package com.ynan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @create: 2021-07-01 21:30
  */
 @SpringBootApplication
+@ComponentScan("xxx")
 public class BootMain
 {
 	public static void main(String[] args)

@@ -355,6 +355,7 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService
 
         if (commitOffset >= 0 && !consumeRequest.getProcessQueue().isDropped())
         {
+            // 更新消费进度
             this.defaultMQPushConsumerImpl.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), commitOffset, false);
         }
 
@@ -540,6 +541,7 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService
                             boolean hasException = false;
                             try
                             {
+                                // 不知道为什么这里还要加个锁？
                                 this.processQueue.getLockConsume().lock();
                                 if (this.processQueue.isDropped())
                                 {

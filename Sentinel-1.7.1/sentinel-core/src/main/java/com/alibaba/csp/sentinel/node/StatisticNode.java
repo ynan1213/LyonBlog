@@ -248,8 +248,7 @@ public class StatisticNode implements Node
     @Override
     public double maxSuccessQps()
     {
-        return (double) rollingCounterInSecond.maxSuccess() * rollingCounterInSecond.getSampleCount()
-                / rollingCounterInSecond.getWindowIntervalInSec();
+        return (double) rollingCounterInSecond.maxSuccess() * rollingCounterInSecond.getSampleCount() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
     @Override

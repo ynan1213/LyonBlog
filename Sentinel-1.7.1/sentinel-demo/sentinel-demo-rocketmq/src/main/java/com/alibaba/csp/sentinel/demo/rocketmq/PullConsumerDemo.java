@@ -64,8 +64,7 @@ public class PullConsumerDemo {
             SINGLE_MQ:
             while (true) {
                 try {
-                    PullResult pullResult =
-                        consumer.pullBlockIfNotFound(mq, null, getMessageQueueOffset(mq), 32);
+                    PullResult pullResult = consumer.pullBlockIfNotFound(mq, null, getMessageQueueOffset(mq), 32);
                     if (pullResult.getMsgFoundList() != null) {
                         for (MessageExt msg : pullResult.getMsgFoundList()) {
                             doSomething(msg);

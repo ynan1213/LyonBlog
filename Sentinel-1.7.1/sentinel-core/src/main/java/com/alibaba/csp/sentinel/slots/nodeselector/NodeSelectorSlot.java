@@ -152,7 +152,8 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object>
          *
          * 这里有两个注意点：
          *   1. 相同的 resource name 使用同一个责任链实例，所以相同的 resource 共享同一个 NodeSelectorSlot
-         *   2. 同一个 resource 但是在不同的 context，不会共享同一个 DefaultNode
+         *   2. 如果context name不一样，不会共享同一个 DefaultNode
+         *   3. context name 不一样，EntranceNode也就不一样，DefaultNode 也不一样
          *
          * 总结：
          *   1. 相同的context name，相同的 resource name，共享同一个 DefaultNode
@@ -173,7 +174,11 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object>
                     cacheMap.putAll(map);
                     cacheMap.put(context.getName(), node);
                     map = cacheMap;
-                    // Build invocation tree
+
+                    // 每执行一次 SphU.entry 都会创建一个 CtEntry，并且将 context 的 curEntry 设置为该 CtEntry
+                    // context.getLastNode() 获取的就是 Context 的 curEntry 的 parent 的 curNode，如果 parent 为null，则返回 context 的 entranceNode
+                    // parent 什么时候被设置的呢？ 当再执行一次 SphU.entry 就会再次创建一个 CtEntry 并组成双向队列
+                    // 然后这里后面的代码还会将创建的node设置为 curEntry 的 curNode，所以下次的 parent 的 curNode就不会为null
                     ((DefaultNode) context.getLastNode()).addChild(node);
                 }
             }

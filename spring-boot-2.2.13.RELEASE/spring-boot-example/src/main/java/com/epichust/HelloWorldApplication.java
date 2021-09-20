@@ -22,7 +22,7 @@ public class HelloWorldApplication
 	public static void main(String[] args)
 	{
 //		System.getProperties().setProperty("spring.profiles.active", "dev");
-		SpringApplication.run(HelloWorldApplication.class, args);
+		ConfigurableApplicationContext applicationContext = SpringApplication.run(HelloWorldApplication.class, args);
 //		SpringApplication.run(HelloWorldApplication.class, new String[] {"--spring.config.location=E:/"});
 //		SpringApplication.run(HelloWorldApplication.class, new String[] {});
 

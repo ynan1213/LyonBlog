@@ -117,6 +117,7 @@ public class ContextUtil
      */
     public static Context enter(String name, String origin)
     {
+        // 不能为 sentinel_default_context
         if (Constants.CONTEXT_DEFAULT_NAME.equals(name))
         {
             throw new ContextNameDefineException("The " + Constants.CONTEXT_DEFAULT_NAME + " can't be permit to defined!");
@@ -133,7 +134,8 @@ public class ContextUtil
             DefaultNode node = localCacheNameMap.get(name);
             if (node == null)
             {
-                // 大于 2000
+                // 大于 2000，代表什么意思呢？ 是线程数不能超过2000吗？
+                // localCacheNameMap的key为 context 的 name，不同线程创建Context但是name可以相同，所以2000不是线程数
                 if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE)
                 {
                     setNullContext();
@@ -155,7 +157,7 @@ public class ContextUtil
                                 // 创建一个新的入口节点
                                 node = new EntranceNode(new StringResourceWrapper(name, EntryType.IN), null);
 
-                                // 加入 HashSet 集合中
+                                // 挂到 ROOT 下面
                                 Constants.ROOT.addChild(node);
 
                                 Map<String, DefaultNode> newMap = new HashMap<>(contextNameNodeMap.size() + 1);
@@ -170,7 +172,7 @@ public class ContextUtil
                     }
                 }
             }
-            // 创建一个新的Context，并设置Context的根节点，即设置EntranceNode
+            // 创建一个新的Context，并设置Context的根节点，即设置 EntranceNode
             context = new Context(node, name);
             context.setOrigin(origin);
             // 将该Context保存到ThreadLocal中去

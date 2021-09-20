@@ -370,6 +370,12 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
          * Returns true if the current thread, when trying to acquire
          * the write lock, and otherwise eligible to do so, should block
          * because of policy for overtaking other waiting threads.
+         *
+         * 非公平模式下，writerShouldBlock直接返回false，说明不需要阻塞；
+         * 而readShouldBlock调用了apparentFirstQueuedIsExcluisve()方法。
+         * 如果等待队列中第一个等待线程想获取写锁，返回true；否则返回false。
+         * 也就说明，如果等待队列中第一个等待线程想获取写锁，那么该读线程应该阻塞。
+         *
          */
         abstract boolean writerShouldBlock();
 
@@ -490,7 +496,7 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
             // 2.获取读锁计数
             int r = sharedCount(c);
 
-            // 3.如果不应该阻塞、且读锁数<MAX_COUNT、且设置同步状态state成功，获取锁成功。
+            // 3.如果不应该阻塞、且读锁数 < MAX_COUNT、且设置同步状态state成功，获取锁成功。
             if (!readerShouldBlock() && r < MAX_COUNT && compareAndSetState(c, c + SHARED_UNIT)) {
 
                 // 如果r=0, 表示，当前线程为第一个获取读锁的线程

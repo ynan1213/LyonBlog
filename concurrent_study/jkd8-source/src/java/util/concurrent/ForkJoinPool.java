@@ -2333,8 +2333,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                 rs = lockRunState();
                 try {
                     if ((rs & STARTED) == 0) {
-                        U.compareAndSwapObject(this, STEALCOUNTER, null,
-                                               new AtomicLong());
+                        U.compareAndSwapObject(this, STEALCOUNTER, null, new AtomicLong());
                         // create workQueues array with size a power of two
                         int p = config & SMASK; // ensure at least 2 slots
                         int n = (p > 1) ? p - 1 : 1;
@@ -2353,8 +2352,7 @@ public class ForkJoinPool extends AbstractExecutorService {
                     int s = q.top;
                     boolean submitted = false; // initial submission or resizing
                     try {                      // locked version of push
-                        if ((a != null && a.length > s + 1 - q.base) ||
-                            (a = q.growArray()) != null) {
+                        if ((a != null && a.length > s + 1 - q.base) || (a = q.growArray()) != null) {
                             int j = (((a.length - 1) & s) << ASHIFT) + ABASE;
                             U.putOrderedObject(a, j, task);
                             U.putOrderedInt(q, QTOP, s + 1);
@@ -2397,16 +2395,19 @@ public class ForkJoinPool extends AbstractExecutorService {
      * @param task the task. Caller must ensure non-null.
      */
     final void externalPush(ForkJoinTask<?> task) {
-        WorkQueue[] ws; WorkQueue q; int m;
+        WorkQueue[] ws;
+        WorkQueue q;
+        int m;
         int r = ThreadLocalRandom.getProbe();
         int rs = runState;
-        if ((ws = workQueues) != null && (m = (ws.length - 1)) >= 0 &&
-            (q = ws[m & r & SQMASK]) != null && r != 0 && rs > 0 &&
-            U.compareAndSwapInt(q, QLOCK, 0, 1)) {
-            ForkJoinTask<?>[] a; int am, n, s;
-            if ((a = q.array) != null &&
-                (am = a.length - 1) > (n = (s = q.top) - q.base)) {
+
+        // workQueues 不为null 、当前线程对应的格子部位null、并且成功给格子加上锁
+        if ((ws = workQueues) != null && (m = (ws.length - 1)) >= 0 && (q = ws[m & r & SQMASK]) != null && r != 0 && rs > 0 && U.compareAndSwapInt(q, QLOCK, 0, 1)) {
+            ForkJoinTask<?>[] a;
+            int am, n, s;
+            if ((a = q.array) != null && (am = a.length - 1) > (n = (s = q.top) - q.base)) {
                 int j = ((am & s) << ASHIFT) + ABASE;
+                // 将任务加入到队列中
                 U.putOrderedObject(a, j, task);
                 U.putOrderedInt(q, QTOP, s + 1);
                 U.putIntVolatile(q, QLOCK, 0);
@@ -2483,8 +2484,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      *         java.lang.RuntimePermission}{@code ("modifyThread")}
      */
     public ForkJoinPool() {
-        this(Math.min(MAX_CAP, Runtime.getRuntime().availableProcessors()),
-             defaultForkJoinWorkerThreadFactory, null, false);
+        this(Math.min(MAX_CAP, Runtime.getRuntime().availableProcessors()), defaultForkJoinWorkerThreadFactory, null, false);
     }
 
     /**
@@ -2529,15 +2529,8 @@ public class ForkJoinPool extends AbstractExecutorService {
      *         because it does not hold {@link
      *         java.lang.RuntimePermission}{@code ("modifyThread")}
      */
-    public ForkJoinPool(int parallelism,
-                        ForkJoinWorkerThreadFactory factory,
-                        UncaughtExceptionHandler handler,
-                        boolean asyncMode) {
-        this(checkParallelism(parallelism),
-             checkFactory(factory),
-             handler,
-             asyncMode ? FIFO_QUEUE : LIFO_QUEUE,
-             "ForkJoinPool-" + nextPoolId() + "-worker-");
+    public ForkJoinPool(int parallelism, ForkJoinWorkerThreadFactory factory, UncaughtExceptionHandler handler, boolean asyncMode) {
+        this(checkParallelism(parallelism), checkFactory(factory), handler, asyncMode ? FIFO_QUEUE : LIFO_QUEUE, "ForkJoinPool-" + nextPoolId() + "-worker-");
         checkPermission();
     }
 
@@ -2559,11 +2552,7 @@ public class ForkJoinPool extends AbstractExecutorService {
      * any security checks or parameter validation.  Invoked directly by
      * makeCommonPool.
      */
-    private ForkJoinPool(int parallelism,
-                         ForkJoinWorkerThreadFactory factory,
-                         UncaughtExceptionHandler handler,
-                         int mode,
-                         String workerNamePrefix) {
+    private ForkJoinPool(int parallelism, ForkJoinWorkerThreadFactory factory, UncaughtExceptionHandler handler, int mode, String workerNamePrefix) {
         this.workerNamePrefix = workerNamePrefix;
         this.factory = factory;
         this.ueh = handler;

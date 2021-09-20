@@ -1307,9 +1307,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             throw new IllegalArgumentException();
         if (workQueue == null || threadFactory == null || handler == null)
             throw new NullPointerException();
-        this.acc = System.getSecurityManager() == null ?
-                null :
-                AccessController.getContext();
+        this.acc = System.getSecurityManager() == null ? null : AccessController.getContext();
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.workQueue = workQueue;

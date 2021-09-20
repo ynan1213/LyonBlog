@@ -30,52 +30,46 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
  * @author renhaojun
  * @author echooymxq
  */
-public class NacosDiscoveryClient implements DiscoveryClient
-{
+public class NacosDiscoveryClient implements DiscoveryClient {
 
-    private static final Logger log = LoggerFactory.getLogger(NacosDiscoveryClient.class);
+	private static final Logger log = LoggerFactory.getLogger(NacosDiscoveryClient.class);
 
-    /**
-     * Nacos Discovery Client Description.
-     */
-    public static final String DESCRIPTION = "Spring Cloud Nacos Discovery Client";
+	/**
+	 * Nacos Discovery Client Description.
+	 */
+	public static final String DESCRIPTION = "Spring Cloud Nacos Discovery Client";
 
-    private NacosServiceDiscovery serviceDiscovery;
+	private NacosServiceDiscovery serviceDiscovery;
 
-    public NacosDiscoveryClient(NacosServiceDiscovery nacosServiceDiscovery)
-    {
-        this.serviceDiscovery = nacosServiceDiscovery;
-    }
+	public NacosDiscoveryClient(NacosServiceDiscovery nacosServiceDiscovery) {
+		this.serviceDiscovery = nacosServiceDiscovery;
+	}
 
-    @Override
-    public String description()
-    {
-        return DESCRIPTION;
-    }
+	@Override
+	public String description() {
+		return DESCRIPTION;
+	}
 
-    @Override
-    public List<ServiceInstance> getInstances(String serviceId)
-    {
-        try
-        {
-            return serviceDiscovery.getInstances(serviceId);
-        } catch (Exception e)
-        {
-            throw new RuntimeException("Can not get hosts from nacos server. serviceId: " + serviceId, e);
-        }
-    }
+	@Override
+	public List<ServiceInstance> getInstances(String serviceId) {
+		try {
+			return serviceDiscovery.getInstances(serviceId);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(
+					"Can not get hosts from nacos server. serviceId: " + serviceId, e);
+		}
+	}
 
-    @Override
-    public List<String> getServices()
-    {
-        try
-        {
-            return serviceDiscovery.getServices();
-        } catch (Exception e)
-        {
-            log.error("get service name from nacos server fail,", e);
-            return Collections.emptyList();
-        }
-    }
+	@Override
+	public List<String> getServices() {
+		try {
+			return serviceDiscovery.getServices();
+		}
+		catch (Exception e) {
+			log.error("get service name from nacos server fail,", e);
+			return Collections.emptyList();
+		}
+	}
 
 }

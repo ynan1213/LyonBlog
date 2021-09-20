@@ -34,143 +34,133 @@ import static org.springframework.util.ReflectionUtils.rethrowRuntimeException;
  * @author xiaojing
  * @author <a href="mailto:mercyblitz@gmail.com">Mercy</a>
  */
-public class NacosServiceRegistry implements ServiceRegistry<Registration>
-{
-    private static final Logger log = LoggerFactory.getLogger(NacosServiceRegistry.class);
+public class NacosServiceRegistry implements ServiceRegistry<Registration> {
 
-    private final NacosDiscoveryProperties nacosDiscoveryProperties;
+	private static final Logger log = LoggerFactory.getLogger(NacosServiceRegistry.class);
 
-    private final NamingService namingService;
+	private final NacosDiscoveryProperties nacosDiscoveryProperties;
 
-    public NacosServiceRegistry(NacosDiscoveryProperties nacosDiscoveryProperties)
-    {
-        this.nacosDiscoveryProperties = nacosDiscoveryProperties;
-        this.namingService = nacosDiscoveryProperties.namingServiceInstance();
-    }
+	private final NamingService namingService;
 
-    @Override
-    public void register(Registration registration)
-    {
-        if (StringUtils.isEmpty(registration.getServiceId()))
-        {
-            log.warn("No service to register for nacos client...");
-            return;
-        }
+	public NacosServiceRegistry(NacosDiscoveryProperties nacosDiscoveryProperties) {
+		this.nacosDiscoveryProperties = nacosDiscoveryProperties;
+		this.namingService = nacosDiscoveryProperties.namingServiceInstance();
+	}
 
-        String serviceId = registration.getServiceId();
-        String group = nacosDiscoveryProperties.getGroup();
+	@Override
+	public void register(Registration registration) {
+		if (StringUtils.isEmpty(registration.getServiceId())) {
+			log.warn("No service to register for nacos client...");
+			return;
+		}
 
-        // 将 Registration 转换成 Instance
-        Instance instance = getNacosInstanceFromRegistration(registration);
-        try
-        {
-            // 将服务注册到注册中心，底层是发送http请求完成注册
-            namingService.registerInstance(serviceId, group, instance);
-            log.info("nacos registry, {} {} {}:{} register finished", group, serviceId, instance.getIp(), instance.getPort());
-        } catch (Exception e)
-        {
-            log.error("nacos registry, {} register failed...{},", serviceId, registration.toString(), e);
-            // rethrow a RuntimeException if the registration is failed.
-            // issue : https://github.com/alibaba/spring-cloud-alibaba/issues/1132
-            rethrowRuntimeException(e);
-        }
-    }
+		String serviceId = registration.getServiceId();
+		String group = nacosDiscoveryProperties.getGroup();
 
-    @Override
-    public void deregister(Registration registration)
-    {
-        log.info("De-registering from Nacos Server now...");
+		// 将 Registration 转换成 Instance
+		Instance instance = getNacosInstanceFromRegistration(registration);
+		try {
+			// 将服务注册到注册中心，底层是发送http请求完成注册
+			namingService.registerInstance(serviceId, group, instance);
+			log.info("nacos registry, {} {} {}:{} register finished", group, serviceId,
+					instance.getIp(), instance.getPort());
+		}
+		catch (Exception e) {
+			log.error("nacos registry, {} register failed...{},", serviceId,
+					registration.toString(), e);
+			// rethrow a RuntimeException if the registration is failed.
+			// issue : https://github.com/alibaba/spring-cloud-alibaba/issues/1132
+			rethrowRuntimeException(e);
+		}
+	}
 
-        if (StringUtils.isEmpty(registration.getServiceId()))
-        {
-            log.warn("No dom to de-register for nacos client...");
-            return;
-        }
+	@Override
+	public void deregister(Registration registration) {
+		log.info("De-registering from Nacos Server now...");
 
-        NamingService namingService = nacosDiscoveryProperties.namingServiceInstance();
-        String serviceId = registration.getServiceId();
-        String group = nacosDiscoveryProperties.getGroup();
+		if (StringUtils.isEmpty(registration.getServiceId())) {
+			log.warn("No dom to de-register for nacos client...");
+			return;
+		}
 
-        try
-        {
-            namingService.deregisterInstance(serviceId, group, registration.getHost(), registration.getPort(), nacosDiscoveryProperties.getClusterName());
-        } catch (Exception e)
-        {
-            log.error("ERR_NACOS_DEREGISTER, de-register failed...{},", registration.toString(), e);
-        }
+		NamingService namingService = nacosDiscoveryProperties.namingServiceInstance();
+		String serviceId = registration.getServiceId();
+		String group = nacosDiscoveryProperties.getGroup();
 
-        log.info("De-registration finished.");
-    }
+		try {
+			namingService.deregisterInstance(serviceId, group, registration.getHost(),
+					registration.getPort(), nacosDiscoveryProperties.getClusterName());
+		}
+		catch (Exception e) {
+			log.error("ERR_NACOS_DEREGISTER, de-register failed...{},",
+					registration.toString(), e);
+		}
 
-    @Override
-    public void close()
-    {
+		log.info("De-registration finished.");
+	}
 
-    }
+	@Override
+	public void close() {
 
-    @Override
-    public void setStatus(Registration registration, String status)
-    {
+	}
 
-        if (!status.equalsIgnoreCase("UP") && !status.equalsIgnoreCase("DOWN"))
-        {
-            log.warn("can't support status {},please choose UP or DOWN", status);
-            return;
-        }
+	@Override
+	public void setStatus(Registration registration, String status) {
 
-        String serviceId = registration.getServiceId();
+		if (!status.equalsIgnoreCase("UP") && !status.equalsIgnoreCase("DOWN")) {
+			log.warn("can't support status {},please choose UP or DOWN", status);
+			return;
+		}
 
-        Instance instance = getNacosInstanceFromRegistration(registration);
+		String serviceId = registration.getServiceId();
 
-        if (status.equalsIgnoreCase("DOWN"))
-        {
-            instance.setEnabled(false);
-        } else
-        {
-            instance.setEnabled(true);
-        }
+		Instance instance = getNacosInstanceFromRegistration(registration);
 
-        try
-        {
-            nacosDiscoveryProperties.namingMaintainServiceInstance().updateInstance(serviceId, instance);
-        } catch (Exception e)
-        {
-            throw new RuntimeException("update nacos instance status fail", e);
-        }
+		if (status.equalsIgnoreCase("DOWN")) {
+			instance.setEnabled(false);
+		}
+		else {
+			instance.setEnabled(true);
+		}
 
-    }
+		try {
+			nacosDiscoveryProperties.namingMaintainServiceInstance()
+					.updateInstance(serviceId, instance);
+		}
+		catch (Exception e) {
+			throw new RuntimeException("update nacos instance status fail", e);
+		}
 
-    @Override
-    public Object getStatus(Registration registration)
-    {
+	}
 
-        String serviceName = registration.getServiceId();
-        try
-        {
-            List<Instance> instances = nacosDiscoveryProperties.namingServiceInstance().getAllInstances(serviceName);
-            for (Instance instance : instances)
-            {
-                if (instance.getIp().equalsIgnoreCase(nacosDiscoveryProperties.getIp()) && instance.getPort() == nacosDiscoveryProperties.getPort())
-                {
-                    return instance.isEnabled() ? "UP" : "DOWN";
-                }
-            }
-        } catch (Exception e)
-        {
-            log.error("get all instance of {} error,", serviceName, e);
-        }
-        return null;
-    }
+	@Override
+	public Object getStatus(Registration registration) {
 
-    private Instance getNacosInstanceFromRegistration(Registration registration)
-    {
-        Instance instance = new Instance();
-        instance.setIp(registration.getHost());
-        instance.setPort(registration.getPort());
-        instance.setWeight(nacosDiscoveryProperties.getWeight());
-        instance.setClusterName(nacosDiscoveryProperties.getClusterName());
-        instance.setMetadata(registration.getMetadata());
-        return instance;
-    }
+		String serviceName = registration.getServiceId();
+		try {
+			List<Instance> instances = nacosDiscoveryProperties.namingServiceInstance()
+					.getAllInstances(serviceName);
+			for (Instance instance : instances) {
+				if (instance.getIp().equalsIgnoreCase(nacosDiscoveryProperties.getIp())
+						&& instance.getPort() == nacosDiscoveryProperties.getPort()) {
+					return instance.isEnabled() ? "UP" : "DOWN";
+				}
+			}
+		}
+		catch (Exception e) {
+			log.error("get all instance of {} error,", serviceName, e);
+		}
+		return null;
+	}
+
+	private Instance getNacosInstanceFromRegistration(Registration registration) {
+		Instance instance = new Instance();
+		instance.setIp(registration.getHost());
+		instance.setPort(registration.getPort());
+		instance.setWeight(nacosDiscoveryProperties.getWeight());
+		instance.setClusterName(nacosDiscoveryProperties.getClusterName());
+		instance.setMetadata(registration.getMetadata());
+		return instance;
+	}
 
 }

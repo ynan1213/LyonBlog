@@ -14,7 +14,9 @@ public class Demo01
     {
         Jedis jedis = new Jedis("localhost", 6379);
 
+        // setnx：SET if Not eXists
         Long result = jedis.setnx("key", "on");
+
         if (result < 1)
         {
             System.out.println("未获取到锁");

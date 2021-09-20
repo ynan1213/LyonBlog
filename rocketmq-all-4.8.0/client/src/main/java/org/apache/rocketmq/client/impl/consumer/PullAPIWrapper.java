@@ -111,6 +111,7 @@ public class PullAPIWrapper
                 {
                     msg.setTransactionId(msg.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX));
                 }
+                // 每条消息都可以取到当前队列的 MaxOffset 和 MinOffset
                 MessageAccessor.putProperty(msg, MessageConst.PROPERTY_MIN_OFFSET, Long.toString(pullResult.getMinOffset()));
                 MessageAccessor.putProperty(msg, MessageConst.PROPERTY_MAX_OFFSET, Long.toString(pullResult.getMaxOffset()));
                 msg.setBrokerName(mq.getBrokerName());

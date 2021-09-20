@@ -42,13 +42,14 @@ import com.alibaba.csp.sentinel.util.function.Function;
 public class FlowRuleChecker
 {
 
-    public void checkFlow(Function<String, Collection<FlowRule>> ruleProvider, ResourceWrapper resource,
-                          Context context, DefaultNode node, int count, boolean prioritized) throws BlockException
+    public void checkFlow(Function<String, Collection<FlowRule>> ruleProvider, ResourceWrapper resource, Context context, DefaultNode node, int count, boolean prioritized) throws BlockException
     {
         if (ruleProvider == null || resource == null)
         {
             return;
         }
+
+        // 同一个资源可以创建多条限流规则，对该资源的所有限流规则依次遍历，有一条不通过则抛异常
         Collection<FlowRule> rules = ruleProvider.apply(resource.getName());
         if (rules != null)
         {
@@ -161,8 +162,8 @@ public class FlowRuleChecker
         {
             /**
              * 如果策略是STRATEGY_DIRECT(调用方限流），则限流节点是originNode；
-             * 若是限流策略是STRATEGY_RELATE(关联限流），则限流节点是refResource的clusterNode；
-             * 若是限流策略是STRATEGY_CHAIN(链路限流），并且refResource等于contextName，则限流节点就是node。
+             * 如果限流策略是STRATEGY_RELATE(关联限流），则限流节点是refResource的clusterNode；
+             * 如果限流策略是STRATEGY_CHAIN(链路限流），并且refResource等于contextName，则限流节点就是node。
              */
             if (strategy == RuleConstant.STRATEGY_DIRECT)
             {

@@ -14,5 +14,7 @@ public class ThreadLocalRandomMain
     {
         ThreadLocalRandom random = ThreadLocalRandom.current();
 
+        random.nextInt();
+
     }
 }

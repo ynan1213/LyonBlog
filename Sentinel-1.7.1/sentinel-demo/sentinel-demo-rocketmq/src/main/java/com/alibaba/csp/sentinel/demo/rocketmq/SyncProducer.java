@@ -24,15 +24,12 @@ public class SyncProducer {
 
     public static void main(String[] args) throws Exception {
         // Instantiate with a producer group name.
-        DefaultMQProducer producer = new
-            DefaultMQProducer(Constants.TEST_GROUP_NAME);
+        DefaultMQProducer producer = new DefaultMQProducer(Constants.TEST_GROUP_NAME);
         // Launch the instance.
         producer.start();
         for (int i = 0; i < 1000; i++) {
             // Create a message instance, specifying topic, tag and message body.
-            Message msg = new Message(Constants.TEST_TOPIC_NAME, "TagA",
-                ("Hello RocketMQ From Sentinel " + i).getBytes(RemotingHelper.DEFAULT_CHARSET)
-            );
+            Message msg = new Message(Constants.TEST_TOPIC_NAME, "TagA", ("Hello RocketMQ From Sentinel " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
             // Call send message to deliver message to one of brokers.
             SendResult sendResult = producer.send(msg);
             System.out.printf("%s%n", sendResult);

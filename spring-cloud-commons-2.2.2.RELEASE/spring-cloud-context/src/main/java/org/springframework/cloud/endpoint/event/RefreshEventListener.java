@@ -48,8 +48,7 @@ public class RefreshEventListener implements SmartApplicationListener {
 
 	@Override
 	public boolean supportsEventType(Class<? extends ApplicationEvent> eventType) {
-		return ApplicationReadyEvent.class.isAssignableFrom(eventType)
-				|| RefreshEvent.class.isAssignableFrom(eventType);
+		return ApplicationReadyEvent.class.isAssignableFrom(eventType) || RefreshEvent.class.isAssignableFrom(eventType);
 	}
 
 	@Override

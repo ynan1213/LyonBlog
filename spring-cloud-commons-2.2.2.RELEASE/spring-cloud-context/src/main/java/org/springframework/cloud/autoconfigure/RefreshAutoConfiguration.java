@@ -62,8 +62,7 @@ import org.springframework.util.StringUtils;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(RefreshScope.class)
-@ConditionalOnProperty(name = RefreshAutoConfiguration.REFRESH_SCOPE_ENABLED,
-		matchIfMissing = true)
+@ConditionalOnProperty(name = RefreshAutoConfiguration.REFRESH_SCOPE_ENABLED, matchIfMissing = true)
 @AutoConfigureBefore(HibernateJpaAutoConfiguration.class)
 public class RefreshAutoConfiguration {
 
@@ -96,8 +95,7 @@ public class RefreshAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public ContextRefresher contextRefresher(ConfigurableApplicationContext context,
-			RefreshScope scope) {
+	public ContextRefresher contextRefresher(ConfigurableApplicationContext context, RefreshScope scope) {
 		return new ContextRefresher(context, scope);
 	}
 
@@ -128,8 +126,7 @@ public class RefreshAutoConfiguration {
 	}
 
 	@Component
-	protected static class RefreshScopeBeanDefinitionEnhancer
-			implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
+	protected static class RefreshScopeBeanDefinitionEnhancer implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
 
 		private Environment environment;
 

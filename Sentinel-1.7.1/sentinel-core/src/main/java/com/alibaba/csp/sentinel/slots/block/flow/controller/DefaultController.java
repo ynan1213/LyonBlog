@@ -53,7 +53,7 @@ public class DefaultController implements TrafficShapingController
     @Override
     public boolean canPass(Node node, int acquireCount, boolean prioritized)
     {
-        // 当前时间窗口内已创建的线程数量(FLOW_GRADE_THREAD) 或已通过的请求个数(FLOW_GRADE_QPS)
+        // 当前时间窗口内已创建的线程数量(FLOW_GRADE_THREAD) 或 已通过的请求个数(FLOW_GRADE_QPS)
         int curCount = avgUsedTokens(node);
         if (curCount + acquireCount > count)
         {

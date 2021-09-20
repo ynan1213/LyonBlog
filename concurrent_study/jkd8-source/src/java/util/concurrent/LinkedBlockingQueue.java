@@ -77,8 +77,7 @@ import java.util.function.Consumer;
  * @author Doug Lea
  * @param <E> the type of elements held in this collection
  */
-public class LinkedBlockingQueue<E> extends AbstractQueue<E>
-        implements BlockingQueue<E>, java.io.Serializable {
+public class LinkedBlockingQueue<E> extends AbstractQueue<E> implements BlockingQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = -6903933977591709194L;
 
     /*
@@ -346,10 +345,14 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
              * signalled if it ever changes from capacity. Similarly
              * for all other uses of count in other wait guards.
              */
+            // 判断队列是否已满，如果已满阻塞等待
             while (count.get() == capacity) {
                 notFull.await();
             }
+
+            // 把node放入队列中
             enqueue(node);
+
             c = count.getAndIncrement();
             if (c + 1 < capacity)
                 notFull.signal();
@@ -369,8 +372,7 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
      * @throws InterruptedException {@inheritDoc}
      * @throws NullPointerException {@inheritDoc}
      */
-    public boolean offer(E e, long timeout, TimeUnit unit)
-        throws InterruptedException {
+    public boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException {
 
         if (e == null) throw new NullPointerException();
         long nanos = unit.toNanos(timeout);
@@ -417,6 +419,8 @@ public class LinkedBlockingQueue<E> extends AbstractQueue<E>
         final ReentrantLock putLock = this.putLock;
         putLock.lock();
         try {
+            // 队列有可用空间，放入node节点，判断放入元素后是否还有可用空间，
+            // 如果有，唤醒下一个添加线程进行添加操作。
             if (count.get() < capacity) {
                 enqueue(node);
                 c = count.getAndIncrement();

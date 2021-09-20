@@ -147,8 +147,7 @@ public class AdminBrokerProcessor extends AsyncNettyRequestProcessor implements 
     }
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx,
-        RemotingCommand request) throws RemotingCommandException {
+    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException {
         switch (request.getCode()) {
             case RequestCode.UPDATE_AND_CREATE_TOPIC:
                 return this.updateAndCreateTopic(ctx, request);
@@ -983,10 +982,8 @@ public class AdminBrokerProcessor extends AsyncNettyRequestProcessor implements 
         return response;
     }
 
-    public RemotingCommand resetOffset(ChannelHandlerContext ctx,
-        RemotingCommand request) throws RemotingCommandException {
-        final ResetOffsetRequestHeader requestHeader =
-            (ResetOffsetRequestHeader) request.decodeCommandCustomHeader(ResetOffsetRequestHeader.class);
+    public RemotingCommand resetOffset(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException {
+        final ResetOffsetRequestHeader requestHeader = (ResetOffsetRequestHeader) request.decodeCommandCustomHeader(ResetOffsetRequestHeader.class);
         log.info("[reset-offset] reset offset started by {}. topic={}, group={}, timestamp={}, isForce={}",
             RemotingHelper.parseChannelRemoteAddr(ctx.channel()), requestHeader.getTopic(), requestHeader.getGroup(),
             requestHeader.getTimestamp(), requestHeader.isForce());

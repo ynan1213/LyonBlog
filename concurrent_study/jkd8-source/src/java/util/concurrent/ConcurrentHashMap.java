@@ -680,6 +680,14 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
      * never be used in index calculations because of table bounds.
      */
     static final int spread(int h) {
+        /**
+         * 和hashMap的区别是这里还 & HASH_BITS，为什么要 & HASH_BITS一个呢？
+         *  0x7fffffff = 0111 1111 1111 1111 1111 1111 1111 1111，可以发现，任何数与0x7fffffff进行&操作，值不会变，只有结果一定是正数
+         *  为什么这里计算的hash要取正数呢？
+         *
+         *  因为这里计算的hash是要存储到Node的hash属性中的
+         *  ForwardingNode的hash为-1，TreeBin的hash为-2
+         */
         return (h ^ (h >>> 16)) & HASH_BITS;
     }
 
@@ -806,7 +814,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
      *
      *   0 代表数组未初始化，且数组容量默认为16
      *  -1 代表数组正在初始化
-     *  -N 数组正在扩容，表示此时有n-1个线程正在共同完成数组的扩容
+     *  -N 数组正在扩容，表示此时有n-1个线程正在共同完成数组的扩容，前面是错误的：取-N对应的二进制的低16位数值为M，此时有M-1个线程进行扩容。
      * 正数 如果数组未初始化，记录的是数组的初始容量，如果数组已经初始化，记录的是数组的扩容阈值，默认是table大小的0.75倍，（n - (n >>> 2)）。
      *
      *  //如果在实例化对象的时候指定了容量，则初始化sizeCtl
@@ -911,15 +919,13 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
      * negative or the load factor or concurrencyLevel are
      * nonpositive
      */
-    public ConcurrentHashMap(int initialCapacity,
-                             float loadFactor, int concurrencyLevel) {
+    public ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
         if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0)
             throw new IllegalArgumentException();
         if (initialCapacity < concurrencyLevel)   // Use at least as many bins
             initialCapacity = concurrencyLevel;   // as estimated threads
         long size = (long)(1.0 + (long)initialCapacity / loadFactor);
-        int cap = (size >= (long)MAXIMUM_CAPACITY) ?
-            MAXIMUM_CAPACITY : tableSizeFor((int)size);
+        int cap = (size >= (long)MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : tableSizeFor((int)size);
         this.sizeCtl = cap;
     }
 
@@ -958,7 +964,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
         K ek;
         int h = spread(key.hashCode());
 
+        // tabAt 可以保证获取到的node是最新的
         if ((tab = table) != null && (n = tab.length) > 0 && (e = tabAt(tab, (n - 1) & h)) != null) {
+
             // e.hash没有被volatile修饰
             if ((eh = e.hash) == h) {
                 if ((ek = e.key) == key || (ek != null && key.equals(ek)))
@@ -1088,7 +1096,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
                 synchronized (f) {
                     // 再判断一下tabAt(tab, i) == f，主要作用是tab是一个volatile修饰的对所有线程可见的共享变量，在synchronized上锁成功之前其他线程有可能对tab做了操作
                     if (tabAt(tab, i) == f) {
-                        // 取出来的元素的hash值大于0，当转换为树之后，hash值为-2
+                        // 取出来的元素的hash值大于0，说明当前是链表，因为当转换为树之后，hash值为-2
                         if (fh >= 0) {
                             binCount = 1;
                             for (Node<K,V> e = f;; ++binCount) {
@@ -2227,7 +2235,9 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
      * 在转移的时候放在头部的节点，是一个空节点
      */
     static final class ForwardingNode<K,V> extends Node<K,V> {
+
         final Node<K,V>[] nextTable;
+
         ForwardingNode(Node<K,V>[] tab) {
             super(MOVED, null, null, null);
             this.nextTable = tab;
@@ -2288,8 +2298,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
     /**
      * 初始化数组table，
      * 如果sizeCtl小于0，说明别的数组正在进行初始化，则让出执行权
-     * 如果sizeCtl大于0的话，则初始化一个大小为sizeCtl的数组
-     * 否则的话初始化一个默认大小(16)的数组
+     * 如果 sizeCtl 大于0的话（因为构造函数的初始大小首先存到了sizeCtl中），则初始化一个大小为sizeCtl的数组
+     * 如果sizeCtl大于等于0，说明构造函数没有指定大小，初始化一个默认大小(16)的数组
      * 然后设置sizeCtl的值为数组长度的3/4
      */
     private final Node<K,V>[] initTable() {
@@ -2353,6 +2363,10 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
              *  3. 通过CAS修改CounterCell随机位置的值，如果修改失败说明出现并发情况（这里又用到了一种巧妙的方法），调用fullAndCount
              *
              *   Random在线程并发的时候会有性能问题以及可能会产生相同的随机数,ThreadLocalRandom.getProbe可以解决这个问题，并且性能要比Random高
+             *   看错了，ThreadLocalRandom.getProbe()不是获取随机数， PROBE 表示的是 Thread 类 threadLocalRandomProbe 字段的偏移量。
+             *   所以 getProbe 方法的功能就是简单的返回当前线程 threadLocalRandomProbe 字段的值。
+             *   SEED 和 PROBE 只有在 ThreadLocalRandom#localInit方法才会被初始化，什么时候才会初始化呢？
+             *   下面的fullAddCount方法就有调用
              */
             if (as == null || (m = as.length - 1) < 0 || (a = as[ThreadLocalRandom.getProbe() & m]) == null || !(uncontended = U.compareAndSwapLong(a, CELLVALUE, v = a.value, v + x))) {
                 // 这里的实现和LondAdder是一样的
@@ -2372,18 +2386,25 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
             int n, sc;
             // 超过阈值，扩容
             while (s >= (long)(sc = sizeCtl) && (tab = table) != null && (n = tab.length) < MAXIMUM_CAPACITY) {
+                // 不明白这个是什么意思
                 int rs = resizeStamp(n);
+
                 // 其它线程进来，如果SIZECTL小于0，说明有其它线程正在扩容
                 if (sc < 0) {
                     if ((sc >>> RESIZE_STAMP_SHIFT) != rs || sc == rs + 1 || sc == rs + MAX_RESIZERS || (nt = nextTable) == null || transferIndex <= 0)
                         break;
+                    // 这是将SIZECTL+1，加在了低16上，也就是扩容线程数+1
                     if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1))
+                        // 协助扩容，第二个参数传入的是nextTable
                         transfer(tab, nt);
                 }
-                // 将 SIZECTL 的内容改成小于0的值，然后进行扩容
-                else if (U.compareAndSwapInt(this, SIZECTL, sc, (rs << RESIZE_STAMP_SHIFT) + 2))
-                    transfer(tab, null);
 
+                // 将 SIZECTL 的内容改成小于0的值，然后进行扩容
+                // 执行rs<<RESIZE<STAMP_SHIFT+2赋值操作，这个结果值是一个负数，表示当前正在执行扩容操作的线程数量 ??? 不是
+                // 小刘源码视频：这里计算完，SIZECTL一定是个负数，高16位为扩容标识戳，低16位为扩容线程数+1，所以这里的低16位为2，标识线程数为2-1
+                else if (U.compareAndSwapInt(this, SIZECTL, sc, (rs << RESIZE_STAMP_SHIFT) + 2))
+                    // 调用transfer方法进行真正的扩容操作，主线程扩容第二个参数传入的是null
+                    transfer(tab, null);
                 s = sumCount();
             }
         }
@@ -2490,8 +2511,11 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
      * 把数组中的节点复制到新的数组的相同位置，或者移动到扩张部分的相同位置
      * 在这里首先会计算一个步长，表示一个线程处理的数组长度，用来控制对CPU的使用，
      * 每个CPU最少处理16个长度的数组元素,也就是说，如果一个数组的长度只有16，那只有一个线程会对其进行扩容的复制移动操作
-     * 扩容的时候会一直遍历，知道复制完所有节点，没处理一个节点的时候会在链表的头部设置一个fwd节点，这样其他线程就会跳过他，
+     * 扩容的时候会一直遍历，知道复制完所有节点，每处理一个节点的时候会在链表的头部设置一个fwd节点，这样其他线程就会跳过他，
      * 复制后在新数组中的链表不是绝对的反序的
+     *
+     * 注意：第二个参数是新数组，只有当扩容线程进来的时候是null，协助扩容的线程进来一定不为null；
+     *
      */
     private final void transfer(Node<K,V>[] tab, Node<K,V>[] nextTab) {
         int n = tab.length, stride;
@@ -2500,6 +2524,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
         if ((stride = (NCPU > 1) ? (n >>> 3) / NCPU : n) < MIN_TRANSFER_STRIDE)
             stride = MIN_TRANSFER_STRIDE; // subdivide range
 
+        // 判断新的数组是否为null，为空则进行创建，比如数组原来的大小是16,2的N次幂，扩容也需要双倍扩容
         if (nextTab == null) {            // initiating
             try {
                 @SuppressWarnings("unchecked")
@@ -2515,9 +2540,12 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
             // n是原数组的大小，赋值给transferIndex
             transferIndex = n;
         }
+
         // 新数组大小
         int nextn = nextTab.length;
+
         ForwardingNode<K,V> fwd = new ForwardingNode<K,V>(nextTab);
+
         boolean advance = true;
         boolean finishing = false; // to ensure sweep before committing nextTab
 
@@ -2527,20 +2555,25 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
             // 这个while循环计算线程负责哪个区间
             while (advance) {
                 int nextIndex, nextBound;
+
                 if (--i >= bound || finishing)
                     advance = false;
+
                 else if ((nextIndex = transferIndex) <= 0) {
                     i = -1;
                     advance = false;
                 }
                 // 首次来这里
-                // transferIndex是原数组的长度，这里将transferIndex的值减少stride个长度，代表当前线程处理这么多内容
+                // transferIndex 记录的是原数组的长度，这里将 transferIndex 的值减少stride个长度，代表当前线程处理这么多内容
                 else if (U.compareAndSwapInt(this, TRANSFERINDEX, nextIndex, nextBound = (nextIndex > stride ? nextIndex - stride : 0))) {
+                    // 此时 nextBound = 原数组的长度 - stride（16）
                     bound = nextBound;
+                    // i = transferIndex（数组长度） - 1
                     i = nextIndex - 1;
                     advance = false;
                 }
             }
+
             if (i < 0 || i >= n || i + n >= nextn) {
                 int sc;
                 if (finishing) {
@@ -2604,8 +2637,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
                             int lc = 0, hc = 0;
                             for (Node<K,V> e = t.first; e != null; e = e.next) {
                                 int h = e.hash;
-                                TreeNode<K,V> p = new TreeNode<K,V>
-                                    (h, e.key, e.val, null, null);
+                                TreeNode<K,V> p = new TreeNode<K,V>(h, e.key, e.val, null, null);
                                 if ((h & n) == 0) {
                                     if ((p.prev = loTail) == null)
                                         lo = p;
@@ -2645,7 +2677,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V> implements Concurre
      * A padded cell for distributing counts.  Adapted from LongAdder
      * and Striped64.  See their internal docs for explanation.
      */
-    @sun.misc.Contended static final class CounterCell {
+    @sun.misc.Contended
+    static final class CounterCell {
         volatile long value;
         CounterCell(long x) { value = x; }
     }

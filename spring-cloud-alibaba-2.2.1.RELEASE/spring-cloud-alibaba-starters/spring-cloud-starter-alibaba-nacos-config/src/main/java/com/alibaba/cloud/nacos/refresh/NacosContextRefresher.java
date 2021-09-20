@@ -49,8 +49,7 @@ import org.springframework.context.ApplicationListener;
 public class NacosContextRefresher implements ApplicationListener<ApplicationReadyEvent>, ApplicationContextAware
 {
 
-    private final static Logger log = LoggerFactory
-            .getLogger(NacosContextRefresher.class);
+    private final static Logger log = LoggerFactory.getLogger(NacosContextRefresher.class);
 
     private static final AtomicLong REFRESH_COUNT = new AtomicLong(0);
 
@@ -130,23 +129,18 @@ public class NacosContextRefresher implements ApplicationListener<ApplicationRea
     private void registerNacosListener(final String groupKey, final String dataKey)
     {
         String key = NacosPropertySourceRepository.getMapKey(dataKey, groupKey);
-        Listener listener = listenerMap.computeIfAbsent(key,
-                lst -> new AbstractSharedListener()
+        Listener listener = listenerMap.computeIfAbsent(key, lst -> new AbstractSharedListener()
                 {
                     @Override
-                    public void innerReceive(String dataId, String group,
-                                             String configInfo)
+                    public void innerReceive(String dataId, String group, String configInfo)
                     {
                         refreshCountIncrement();
                         nacosRefreshHistory.addRefreshRecord(dataId, group, configInfo);
                         // todo feature: support single refresh for listening
-                        applicationContext.publishEvent(
-                                new RefreshEvent(this, null, "Refresh Nacos config"));
+                        applicationContext.publishEvent(new RefreshEvent(this, null, "Refresh Nacos config"));
                         if (log.isDebugEnabled())
                         {
-                            log.debug(String.format(
-                                    "Refresh Nacos config group=%s,dataId=%s,configInfo=%s",
-                                    group, dataId, configInfo));
+                            log.debug(String.format("Refresh Nacos config group=%s,dataId=%s,configInfo=%s", group, dataId, configInfo));
                         }
                     }
                 });
@@ -155,9 +149,7 @@ public class NacosContextRefresher implements ApplicationListener<ApplicationRea
             configService.addListener(dataKey, groupKey, listener);
         } catch (NacosException e)
         {
-            log.warn(String.format(
-                    "register fail for nacos listener ,dataId=[%s],group=[%s]", dataKey,
-                    groupKey), e);
+            log.warn(String.format("register fail for nacos listener ,dataId=[%s],group=[%s]", dataKey, groupKey), e);
         }
     }
 

@@ -6,12 +6,22 @@ public class HashMapMain
 {
     public static void main(String[] args)
     {
-        HashMap map = new HashMap();
+        HashMap map = new HashMap(5);
 
-        map.put(null, "xxx");
-        map.put(null, "yyy");
-        System.out.println(map.size());
-        System.out.println(map.get(null));
+        map.put("asdsadsadsa", 111);
+        map.put("123", 111);
+        map.put(123, 111);
+        map.put(0, 111);
+        map.put("a", 111);
+        map.put("asdsadsadsa", 111);
+
+        A a = new  A();
+
 
     }
+
+}
+
+class A{
+
 }

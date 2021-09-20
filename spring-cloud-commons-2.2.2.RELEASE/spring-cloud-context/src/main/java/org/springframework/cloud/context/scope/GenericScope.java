@@ -70,8 +70,7 @@ import org.springframework.util.StringUtils;
  * @since 3.1
  *
  */
-public class GenericScope implements Scope, BeanFactoryPostProcessor,
-		BeanDefinitionRegistryPostProcessor, DisposableBean {
+public class GenericScope implements Scope, BeanFactoryPostProcessor, BeanDefinitionRegistryPostProcessor, DisposableBean {
 
 	/**
 	 * Prefix for the scoped target.
@@ -80,8 +79,7 @@ public class GenericScope implements Scope, BeanFactoryPostProcessor,
 
 	private static final Log logger = LogFactory.getLog(GenericScope.class);
 
-	private BeanLifecycleWrapperCache cache = new BeanLifecycleWrapperCache(
-			new StandardScopeCache());
+	private BeanLifecycleWrapperCache cache = new BeanLifecycleWrapperCache(new StandardScopeCache());
 
 	private String name = "generic";
 
@@ -179,8 +177,7 @@ public class GenericScope implements Scope, BeanFactoryPostProcessor,
 
 	@Override
 	public Object get(String name, ObjectFactory<?> objectFactory) {
-		BeanLifecycleWrapper value = this.cache.put(name,
-				new BeanLifecycleWrapper(name, objectFactory));
+		BeanLifecycleWrapper value = this.cache.put(name, new BeanLifecycleWrapper(name, objectFactory));
 		this.locks.putIfAbsent(name, new ReentrantReadWriteLock());
 		try {
 			return value.getBean();

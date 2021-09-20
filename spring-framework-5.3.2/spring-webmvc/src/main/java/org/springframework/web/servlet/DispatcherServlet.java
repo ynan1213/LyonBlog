@@ -1676,10 +1676,8 @@ public class DispatcherServlet extends FrameworkServlet
 		return null;
 	}
 
-	private void triggerAfterCompletion(HttpServletRequest request, HttpServletResponse response,
-										@Nullable HandlerExecutionChain mappedHandler, Exception ex) throws Exception
+	private void triggerAfterCompletion(HttpServletRequest request, HttpServletResponse response, @Nullable HandlerExecutionChain mappedHandler, Exception ex) throws Exception
 	{
-
 		if (mappedHandler != null)
 		{
 			mappedHandler.triggerAfterCompletion(request, response, ex);

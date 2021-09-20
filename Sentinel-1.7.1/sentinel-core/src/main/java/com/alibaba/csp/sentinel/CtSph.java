@@ -180,8 +180,7 @@ public class CtSph implements Sph
          * 如果正确返回了 Entry ，那表示调用者可以正常访问被 Sentinel 保护的后方服务了，否则 Sentinel 会抛出一个BlockException
          *
          * 1.每执行一次SphU.entry()，都会创建一个对应的 CtEntry ，然后设置 context 的 curEntry 为此 CtEntry
-         * 2.如果先判断的 context 的curEntry不为空，则与当前的CtEntry组成双向队列，什么时候context的curEntry不为空的？
-         *           先执行 SphU.entry("xxx")，再执行一次 SphU.entry("yyy")
+         * 2.如果先判断的 context 的curEntry不为空，则与当前的CtEntry组成双向队列，什么时候context的curEntry不为空的？ 先执行 SphU.entry("xxx")，再执行一次 SphU.entry("yyy")
          */
         Entry e = new CtEntry(resourceWrapper, chain, context);
         try

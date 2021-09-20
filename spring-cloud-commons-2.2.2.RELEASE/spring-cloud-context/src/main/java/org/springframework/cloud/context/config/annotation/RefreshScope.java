@@ -44,6 +44,12 @@ public @interface RefreshScope {
 	/**
 	 * @see Scope#proxyMode()
 	 * @return proxy mode
+	 *
+	 * 	DEFAULT			不使用代理。(默认)
+	 *  NO				不使用代理，等价于DEFAULT。
+	 *  INTERFACES		使用基于接口的代理(jdk dynamic proxy)。
+	 *  TARGET_CLASS	使用基于类的代理(cglib)。
+	 *
 	 */
 	ScopedProxyMode proxyMode() default ScopedProxyMode.TARGET_CLASS;
 

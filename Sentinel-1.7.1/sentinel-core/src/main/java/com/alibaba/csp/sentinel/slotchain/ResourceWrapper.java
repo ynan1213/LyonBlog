@@ -28,7 +28,6 @@ import com.alibaba.csp.sentinel.util.AssertUtil;
 public abstract class ResourceWrapper
 {
     protected final String name;
-
     protected final EntryType entryType;
     protected final int resourceType;
 

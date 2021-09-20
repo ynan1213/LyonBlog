@@ -30,20 +30,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnDiscoveryEnabled
 @ConditionalOnNacosDiscoveryEnabled
-public class NacosDiscoveryAutoConfiguration
-{
+public class NacosDiscoveryAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    public NacosDiscoveryProperties nacosProperties()
-    {
-        return new NacosDiscoveryProperties();
-    }
+	@Bean
+	@ConditionalOnMissingBean
+	public NacosDiscoveryProperties nacosProperties() {
+		return new NacosDiscoveryProperties();
+	}
 
-    @Bean
-    @ConditionalOnMissingBean
-    public NacosServiceDiscovery nacosServiceDiscovery(NacosDiscoveryProperties discoveryProperties)
-    {
-        return new NacosServiceDiscovery(discoveryProperties);
-    }
+	@Bean
+	@ConditionalOnMissingBean
+	public NacosServiceDiscovery nacosServiceDiscovery(
+			NacosDiscoveryProperties discoveryProperties) {
+		return new NacosServiceDiscovery(discoveryProperties);
+	}
+
 }

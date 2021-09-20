@@ -136,6 +136,7 @@ public abstract class LeapArray<T>
 
         // 根据当前时间，算出该时间的timeId，并根据timeId算出当前窗口在采样窗口数组中的索引idx
         int idx = calculateTimeIdx(timeMillis);
+
         // 根据当前时间算出当前窗口的应该对应的开始时间time，以毫秒为单位
         long windowStart = calculateWindowStart(timeMillis);
 

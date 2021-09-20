@@ -68,7 +68,7 @@ public class RateLimiterController implements TrafficShapingController
         long currentTime = TimeUtil.currentTimeMillis();
 
         // 首先算出每一个请求之间最小的间隔，时间单位为毫秒。
-        // 例如 count 设置为 1000,表示一秒可以通过 1000个请求，匀速排队，那每个请求的间隔为 1 / 1000(s)，
+        // 例如 count 设置为 1000，表示一秒可以通过 1000个请求，匀速排队，那每个请求的间隔为 1 / 1000(s)，
         // 乘以1000将时间单位转换为毫秒，如果一次需要2个令牌，则其间隔时间为2ms，用 costTime 表示
         long costTime = Math.round(1.0 * (acquireCount) / count * 1000);
 

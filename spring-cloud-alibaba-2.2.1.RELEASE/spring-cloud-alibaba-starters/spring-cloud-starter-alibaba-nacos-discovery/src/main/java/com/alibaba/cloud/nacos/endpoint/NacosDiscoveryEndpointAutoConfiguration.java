@@ -38,22 +38,22 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(Endpoint.class)
 @ConditionalOnNacosDiscoveryEnabled
-public class NacosDiscoveryEndpointAutoConfiguration
-{
+public class NacosDiscoveryEndpointAutoConfiguration {
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnEnabledEndpoint
-    public NacosDiscoveryEndpoint nacosDiscoveryEndpoint(NacosDiscoveryProperties nacosDiscoveryProperties)
-    {
-        return new NacosDiscoveryEndpoint(nacosDiscoveryProperties);
-    }
+	@Bean
+	@ConditionalOnMissingBean
+	@ConditionalOnEnabledEndpoint
+	public NacosDiscoveryEndpoint nacosDiscoveryEndpoint(
+			NacosDiscoveryProperties nacosDiscoveryProperties) {
+		return new NacosDiscoveryEndpoint(nacosDiscoveryProperties);
+	}
 
-    @Bean
-    @ConditionalOnEnabledHealthIndicator("nacos-discovery")
-    public HealthIndicator nacosDiscoveryHealthIndicator(NacosDiscoveryProperties nacosDiscoveryProperties)
-    {
-        return new NacosDiscoveryHealthIndicator(nacosDiscoveryProperties.namingServiceInstance());
-    }
+	@Bean
+	@ConditionalOnEnabledHealthIndicator("nacos-discovery")
+	public HealthIndicator nacosDiscoveryHealthIndicator(
+			NacosDiscoveryProperties nacosDiscoveryProperties) {
+		return new NacosDiscoveryHealthIndicator(
+				nacosDiscoveryProperties.namingServiceInstance());
+	}
 
 }

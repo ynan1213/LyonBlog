@@ -13,11 +13,12 @@ public class ReentrantLockMain
         //ReentrantLock lock = new ReentrantLock(true);// 公平锁
 
         lock.lock();
-        //lock.lockInterruptibly();// 可中断
+        lock.lockInterruptibly();// 可中断
 
-        lock.tryLock();// 不分公平锁和非公平锁，均是state如果等于0就CAS一次，也没有是否可中断的概念
-        lock.tryLock(3, TimeUnit.SECONDS);
 
+
+        // lock.tryLock();// 不分公平锁和非公平锁，均是state如果等于0就CAS一次，也没有是否可中断的概念
+        // lock.tryLock(3, TimeUnit.SECONDS);// 可以响应中断，中断就会抛出InterruptedException异常
 
         // lock.isFair();// 是否是公平锁
         // lock.isHeldByCurrentThread();// 当前线程是否独占此锁

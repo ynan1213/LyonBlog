@@ -276,7 +276,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             this.nettyEventExecutor.start();// 起传播事件的作用
         }
 
-        //尚不清楚具体作用
+        // 清理超时的ResponseFuture，但是 RemotingServer 需要发送吗？
         this.timer.scheduleAtFixedRate(new TimerTask()
         {
 

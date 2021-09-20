@@ -8,6 +8,7 @@ public class ReadWriteLockMain
     {
         ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
+
         ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
         ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 

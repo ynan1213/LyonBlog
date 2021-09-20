@@ -88,8 +88,8 @@ public class LongAdder extends Striped64 implements Serializable {
         int m;
         Cell a;
 
-        // cells不为null直接进if
-        // 有冲突才回进入if，没有冲突直接更新base值
+        // cells 不为null直接进if
+        // cells为null则CAS设置base值，成功就不会进入if，失败则进入if
         if ((as = cells) != null || !casBase(b = base, b + x))
         {
             boolean uncontended = true;

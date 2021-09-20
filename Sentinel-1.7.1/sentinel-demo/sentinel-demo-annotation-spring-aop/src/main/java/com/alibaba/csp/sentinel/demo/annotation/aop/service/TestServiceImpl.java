@@ -42,8 +42,7 @@ public class TestServiceImpl implements TestService {
     }
 
     @Override
-    @SentinelResource(value = "helloAnother", defaultFallback = "defaultFallback",
-        exceptionsToIgnore = {IllegalStateException.class})
+    @SentinelResource(value = "helloAnother", defaultFallback = "defaultFallback", exceptionsToIgnore = {IllegalStateException.class})
     public String helloAnother(String name) {
         if (name == null || "bad".equals(name)) {
             throw new IllegalArgumentException("oops");

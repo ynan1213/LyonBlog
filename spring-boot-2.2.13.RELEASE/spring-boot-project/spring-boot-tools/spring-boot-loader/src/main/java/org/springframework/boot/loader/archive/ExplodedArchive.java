@@ -70,6 +70,8 @@ public class ExplodedArchive implements Archive {
 	 * Defaults to {@code true}, folders with a large tree might want to set this to
 	 * {@code
 	 * false}.
+	 *
+	 * root代表jar包的根目录
 	 */
 	public ExplodedArchive(File root, boolean recursive) {
 		if (!root.exists() || !root.isDirectory()) {

@@ -764,7 +764,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
                     // 唤醒后的下一个线程继续在在for循环中获取锁，成功后调用setHeadAndPropagate
                     unparkSuccessor(h);
                 }
-                // 什么情况下的ws=0呢？
+                // 什么情况下的 ws=0 呢？
                 else if (ws == 0 && !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
                     // loop on failed CAS
                     continue;
@@ -818,7 +818,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
          * 在ReentrantReadWriteLock中走到setHeadAndPropagate，只可能是propagate > 0，所以后面判断旧、新head的逻辑就被短路了
          * 因为经过了addWaiter，这里的head不肯能为null
          *
-         * Semaphore中走到setHeadAndPropagate，propagate是可以等于0的，表示没有剩余资源了，故propagate=0不满足，往后判断。
+         * Semaphore中走到 setHeadAndPropagate，propagate是可以等于0的，表示没有剩余资源了，故propagate=0不满足，往后判断。
          *
          * h == null和(h = head) == null和s == null是为了防止空指针异常发生的标准写法，在这里是不可能成立
          */
@@ -843,7 +843,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
 
         node.thread = null;
 
-        // Skip cancelled predecessors
+        // 向前找一个没有取消的node
         Node pred = node.prev;
         while (pred.waitStatus > 0)
             node.prev = pred = pred.prev;
@@ -856,9 +856,11 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         // Can use unconditional write instead of CAS here.
         // After this atomic step, other Nodes can skip past us.
         // Before, we are free of interference from other threads.
+        // 将自己状态置为 -1（取消）
         node.waitStatus = Node.CANCELLED;
 
-        // If we are the tail, remove ourselves.
+        // pred是当前node前面一个正常的节点
+        // 如果当前node是tail，自己置为取消状态后所以要将pre置为tail
         if (node == tail && compareAndSetTail(node, pred)) {
             // 将前一个的next设置为null
             compareAndSetNext(pred, predNext, null);
@@ -866,14 +868,15 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             // If successor needs signal, try to set pred's next-link
             // so it will get one. Otherwise wake it up to propagate.
             int ws;
-            if (pred != head &&
-                ((ws = pred.waitStatus) == Node.SIGNAL ||
-                 (ws <= 0 && compareAndSetWaitStatus(pred, ws, Node.SIGNAL))) &&
-                pred.thread != null) {
+
+            if (pred != head && ((ws = pred.waitStatus) == Node.SIGNAL || (ws <= 0 && compareAndSetWaitStatus(pred, ws, Node.SIGNAL))) && pred.thread != null) {
+                // 能进来这里，说明pred不是head，并且head的ws为-1(SIGNAL)状态，然后将自己的后面一个挂到前面
                 Node next = node.next;
                 if (next != null && next.waitStatus <= 0)
                     compareAndSetNext(pred, predNext, next);
             } else {
+                // 到这里，说明前面要么是head，要么是....（这里没明白）
+                // 然后唤醒后面以后，让它再次去争抢
                 unparkSuccessor(node);
             }
 
@@ -981,7 +984,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
                 final Node pre = node.predecessor();
 
                 // 如果前继节点为头结点，说明排队马上排到自己了，可以尝试获取资源，若获取资源成功，则执行下述操作
-                // 什么时候回出现pre == head 但是 tryAcquire 失败的情况呢？ 其实很常见，前一个节点获取到了锁但是为释放锁unLock
+                // 什么时候会出现pre == head 但是 tryAcquire 失败的情况呢？ 其实很常见，前一个节点获取到了锁但是未unLock释放锁
                 if (pre == head && tryAcquire(arg)) {
                     // 将head指向当前node，同时立即清空了当前node的thread和pre指针
                     setHead(node);
@@ -1036,6 +1039,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
                     throw new InterruptedException();
             }
         } finally {
+            // 如果是被中断的，会进入if
             if (failed)
                 cancelAcquire(node);
         }
@@ -1124,7 +1128,8 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      * @param arg the acquire argument
      */
     private void doAcquireSharedInterruptibly(int arg) throws InterruptedException {
-        final Node node = addWaiter(Node.SHARED);//共享模式
+        // 添加到队列尾部，共享模式
+        final Node node = addWaiter(Node.SHARED);
         boolean failed = true;
         try {
             for (;;) {
@@ -1132,6 +1137,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
                 if (p == head) {
                     int r = tryAcquireShared(arg);
                     if (r >= 0) {
+                        // 获取到资源
                         setHeadAndPropagate(node, r);
                         p.next = null; // help GC
                         failed = false;
@@ -1492,8 +1498,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         /**
          * CountDownLatch 的实现是state=0返回1，否则返回-1，也就是说当state > 0的时候会进入阻塞
          *
-         * Semaphore的实现返回是扣除arg后剩余的资源可用量，如果返回值 <0，说明剩余信号量不够将进入if进入阻塞队列，如果 >=0，说明已成功扣了arg个信号量，不会进入if
-         *
+         * Semaphore的实现返回是扣除arg后剩余的资源可用量，如果返回值 < 0，说明剩余信号量不够将进入if进入阻塞队列，如果 >=0，说明已成功扣了arg个信号量，不会进入if
          */
         if (tryAcquireShared(arg) < 0)
             doAcquireSharedInterruptibly(arg);
@@ -2119,7 +2124,10 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             // 将当前线程包装成Node扔进条件队列，waitStatus初始化为 -2
             Node node = new Node(Thread.currentThread(), Node.CONDITION);
             if (t == null)
+            {
+                // t == null，说明 firstWaiter 为null
                 firstWaiter = node;
+            }
             else
                 t.nextWaiter = node;
             lastWaiter = node;
@@ -2179,7 +2187,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
          * without requiring many re-traversals during cancellation
          * storms.
          *
-         * 从头节点开始遍历整个队列，剔除其中waitStatus不为Node.CONDTION的节点
+         * 从头节点开始遍历整个队列，剔除其中waitStatus不为Node.CONDTION 的节点
          * 不存在并发问题
          */
         private void unlinkCancelledWaiters() {
@@ -2188,11 +2196,16 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             while (t != null) {
                 Node next = t.nextWaiter;
                 if (t.waitStatus != Node.CONDITION) {
+                    // t节点 ws ！= -1，需要剔除
                     t.nextWaiter = null;
+
                     if (trail == null)
+                        // 首次进来会到这里，t 是头结点 firstWaiter，因为要剔除t，将firstWaiter 指向下一个
                         firstWaiter = next;
                     else
                         trail.nextWaiter = next;
+
+                    // next为null，说明到了尾部，trail记录了上一个正常的节点
                     if (next == null)
                         lastWaiter = trail;
                 }

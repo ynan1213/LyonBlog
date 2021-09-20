@@ -24,7 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.rocketmq.broker.out.BrokerOuterAPI;
+import org.apache.rocketmq.broker.out1.BrokerOuterAPI;
 import org.apache.rocketmq.common.BrokerConfig;
 import org.apache.rocketmq.common.namesrv.RegisterBrokerResult;
 import org.apache.rocketmq.common.protocol.ResponseCode;

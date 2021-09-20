@@ -178,8 +178,7 @@ public class HandlerExecutionChain
 	/**
 	 * Apply postHandle methods of registered interceptors.
 	 */
-	void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @Nullable ModelAndView mv)
-			throws Exception
+	void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @Nullable ModelAndView mv) throws Exception
 	{
 
 		for (int i = this.interceptorList.size() - 1; i >= 0; i--)

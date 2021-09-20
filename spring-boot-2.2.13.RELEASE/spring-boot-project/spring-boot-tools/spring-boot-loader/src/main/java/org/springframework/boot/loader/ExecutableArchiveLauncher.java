@@ -36,6 +36,7 @@ public abstract class ExecutableArchiveLauncher extends Launcher {
 
 	public ExecutableArchiveLauncher() {
 		try {
+			// 通过debug，这里获取到的是jar包根目录下的所有文件
 			this.archive = createArchive();
 		}
 		catch (Exception ex) {
@@ -66,6 +67,7 @@ public abstract class ExecutableArchiveLauncher extends Launcher {
 
 	@Override
 	protected List<Archive> getClassPathArchives() throws Exception {
+		// 获取 BOOT-INF/classes/ 和 BOOT-INF/lib/ 下的所有组件
 		List<Archive> archives = new ArrayList<>(this.archive.getNestedArchives(this::isNestedArchive));
 		postProcessClassPathArchives(archives);
 		return archives;

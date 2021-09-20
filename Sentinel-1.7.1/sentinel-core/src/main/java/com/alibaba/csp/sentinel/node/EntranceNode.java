@@ -38,7 +38,6 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
  */
 public class EntranceNode extends DefaultNode
 {
-
     public EntranceNode(ResourceWrapper id, ClusterNode clusterNode)
     {
         super(id, clusterNode);

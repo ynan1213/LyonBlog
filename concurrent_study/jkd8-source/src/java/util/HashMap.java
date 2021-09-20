@@ -656,7 +656,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
                     // 如果已经找到了链表的尾节点了,还没有找到目标key, 则说明目标key不存在，那我们就新建一个节点, 把它接在尾节点的后面
                     if ((e = p.next) == null) {
                         p.next = newNode(hash, key, value, null);
-                        // 如果链表的长度达到了8个, 就将链表转换成红黑数以提升查找性能
+                        // 添加完一个节点后，如果链表的长度达到了8个, 就将链表转换成红黑数以提升查找性能，里面还有一个判断，如果数组长度小于64，只会扩容
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
                         break;
@@ -793,9 +793,14 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         int n, index; Node<K,V> e;
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
+
+        // e 是 ROOT节点
         else if ((e = tab[index = (n - 1) & hash]) != null) {
             TreeNode<K,V> hd = null, tl = null;
+
+            // do while 循环是构成一个 TreeNode 链表
             do {
+                // 包装成 TreeNode
                 TreeNode<K,V> p = replacementTreeNode(e, null);
                 if (tl == null)
                     hd = p;
@@ -805,6 +810,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
                 }
                 tl = p;
             } while ((e = e.next) != null);
+
             if ((tab[index] = hd) != null)
                 hd.treeify(tab);
         }
@@ -1924,11 +1930,8 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
          */
         static int tieBreakOrder(Object a, Object b) {
             int d;
-            if (a == null || b == null ||
-                (d = a.getClass().getName().
-                 compareTo(b.getClass().getName())) == 0)
-                d = (System.identityHashCode(a) <= System.identityHashCode(b) ?
-                     -1 : 1);
+            if (a == null || b == null || (d = a.getClass().getName().compareTo(b.getClass().getName())) == 0)
+                d = (System.identityHashCode(a) <= System.identityHashCode(b) ? -1 : 1);
             return d;
         }
 
@@ -1957,9 +1960,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
                             dir = -1;
                         else if (ph < h)
                             dir = 1;
-                        else if ((kc == null &&
-                                  (kc = comparableClassFor(k)) == null) ||
-                                 (dir = compareComparables(kc, k, pk)) == 0)
+                        else if ((kc == null && (kc = comparableClassFor(k)) == null) || (dir = compareComparables(kc, k, pk)) == 0)
                             dir = tieBreakOrder(k, pk);
 
                         TreeNode<K,V> xp = p;
@@ -1998,31 +1999,36 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         /**
          * Tree version of putVal.
          */
-        final TreeNode<K,V> putTreeVal(HashMap<K,V> map, Node<K,V>[] tab,
-                                       int h, K k, V v) {
+        final TreeNode<K,V> putTreeVal(HashMap<K,V> map, Node<K,V>[] tab, int h, K k, V v) {
             Class<?> kc = null;
             boolean searched = false;
+
+            // 找到树根
             TreeNode<K,V> root = (parent != null) ? root() : this;
+
             for (TreeNode<K,V> p = root;;) {
-                int dir, ph; K pk;
+                int dir, ph;
+                K pk;
+
+                // 根据hash值比较大小
                 if ((ph = p.hash) > h)
                     dir = -1;
                 else if (ph < h)
                     dir = 1;
+
+                // hash值相等时，如果键指向同一地址，查找结束
                 else if ((pk = p.key) == k || (k != null && k.equals(pk)))
                     return p;
-                else if ((kc == null &&
-                          (kc = comparableClassFor(k)) == null) ||
-                         (dir = compareComparables(kc, k, pk)) == 0) {
+
+                // hash值相等，比较两个键
+                else if ((kc == null && (kc = comparableClassFor(k)) == null) || (dir = compareComparables(kc, k, pk)) == 0) {
                     if (!searched) {
                         TreeNode<K,V> q, ch;
                         searched = true;
-                        if (((ch = p.left) != null &&
-                             (q = ch.find(h, k, kc)) != null) ||
-                            ((ch = p.right) != null &&
-                             (q = ch.find(h, k, kc)) != null))
+                        if (((ch = p.left) != null && (q = ch.find(h, k, kc)) != null) || ((ch = p.right) != null && (q = ch.find(h, k, kc)) != null))
                             return q;
                     }
+                    // 比较两个对象的内存地址
                     dir = tieBreakOrder(k, pk);
                 }
 
@@ -2209,8 +2215,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         /* ------------------------------------------------------------ */
         // Red-black tree methods, all adapted from CLR
 
-        static <K,V> TreeNode<K,V> rotateLeft(TreeNode<K,V> root,
-                                              TreeNode<K,V> p) {
+        static <K,V> TreeNode<K,V> rotateLeft(TreeNode<K,V> root, TreeNode<K,V> p) {
             TreeNode<K,V> r, pp, rl;
             if (p != null && (r = p.right) != null) {
                 if ((rl = p.right = r.left) != null)

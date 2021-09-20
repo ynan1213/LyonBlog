@@ -900,17 +900,20 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
 
         /**
          * 然后使用循环找到大于等于concurrencyLevel的第一个2的n次方的数ssize，这个数就是Segment数组的大小
-         * 并记录一共向左按位移动的次数sshift
+         * 并记录一共向左按位移动的次数 sshift
          */
         while (ssize < concurrencyLevel) {
             ++sshift;
             ssize <<= 1;
         }
+
         // 用于定位段
         this.segmentShift = 32 - sshift;
+
         // segmentMask的各个二进制位都为1，目的是之后可以通过key的hash值与这个值做&运算确定Segment的索引。
         this.segmentMask = ssize - 1;
 
+        // 出师容量不超过 1 << 30
         if (initialCapacity > MAXIMUM_CAPACITY)
             initialCapacity = MAXIMUM_CAPACITY;
 
@@ -919,7 +922,10 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         int c = initialCapacity / ssize;
         if (c * ssize < initialCapacity)
             ++c;
+
+        // c是每个 Segment 平均的长度，再计算cap，cap是大于或等于c的2的n次方，最小为2，cap是 Segment 内部数组的初始大小
         int cap = MIN_SEGMENT_TABLE_CAPACITY;
+        // cap就是每个段的长度，为2的n次方
         while (cap < c)
             cap <<= 1;
 
@@ -1235,6 +1241,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         if (value == null)
             throw new NullPointerException();
 
+        // hash算法和jdk1.7 的hashmap一样
         int hash = hash(key);
 
         /**

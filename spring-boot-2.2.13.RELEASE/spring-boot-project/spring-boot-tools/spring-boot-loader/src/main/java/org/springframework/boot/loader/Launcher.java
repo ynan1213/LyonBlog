@@ -56,8 +56,8 @@ public abstract class Launcher {
 		JarFile.registerUrlProtocolHandler();
 
 		/**
-		 * 构件LaunchedURLClassLoader类加载器，这个是spring boot自己定义的类加载器
-		 * 它修改了默认的类加载方式，定义了自己的类加载规则，可以从前面得到的 List<Archive>中加载依赖包的class文件了
+		 * getClassPathArchives：返回 BOOT-INF/classes/ 和 BOOT-INF/lib/ 下的所有组件
+		 * 构件LaunchedURLClassLoader类加载器，这个是spring boot自己定义的类加载器，这样就可以加载 BOOT-INF/classes/ 和 BOOT-INF/lib/ 下的所有组件
 		 */
 		ClassLoader classLoader = createClassLoader(getClassPathArchives());
 
@@ -136,6 +136,7 @@ public abstract class Launcher {
 		ProtectionDomain protectionDomain = getClass().getProtectionDomain();
 		CodeSource codeSource = protectionDomain.getCodeSource();
 		URI location = (codeSource != null) ? codeSource.getLocation().toURI() : null;
+		// 此时的path是jar包的根目录
 		String path = (location != null) ? location.getSchemeSpecificPart() : null;
 		if (path == null) {
 			throw new IllegalStateException("Unable to determine code source archive");

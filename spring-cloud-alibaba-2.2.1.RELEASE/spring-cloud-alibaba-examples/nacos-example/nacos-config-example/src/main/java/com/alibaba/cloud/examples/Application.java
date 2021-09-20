@@ -110,11 +110,9 @@ class SampleRunner implements ApplicationRunner {
 
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
-		System.out.println(
-				String.format("Initial username=%s, userAge=%d", userName, userAge));
+		System.out.println(String.format("Initial username=%s, userAge=%d", userName, userAge));
 
-		nacosConfigManager.getConfigService().addListener(
-				"nacos-config-example.properties", "DEFAULT_GROUP", new Listener() {
+		nacosConfigManager.getConfigService().addListener("nacos-config-example.properties", "DEFAULT_GROUP", new Listener() {
 
 					/**
 					 * Callback with latest config data.
@@ -164,8 +162,7 @@ class SampleController {
 
 	@RequestMapping("/user")
 	public String simple() {
-		return "Hello Nacos Config!" + "Hello " + userName + " " + age + " [UserConfig]: "
-				+ userConfig + "!" + nacosConfigManager.getConfigService();
+		return "Hello Nacos Config!" + "Hello " + userName + " " + age + " [UserConfig]: " + userConfig + "!" + nacosConfigManager.getConfigService();
 	}
 
 	@RequestMapping("/bool")

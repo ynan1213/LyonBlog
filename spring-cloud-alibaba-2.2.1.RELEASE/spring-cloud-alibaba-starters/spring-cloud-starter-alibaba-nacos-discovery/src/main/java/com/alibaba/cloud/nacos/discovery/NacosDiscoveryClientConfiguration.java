@@ -41,23 +41,24 @@ import org.springframework.scheduling.TaskScheduler;
 @ConditionalOnDiscoveryEnabled
 @ConditionalOnBlockingDiscoveryEnabled
 @ConditionalOnNacosDiscoveryEnabled
-@AutoConfigureBefore({SimpleDiscoveryClientAutoConfiguration.class, CommonsClientAutoConfiguration.class})
+@AutoConfigureBefore({ SimpleDiscoveryClientAutoConfiguration.class,
+		CommonsClientAutoConfiguration.class })
 @AutoConfigureAfter(NacosDiscoveryAutoConfiguration.class)
-public class NacosDiscoveryClientConfiguration
-{
+public class NacosDiscoveryClientConfiguration {
 
-    @Bean
-    public DiscoveryClient nacosDiscoveryClient(NacosServiceDiscovery nacosServiceDiscovery)
-    {
-        return new NacosDiscoveryClient(nacosServiceDiscovery);
-    }
+	@Bean
+	public DiscoveryClient nacosDiscoveryClient(
+			NacosServiceDiscovery nacosServiceDiscovery) {
+		return new NacosDiscoveryClient(nacosServiceDiscovery);
+	}
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty(value = "spring.cloud.nacos.discovery.watch.enabled", matchIfMissing = true)
-    public NacosWatch nacosWatch(NacosDiscoveryProperties nacosDiscoveryProperties, ObjectProvider<TaskScheduler> taskScheduler)
-    {
-        return new NacosWatch(nacosDiscoveryProperties, taskScheduler);
-    }
+	@Bean
+	@ConditionalOnMissingBean
+	@ConditionalOnProperty(value = "spring.cloud.nacos.discovery.watch.enabled",
+			matchIfMissing = true)
+	public NacosWatch nacosWatch(NacosDiscoveryProperties nacosDiscoveryProperties,
+			ObjectProvider<TaskScheduler> taskScheduler) {
+		return new NacosWatch(nacosDiscoveryProperties, taskScheduler);
+	}
 
 }

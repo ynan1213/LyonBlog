@@ -113,8 +113,7 @@ import java.util.function.Function;
  * @param <V> the type of mapped values
  * @since 1.6
  */
-public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
-    implements ConcurrentNavigableMap<K,V>, Cloneable, Serializable {
+public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V> implements ConcurrentNavigableMap<K,V>, Cloneable, Serializable {
     /*
      * This class implements a tree-like two-dimensionally linked skip
      * list in which the index levels are represented in separate
@@ -815,6 +814,7 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
      * @return the old value, or null if newly inserted
      */
     private V doPut(K key, V value, boolean onlyIfAbsent) {
+        // 指向新加入的node节点
         Node<K,V> z;             // added node
         if (key == null)
             throw new NullPointerException();

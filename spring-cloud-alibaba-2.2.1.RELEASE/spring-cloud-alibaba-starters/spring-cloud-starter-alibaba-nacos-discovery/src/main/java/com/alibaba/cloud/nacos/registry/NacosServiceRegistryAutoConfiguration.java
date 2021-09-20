@@ -38,41 +38,47 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties
 @ConditionalOnNacosDiscoveryEnabled
-@ConditionalOnProperty(value = "spring.cloud.service-registry.auto-registration.enabled", matchIfMissing = true)
-@AutoConfigureAfter({AutoServiceRegistrationConfiguration.class, AutoServiceRegistrationAutoConfiguration.class, NacosDiscoveryAutoConfiguration.class})
-public class NacosServiceRegistryAutoConfiguration
-{
-    /**
-     * 参数 NacosDiscoveryProperties 是什么时候被注入到容器中的呢？
-     * spring.factories -> NacosDiscoveryAutoConfiguration -> @Bean方法注入
-     *
-     * 该类实现了 spring-cloud-commons 提供的 ServiceRegistry接口，在register方法中主要是将配置文件封装成Instance实例，
-     * 调用了namingService.registerInstance(serviceId, instance)方法将服务注册到注册中心
-     */
-    @Bean
-    public NacosServiceRegistry nacosServiceRegistry(NacosDiscoveryProperties nacosDiscoveryProperties)
-    {
-        return new NacosServiceRegistry(nacosDiscoveryProperties);
-    }
+@ConditionalOnProperty(value = "spring.cloud.service-registry.auto-registration.enabled",
+		matchIfMissing = true)
+@AutoConfigureAfter({ AutoServiceRegistrationConfiguration.class,
+		AutoServiceRegistrationAutoConfiguration.class,
+		NacosDiscoveryAutoConfiguration.class })
+public class NacosServiceRegistryAutoConfiguration {
 
-    /**
-     * 该类主要是管理服务的一些基本数据，如服务名，服务ip地址等信息。它实现了spring-cloud-commons 提供的Registration、ServiceInstance接口
-     */
-    @Bean
-    @ConditionalOnBean(AutoServiceRegistrationProperties.class)
-    public NacosRegistration nacosRegistration(NacosDiscoveryProperties nacosDiscoveryProperties, ApplicationContext context)
-    {
-        return new NacosRegistration(nacosDiscoveryProperties, context);
-    }
+	/**
+	 * 参数 NacosDiscoveryProperties 是什么时候被注入到容器中的呢？ spring.factories ->
+	 * NacosDiscoveryAutoConfiguration -> @Bean方法注入
+	 *
+	 * 该类实现了 spring-cloud-commons 提供的 ServiceRegistry接口，在register方法中主要是将配置文件封装成Instance实例，
+	 * 调用了namingService.registerInstance(serviceId, instance)方法将服务注册到注册中心
+	 */
+	@Bean
+	public NacosServiceRegistry nacosServiceRegistry(
+			NacosDiscoveryProperties nacosDiscoveryProperties) {
+		return new NacosServiceRegistry(nacosDiscoveryProperties);
+	}
 
-    // 该类实现了 ApplicationListener 接口，服务启动后自动把服务信息注册到注册中心
-    @Bean
-    @ConditionalOnBean(AutoServiceRegistrationProperties.class)
-    public NacosAutoServiceRegistration nacosAutoServiceRegistration(NacosServiceRegistry registry,
-                                                                     AutoServiceRegistrationProperties autoServiceRegistrationProperties,
-                                                                     NacosRegistration registration)
-    {
-        return new NacosAutoServiceRegistration(registry, autoServiceRegistrationProperties, registration);
-    }
+	/**
+	 * 该类主要是管理服务的一些基本数据，如服务名，服务ip地址等信息。它实现了spring-cloud-commons
+	 * 提供的Registration、ServiceInstance接口
+	 */
+	@Bean
+	@ConditionalOnBean(AutoServiceRegistrationProperties.class)
+	public NacosRegistration nacosRegistration(
+			NacosDiscoveryProperties nacosDiscoveryProperties,
+			ApplicationContext context) {
+		return new NacosRegistration(nacosDiscoveryProperties, context);
+	}
+
+	// 该类实现了 ApplicationListener 接口，服务启动后自动把服务信息注册到注册中心
+	@Bean
+	@ConditionalOnBean(AutoServiceRegistrationProperties.class)
+	public NacosAutoServiceRegistration nacosAutoServiceRegistration(
+			NacosServiceRegistry registry,
+			AutoServiceRegistrationProperties autoServiceRegistrationProperties,
+			NacosRegistration registration) {
+		return new NacosAutoServiceRegistration(registry,
+				autoServiceRegistrationProperties, registration);
+	}
 
 }

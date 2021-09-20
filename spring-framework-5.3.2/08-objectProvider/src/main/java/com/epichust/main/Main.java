@@ -10,8 +10,8 @@ public class Main
     {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(RootConfig.class);
 
-        UserController userController = context.getBean("xxxx", UserController.class);
+        //UserController userController = context.getBean("xxxx", UserController.class);
 
-		userController.test();
+		//userController.test();
 	}
 }

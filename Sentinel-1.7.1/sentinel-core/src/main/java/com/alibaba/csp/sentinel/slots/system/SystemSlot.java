@@ -24,6 +24,7 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
 /**
  * A {@link ProcessorSlot} that dedicates to {@link SystemRule} checking.
  *
+ * 系统自适应限流
  * 这个 slot 会根据对于当前系统的整体情况，对入口资源的调用进行动态调配。其原理是让入口的流量和当前系统的预计容量达到一个动态平衡。
  * 注意系统规则只对入口流量起作用（调用类型为 EntryType.IN），对出口流量无效。可通过 SphU.entry(res, entryType) 指定调用类型，
  * 如果不指定，默认是EntryType.OUT。

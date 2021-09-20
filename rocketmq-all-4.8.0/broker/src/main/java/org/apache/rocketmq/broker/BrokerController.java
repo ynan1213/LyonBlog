@@ -53,7 +53,7 @@ import org.apache.rocketmq.broker.longpolling.PullRequestHoldService;
 import org.apache.rocketmq.broker.mqtrace.ConsumeMessageHook;
 import org.apache.rocketmq.broker.mqtrace.SendMessageHook;
 import org.apache.rocketmq.broker.offset.ConsumerOffsetManager;
-import org.apache.rocketmq.broker.out.BrokerOuterAPI;
+import org.apache.rocketmq.broker.out1.BrokerOuterAPI;
 import org.apache.rocketmq.broker.plugin.MessageStoreFactory;
 import org.apache.rocketmq.broker.plugin.MessageStorePluginContext;
 import org.apache.rocketmq.broker.processor.AdminBrokerProcessor;

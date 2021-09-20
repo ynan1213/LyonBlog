@@ -68,6 +68,7 @@ public class HandlerMethod
 	 */
 	protected static final Log logger = LogFactory.getLog(HandlerMethod.class);
 
+	// bean有可能存的是beanName
 	private final Object bean;
 
 	@Nullable

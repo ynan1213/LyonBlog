@@ -92,8 +92,7 @@ class CtEntry extends Entry
                     e.exit(count, args);
                     e = (CtEntry) e.parent;
                 }
-                String errorMessage = String.format("The order of entry exit can't be paired with the order of entry"
-                        + ", current entry in context: <%s>, but expected: <%s>", curEntryNameInContext, resourceWrapper.getName());
+                String errorMessage = String.format("The order of entry exit can't be paired with the order of entry , current entry in context: <%s>, but expected: <%s>", curEntryNameInContext, resourceWrapper.getName());
                 throw new ErrorEntryFreeException(errorMessage);
             } else
             {

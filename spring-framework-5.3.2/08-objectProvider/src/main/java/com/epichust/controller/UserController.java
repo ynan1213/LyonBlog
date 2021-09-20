@@ -26,6 +26,10 @@ public class UserController
 			iterator.next().print("aaa");
 		}
 
+		System.out.println("==================");
+		System.out.println(objectProvider.getIfAvailable());
+		System.out.println(objectProvider.getIfUnique());
+
 	}
 
 	public void test()

@@ -82,17 +82,17 @@ public class ContextRefresher {
 	}
 
 	public synchronized Set<String> refresh() {
+		// 这里做的就是先获取老的配置属性源，然后刷新配置属性，然后比对新的和老的区别，获取有改变的属性源key集合返回。
 		Set<String> keys = refreshEnvironment();
 		this.scope.refreshAll();
 		return keys;
 	}
 
 	public synchronized Set<String> refreshEnvironment() {
-		Map<String, Object> before = extract(
-				this.context.getEnvironment().getPropertySources());
+		Map<String, Object> before = extract(this.context.getEnvironment().getPropertySources());
 		addConfigFilesToEnvironment();
-		Set<String> keys = changes(before,
-				extract(this.context.getEnvironment().getPropertySources())).keySet();
+		Set<String> keys = changes(before, extract(this.context.getEnvironment().getPropertySources())).keySet();
+		// 通知事件，通知配置属性对象去重新加载属性
 		this.context.publishEvent(new EnvironmentChangeEvent(this.context, keys));
 		return keys;
 	}

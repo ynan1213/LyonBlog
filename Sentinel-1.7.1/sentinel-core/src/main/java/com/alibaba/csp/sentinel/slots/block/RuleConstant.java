@@ -26,16 +26,30 @@ public final class RuleConstant {
     public static final int FLOW_GRADE_THREAD = 0;
     public static final int FLOW_GRADE_QPS = 1;
 
+    /**
+     * 平均响应时间
+     * 当资源的平均响应时间超过阈值（DegradeRule 中的 count，以 ms 为单位）之后，资源进入准降级状态。
+     * 如果接下来 1s 内持续进入 5 个请求（即 QPS >= 5），它们的 RT 都持续超过这个阈值，那么在接下的时间窗口（DegradeRule 中的 timeWindow，以 s 为单位）之内，
+     * 对这个方法的调用都会自动地熔断（抛出 DegradeException）。
+     */
     public static final int DEGRADE_GRADE_RT = 0;
+
     /**
      * Degrade by biz exception ratio in the current {@link IntervalProperty#INTERVAL} second(s).
+     * 异常比例
+     * 当资源的每秒异常总数占通过量的比值超过阈值（DegradeRule 中的 count）之后，资源进入降级状态，
+     * 即在接下的时间窗口（DegradeRule 中的 timeWindow，以 s 为单位）之内，对这个方法的调用都会自动地返回。
      */
     public static final int DEGRADE_GRADE_EXCEPTION_RATIO = 1;
+
     /**
      * Degrade by biz exception count in the last 60 seconds.
+     * 异常数
+     * 当资源近 1 分钟的异常数目超过阈值之后会进行熔断。
      */
     public static final int DEGRADE_GRADE_EXCEPTION_COUNT = 2;
 
+    //
     public static final int DEGRADE_DEFAULT_SLOW_REQUEST_AMOUNT = 5;
     public static final int DEGRADE_DEFAULT_MIN_REQUEST_AMOUNT = 5;
 

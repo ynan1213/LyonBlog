@@ -67,22 +67,18 @@ public class Broker2Client
             final CheckTransactionStateRequestHeader requestHeader,
             final MessageExt messageExt) throws Exception
     {
-        RemotingCommand request =
-                RemotingCommand.createRequestCommand(RequestCode.CHECK_TRANSACTION_STATE, requestHeader);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.CHECK_TRANSACTION_STATE, requestHeader);
         request.setBody(MessageDecoder.encode(messageExt, false));
         try
         {
             this.brokerController.getRemotingServer().invokeOneway(channel, request, 10);
         } catch (Exception e)
         {
-            log.error("Check transaction failed because invoke producer exception. group={}, msgId={}, error={}",
-                    group, messageExt.getMsgId(), e.toString());
+            log.error("Check transaction failed because invoke producer exception. group={}, msgId={}, error={}", group, messageExt.getMsgId(), e.toString());
         }
     }
 
-    public RemotingCommand callClient(final Channel channel,
-                                      final RemotingCommand request
-    ) throws RemotingSendRequestException, RemotingTimeoutException, InterruptedException
+    public RemotingCommand callClient(final Channel channel, final RemotingCommand request) throws RemotingSendRequestException, RemotingTimeoutException, InterruptedException
     {
         return this.brokerController.getRemotingServer().invokeSync(channel, request, 10000);
     }
@@ -293,8 +289,7 @@ public class Broker2Client
             {
                 try
                 {
-                    RemotingCommand response =
-                            this.brokerController.getRemotingServer().invokeSync(entry.getKey(), request, 5000);
+                    RemotingCommand response = this.brokerController.getRemotingServer().invokeSync(entry.getKey(), request, 5000);
                     assert response != null;
                     switch (response.getCode())
                     {

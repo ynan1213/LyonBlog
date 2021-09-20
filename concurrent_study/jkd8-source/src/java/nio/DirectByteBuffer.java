@@ -34,13 +34,7 @@ import sun.misc.VM;
 import sun.nio.ch.DirectBuffer;
 
 
-class DirectByteBuffer
-
-    extends MappedByteBuffer
-
-
-
-    implements DirectBuffer
+class DirectByteBuffer extends MappedByteBuffer implements DirectBuffer
 {
 
 
@@ -120,6 +114,8 @@ class DirectByteBuffer
         boolean pa = VM.isDirectMemoryPageAligned();
         int ps = Bits.pageSize();
         long size = Math.max(1L, (long)cap + (pa ? ps : 0));
+
+        // 保留总分配内存(按页分配)的大小和实际内存的大小
         Bits.reserveMemory(size, cap);
 
         long base = 0;
@@ -136,11 +132,10 @@ class DirectByteBuffer
         } else {
             address = base;
         }
+
+        // 构建Cleaner对象用于跟踪DirectByteBuffer对象的垃圾回收，以实现当DirectByteBuffer被垃圾回收时，堆外内存也会被释放
         cleaner = Cleaner.create(this, new Deallocator(base, size, cap));
         att = null;
-
-
-
     }
 
 

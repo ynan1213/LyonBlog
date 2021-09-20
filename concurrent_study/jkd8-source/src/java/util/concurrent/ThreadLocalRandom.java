@@ -127,8 +127,7 @@ public class ThreadLocalRandom extends Random {
      */
 
     /** Generates per-thread initialization/probe field */
-    private static final AtomicInteger probeGenerator =
-        new AtomicInteger();
+    private static final AtomicInteger probeGenerator = new AtomicInteger();
 
     /**
      * The next seed for default constructors.
@@ -144,8 +143,7 @@ public class ThreadLocalRandom extends Random {
                 s = (s << 8) | ((long)(seedBytes[i]) & 0xffL);
             return s;
         }
-        return (mix64(System.currentTimeMillis()) ^
-                mix64(System.nanoTime()));
+        return (mix64(System.currentTimeMillis()) ^ mix64(System.nanoTime()));
     }
 
     /**
@@ -218,8 +216,11 @@ public class ThreadLocalRandom extends Random {
      * @return the current thread's {@code ThreadLocalRandom}
      */
     public static ThreadLocalRandom current() {
+        // 判断thread类对象的 threadLocalRandomProbe 属性是否为0，为0就说明还未初始化，进行初始化：初始化就是给每个线程生成一个seed，每个线程的seed是不会重复的；
         if (UNSAFE.getInt(Thread.currentThread(), PROBE) == 0)
             localInit();
+
+        // instance 是单例的
         return instance;
     }
 
@@ -237,8 +238,7 @@ public class ThreadLocalRandom extends Random {
 
     final long nextSeed() {
         Thread t; long r; // read and update per-thread seed
-        UNSAFE.putLong(t = Thread.currentThread(), SEED,
-                       r = UNSAFE.getLong(t, SEED) + GAMMA);
+        UNSAFE.putLong(t = Thread.currentThread(), SEED, r = UNSAFE.getLong(t, SEED) + GAMMA);
         return r;
     }
 
@@ -1058,12 +1058,9 @@ public class ThreadLocalRandom extends Random {
         try {
             UNSAFE = sun.misc.Unsafe.getUnsafe();
             Class<?> tk = Thread.class;
-            SEED = UNSAFE.objectFieldOffset
-                (tk.getDeclaredField("threadLocalRandomSeed"));
-            PROBE = UNSAFE.objectFieldOffset
-                (tk.getDeclaredField("threadLocalRandomProbe"));
-            SECONDARY = UNSAFE.objectFieldOffset
-                (tk.getDeclaredField("threadLocalRandomSecondarySeed"));
+            SEED = UNSAFE.objectFieldOffset(tk.getDeclaredField("threadLocalRandomSeed"));
+            PROBE = UNSAFE.objectFieldOffset(tk.getDeclaredField("threadLocalRandomProbe"));
+            SECONDARY = UNSAFE.objectFieldOffset(tk.getDeclaredField("threadLocalRandomSecondarySeed"));
         } catch (Exception e) {
             throw new Error(e);
         }

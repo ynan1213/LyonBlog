@@ -269,6 +269,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
         {
             response.setRemark(getMessageResult.getStatus().name());
             responseHeader.setNextBeginOffset(getMessageResult.getNextBeginOffset());// 下一次拉取时的偏移量，由服务端返回给客户端，客户端拉取时再带过来
+            // 这里将 MaxOffset 和 MinOffset 传回去了
             responseHeader.setMinOffset(getMessageResult.getMinOffset());
             responseHeader.setMaxOffset(getMessageResult.getMaxOffset());
 

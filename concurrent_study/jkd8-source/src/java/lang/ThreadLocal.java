@@ -616,11 +616,12 @@ public class ThreadLocal<T> {
                 // If we didn't find stale entry on backward scan, the
                 // first stale entry seen while scanning for key is the
                 // first still present in the run.
+                // slotToExpunge == staleSlot 说明前面没有找到无效entry，这里置为后面的第一个下标，也就是说，slotToExpunge 至始至终指向这个区间的第一件无效entry
                 if (k == null && slotToExpunge == staleSlot)
                     slotToExpunge = i;
             }
 
-            // staleSlot 后面没有找到k == key的entry，则替换 staleSlot 下标的slot
+            // staleSlot 后面没有找到k == key的entry，则替换 staleSlot 下标的 slot
             tab[staleSlot].value = null;
             tab[staleSlot] = new Entry(key, value);
 

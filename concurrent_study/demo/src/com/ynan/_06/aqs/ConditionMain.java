@@ -9,12 +9,10 @@ public class ConditionMain
     {
         ReentrantLock lock = new ReentrantLock();
 
-        Condition ac = lock.newCondition();
+        Condition conditionA = lock.newCondition();
+        Condition conditionB = lock.newCondition();
 
         lock.lock();
-        ac.await();
-
-        ac.signal();
-        ac.signalAll();
+        conditionA.await();
     }
 }

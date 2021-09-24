@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ynan.dao.UserDao">
+    <!--<cache-ref namespace="ArticleDao"/>-->
+    <cache/>
+
+    <!-- type可以使用别名，别名的使用是不区分大小写的 UsEr也可以 -->
+    <resultMap type="User" id="UserResultMap" autoMapping="true">
+        <result column="id" property="uid"/>
+        <result column="name" property="uname"/>
+        <result column="age" property="uage"/>
+        <result column="addr" property="addr"/>
+        <collection property="bookist" ofType="book">
+            <id column="bid" property="id"/>
+            <result column="bname" property="name"/>
+            <result column="bprice" property="price"/>
+        </collection>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="uid">
+        insert into user(name, age, addr, school) values(#{uname},#{uage},#{addr},#{school})
+    </insert>
+
+    <select id="getById" resultMap="UserResultMap">
+        select u.*,b.bname,b.bprice from user u, book b where id = #{xxxx} and u.id = b.uid
+    </select>
+
+    <!--<select id="getByName" resultMap="UserResultMap">
+        select * from user where name like concat('%',#{xx},'%')
+    </select>-->
+    <!--<select id="getByName" resultMap="UserResultMap">
+        select * from user where name like '%${xx}%'
+    </select>-->
+    <!--<select id="getByName" resultMap="UserResultMap">
+        select * from user where name like "%"'${xx}'"%"
+    </select>-->
+    <select id="getByName" resultMap="UserResultMap" >
+        <bind name="paran_uname" value="'%' + xx + '%'"/>
+        select * from user where name like #{paran_uname}
+    </select>
+
+
+    <select id="selectByCondition" resultMap="UserResultMap">
+        select * from user
+        <where>
+            age &lt; #{age,javaType=int} and addr = "${addr}"
+            <if test="1 == 1">
+                and school = #{school}
+            </if>
+        </where>
+        and 1=1;
+    </select>
+
+    <select id="selectByUser" resultMap="UserResultMap">
+        select * from user
+        <where>
+            age &lt; #{uage,javaType=int} and addr = #{addr}
+            <!--            <if test="school">-->
+            <!--                and school = #{school}-->
+            <!--            </if>-->
+        </where>
+        and 1=1
+    </select>
+
+    <select id="selectOne" resultMap="UserResultMap">
+        select * from user where addr = #{xxxx}
+    </select>
+
+    <select id="selectAll" resultMap="UserResultMap">
+        select * from user
+    </select>
+
+    <insert id="insert1">
+        insert into user(name, age, addr, school) values(#{uname},1,#{addr},#{school})
+        <selectKey keyProperty="uid" resultType="int" order="AFTER">
+            select @@IDENTITY
+        </selectKey>
+    </insert>
+</mapper>

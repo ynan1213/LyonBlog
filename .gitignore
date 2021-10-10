@@ -1,7 +1,6 @@
 *.iml
 .idea
 .idea/
-target
 target/
 /.settings
 *.settings
@@ -10,9 +9,7 @@ target/
 *.project
 .project
 .settings
-out
 out/
 netty-demo/
 rocketmq-demo/
-build
 build/

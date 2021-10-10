@@ -1,0 +1,17 @@
+task("helloworld", {
+    println("hello!!!")
+    doLast({
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!")
+        println("world!!!");
+        println("world!!!")
+        println("world!!!")
+    })
+})

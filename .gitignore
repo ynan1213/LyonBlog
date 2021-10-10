@@ -1,7 +1,10 @@
 *.iml
 .idea
 .idea/
+
+!spring-framework-5.3.2/spring-aop/src/main/java/org/springframework/aop/target/
 target/
+
 /.settings
 *.settings
 *.classpath

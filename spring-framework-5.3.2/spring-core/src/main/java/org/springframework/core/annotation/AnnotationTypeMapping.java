@@ -82,9 +82,7 @@ final class AnnotationTypeMapping {
 	private final Set<Method> claimedAliases = new HashSet<>();
 
 
-	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source,
-			Class<? extends Annotation> annotationType, @Nullable Annotation annotation) {
-
+	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source, Class<? extends Annotation> annotationType, @Nullable Annotation annotation) {
 		this.source = source;
 		this.root = (source != null ? source.getRoot() : this);
 		this.distance = (source == null ? 0 : source.getDistance() + 1);

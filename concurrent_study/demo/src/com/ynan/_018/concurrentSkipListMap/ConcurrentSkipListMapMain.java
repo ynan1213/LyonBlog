@@ -1,6 +1,8 @@
 package com.ynan._018.concurrentSkipListMap;
 
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.regex.Pattern;
+import sun.misc.Regexp;
 
 /**
  * @program: concurrent_study
@@ -12,9 +14,7 @@ public class ConcurrentSkipListMapMain
 {
     public static void main(String[] args)
     {
-        ConcurrentSkipListMap map = new ConcurrentSkipListMap();
-
-        map.put("k1", "v1");
-
+        boolean matches = Pattern.matches("^\\d\\d(,\\d\\d)*$", "123");
+        System.out.println(matches);
     }
 }

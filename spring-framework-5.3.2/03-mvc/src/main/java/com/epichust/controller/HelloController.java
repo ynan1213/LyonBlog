@@ -1,20 +1,16 @@
 package com.epichust.controller;
 
 import com.epichust.entity.User;
-import com.epichust.expcetion.UserException;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
-public class HelloController
-{
-	@RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.POST}, produces="application/xml")
+public class HelloController {
+
+	@RequestMapping(value = "/login")
 	@ResponseBody
-	public User login1()
-	{
-		// if(1 == 1)
-		// 	throw new UserException();
+	public User login() {
 		return new User("11", 22);
 	}
 }

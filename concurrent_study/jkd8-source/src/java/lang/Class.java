@@ -183,12 +183,14 @@ public final class Class<T> implements java.io.Serializable,
      * @since 1.8
      */
     public String toGenericString() {
+        // 如果是原始类型，直接调用toString()方法
         if (isPrimitive()) {
             return toString();
         } else {
             StringBuilder sb = new StringBuilder();
 
             // Class modifiers are a superset of interface modifiers
+            // 权限修饰符
             int modifiers = getModifiers() & Modifier.classModifiers();
             if (modifiers != 0) {
                 sb.append(Modifier.toString(modifiers));
@@ -759,6 +761,8 @@ public final class Class<T> implements java.io.Serializable,
      *     instantiated  for any reason
      * @return the superclass of the class represented by this object
      * @since 1.5
+     *
+     * 和getSuperclass的区别就是该方法与泛型有关
      */
     public Type getGenericSuperclass() {
         ClassRepository info = getGenericInfo();

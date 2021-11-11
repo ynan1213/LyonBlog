@@ -77,8 +77,7 @@ final class ObjectToObjectConverter implements ConditionalGenericConverter {
 
 	@Override
 	public boolean matches(TypeDescriptor sourceType, TypeDescriptor targetType) {
-		return (sourceType.getType() != targetType.getType() &&
-				hasConversionMethodOrConstructor(targetType.getType(), sourceType.getType()));
+		return (sourceType.getType() != targetType.getType() && hasConversionMethodOrConstructor(targetType.getType(), sourceType.getType()));
 	}
 
 	@Override

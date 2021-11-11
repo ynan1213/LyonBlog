@@ -50,8 +50,7 @@ import org.springframework.util.StringValueResolver;
  * @author Juergen Hoeller
  * @since 3.0
  */
-public class FormattingConversionService extends GenericConversionService
-		implements FormatterRegistry, EmbeddedValueResolverAware {
+public class FormattingConversionService extends GenericConversionService implements FormatterRegistry, EmbeddedValueResolverAware {
 
 	@Nullable
 	private StringValueResolver embeddedValueResolver;
@@ -117,8 +116,7 @@ public class FormattingConversionService extends GenericConversionService
 	private static <T> Class<?> getFieldType(T instance, Class<T> genericInterface) {
 		Class<?> fieldType = GenericTypeResolver.resolveTypeArgument(instance.getClass(), genericInterface);
 		if (fieldType == null && instance instanceof DecoratingProxy) {
-			fieldType = GenericTypeResolver.resolveTypeArgument(
-					((DecoratingProxy) instance).getDecoratedClass(), genericInterface);
+			fieldType = GenericTypeResolver.resolveTypeArgument(((DecoratingProxy) instance).getDecoratedClass(), genericInterface);
 		}
 		Assert.notNull(fieldType, () -> "Unable to extract the parameterized field type from " +
 					ClassUtils.getShortName(genericInterface) + " [" + instance.getClass().getName() +

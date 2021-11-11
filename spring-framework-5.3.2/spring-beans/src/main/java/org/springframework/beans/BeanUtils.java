@@ -537,6 +537,9 @@ public abstract class BeanUtils {
 	 * registered default editors for primitive types.
 	 * @param targetType the type to find an editor for
 	 * @return the corresponding editor, or {@code null} if none found
+	 *
+	 * PropertyEditor自动发现机制，详情见 Java类型转换文档
+	 *
 	 */
 	@Nullable
 	public static PropertyEditor findEditorByConvention(@Nullable Class<?> targetType) {

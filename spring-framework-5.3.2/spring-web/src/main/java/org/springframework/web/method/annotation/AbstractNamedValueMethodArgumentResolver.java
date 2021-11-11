@@ -97,16 +97,18 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 
 	@Override
 	@Nullable
+	// final修饰，并不希望子类覆盖
 	public final Object resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
 										NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) throws Exception
 	{
-		// // 创建 MethodParameter 对应的 NamedValueInfo：name/required/defaultValue
+		// 创建 MethodParameter 对应的 NamedValueInfo：name/required/defaultValue
 		NamedValueInfo namedValueInfo = getNamedValueInfo(parameter);
 
 		// 支持Java 8 中支持的 java.util.Optional
+		// 内部就是让 nestingLevel + 1
 		MethodParameter nestedParameter = parameter.nestedIfOptional();
 
-		// name属性（也就是注解标注的value/name属性）这里既会解析占位符，还会解析SpEL表达式
+		// 这里既会解析占位符，还会解析SpEL表达式，也就是说name/value属性支持使用 ${} 或者 #{}
 		Object resolvedName = resolveEmbeddedValuesAndExpressions(namedValueInfo.name);
 		if (resolvedName == null)
 		{
@@ -114,6 +116,12 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		}
 
 		// 模版抽象方法：将给定的参数类型和值名称解析为参数值。  由子类去实现
+		// @PathVariable     --> 通过对uri解析后得到的decodedUriVariables值(常用)
+		// @RequestParam     --> 通过 HttpServletRequest.getParameterValues(name) 获取（常用）
+		// @RequestAttribute --> 通过 HttpServletRequest.getAttribute(name) 获取   <-- 这里的 scope 是 request
+		// @SessionAttribute --> 略
+		// @RequestHeader    --> 通过 HttpServletRequest.getHeaderValues(name) 获取
+		// @CookieValue      --> 通过 HttpServletRequest.getCookies() 获取
 		Object arg = resolveName(resolvedName.toString(), nestedParameter, webRequest);
 
 		if (arg == null)
@@ -124,11 +132,11 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 				arg = resolveEmbeddedValuesAndExpressions(namedValueInfo.defaultValue);
 			} else if (namedValueInfo.required && !nestedParameter.isOptional())
 			{
-				//如果defaultValue为null，并且required为true，则抛异常，各子类都复写了此方法，转而抛出自己的异常
+				// 如果defaultValue为null、required为true、参数不是Optional类型（参数如果是Optional类型由下面抛），
+				// 则抛异常，各子类都复写了此方法，转而抛出自己的异常
 				handleMissingValue(namedValueInfo.name, nestedParameter, webRequest);
 			}
 			// 如果到了这一步（value是null），但还是基本类型，那就抛出异常了（只有boolean类型不会抛异常），其它的简单类型返回null
-			// 即使请求为&bool=1，效果同bool=true的,1：true 0：false,并且不区分大小写
 			arg = handleNullValue(namedValueInfo.name, arg, nestedParameter.getNestedParameterType());
 		} else if ("".equals(arg) && namedValueInfo.defaultValue != null)
 		{
@@ -172,7 +180,10 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 		NamedValueInfo namedValueInfo = this.namedValueInfoCache.get(parameter);
 		if (namedValueInfo == null)
 		{
+			// 由子类实现，其实就是从@RequestParam或者其它注解中获取name、request、defaultValue
 			namedValueInfo = createNamedValueInfo(parameter);
+
+			// 如果name没有指定，则取参数名称作为name
 			namedValueInfo = updateNamedValueInfo(parameter, namedValueInfo);
 			this.namedValueInfoCache.put(parameter, namedValueInfo);
 		}
@@ -199,8 +210,7 @@ public abstract class AbstractNamedValueMethodArgumentResolver implements Handle
 			name = parameter.getParameterName();
 			if (name == null)
 			{
-				throw new IllegalArgumentException(
-						"Name for argument of type [" + parameter.getNestedParameterType().getName() +
+				throw new IllegalArgumentException("Name for argument of type [" + parameter.getNestedParameterType().getName() +
 								"] not specified, and parameter name information not found in class file either.");
 			}
 		}

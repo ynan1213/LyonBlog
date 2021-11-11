@@ -75,11 +75,13 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @since 3.1
  * @see RequestParamMapMethodArgumentResolver
  */
-public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethodArgumentResolver
-		implements UriComponentsContributor {
+public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethodArgumentResolver implements UriComponentsContributor {
 
 	private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
 
+	// true：如果参数类型是基本类型，即使不写@RequestParam注解，这也可以匹配上
+	// fasle：除上以外的。  要想它处理就必须标注注解才行哦，比如List等~
+	// 默认值是false
 	private final boolean useDefaultResolution;
 
 
@@ -122,6 +124,12 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	 * <li>Arguments of type {@code Part} unless annotated with @{@link RequestPart}.
 	 * <li>In default resolution mode, simple type arguments even if not with @{@link RequestParam}.
 	 * </ul>
+	 *
+	 * 支持的参数：
+	 * 	1、参数上有@RequestParam注解，并且参数不是Map类型；
+	 * 	2、参数上有@RequestParam注解、参数是Map类型，且注解的name属性不为空；
+	 * 	3、参数上没有@RequestParam注解，上传类型也处理；
+	 * 	4、参数上没有@RequestParam注解，如果useDefaultResolution未true，简单类型也会处理；
 	 */
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
@@ -134,7 +142,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 				return true;
 			}
 		}
-		else {
+		else { // 不带注解
 			if (parameter.hasParameterAnnotation(RequestPart.class)) {
 				return false;
 			}
@@ -188,8 +196,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 	}
 
 	@Override
-	protected void handleMissingValue(String name, MethodParameter parameter, NativeWebRequest request)
-			throws Exception {
+	protected void handleMissingValue(String name, MethodParameter parameter, NativeWebRequest request) throws Exception {
 
 		HttpServletRequest servletRequest = request.getNativeRequest(HttpServletRequest.class);
 		if (MultipartResolutionDelegate.isMultipartArgument(parameter)) {
@@ -201,8 +208,7 @@ public class RequestParamMethodArgumentResolver extends AbstractNamedValueMethod
 			}
 		}
 		else {
-			throw new MissingServletRequestParameterException(name,
-					parameter.getNestedParameterType().getSimpleName());
+			throw new MissingServletRequestParameterException(name, parameter.getNestedParameterType().getSimpleName());
 		}
 	}
 

@@ -87,7 +87,7 @@ public abstract class TransactionSynchronizationManager {
 
 	// 事物同步器，通过 TransactionSynchronizationManager#registerSynchronization 来注册
 	// 可以理解为是回调钩子对象,内部含有beforeCommit, afterCommit, beforeCompletion等钩子方法。
-	// 我们自己如果需要的话也可以在业务方法或者切面中注册一些 TransactionSynchronization 对象用于追踪事务生命周期做一些自定义的事情。
+	// 我们自己如果需要的话也可以在业务方法或者切面中注册一些 TransactionSynchronization 对象用于在指定的地方执行自定义的方法
 	private static final ThreadLocal<Set<TransactionSynchronization>> synchronizations = new NamedThreadLocal<>("Transaction synchronizations");
 
 	// 当前事务名

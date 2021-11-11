@@ -37,8 +37,7 @@ import org.springframework.util.StringUtils;
  * @since 3.2
  * @see org.springframework.format.datetime.joda.JodaDateTimeFormatAnnotationFormatterFactory
  */
-public class DateTimeFormatAnnotationFormatterFactory  extends EmbeddedValueResolutionSupport
-		implements AnnotationFormatterFactory<DateTimeFormat> {
+public class DateTimeFormatAnnotationFormatterFactory  extends EmbeddedValueResolutionSupport implements AnnotationFormatterFactory<DateTimeFormat> {
 
 	private static final Set<Class<?>> FIELD_TYPES;
 
@@ -67,6 +66,8 @@ public class DateTimeFormatAnnotationFormatterFactory  extends EmbeddedValueReso
 	}
 
 	protected Formatter<Date> getFormatter(DateTimeFormat annotation, Class<?> fieldType) {
+		// 原理就是创建一个 DateFormatter ，然后获取注解上的属性设置进去
+		// DateFormatter 只能 处理Date类型，所以第二个参数并没有用上
 		DateFormatter formatter = new DateFormatter();
 		String style = resolveEmbeddedValue(annotation.style());
 		if (StringUtils.hasLength(style)) {

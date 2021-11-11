@@ -804,9 +804,9 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 				boolean unexpectedRollback = false;
 				// 钩子函数，TxMgr子类可以覆盖默认的空实现。
 				prepareForCommit(status);
-				// 回调transaction synchronization的beforeCommit方法。
+				// 回调beforeCommit方法。
 				triggerBeforeCommit(status);
-				// 回调transaction synchronization的beforeCompletion方法。
+				// 回调beforeCompletion方法。
 				triggerBeforeCompletion(status);
 				beforeCompletionInvoked = true;
 

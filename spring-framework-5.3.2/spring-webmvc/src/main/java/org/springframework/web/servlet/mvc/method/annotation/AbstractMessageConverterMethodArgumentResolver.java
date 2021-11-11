@@ -71,8 +71,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 public abstract class AbstractMessageConverterMethodArgumentResolver implements HandlerMethodArgumentResolver
 {
 
-	private static final Set<HttpMethod> SUPPORTED_METHODS =
-			EnumSet.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH);
+	private static final Set<HttpMethod> SUPPORTED_METHODS = EnumSet.of(HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH);
 
 	private static final Object NO_VALUE = new Object();
 
@@ -99,8 +98,7 @@ public abstract class AbstractMessageConverterMethodArgumentResolver implements 
 	 *
 	 * @since 4.2
 	 */
-	public AbstractMessageConverterMethodArgumentResolver(List<HttpMessageConverter<?>> converters,
-														  @Nullable List<Object> requestResponseBodyAdvice)
+	public AbstractMessageConverterMethodArgumentResolver(List<HttpMessageConverter<?>> converters, @Nullable List<Object> requestResponseBodyAdvice)
 	{
 
 		Assert.notEmpty(converters, "'messageConverters' must not be empty");

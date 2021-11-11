@@ -20,13 +20,15 @@ public class CollectDemo {
 //            (theList, theList2) -> theList.addAll(theList2)
 //        );
 //        System.out.println(list1);
-        System.out.println("------------------");
-        ArrayList list2 = stream.collect(
-            ArrayList::new,
-            ArrayList::add,
-            ArrayList::addAll
-        );
-        System.out.println(list2);
+//        System.out.println("------------------");
+//        ArrayList list2 = stream.collect(
+//            ArrayList::new,
+//            ArrayList::add,
+//            ArrayList::addAll
+//        );
+//        System.out.println(list2);
+
+        System.out.println(String.format("hello[%s]", 123));
 
     }
 

@@ -14,9 +14,8 @@ public class Demo01 {
 
         List list = new ArrayList<>();
 
-        Stream stream = list.stream();
-
-//        Stream.of()
+        StringBuilder sb = new StringBuilder();
+        System.out.println(sb.capacity());
 
     }
 

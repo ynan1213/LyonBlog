@@ -85,14 +85,18 @@ public class DefaultConversionService extends GenericConversionService {
 	 * @throws ClassCastException if the given ConverterRegistry could not be cast to a ConversionService
 	 */
 	public static void addDefaultConverters(ConverterRegistry converterRegistry) {
+		// 1、添加标量转换器(和数字相关)
 		addScalarConverters(converterRegistry);
+		// 2、添加处理集合的转换器
 		addCollectionConverters(converterRegistry);
 
+		// 3、添加对JSR310时间类型支持的转换器
 		converterRegistry.addConverter(new ByteBufferConverter((ConversionService) converterRegistry));
 		converterRegistry.addConverter(new StringToTimeZoneConverter());
 		converterRegistry.addConverter(new ZoneIdToTimeZoneConverter());
 		converterRegistry.addConverter(new ZonedDateTimeToCalendarConverter());
 
+		// 4、添加兜底转换器（上面处理不了的全交给这几个哥们处理）
 		converterRegistry.addConverter(new ObjectToObjectConverter());
 		converterRegistry.addConverter(new IdToEntityConverter((ConversionService) converterRegistry));
 		converterRegistry.addConverter(new FallbackObjectToStringConverter());

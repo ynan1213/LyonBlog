@@ -64,8 +64,9 @@ public class RequestParamMapMethodArgumentResolver implements HandlerMethodArgum
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
 		RequestParam requestParam = parameter.getParameterAnnotation(RequestParam.class);
-		return (requestParam != null && Map.class.isAssignableFrom(parameter.getParameterType()) &&
-				!StringUtils.hasText(requestParam.name()));
+		return (requestParam != null
+				&& Map.class.isAssignableFrom(parameter.getParameterType())
+				&& !StringUtils.hasText(requestParam.name()));
 	}
 
 	@Override

@@ -69,8 +69,7 @@ public class RabbitMessageChannelBinderConfiguration {
 
 	@Bean
 	RabbitMessageChannelBinder rabbitMessageChannelBinder(@Nullable ListenerContainerCustomizer<AbstractMessageListenerContainer> listenerContainerCustomizer) throws Exception {
-		RabbitMessageChannelBinder binder = new RabbitMessageChannelBinder(this.rabbitConnectionFactory,
-				this.rabbitProperties, provisioningProvider(), listenerContainerCustomizer);
+		RabbitMessageChannelBinder binder = new RabbitMessageChannelBinder(this.rabbitConnectionFactory, this.rabbitProperties, provisioningProvider(), listenerContainerCustomizer);
 		binder.setAdminAddresses(this.rabbitBinderConfigurationProperties.getAdminAddresses());
 		binder.setCompressingPostProcessor(gZipPostProcessor());
 		binder.setDecompressingPostProcessor(deCompressingPostProcessor());
@@ -101,8 +100,7 @@ public class RabbitMessageChannelBinderConfiguration {
 	@ConditionalOnProperty("spring.cloud.stream.rabbit.binder.connection-name-prefix")
 	public ConnectionNameStrategy connectionNamer(CachingConnectionFactory cf) {
 		final AtomicInteger nameIncrementer = new AtomicInteger();
-		ConnectionNameStrategy namer = f -> this.rabbitBinderConfigurationProperties.getConnectionNamePrefix()
-				+ "#" + nameIncrementer.getAndIncrement();
+		ConnectionNameStrategy namer = f -> this.rabbitBinderConfigurationProperties.getConnectionNamePrefix() + "#" + nameIncrementer.getAndIncrement();
 		// TODO: this can be removed when Boot 2.0.1 wires it in
 		cf.setConnectionNameStrategy(namer);
 		return namer;

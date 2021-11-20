@@ -82,10 +82,9 @@ public class StreamListenerAnnotationBeanPostProcessorOverrideTest {
 		public static StreamListenerAnnotationBeanPostProcessor streamListenerAnnotationBeanPostProcessor() {
 			return new StreamListenerAnnotationBeanPostProcessor() {
 				@Override
-				protected StreamListener postProcessAnnotation(StreamListener originalAnnotation,
-						Method annotatedMethod) {
-					Map<String, Object> attributes = new HashMap<>(
-							AnnotationUtils.getAnnotationAttributes(originalAnnotation));
+				protected StreamListener postProcessAnnotation(StreamListener originalAnnotation, Method annotatedMethod) {
+					Map<String, Object> attributes = new HashMap<>(AnnotationUtils.getAnnotationAttributes(originalAnnotation));
+					// spring 注解合并
 					attributes.put("condition", "headers['type']=='" + originalAnnotation.condition() + "'");
 					return AnnotationUtils.synthesizeAnnotation(attributes, StreamListener.class, annotatedMethod);
 				}

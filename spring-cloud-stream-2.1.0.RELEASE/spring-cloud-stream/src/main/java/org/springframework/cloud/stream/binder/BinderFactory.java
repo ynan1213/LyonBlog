@@ -29,6 +29,5 @@ public interface BinderFactory {
 	 * @param configurationName the name of a binder configuration
 	 * @return the binder instance
 	 */
-	<T> Binder<T, ? extends ConsumerProperties, ? extends ProducerProperties> getBinder(String configurationName,
-			Class<? extends T> bindableType);
+	<T> Binder<T, ? extends ConsumerProperties, ? extends ProducerProperties> getBinder(String configurationName, Class<? extends T> bindableType);
 }

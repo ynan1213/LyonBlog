@@ -87,10 +87,8 @@ public class MessageConverterConfigurer implements MessageChannelAndSourceConfig
 
 	private final Field headersField;
 
-	public MessageConverterConfigurer(BindingServiceProperties bindingServiceProperties,
-			CompositeMessageConverterFactory compositeMessageConverterFactory) {
-		Assert.notNull(compositeMessageConverterFactory,
-				"The message converter factory cannot be null");
+	public MessageConverterConfigurer(BindingServiceProperties bindingServiceProperties, CompositeMessageConverterFactory compositeMessageConverterFactory) {
+		Assert.notNull(compositeMessageConverterFactory, "The message converter factory cannot be null");
 		this.bindingServiceProperties = bindingServiceProperties;
 		this.compositeMessageConverterFactory = compositeMessageConverterFactory;
 
@@ -109,8 +107,7 @@ public class MessageConverterConfigurer implements MessageChannelAndSourceConfig
 	}
 
 	@Override
-	public void configureOutputChannel(MessageChannel messageChannel,
-			String channelName) {
+	public void configureOutputChannel(MessageChannel messageChannel, String channelName) {
 		configureMessageChannel(messageChannel, channelName, false);
 	}
 
@@ -119,8 +116,7 @@ public class MessageConverterConfigurer implements MessageChannelAndSourceConfig
 		BindingProperties bindingProperties = this.bindingServiceProperties.getBindingProperties(name);
 		String contentType = bindingProperties.getContentType();
 		ConsumerProperties consumerProperties = bindingProperties.getConsumer();
-		if ((consumerProperties == null || !consumerProperties.isUseNativeDecoding())
-				&& binding instanceof DefaultPollableMessageSource) {
+		if ((consumerProperties == null || !consumerProperties.isUseNativeDecoding()) && binding instanceof DefaultPollableMessageSource) {
 			((DefaultPollableMessageSource) binding).addInterceptor(new InboundContentTypeEnhancingInterceptor(contentType));
 		}
 	}
@@ -150,8 +146,8 @@ public class MessageConverterConfigurer implements MessageChannelAndSourceConfig
 				messageChannel.addInterceptor(new InboundContentTypeEnhancingInterceptor(contentType));
 			}
 			else {
-				messageChannel.addInterceptor(new OutboundContentTypeConvertingInterceptor(contentType, this.compositeMessageConverterFactory
-						.getMessageConverterForAllRegistered()));
+				messageChannel.addInterceptor(
+					new OutboundContentTypeConvertingInterceptor(contentType, this.compositeMessageConverterFactory.getMessageConverterForAllRegistered()));
 			}
 		}
 	}

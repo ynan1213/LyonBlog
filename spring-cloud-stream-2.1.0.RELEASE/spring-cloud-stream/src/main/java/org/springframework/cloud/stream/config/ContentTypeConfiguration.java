@@ -40,18 +40,13 @@ import org.springframework.messaging.converter.MessageConverter;
 class ContentTypeConfiguration {
 
 	@Bean
-	public CompositeMessageConverterFactory compositeMessageConverterFactory(
-			ObjectProvider<ObjectMapper> objectMapperObjectProvider,
+	public CompositeMessageConverterFactory compositeMessageConverterFactory(ObjectProvider<ObjectMapper> objectMapperObjectProvider,
 			@StreamMessageConverter List<MessageConverter> customMessageConverters) {
-
-		return new CompositeMessageConverterFactory(customMessageConverters,
-				objectMapperObjectProvider.getIfAvailable(ObjectMapper::new));
+		return new CompositeMessageConverterFactory(customMessageConverters, objectMapperObjectProvider.getIfAvailable(ObjectMapper::new));
 	}
 
 	@Bean(name = IntegrationContextUtils.ARGUMENT_RESOLVER_MESSAGE_CONVERTER_BEAN_NAME)
-	public ConfigurableCompositeMessageConverter configurableCompositeMessageConverter(
-			CompositeMessageConverterFactory factory) {
-
+	public ConfigurableCompositeMessageConverter configurableCompositeMessageConverter(CompositeMessageConverterFactory factory) {
 		return new ConfigurableCompositeMessageConverter(factory.getMessageConverterForAllRegistered().getConverters());
 	}
 

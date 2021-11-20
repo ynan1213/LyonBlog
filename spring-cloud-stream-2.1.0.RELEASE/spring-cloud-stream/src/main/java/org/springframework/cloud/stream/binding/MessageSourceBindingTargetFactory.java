@@ -27,8 +27,7 @@ import org.springframework.util.Assert;
  *
  * @author Gary Russell
  */
-public class MessageSourceBindingTargetFactory
-		extends AbstractBindingTargetFactory<PollableMessageSource> {
+public class MessageSourceBindingTargetFactory extends AbstractBindingTargetFactory<PollableMessageSource> {
 
 	private final MessageChannelAndSourceConfigurer messageSourceConfigurer;
 

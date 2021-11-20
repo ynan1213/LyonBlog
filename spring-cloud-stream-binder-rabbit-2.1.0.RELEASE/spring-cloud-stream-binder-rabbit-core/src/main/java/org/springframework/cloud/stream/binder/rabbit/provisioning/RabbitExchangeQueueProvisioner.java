@@ -61,11 +61,9 @@ import org.springframework.util.StringUtils;
  * @author Oleg Zhurakousky
  */
 public class RabbitExchangeQueueProvisioner implements ApplicationListener<DeclarationExceptionEvent>,
-		ProvisioningProvider<ExtendedConsumerProperties<RabbitConsumerProperties>,
-							ExtendedProducerProperties<RabbitProducerProperties>> {
+		ProvisioningProvider<ExtendedConsumerProperties<RabbitConsumerProperties>, ExtendedProducerProperties<RabbitProducerProperties>> {
 
-	private static final Base64UrlNamingStrategy ANONYMOUS_GROUP_NAME_GENERATOR
-			= new Base64UrlNamingStrategy("anonymous.");
+	private static final Base64UrlNamingStrategy ANONYMOUS_GROUP_NAME_GENERATOR = new Base64UrlNamingStrategy("anonymous.");
 
 	/**
 	 * The delimiter between a group and index when constructing a binder
@@ -89,8 +87,7 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 	}
 
 	@Override
-	public ProducerDestination provisionProducerDestination(String name,
-															ExtendedProducerProperties<RabbitProducerProperties> producerProperties) {
+	public ProducerDestination provisionProducerDestination(String name, ExtendedProducerProperties<RabbitProducerProperties> producerProperties) {
 		final String exchangeName = applyPrefix(producerProperties.getExtension().getPrefix(), name);
 		Exchange exchange = buildExchange(producerProperties.getExtension(), exchangeName);
 		if (producerProperties.getExtension().isDeclareExchange()) {
@@ -98,13 +95,11 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 		}
 		Binding binding = null;
 		for (String requiredGroupName : producerProperties.getRequiredGroups()) {
-			String baseQueueName = producerProperties.getExtension().isQueueNameGroupOnly()
-					? requiredGroupName : (exchangeName + "." + requiredGroupName);
+			String baseQueueName = producerProperties.getExtension().isQueueNameGroupOnly() ? requiredGroupName : (exchangeName + "." + requiredGroupName);
 			if (!producerProperties.isPartitioned()) {
 				autoBindDLQ(baseQueueName, baseQueueName, producerProperties.getExtension());
 				if (producerProperties.getExtension().isBindQueue()) {
-					Queue queue = new Queue(baseQueueName, true, false, false,
-							queueArgs(baseQueueName, producerProperties.getExtension(), false));
+					Queue queue = new Queue(baseQueueName, true, false, false, queueArgs(baseQueueName, producerProperties.getExtension(), false));
 					declareQueue(baseQueueName, queue);
 					binding = notPartitionedBinding(exchange, queue, producerProperties.getExtension());
 				}
@@ -116,8 +111,7 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 					String partitionQueueName = baseQueueName + partitionSuffix;
 					autoBindDLQ(baseQueueName, baseQueueName + partitionSuffix, producerProperties.getExtension());
 					if (producerProperties.getExtension().isBindQueue()) {
-						Queue queue = new Queue(partitionQueueName, true, false, false,
-								queueArgs(partitionQueueName, producerProperties.getExtension(), false));
+						Queue queue = new Queue(partitionQueueName, true, false, false, queueArgs(partitionQueueName, producerProperties.getExtension(), false));
 						declareQueue(queue.getName(), queue);
 						String prefix = producerProperties.getExtension().getPrefix();
 						String destination = StringUtils.isEmpty(prefix) ? exchangeName : exchangeName.substring(prefix.length());
@@ -130,23 +124,20 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 	}
 
 	@Override
-	public ConsumerDestination provisionConsumerDestination(String name, String group,
-			ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
+	public ConsumerDestination provisionConsumerDestination(String name, String group, ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
 		ConsumerDestination consumerDestination;
 		if (!properties.isMultiplex()) {
 			consumerDestination = doProvisionConsumerDestination(name, group, properties);
 		}
 		else {
 			String[] provisionedDestinations = Stream.of(StringUtils.tokenizeToStringArray(name, ",", true, true))
-				.map(destination -> doProvisionConsumerDestination(destination, group, properties).getName())
-				.toArray(String[]::new);
+				.map(destination -> doProvisionConsumerDestination(destination, group, properties).getName()).toArray(String[]::new);
 			consumerDestination = new RabbitConsumerDestination(StringUtils.arrayToCommaDelimitedString(provisionedDestinations), null);
 		}
 		return consumerDestination;
 	}
 
-	private ConsumerDestination doProvisionConsumerDestination(String name, String group,
-			ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
+	private ConsumerDestination doProvisionConsumerDestination(String name, String group, ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
 		boolean anonymous = !StringUtils.hasText(group);
 		String  baseQueueName;
 		if (properties.getExtension().isQueueNameGroupOnly()) {
@@ -177,12 +168,10 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 				queueName += partitionSuffix;
 			}
 			if (durable) {
-				queue = new Queue(queueName, true, false, false,
-						queueArgs(queueName, properties.getExtension(), false));
+				queue = new Queue(queueName, true, false, false, queueArgs(queueName, properties.getExtension(), false));
 			}
 			else {
-				queue = new Queue(queueName, false, false, true,
-						queueArgs(queueName, properties.getExtension(), false));
+				queue = new Queue(queueName, false, false, true, queueArgs(queueName, properties.getExtension(), false));
 			}
 		}
 		Binding binding = null;
@@ -191,8 +180,7 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 			binding = declareConsumerBindings(name, properties, exchange, partitioned, queue);
 		}
 		if (durable) {
-			autoBindDLQ(applyPrefix(properties.getExtension().getPrefix(), baseQueueName), queueName,
-					properties.getExtension());
+			autoBindDLQ(applyPrefix(properties.getExtension().getPrefix(), baseQueueName), queueName, properties.getExtension());
 		}
 		return new RabbitConsumerDestination(queue.getName(), binding);
 	}
@@ -208,24 +196,19 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 		return name + GROUP_INDEX_DELIMITER + (StringUtils.hasText(group) ? group : "default");
 	}
 
-	private Binding partitionedBinding(String destination, Exchange exchange, Queue queue,
-									RabbitCommonProperties extendedProperties, int index) {
+	private Binding partitionedBinding(String destination, Exchange exchange, Queue queue, RabbitCommonProperties extendedProperties, int index) {
 		String bindingKey = extendedProperties.getBindingRoutingKey();
 		if (bindingKey == null) {
 			bindingKey = destination;
 		}
 		bindingKey += "-" + index;
 		if (exchange instanceof TopicExchange) {
-			Binding binding = BindingBuilder.bind(queue)
-					.to((TopicExchange) exchange)
-					.with(bindingKey);
+			Binding binding = BindingBuilder.bind(queue).to((TopicExchange) exchange).with(bindingKey);
 			declareBinding(queue.getName(), binding);
 			return binding;
 		}
 		else if (exchange instanceof DirectExchange) {
-			Binding binding = BindingBuilder.bind(queue)
-					.to((DirectExchange) exchange)
-					.with(bindingKey);
+			Binding binding = BindingBuilder.bind(queue).to((DirectExchange) exchange).with(bindingKey);
 			declareBinding(queue.getName(), binding);
 			return binding;
 		}
@@ -237,8 +220,7 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 		}
 	}
 
-	private Binding declareConsumerBindings(String name, ExtendedConsumerProperties<RabbitConsumerProperties> properties,
-										Exchange exchange, boolean partitioned, Queue queue) {
+	private Binding declareConsumerBindings(String name, ExtendedConsumerProperties<RabbitConsumerProperties> properties, Exchange exchange, boolean partitioned, Queue queue) {
 		if (partitioned) {
 			return partitionedBinding(name, exchange, queue, properties.getExtension(), properties.getInstanceIndex());
 		}
@@ -253,22 +235,17 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 			routingKey = "#";
 		}
 		if (exchange instanceof TopicExchange) {
-			Binding binding = BindingBuilder.bind(queue)
-					.to((TopicExchange) exchange)
-					.with(routingKey);
+			Binding binding = BindingBuilder.bind(queue).to((TopicExchange) exchange).with(routingKey);
 			declareBinding(queue.getName(), binding);
 			return binding;
 		}
 		else if (exchange instanceof DirectExchange) {
-			Binding binding = BindingBuilder.bind(queue)
-					.to((DirectExchange) exchange)
-					.with(routingKey);
+			Binding binding = BindingBuilder.bind(queue).to((DirectExchange) exchange).with(routingKey);
 			declareBinding(queue.getName(), binding);
 			return binding;
 		}
 		else if (exchange instanceof FanoutExchange) {
-			Binding binding = BindingBuilder.bind(queue)
-					.to((FanoutExchange) exchange);
+			Binding binding = BindingBuilder.bind(queue).to((FanoutExchange) exchange);
 			declareBinding(queue.getName(), binding);
 			return binding;
 		}
@@ -458,8 +435,7 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 		}
 		catch (AmqpConnectException e) {
 			if (this.logger.isDebugEnabled()) {
-				this.logger.debug(
-						"Declaration of exchange: " + exchange.getName() + " deferred - connection not available");
+				this.logger.debug("Declaration of exchange: " + exchange.getName() + " deferred - connection not available");
 			}
 		}
 		catch (RuntimeException e) {

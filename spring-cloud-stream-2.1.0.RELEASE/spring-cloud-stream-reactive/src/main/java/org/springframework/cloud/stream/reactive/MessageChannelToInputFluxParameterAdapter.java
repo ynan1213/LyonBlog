@@ -48,8 +48,7 @@ public class MessageChannelToInputFluxParameterAdapter
 
 	@Override
 	public boolean supports(Class<?> bindingTargetType, MethodParameter methodParameter) {
-		return MessageChannel.class.isAssignableFrom(bindingTargetType)
-				&& Flux.class.isAssignableFrom(methodParameter.getParameterType());
+		return MessageChannel.class.isAssignableFrom(bindingTargetType) && Flux.class.isAssignableFrom(methodParameter.getParameterType());
 	}
 
 	@Override
@@ -57,8 +56,7 @@ public class MessageChannelToInputFluxParameterAdapter
 		final ResolvableType fluxResolvableType = ResolvableType.forMethodParameter(parameter);
 		final ResolvableType fluxTypeParameter = fluxResolvableType.getGeneric(0);
 		final Class<?> fluxTypeParameterRawClass = fluxTypeParameter.getRawClass();
-		final Class<?> fluxTypeParameterClass = (fluxTypeParameterRawClass != null) ? fluxTypeParameterRawClass
-				: Object.class;
+		final Class<?> fluxTypeParameterClass = (fluxTypeParameterRawClass != null) ? fluxTypeParameterRawClass : Object.class;
 
 		final Object monitor = new Object();
 
@@ -66,20 +64,16 @@ public class MessageChannelToInputFluxParameterAdapter
 
 			final ResolvableType payloadTypeParameter = fluxTypeParameter.getGeneric(0);
 			final Class<?> payloadTypeParameterRawClass = payloadTypeParameter.getRawClass();
-			final Class<?> payloadTypeParameterClass = (payloadTypeParameterRawClass != null)
-					? payloadTypeParameterRawClass : Object.class;
+			final Class<?> payloadTypeParameterClass = (payloadTypeParameterRawClass != null) ? payloadTypeParameterRawClass : Object.class;
 
 			return Flux.create(emitter -> {
 				MessageHandler messageHandler = message -> {
 					synchronized (monitor) {
-
 						if (payloadTypeParameterClass.isAssignableFrom(message.getPayload().getClass())) {
 							emitter.next(message);
 						}
 						else {
-							emitter.next(MessageBuilder.createMessage(
-									this.messageConverter.fromMessage(message, payloadTypeParameterClass),
-									message.getHeaders()));
+							emitter.next(MessageBuilder.createMessage(this.messageConverter.fromMessage(message, payloadTypeParameterClass), message.getHeaders()));
 						}
 					}
 				};

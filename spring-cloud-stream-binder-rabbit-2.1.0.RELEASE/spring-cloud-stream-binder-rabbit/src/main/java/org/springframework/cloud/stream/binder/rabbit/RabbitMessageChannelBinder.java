@@ -117,10 +117,8 @@ import com.rabbitmq.client.Envelope;
  * @author Oleg Zhurakousky
  */
 public class RabbitMessageChannelBinder
-		extends AbstractMessageChannelBinder<ExtendedConsumerProperties<RabbitConsumerProperties>,
-		ExtendedProducerProperties<RabbitProducerProperties>, RabbitExchangeQueueProvisioner>
-		implements ExtendedPropertiesBinder<MessageChannel, RabbitConsumerProperties, RabbitProducerProperties>,
-			DisposableBean {
+		extends AbstractMessageChannelBinder<ExtendedConsumerProperties<RabbitConsumerProperties>, ExtendedProducerProperties<RabbitProducerProperties>, RabbitExchangeQueueProvisioner>
+		implements ExtendedPropertiesBinder<MessageChannel, RabbitConsumerProperties, RabbitProducerProperties>, DisposableBean {
 
 	private static final SimplePassthroughMessageConverter passThoughConverter =
 			new SimplePassthroughMessageConverter();
@@ -159,14 +157,12 @@ public class RabbitMessageChannelBinder
 
 	private RabbitExtendedBindingProperties extendedBindingProperties = new RabbitExtendedBindingProperties();
 
-	public RabbitMessageChannelBinder(ConnectionFactory connectionFactory, RabbitProperties rabbitProperties,
-			RabbitExchangeQueueProvisioner provisioningProvider) {
+	public RabbitMessageChannelBinder(ConnectionFactory connectionFactory, RabbitProperties rabbitProperties, RabbitExchangeQueueProvisioner provisioningProvider) {
 		this(connectionFactory, rabbitProperties, provisioningProvider, null);
 	}
 
 	public RabbitMessageChannelBinder(ConnectionFactory connectionFactory, RabbitProperties rabbitProperties,
-			RabbitExchangeQueueProvisioner provisioningProvider,
-			ListenerContainerCustomizer<AbstractMessageListenerContainer> containerCustomizer) {
+			RabbitExchangeQueueProvisioner provisioningProvider, ListenerContainerCustomizer<AbstractMessageListenerContainer> containerCustomizer) {
 		super(new String[0], provisioningProvider, containerCustomizer);
 		Assert.notNull(connectionFactory, "connectionFactory must not be null");
 		Assert.notNull(rabbitProperties, "rabbitProperties must not be null");
@@ -263,8 +259,7 @@ public class RabbitMessageChannelBinder
 		String prefix = producerProperties.getExtension().getPrefix();
 		String exchangeName = producerDestination.getName();
 		String destination = StringUtils.isEmpty(prefix) ? exchangeName : exchangeName.substring(prefix.length());
-		final AmqpOutboundEndpoint endpoint = new AmqpOutboundEndpoint(
-				buildRabbitTemplate(producerProperties.getExtension(), errorChannel != null));
+		final AmqpOutboundEndpoint endpoint = new AmqpOutboundEndpoint(buildRabbitTemplate(producerProperties.getExtension(), errorChannel != null));
 		endpoint.setExchangeName(producerDestination.getName());
 		RabbitProducerProperties extendedProperties = producerProperties.getExtension();
 		boolean expressionInterceptorNeeded = expressionInterceptorNeeded(extendedProperties);
@@ -275,8 +270,7 @@ public class RabbitMessageChannelBinder
 			}
 			else {
 				if (expressionInterceptorNeeded) {
-					endpoint.setRoutingKeyExpressionString("headers['"
-							+ RabbitExpressionEvaluatingInterceptor.ROUTING_KEY_HEADER + "']");
+					endpoint.setRoutingKeyExpressionString("headers['" + RabbitExpressionEvaluatingInterceptor.ROUTING_KEY_HEADER + "']");
 				}
 				else {
 					endpoint.setRoutingKeyExpression(routingKeyExpression);
@@ -293,15 +287,13 @@ public class RabbitMessageChannelBinder
 							+ RabbitExpressionEvaluatingInterceptor.ROUTING_KEY_HEADER + "']", true));
 				}
 				else {
-					endpoint.setRoutingKeyExpression(buildPartitionRoutingExpression(routingKeyExpression.getExpressionString(),
-							true));
+					endpoint.setRoutingKeyExpression(buildPartitionRoutingExpression(routingKeyExpression.getExpressionString(), true));
 				}
 			}
 		}
 		if (extendedProperties.getDelayExpression() != null) {
 			if (expressionInterceptorNeeded) {
-				endpoint.setDelayExpressionString("headers['"
-						+ RabbitExpressionEvaluatingInterceptor.DELAY_HEADER + "']");
+				endpoint.setDelayExpressionString("headers['" + RabbitExpressionEvaluatingInterceptor.DELAY_HEADER + "']");
 			}
 			else {
 				endpoint.setDelayExpression(extendedProperties.getDelayExpression());
@@ -320,10 +312,8 @@ public class RabbitMessageChannelBinder
 			endpoint.setReturnChannel(errorChannel);
 			endpoint.setConfirmNackChannel(errorChannel);
 			String ackChannelBeanName = StringUtils.hasText(extendedProperties.getConfirmAckChannel())
-					? extendedProperties.getConfirmAckChannel()
-					: IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME;
-			if (!ackChannelBeanName.equals(IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME)
-					&& !getApplicationContext().containsBean(ackChannelBeanName)) {
+					? extendedProperties.getConfirmAckChannel() : IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME;
+			if (!ackChannelBeanName.equals(IntegrationContextUtils.NULL_CHANNEL_BEAN_NAME) && !getApplicationContext().containsBean(ackChannelBeanName)) {
 				GenericApplicationContext context = (GenericApplicationContext) getApplicationContext();
 				context.registerBean(ackChannelBeanName, DirectChannel.class, () -> new DirectChannel());
 			}
@@ -337,8 +327,7 @@ public class RabbitMessageChannelBinder
 
 
 	@Override
-	protected void postProcessOutputChannel(MessageChannel outputChannel,
-			ExtendedProducerProperties<RabbitProducerProperties> producerProperties) {
+	protected void postProcessOutputChannel(MessageChannel outputChannel, ExtendedProducerProperties<RabbitProducerProperties> producerProperties) {
 		RabbitProducerProperties extendedProperties = producerProperties.getExtension();
 		if (expressionInterceptorNeeded(extendedProperties)) {
 			((AbstractMessageChannel) outputChannel).addInterceptor(0,
@@ -348,30 +337,24 @@ public class RabbitMessageChannelBinder
 	}
 
 	private boolean expressionInterceptorNeeded(RabbitProducerProperties extendedProperties) {
-		return extendedProperties.getRoutingKeyExpression() != null
-					&& extendedProperties.getRoutingKeyExpression().getExpressionString().contains("payload")
-				|| (extendedProperties.getDelayExpression() != null
-					&& extendedProperties.getDelayExpression().getExpressionString().contains("payload"));
+		return extendedProperties.getRoutingKeyExpression() != null && extendedProperties.getRoutingKeyExpression().getExpressionString().contains("payload")
+				|| (extendedProperties.getDelayExpression() != null && extendedProperties.getDelayExpression().getExpressionString().contains("payload"));
 	}
 
 	private void checkConnectionFactoryIsErrorCapable() {
 		if (!(this.connectionFactory instanceof CachingConnectionFactory)) {
-			logger.warn("Unknown connection factory type, cannot determine error capabilities: "
-					+ this.connectionFactory.getClass());
+			logger.warn("Unknown connection factory type, cannot determine error capabilities: " + this.connectionFactory.getClass());
 		}
 		else {
 			CachingConnectionFactory ccf = (CachingConnectionFactory) this.connectionFactory;
 			if (!ccf.isPublisherConfirms() && !ccf.isPublisherReturns()) {
-				logger.warn("Producer error channel is enabled, but the connection factory is not configured for "
-						+ "returns or confirms; the error channel will receive no messages");
+				logger.warn("Producer error channel is enabled, but the connection factory is not configured for returns or confirms; the error channel will receive no messages");
 			}
 			else if (!ccf.isPublisherConfirms()) {
-				logger.info("Producer error channel is enabled, but the connection factory is only configured to "
-						+ "handle returned messages; negative acks will not be reported");
+				logger.info("Producer error channel is enabled, but the connection factory is only configured to handle returned messages; negative acks will not be reported");
 			}
 			else if (!ccf.isPublisherReturns()) {
-				logger.info("Producer error channel is enabled, but the connection factory is only configured to "
-						+ "handle negatively acked messages; returned messages will not be reported");
+				logger.info("Producer error channel is enabled, but the connection factory is only configured to handle negatively acked messages; returned messages will not be reported");
 			}
 		}
 	}
@@ -386,11 +369,9 @@ public class RabbitMessageChannelBinder
 	@Override
 	protected MessageProducer createConsumerEndpoint(ConsumerDestination consumerDestination, String group,
 			ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
-		Assert.state(!HeaderMode.embeddedHeaders.equals(properties.getHeaderMode()),
-				"the RabbitMQ binder does not support embedded headers since RabbitMQ supports headers natively");
+		Assert.state(!HeaderMode.embeddedHeaders.equals(properties.getHeaderMode()), "the RabbitMQ binder does not support embedded headers since RabbitMQ supports headers natively");
 		String destination = consumerDestination.getName();
-		SimpleMessageListenerContainer listenerContainer = new SimpleMessageListenerContainer(
-				this.connectionFactory);
+		SimpleMessageListenerContainer listenerContainer = new SimpleMessageListenerContainer(this.connectionFactory);
 		listenerContainer.setAcknowledgeMode(properties.getExtension().getAcknowledgeMode());
 		listenerContainer.setChannelTransacted(properties.getExtension().isTransacted());
 		listenerContainer.setDefaultRequeueRejected(properties.getExtension().isRequeueRejected());
@@ -408,16 +389,14 @@ public class RabbitMessageChannelBinder
 		String[] queues = StringUtils.tokenizeToStringArray(destination, ",", true, true);
 		listenerContainer.setQueueNames(queues);
 		listenerContainer.setAfterReceivePostProcessors(this.decompressingPostProcessor);
-		listenerContainer.setMessagePropertiesConverter(
-				RabbitMessageChannelBinder.inboundMessagePropertiesConverter);
+		listenerContainer.setMessagePropertiesConverter(RabbitMessageChannelBinder.inboundMessagePropertiesConverter);
 		listenerContainer.setExclusive(properties.getExtension().isExclusive());
 		listenerContainer.setMissingQueuesFatal(properties.getExtension().getMissingQueuesFatal());
 		if (properties.getExtension().getQueueDeclarationRetries() != null) {
 			listenerContainer.setDeclarationRetries(properties.getExtension().getQueueDeclarationRetries());
 		}
 		if (properties.getExtension().getFailedDeclarationRetryInterval() != null) {
-			listenerContainer.setFailedDeclarationRetryInterval(
-					properties.getExtension().getFailedDeclarationRetryInterval());
+			listenerContainer.setFailedDeclarationRetryInterval(properties.getExtension().getFailedDeclarationRetryInterval());
 		}
 		if (getApplicationEventPublisher() != null) {
 			listenerContainer.setApplicationEventPublisher(getApplicationEventPublisher());
@@ -455,12 +434,10 @@ public class RabbitMessageChannelBinder
 	@Override
 	protected PolledConsumerResources createPolledConsumerResources(String name, String group, ConsumerDestination destination,
 			ExtendedConsumerProperties<RabbitConsumerProperties> consumerProperties) {
-		Assert.isTrue(!consumerProperties.isMultiplex(),
-				"The Spring Integration polled MessageSource does not currently support muiltiple queues");
+		Assert.isTrue(!consumerProperties.isMultiplex(), "The Spring Integration polled MessageSource does not currently support muiltiple queues");
 		AmqpMessageSource source = new AmqpMessageSource(this.connectionFactory, destination.getName());
 		source.setRawMessageHeader(true);
-		return new PolledConsumerResources(source,
-				registerErrorInfrastructure(destination, group, consumerProperties, true));
+		return new PolledConsumerResources(source, registerErrorInfrastructure(destination, group, consumerProperties, true));
 	}
 
 	@Override
@@ -479,14 +456,11 @@ public class RabbitMessageChannelBinder
 	}
 
 	@Override
-	protected MessageHandler getErrorMessageHandler(ConsumerDestination destination, String group,
-			final ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
+	protected MessageHandler getErrorMessageHandler(ConsumerDestination destination, String group, final ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
 		if (properties.getExtension().isRepublishToDlq()) {
 			return new MessageHandler() {
 
-				private final RabbitTemplate template = new RabbitTemplate(
-						RabbitMessageChannelBinder.this.connectionFactory);
-
+				private final RabbitTemplate template = new RabbitTemplate(RabbitMessageChannelBinder.this.connectionFactory);
 				{
 					this.template.setUsePublisherConnection(true);
 				}
@@ -501,11 +475,9 @@ public class RabbitMessageChannelBinder
 
 				@Override
 				public void handleMessage(org.springframework.messaging.Message<?> message) throws MessagingException {
-					Message amqpMessage = (Message) message.getHeaders()
-							.get(AmqpMessageHeaderErrorMessageStrategy.AMQP_RAW_MESSAGE);
+					Message amqpMessage = (Message) message.getHeaders().get(AmqpMessageHeaderErrorMessageStrategy.AMQP_RAW_MESSAGE);
 					if (!(message instanceof ErrorMessage)) {
-						logger.error("Expected an ErrorMessage, not a " + message.getClass().toString() + " for: "
-								+ message);
+						logger.error("Expected an ErrorMessage, not a " + message.getClass().toString() + " for: " + message);
 					}
 					else if (amqpMessage == null) {
 						logger.error("No raw message header in " + message);
@@ -522,8 +494,7 @@ public class RabbitMessageChannelBinder
 						Map<String, Object> headers = messageProperties.getHeaders();
 						String stackTraceAsString = getStackTraceAsString(cause);
 						if (this.maxStackTraceLength < 0) {
-							int rabbitMaxStackTraceLength = RabbitUtils
-									.getMaxFrame(this.template.getConnectionFactory());
+							int rabbitMaxStackTraceLength = RabbitUtils.getMaxFrame(this.template.getConnectionFactory());
 							if (rabbitMaxStackTraceLength > 0) {
 								//maxStackTraceLength -= this.frameMaxHeadroom;
 								this.maxStackTraceLength = rabbitMaxStackTraceLength - this.frameMaxHeadroom;
@@ -535,18 +506,13 @@ public class RabbitMessageChannelBinder
 									+ "consider increasing frame_max on the broker or reduce the stack trace depth", cause);
 						}
 						headers.put(RepublishMessageRecoverer.X_EXCEPTION_STACKTRACE, stackTraceAsString);
-						headers.put(RepublishMessageRecoverer.X_EXCEPTION_MESSAGE,
-								cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
-						headers.put(RepublishMessageRecoverer.X_ORIGINAL_EXCHANGE,
-								messageProperties.getReceivedExchange());
-						headers.put(RepublishMessageRecoverer.X_ORIGINAL_ROUTING_KEY,
-								messageProperties.getReceivedRoutingKey());
+						headers.put(RepublishMessageRecoverer.X_EXCEPTION_MESSAGE, cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
+						headers.put(RepublishMessageRecoverer.X_ORIGINAL_EXCHANGE, messageProperties.getReceivedExchange());
+						headers.put(RepublishMessageRecoverer.X_ORIGINAL_ROUTING_KEY, messageProperties.getReceivedRoutingKey());
 						if (properties.getExtension().getRepublishDeliveyMode() != null) {
 							messageProperties.setDeliveryMode(properties.getExtension().getRepublishDeliveyMode());
 						}
-						this.template.send(this.exchange,
-								this.routingKey != null ? this.routingKey : messageProperties.getConsumerQueue(),
-								amqpMessage);
+						this.template.send(this.exchange, this.routingKey != null ? this.routingKey : messageProperties.getConsumerQueue(), amqpMessage);
 					}
 				}
 
@@ -559,8 +525,7 @@ public class RabbitMessageChannelBinder
 				 */
 				private boolean shouldRepublish(Throwable throwable) {
 					Throwable cause = throwable;
-					while (cause != null && !(cause instanceof AmqpRejectAndDontRequeueException)
-						&& !(cause instanceof ImmediateAcknowledgeAmqpException)) {
+					while (cause != null && !(cause instanceof AmqpRejectAndDontRequeueException) && !(cause instanceof ImmediateAcknowledgeAmqpException)) {
 						cause = cause.getCause();
 					}
 					return !(cause instanceof ImmediateAcknowledgeAmqpException);
@@ -574,8 +539,7 @@ public class RabbitMessageChannelBinder
 
 				@Override
 				public void handleMessage(org.springframework.messaging.Message<?> message) throws MessagingException {
-					Message amqpMessage = (Message) message.getHeaders()
-							.get(AmqpMessageHeaderErrorMessageStrategy.AMQP_RAW_MESSAGE);
+					Message amqpMessage = (Message) message.getHeaders().get(AmqpMessageHeaderErrorMessageStrategy.AMQP_RAW_MESSAGE);
 					/*
 					 * NOTE: The following IF and subsequent ELSE IF should never happen under normal interaction and
 					 * it should always go to the last ELSE
@@ -584,15 +548,12 @@ public class RabbitMessageChannelBinder
 					 * a safety net to handle any message properly.
 					 */
 					if (!(message instanceof ErrorMessage)) {
-						logger.error("Expected an ErrorMessage, not a " + message.getClass().toString() + " for: "
-								+ message);
-						throw new ListenerExecutionFailedException("Unexpected error message " + message,
-								new AmqpRejectAndDontRequeueException(""), null);
+						logger.error("Expected an ErrorMessage, not a " + message.getClass().toString() + " for: " + message);
+						throw new ListenerExecutionFailedException("Unexpected error message " + message, new AmqpRejectAndDontRequeueException(""), null);
 					}
 					else if (amqpMessage == null) {
 						logger.error("No raw message header in " + message);
-						throw new ListenerExecutionFailedException("Unexpected error message " + message,
-								new AmqpRejectAndDontRequeueException(""), amqpMessage);
+						throw new ListenerExecutionFailedException("Unexpected error message " + message, new AmqpRejectAndDontRequeueException(""), amqpMessage);
 					}
 					else {
 						this.recoverer.recover(amqpMessage, (Throwable) message.getPayload());

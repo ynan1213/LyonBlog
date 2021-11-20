@@ -42,6 +42,7 @@ public abstract class RabbitCommonProperties  {
 
 	/**
 	 * whether to declare the exchange as durable
+     * true表示持久化
 	 */
 	private boolean exchangeDurable = true;
 

@@ -56,8 +56,7 @@ import org.springframework.util.StringUtils;
  */
 @Configuration
 @ConditionalOnMissingBean(Binder.class)
-@Import({ RabbitMessageChannelBinderConfiguration.class,
-		RabbitServiceAutoConfiguration.RabbitHealthIndicatorConfiguration.class })
+@Import({ RabbitMessageChannelBinderConfiguration.class, RabbitServiceAutoConfiguration.RabbitHealthIndicatorConfiguration.class })
 public class RabbitServiceAutoConfiguration {
 
 	/**
@@ -107,11 +106,9 @@ public class RabbitServiceAutoConfiguration {
 						ConfigurableApplicationContext applicationContext,
 						RabbitProperties rabbitProperties) throws Exception {
 
-					ConnectionFactory connectionFactory = cloud.getSingletonServiceConnector(ConnectionFactory.class,
-							connectorConfigObjectProvider.getIfUnique());
+					ConnectionFactory connectionFactory = cloud.getSingletonServiceConnector(ConnectionFactory.class, connectorConfigObjectProvider.getIfUnique());
 
-					configureCachingConnectionFactory((CachingConnectionFactory) connectionFactory,
-							applicationContext, rabbitProperties);
+					configureCachingConnectionFactory((CachingConnectionFactory) connectionFactory, applicationContext, rabbitProperties);
 
 					return connectionFactory;
 				}
@@ -182,12 +179,10 @@ public class RabbitServiceAutoConfiguration {
 			connectionFactory.setCacheMode(rabbitProperties.getCache().getConnection().getMode());
 		}
 		if (rabbitProperties.getCache().getConnection().getSize() != null) {
-			connectionFactory.setConnectionCacheSize(
-					rabbitProperties.getCache().getConnection().getSize());
+			connectionFactory.setConnectionCacheSize(rabbitProperties.getCache().getConnection().getSize());
 		}
 		if (rabbitProperties.getCache().getChannel().getCheckoutTimeout() != null) {
-			connectionFactory.setChannelCheckoutTimeout(
-					rabbitProperties.getCache().getChannel().getCheckoutTimeout().toMillis());
+			connectionFactory.setChannelCheckoutTimeout(rabbitProperties.getCache().getChannel().getCheckoutTimeout().toMillis());
 		}
 		connectionFactory.setApplicationContext(applicationContext);
 		applicationContext.addApplicationListener(connectionFactory);

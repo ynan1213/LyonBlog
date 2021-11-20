@@ -43,8 +43,7 @@ final class DispatchingStreamListenerMessageHandler extends AbstractReplyProduci
 
 	private final EvaluationContext evaluationContext;
 
-	DispatchingStreamListenerMessageHandler(Collection<ConditionalStreamListenerMessageHandlerWrapper> handlerMethods,
-			EvaluationContext evaluationContext) {
+	DispatchingStreamListenerMessageHandler(Collection<ConditionalStreamListenerMessageHandlerWrapper> handlerMethods, EvaluationContext evaluationContext) {
 		Assert.notEmpty(handlerMethods, "'handlerMethods' cannot be empty");
 		this.handlerMethods = Collections.unmodifiableList(new ArrayList<>(handlerMethods));
 		boolean evaluateExpressions = false;
@@ -112,11 +111,9 @@ final class DispatchingStreamListenerMessageHandler extends AbstractReplyProduci
 
 		private final StreamListenerMessageHandler streamListenerMessageHandler;
 
-		ConditionalStreamListenerMessageHandlerWrapper(Expression condition,
-				StreamListenerMessageHandler streamListenerMessageHandler) {
+		ConditionalStreamListenerMessageHandlerWrapper(Expression condition, StreamListenerMessageHandler streamListenerMessageHandler) {
 			Assert.notNull(streamListenerMessageHandler, "the message handler cannot be null");
-			Assert.isTrue(condition == null || streamListenerMessageHandler.isVoid(),
-					"cannot specify a condition and a return value at the same time");
+			Assert.isTrue(condition == null || streamListenerMessageHandler.isVoid(), "cannot specify a condition and a return value at the same time");
 			this.condition = condition;
 			this.streamListenerMessageHandler = streamListenerMessageHandler;
 		}

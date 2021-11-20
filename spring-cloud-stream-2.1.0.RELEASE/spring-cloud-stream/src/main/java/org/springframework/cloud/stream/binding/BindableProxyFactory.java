@@ -68,6 +68,10 @@ public class BindableProxyFactory implements MethodInterceptor, FactoryBean<Obje
 	@Autowired(required = false)
 	private SharedBindingTargetRegistry sharedBindingTargetRegistry;
 
+	/**
+	 *	注入了2个bean：SubscribableChannelBindingTargetFactory、MessageSourceBindingTargetFactory
+	 *  来自配置类 BinderFactoryConfiguration
+	 */
 	@Autowired
 	private Map<String, BindingTargetFactory> bindingTargetFactories;
 
@@ -120,16 +124,15 @@ public class BindableProxyFactory implements MethodInterceptor, FactoryBean<Obje
 			public void doWith(Method method) throws IllegalArgumentException {
 				Input input = AnnotationUtils.findAnnotation(method, Input.class);
 				if (input != null) {
+					// 获取 @Input 注解的value值，如果没有配置，则取所在方法名
 					String name = BindingBeanDefinitionRegistryUtils.getBindingTargetName(input, method);
 					Class<?> returnType = method.getReturnType();
 					Object sharedBindingTarget = locateSharedBindingTarget(name, returnType);
 					if (sharedBindingTarget != null) {
-						BindableProxyFactory.this.inputHolders.put(name,
-								new BoundTargetHolder(sharedBindingTarget, false));
+						BindableProxyFactory.this.inputHolders.put(name, new BoundTargetHolder(sharedBindingTarget, false));
 					}
 					else {
-						BindableProxyFactory.this.inputHolders.put(name,
-								new BoundTargetHolder(getBindingTargetFactory(returnType).createInput(name), true));
+						BindableProxyFactory.this.inputHolders.put(name, new BoundTargetHolder(getBindingTargetFactory(returnType).createInput(name), true));
 					}
 				}
 			}
@@ -143,12 +146,10 @@ public class BindableProxyFactory implements MethodInterceptor, FactoryBean<Obje
 					Class<?> returnType = method.getReturnType();
 					Object sharedBindingTarget = locateSharedBindingTarget(name, returnType);
 					if (sharedBindingTarget != null) {
-						BindableProxyFactory.this.outputHolders.put(name,
-								new BoundTargetHolder(sharedBindingTarget, false));
+						BindableProxyFactory.this.outputHolders.put(name, new BoundTargetHolder(sharedBindingTarget, false));
 					}
 					else {
-						BindableProxyFactory.this.outputHolders.put(name,
-								new BoundTargetHolder(getBindingTargetFactory(returnType).createOutput(name), true));
+						BindableProxyFactory.this.outputHolders.put(name, new BoundTargetHolder(getBindingTargetFactory(returnType).createOutput(name), true));
 					}
 				}
 			}
@@ -157,8 +158,7 @@ public class BindableProxyFactory implements MethodInterceptor, FactoryBean<Obje
 
 	private BindingTargetFactory getBindingTargetFactory(Class<?> bindingTargetType) {
 		List<String> candidateBindingTargetFactories = new ArrayList<>();
-		for (Map.Entry<String, BindingTargetFactory> bindingTargetFactoryEntry : this.bindingTargetFactories
-				.entrySet()) {
+		for (Map.Entry<String, BindingTargetFactory> bindingTargetFactoryEntry : this.bindingTargetFactories.entrySet()) {
 			if (bindingTargetFactoryEntry.getValue().canCreate(bindingTargetType)) {
 				candidateBindingTargetFactories.add(bindingTargetFactoryEntry.getKey());
 			}
@@ -182,8 +182,7 @@ public class BindableProxyFactory implements MethodInterceptor, FactoryBean<Obje
 
 	private <T> T locateSharedBindingTarget(String name, Class<T> bindingTargetType) {
 		return this.sharedBindingTargetRegistry != null
-				? this.sharedBindingTargetRegistry.get(getNamespacePrefixedBindingTargetName(name), bindingTargetType)
-				: null;
+				? this.sharedBindingTargetRegistry.get(getNamespacePrefixedBindingTargetName(name), bindingTargetType) : null;
 	}
 
 	private String getNamespacePrefixedBindingTargetName(String name) {
@@ -252,9 +251,13 @@ public class BindableProxyFactory implements MethodInterceptor, FactoryBean<Obje
 		if (log.isDebugEnabled()) {
 			log.debug(String.format("Binding outputs for %s:%s", this.namespace, this.type));
 		}
+		/**
+		 * outputHolders缓存的是@EnableBinding注解中value属性的接口中的@Output的方法
+		 */
 		for (Map.Entry<String, BoundTargetHolder> boundTargetHolderEntry : this.outputHolders.entrySet()) {
 			BoundTargetHolder boundTargetHolder = boundTargetHolderEntry.getValue();
 			String outputTargetName = boundTargetHolderEntry.getKey();
+			// 默认 bindable 为true
 			if (boundTargetHolderEntry.getValue().isBindable()) {
 				if (log.isDebugEnabled()) {
 					log.debug(String.format("Binding %s:%s:%s", this.namespace, this.type, outputTargetName));

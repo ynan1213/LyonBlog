@@ -164,19 +164,14 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 	 * @throws BinderException on internal errors during binding
 	 */
 	@Override
-	public final Binding<MessageChannel> doBindProducer(final String destination, MessageChannel outputChannel,
-			final P producerProperties) throws BinderException {
-		Assert.isInstanceOf(SubscribableChannel.class, outputChannel,
-				"Binding is supported only for SubscribableChannel instances");
+	public final Binding<MessageChannel> doBindProducer(final String destination, MessageChannel outputChannel, final P producerProperties) throws BinderException {
+		Assert.isInstanceOf(SubscribableChannel.class, outputChannel, "Binding is supported only for SubscribableChannel instances");
 		final MessageHandler producerMessageHandler;
 		final ProducerDestination producerDestination;
 		try {
-			producerDestination = this.provisioningProvider.provisionProducerDestination(destination,
-					producerProperties);
-			SubscribableChannel errorChannel = producerProperties.isErrorChannelEnabled()
-					? registerErrorInfrastructure(producerDestination) : null;
-			producerMessageHandler = createProducerMessageHandler(producerDestination, producerProperties,
-					outputChannel, errorChannel);
+			producerDestination = this.provisioningProvider.provisionProducerDestination(destination, producerProperties);
+			SubscribableChannel errorChannel = producerProperties.isErrorChannelEnabled() ? registerErrorInfrastructure(producerDestination) : null;
+			producerMessageHandler = createProducerMessageHandler(producerDestination, producerProperties, outputChannel, errorChannel);
 			if (producerMessageHandler instanceof InitializingBean) {
 				((InitializingBean) producerMessageHandler).afterPropertiesSet();
 			}
@@ -201,14 +196,13 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			outputChannel = this.postProcessOutboundChannelForFunction(outputChannel, producerProperties);
 		}
 
-		((SubscribableChannel) outputChannel).subscribe(
-				new SendingHandler(producerMessageHandler, HeaderMode.embeddedHeaders
-						.equals(producerProperties.getHeaderMode()), this.headersToEmbed,
-						useNativeEncoding(producerProperties)));
+		((SubscribableChannel) outputChannel).subscribe(new SendingHandler(producerMessageHandler,
+			HeaderMode.embeddedHeaders.equals(producerProperties.getHeaderMode()),
+			this.headersToEmbed,
+			useNativeEncoding(producerProperties)));
 
 
-		Binding<MessageChannel> binding = new DefaultBinding<MessageChannel>(destination, outputChannel,
-				producerMessageHandler instanceof Lifecycle ? (Lifecycle) producerMessageHandler : null) {
+		Binding<MessageChannel> binding = new DefaultBinding<MessageChannel>(destination, outputChannel, producerMessageHandler instanceof Lifecycle ? (Lifecycle) producerMessageHandler : null) {
 
 			@Override
 			public Map<String, Object> getExtendedInfo() {
@@ -224,8 +218,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 					}
 				}
 				catch (Exception e) {
-					AbstractMessageChannelBinder.this.logger
-							.error("Exception thrown while unbinding " + toString(), e);
+					AbstractMessageChannelBinder.this.logger.error("Exception thrown while unbinding " + toString(), e);
 				}
 				afterUnbindProducer(producerDestination, producerProperties);
 			}
@@ -281,9 +274,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 	 * @return the message handler for sending data to the target middleware
 	 * @throws Exception
 	 */
-	protected MessageHandler createProducerMessageHandler(ProducerDestination destination,
-			P producerProperties, MessageChannel channel, MessageChannel errorChannel)
-			throws Exception {
+	protected MessageHandler createProducerMessageHandler(ProducerDestination destination, P producerProperties, MessageChannel channel, MessageChannel errorChannel) throws Exception {
 		return createProducerMessageHandler(destination, producerProperties, errorChannel);
 	}
 
@@ -340,8 +331,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 	 * @throws BinderException on internal errors during binding
 	 */
 	@Override
-	public final Binding<MessageChannel> doBindConsumer(String name, String group, MessageChannel inputChannel,
-			final C properties) throws BinderException {
+	public final Binding<MessageChannel> doBindConsumer(String name, String group, MessageChannel inputChannel, final C properties) throws BinderException {
 		MessageProducer consumerEndpoint = null;
 		try {
 			ConsumerDestination destination = this.provisioningProvider.provisionConsumerDestination(name, group, properties);
@@ -513,8 +503,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 		if (getApplicationContext().containsBean(errorChannelName)) {
 			Object errorChannelObject = getApplicationContext().getBean(errorChannelName);
 			if (!(errorChannelObject instanceof SubscribableChannel)) {
-				throw new IllegalStateException(
-						"Error channel '" + errorChannelName + "' must be a SubscribableChannel");
+				throw new IllegalStateException("Error channel '" + errorChannelName + "' must be a SubscribableChannel");
 			}
 			errorChannel = (SubscribableChannel) errorChannelObject;
 		}
@@ -525,8 +514,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 		}
 		MessageChannel defaultErrorChannel = null;
 		if (getApplicationContext().containsBean(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME)) {
-			defaultErrorChannel = getApplicationContext().getBean(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME,
-					MessageChannel.class);
+			defaultErrorChannel = getApplicationContext().getBean(IntegrationContextUtils.ERROR_CHANNEL_BEAN_NAME, MessageChannel.class);
 		}
 		if (defaultErrorChannel != null) {
 			BridgeHandler errorBridge = new BridgeHandler();

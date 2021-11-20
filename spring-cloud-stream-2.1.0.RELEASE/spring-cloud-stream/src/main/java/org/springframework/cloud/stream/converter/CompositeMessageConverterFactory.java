@@ -58,8 +58,7 @@ public class CompositeMessageConverterFactory {
 	/**
 	 * @param customConverters a list of {@link AbstractMessageConverter}
 	 */
-	public CompositeMessageConverterFactory(List<? extends MessageConverter> customConverters,
-			ObjectMapper objectMapper) {
+	public CompositeMessageConverterFactory(List<? extends MessageConverter> customConverters, ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
 		if (!CollectionUtils.isEmpty(customConverters)) {
 			this.converters = new ArrayList<>(customConverters);

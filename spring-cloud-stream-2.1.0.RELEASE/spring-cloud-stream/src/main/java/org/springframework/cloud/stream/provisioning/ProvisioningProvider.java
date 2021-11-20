@@ -61,7 +61,6 @@ public interface ProvisioningProvider<C extends ConsumerProperties, P extends Pr
 	 * @return reference to {@link ConsumerDestination} that represents a consumer
 	 * @throws ProvisioningException on underlying provisioning errors from the middleware
 	 */
-	ConsumerDestination provisionConsumerDestination(String name, String group, C properties)
-			throws ProvisioningException;
+	ConsumerDestination provisionConsumerDestination(String name, String group, C properties) throws ProvisioningException;
 
 }

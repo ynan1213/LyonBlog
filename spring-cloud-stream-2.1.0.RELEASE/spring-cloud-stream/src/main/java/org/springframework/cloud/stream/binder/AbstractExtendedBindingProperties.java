@@ -42,8 +42,7 @@ import org.springframework.integration.support.utils.IntegrationUtils;
  * @param <P> - producer properties type
  * @param <T> - type which provides the consumer and producer properties
  */
-public abstract class AbstractExtendedBindingProperties<C, P, T extends BinderSpecificPropertiesProvider>
-			implements ExtendedBindingProperties<C, P>, ApplicationContextAware {
+public abstract class AbstractExtendedBindingProperties<C, P, T extends BinderSpecificPropertiesProvider> implements ExtendedBindingProperties<C, P>, ApplicationContextAware {
 
 	private final Map<String, T> bindings = new HashMap<>();
 

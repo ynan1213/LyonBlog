@@ -81,8 +81,7 @@ public class BindingServiceProperties implements ApplicationContextAware, Initia
 	 * For example; This sets the content-type for the 'input' binding of a Sink application:
 	 * 'spring.cloud.stream.bindings.input.contentType=text/plain'
 	 */
-	private Map<String, BindingProperties> bindings = new TreeMap<>(
-			String.CASE_INSENSITIVE_ORDER);
+	private Map<String, BindingProperties> bindings = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
 	/**
 	 * Additional per-binder properties (see {@link BinderProperties}) if more then one binder of the same type is used
@@ -160,8 +159,7 @@ public class BindingServiceProperties implements ApplicationContextAware, Initia
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext)
-			throws BeansException {
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = (ConfigurableApplicationContext) applicationContext;
 		GenericConversionService cs = (GenericConversionService) IntegrationUtils.getConversionService(this.applicationContext.getBeanFactory());
 		if (this.applicationContext.containsBean("spelConverter")) {
@@ -177,9 +175,7 @@ public class BindingServiceProperties implements ApplicationContextAware, Initia
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		if (this.conversionService == null) {
-			this.conversionService = this.applicationContext.getBean(
-					IntegrationUtils.INTEGRATION_CONVERSION_SERVICE_BEAN_NAME,
-					ConversionService.class);
+			this.conversionService = this.applicationContext.getBean(IntegrationUtils.INTEGRATION_CONVERSION_SERVICE_BEAN_NAME, ConversionService.class);
 		}
 	}
 
@@ -236,8 +232,10 @@ public class BindingServiceProperties implements ApplicationContextAware, Initia
 	}
 
 	public BindingProperties getBindingProperties(String bindingName) {
+		// 取 bindingName 的配置文件
 		this.bindIfNecessary(bindingName);
 		BindingProperties bindingProperties = this.bindings.get(bindingName);
+		// 如果未配置 destination，默认就是bindingName，也就是@Input或者@Output注解的value值
 		if (bindingProperties.getDestination() == null) {
 			bindingProperties.setDestination(bindingName);
 		}

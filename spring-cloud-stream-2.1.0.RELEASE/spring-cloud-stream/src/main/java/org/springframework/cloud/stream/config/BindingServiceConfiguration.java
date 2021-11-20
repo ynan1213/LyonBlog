@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -80,166 +79,173 @@ import org.springframework.validation.Validator;
  * @author Soby Chacko
  */
 @Configuration
-@EnableConfigurationProperties({ BindingServiceProperties.class, SpringIntegrationProperties.class, StreamFunctionProperties.class })
-@Import({ DestinationPublishingMetricsAutoConfiguration.class, SpelExpressionConverterConfiguration.class })
+@EnableConfigurationProperties({BindingServiceProperties.class, SpringIntegrationProperties.class, StreamFunctionProperties.class})
+@Import({DestinationPublishingMetricsAutoConfiguration.class, SpelExpressionConverterConfiguration.class})
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @ConditionalOnBean(value = BinderTypeRegistry.class, search = SearchStrategy.CURRENT)
 public class BindingServiceConfiguration {
 
-	public static final String STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME =
-			"streamListenerAnnotationBeanPostProcessor";
+    public static final String STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME = "streamListenerAnnotationBeanPostProcessor";
 
-	@Autowired(required = false)
-	private Collection<DefaultBinderFactory.Listener> binderFactoryListeners;
+    @Autowired(required = false)
+    private Collection<DefaultBinderFactory.Listener> binderFactoryListeners;
 
-	@Bean
-	public BindingHandlerAdvise BindingHandlerAdvise(@Nullable MappingsProvider[] providers, @Nullable Validator validator) {
-		Map<ConfigurationPropertyName, ConfigurationPropertyName> additionalMappings = new HashMap<>();
-		if (!ObjectUtils.isEmpty(providers)) {
-			for (int i = 0; i < providers.length; i++) {
-				MappingsProvider mappingsProvider = providers[i];
-				additionalMappings.putAll(mappingsProvider.getDefaultMappings());
-			}
-		}
-		return new BindingHandlerAdvise(additionalMappings, validator);
-	}
+    @Bean
+    public BindingHandlerAdvise BindingHandlerAdvise(@Nullable MappingsProvider[] providers, @Nullable Validator validator) {
+        Map<ConfigurationPropertyName, ConfigurationPropertyName> additionalMappings = new HashMap<>();
+        if (!ObjectUtils.isEmpty(providers)) {
+            for (int i = 0; i < providers.length; i++) {
+                MappingsProvider mappingsProvider = providers[i];
+                additionalMappings.putAll(mappingsProvider.getDefaultMappings());
+            }
+        }
+        return new BindingHandlerAdvise(additionalMappings, validator);
+    }
 
-	@Bean
-	@ConditionalOnMissingBean(BinderFactory.class)
-	public BinderFactory binderFactory(BinderTypeRegistry binderTypeRegistry,
-			BindingServiceProperties bindingServiceProperties) {
+    /**
+     * @param binderTypeRegistry 来自配置类 BinderFactoryConfiguration#binderTypeRegistry，内部就一个map，保存着 META-INF/spring.binders 配置文件的key和value
+     * @param bindingServiceProperties spring.cloud.streamq前缀的配置
+     */
+    @Bean
+    @ConditionalOnMissingBean(BinderFactory.class)
+    public BinderFactory binderFactory(BinderTypeRegistry binderTypeRegistry, BindingServiceProperties bindingServiceProperties) {
+        Map<String, BinderConfiguration> configurationMap = getBinderConfigurations(binderTypeRegistry, bindingServiceProperties);
+        DefaultBinderFactory binderFactory = new DefaultBinderFactory(configurationMap, binderTypeRegistry);
+        // spring.cloud.stream.defaultBinder=rabbit 手动指定一个全局默认的binder，如果未配置，这里就是未null
+        binderFactory.setDefaultBinder(bindingServiceProperties.getDefaultBinder());
+        binderFactory.setListeners(binderFactoryListeners);
+        return binderFactory;
+    }
 
-		DefaultBinderFactory binderFactory = new DefaultBinderFactory(
-				getBinderConfigurations(binderTypeRegistry, bindingServiceProperties), binderTypeRegistry);
-		binderFactory.setDefaultBinder(bindingServiceProperties.getDefaultBinder());
-		binderFactory.setListeners(binderFactoryListeners);
-		return binderFactory;
-	}
+    /**
+     * 解析 spring.cloud.stream.binders前缀的配置内容，简单封装到 Map<String, BinderConfiguration> 中返回
+     */
+    private static Map<String, BinderConfiguration> getBinderConfigurations(BinderTypeRegistry binderTypeRegistry,
+        BindingServiceProperties bindingServiceProperties) {
 
-	private static Map<String, BinderConfiguration> getBinderConfigurations(BinderTypeRegistry binderTypeRegistry,
-			BindingServiceProperties bindingServiceProperties) {
+        Map<String, BinderConfiguration> binderConfigurations = new HashMap<>();
+        // 配置文件 binders 前缀的配置内容
+        Map<String, BinderProperties> declaredBinders = bindingServiceProperties.getBinders();
+        boolean defaultCandidatesExist = false;
 
-		Map<String, BinderConfiguration> binderConfigurations = new HashMap<>();
-		Map<String, BinderProperties> declaredBinders = bindingServiceProperties.getBinders();
-		boolean defaultCandidatesExist = false;
-		Iterator<Map.Entry<String, BinderProperties>> binderPropertiesIterator = declaredBinders.entrySet().iterator();
-		while (!defaultCandidatesExist && binderPropertiesIterator.hasNext()) {
-			defaultCandidatesExist = binderPropertiesIterator.next().getValue().isDefaultCandidate();
-		}
-		List<String> existingBinderConfigurations = new ArrayList<>();
-		for (Map.Entry<String, BinderProperties> binderEntry : declaredBinders.entrySet()) {
-			BinderProperties binderProperties = binderEntry.getValue();
-			if (binderTypeRegistry.get(binderEntry.getKey()) != null) {
-				binderConfigurations.put(binderEntry.getKey(),
-						new BinderConfiguration(binderEntry.getKey(),
-								binderProperties.getEnvironment(), binderProperties.isInheritEnvironment(),
-								binderProperties.isDefaultCandidate()));
-				existingBinderConfigurations.add(binderEntry.getKey());
-			}
-			else {
-				Assert.hasText(binderProperties.getType(),
-						"No 'type' property present for custom binder " + binderEntry.getKey());
-				binderConfigurations.put(binderEntry.getKey(),
-						new BinderConfiguration(binderProperties.getType(), binderProperties.getEnvironment(),
-								binderProperties.isInheritEnvironment(), binderProperties.isDefaultCandidate()));
-				existingBinderConfigurations.add(binderEntry.getKey());
-			}
-		}
-		for (Map.Entry<String, BinderConfiguration> configurationEntry : binderConfigurations.entrySet()) {
-			if (configurationEntry.getValue().isDefaultCandidate()) {
-				defaultCandidatesExist = true;
-			}
-		}
-		if (!defaultCandidatesExist) {
-			for (Map.Entry<String, BinderType> binderEntry : binderTypeRegistry.getAll().entrySet()) {
-				if (!existingBinderConfigurations.contains(binderEntry.getKey())) {
-					binderConfigurations.put(binderEntry.getKey(), new BinderConfiguration(binderEntry.getKey(),
-							new HashMap<>(), true, true));
-				}
-			}
-		}
-		return binderConfigurations;
-	}
+        // spring.cloud.stream.binders.<configurationName>.defaultCandidate=false
+        Iterator<Map.Entry<String, BinderProperties>> binderPropertiesIterator = declaredBinders.entrySet().iterator();
 
-	@Bean
-	public MessageChannelStreamListenerResultAdapter messageChannelStreamListenerResultAdapter() {
-		return new MessageChannelStreamListenerResultAdapter();
-	}
+        // 只要碰到一个true这里就会跳出while，不配置默认就true，第一个binders 默认就为true
+        while (!defaultCandidatesExist && binderPropertiesIterator.hasNext()) {
+            defaultCandidatesExist = binderPropertiesIterator.next().getValue().isDefaultCandidate();
+        }
 
-	@Bean(name = STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME)
-	@ConditionalOnMissingBean(search = SearchStrategy.CURRENT)
-	public static StreamListenerAnnotationBeanPostProcessor streamListenerAnnotationBeanPostProcessor() {
-		return new StreamListenerAnnotationBeanPostProcessor();
-	}
+        List<String> existingBinderConfigurations = new ArrayList<>();
+        for (Map.Entry<String, BinderProperties> binderEntry : declaredBinders.entrySet()) {
+            BinderProperties binderProperties = binderEntry.getValue();
+            if (binderTypeRegistry.get(binderEntry.getKey()) != null) {
+                binderConfigurations.put(binderEntry.getKey(), new BinderConfiguration(binderEntry.getKey(), binderProperties.getEnvironment(),
+                    binderProperties.isInheritEnvironment(), binderProperties.isDefaultCandidate()));
+                existingBinderConfigurations.add(binderEntry.getKey());
+            } else {
+                // 该binders配置没有找到对应的binder
+                Assert.hasText(binderProperties.getType(), "No 'type' property present for custom binder " + binderEntry.getKey());
+                binderConfigurations.put(binderEntry.getKey(), new BinderConfiguration(binderProperties.getType(), binderProperties.getEnvironment(),
+                    binderProperties.isInheritEnvironment(), binderProperties.isDefaultCandidate()));
+                existingBinderConfigurations.add(binderEntry.getKey());
+            }
+        }
 
-	@Bean
-	// This conditional is intentionally not in an autoconfig (usually a bad idea) because
-	// it is used to detect a BindingService in the parent context (which we know
-	// already exists).
-	@ConditionalOnMissingBean(search = SearchStrategy.CURRENT)
-	public BindingService bindingService(BindingServiceProperties bindingServiceProperties,
-										BinderFactory binderFactory, TaskScheduler taskScheduler) {
+        // 感觉这里和上面while循环有重复的意思
+        for (Map.Entry<String, BinderConfiguration> configurationEntry : binderConfigurations.entrySet()) {
+            if (configurationEntry.getValue().isDefaultCandidate()) {
+                defaultCandidatesExist = true;
+            }
+        }
 
-		return new BindingService(bindingServiceProperties, binderFactory, taskScheduler);
-	}
+        // 如果都显示配置 defaultCandidate = false，才会进入这里的if
+        if (!defaultCandidatesExist) {
+            for (Map.Entry<String, BinderType> binderEntry : binderTypeRegistry.getAll().entrySet()) {
+                if (!existingBinderConfigurations.contains(binderEntry.getKey())) {
+                    binderConfigurations.put(binderEntry.getKey(), new BinderConfiguration(binderEntry.getKey(), new HashMap<>(), true, true));
+                }
+            }
+        }
+        return binderConfigurations;
+    }
 
-	@Bean
-	@DependsOn("bindingService")
-	public OutputBindingLifecycle outputBindingLifecycle(BindingService bindingService,
-			Map<String, Bindable> bindables) {
+    @Bean
+    public MessageChannelStreamListenerResultAdapter messageChannelStreamListenerResultAdapter() {
+        return new MessageChannelStreamListenerResultAdapter();
+    }
 
-		return new OutputBindingLifecycle(bindingService, bindables);
-	}
+    @Bean(name = STREAM_LISTENER_ANNOTATION_BEAN_POST_PROCESSOR_NAME)
+    @ConditionalOnMissingBean(search = SearchStrategy.CURRENT)
+    public static StreamListenerAnnotationBeanPostProcessor streamListenerAnnotationBeanPostProcessor() {
+        return new StreamListenerAnnotationBeanPostProcessor();
+    }
 
-	@Bean
-	@DependsOn("bindingService")
-	public InputBindingLifecycle inputBindingLifecycle(BindingService bindingService, Map<String, Bindable> bindables) {
-		return new InputBindingLifecycle(bindingService, bindables);
-	}
+    /**
+     * @param binderFactory 上面的方法注入
+     * @param taskScheduler 这个bean是在哪里注入的？？？
+     */
+    @Bean
+    // This conditional is intentionally not in an autoconfig (usually a bad idea) because
+    // it is used to detect a BindingService in the parent context (which we know
+    // already exists).
+    @ConditionalOnMissingBean(search = SearchStrategy.CURRENT)
+    public BindingService bindingService(BindingServiceProperties bindingServiceProperties, BinderFactory binderFactory, TaskScheduler taskScheduler) {
+        return new BindingService(bindingServiceProperties, binderFactory, taskScheduler);
+    }
 
-	@Bean
-	@DependsOn("bindingService")
-	public ContextStartAfterRefreshListener contextStartAfterRefreshListener() {
-		return new ContextStartAfterRefreshListener();
-	}
 
-	@SuppressWarnings("rawtypes")
-	@Bean
-	public BinderAwareChannelResolver binderAwareChannelResolver(BindingService bindingService,
-			AbstractBindingTargetFactory<? extends MessageChannel> bindingTargetFactory,
-			DynamicDestinationsBindable dynamicDestinationsBindable,
-			@Nullable BinderAwareChannelResolver.NewDestinationBindingCallback callback) {
+    @Bean
+    @DependsOn("bindingService")
+    public OutputBindingLifecycle outputBindingLifecycle(BindingService bindingService, Map<String, Bindable> bindables) {
+        return new OutputBindingLifecycle(bindingService, bindables);
+    }
 
-		return new BinderAwareChannelResolver(bindingService, bindingTargetFactory, dynamicDestinationsBindable, callback);
-	}
+    @Bean
+    @DependsOn("bindingService")
+    public InputBindingLifecycle inputBindingLifecycle(BindingService bindingService, Map<String, Bindable> bindables) {
+        return new InputBindingLifecycle(bindingService, bindables);
+    }
 
-	@Bean
-	public DynamicDestinationsBindable dynamicDestinationsBindable() {
-		return new DynamicDestinationsBindable();
-	}
+    // 不知道有什么用？
+    @Bean
+    @DependsOn("bindingService")
+    public ContextStartAfterRefreshListener contextStartAfterRefreshListener() {
+        return new ContextStartAfterRefreshListener();
+    }
 
-	@SuppressWarnings("deprecation")
-	@Bean
-	@ConditionalOnMissingBean
-	public org.springframework.cloud.stream.binding.BinderAwareRouterBeanPostProcessor binderAwareRouterBeanPostProcessor(
-			@Autowired(required = false) AbstractMappingMessageRouter[] routers,
-			@Autowired(required = false) DestinationResolver<MessageChannel> channelResolver) {
+    @SuppressWarnings("rawtypes")
+    @Bean
+    public BinderAwareChannelResolver binderAwareChannelResolver(BindingService bindingService,
+        AbstractBindingTargetFactory<? extends MessageChannel> bindingTargetFactory,
+        DynamicDestinationsBindable dynamicDestinationsBindable,
+        @Nullable BinderAwareChannelResolver.NewDestinationBindingCallback callback) {
+        return new BinderAwareChannelResolver(bindingService, bindingTargetFactory, dynamicDestinationsBindable, callback);
+    }
 
-		return new org.springframework.cloud.stream.binding.BinderAwareRouterBeanPostProcessor(routers, channelResolver);
-	}
+    @Bean
+    public DynamicDestinationsBindable dynamicDestinationsBindable() {
+        return new DynamicDestinationsBindable();
+    }
 
-	@Bean
-	public ApplicationListener<ContextRefreshedEvent> appListener(SpringIntegrationProperties springIntegrationProperties) {
-		return new ApplicationListener<ContextRefreshedEvent>() {
+    @SuppressWarnings("deprecation")
+    @Bean
+    @ConditionalOnMissingBean
+    public org.springframework.cloud.stream.binding.BinderAwareRouterBeanPostProcessor binderAwareRouterBeanPostProcessor(
+        @Autowired(required = false) AbstractMappingMessageRouter[] routers,
+        @Autowired(required = false) DestinationResolver<MessageChannel> channelResolver) {
+        return new org.springframework.cloud.stream.binding.BinderAwareRouterBeanPostProcessor(routers, channelResolver);
+    }
 
-			@Override
-			public void onApplicationEvent(ContextRefreshedEvent event) {
-				event.getApplicationContext().getBeansOfType(AbstractReplyProducingMessageHandler.class).values()
-						.forEach(mh -> mh.addNotPropagatedHeaders(springIntegrationProperties
-								.getMessageHandlerNotPropagatedHeaders()));
-			}
-
-		};
-	}
+    @Bean
+    public ApplicationListener<ContextRefreshedEvent> appListener(SpringIntegrationProperties springIntegrationProperties) {
+        return new ApplicationListener<ContextRefreshedEvent>() {
+            @Override
+            public void onApplicationEvent(ContextRefreshedEvent event) {
+                event.getApplicationContext().getBeansOfType(AbstractReplyProducingMessageHandler.class).values()
+                    .forEach(mh -> mh.addNotPropagatedHeaders(springIntegrationProperties.getMessageHandlerNotPropagatedHeaders()));
+            }
+        };
+    }
 
 }

@@ -69,8 +69,7 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 
 	private final BinderTypeRegistry binderTypeRegistry;
 
-	public DefaultBinderFactory(Map<String, BinderConfiguration> binderConfigurations,
-			BinderTypeRegistry binderTypeRegistry) {
+	public DefaultBinderFactory(Map<String, BinderConfiguration> binderConfigurations, BinderTypeRegistry binderTypeRegistry) {
 		this.binderConfigurations = new HashMap<>(binderConfigurations);
 		this.binderTypeRegistry = binderTypeRegistry;
 	}
@@ -95,12 +94,19 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 		this.defaultBinderForBindingTargetType.clear();
 	}
 
+	/**
+	 *
+	 * @param name 就是spring.cloud.stream.bindings.xxxx.binder配置的值，如果未配置，这里就为null
+	 * @param bindingTargetType 一般就是@Input或者@Output方法的返回值，一般为MessageChannel类型
+	 * @param <T>
+	 * @return
+	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	@Override
 	public synchronized <T> Binder<T, ?, ?> getBinder(String name, Class<? extends T> bindingTargetType) {
-
+		// 如果未指定binder，则获取全局默认binder，全局默认binder也有可能为空
 		String binderName = StringUtils.hasText(name) ? name : this.defaultBinder;
-
+		// 从容器中获取 Binder 类型的 bean，也就是说容器中Binder类型的bean优先级高
 		Map<String, Binder> binders = this.context == null ? Collections.emptyMap() : this.context.getBeansOfType(Binder.class);
 		Binder<T, ConsumerProperties, ProducerProperties> binder;
 		if (StringUtils.hasText(binderName) && binders.containsKey(binderName)) {
@@ -110,8 +116,7 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 			binder = binders.values().iterator().next();
 		}
 		else  if (binders.size() > 1) {
-			throw new IllegalStateException("Multiple binders are available, however neither default nor "
-					+ "per-destination binder name is provided. Available binders are " + binders.keySet());
+			throw new IllegalStateException("Multiple binders are available, however neither default nor " + "per-destination binder name is provided. Available binders are " + binders.keySet());
 		}
 		else {
 			/*
@@ -126,6 +131,7 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 	private <T> Binder<T, ConsumerProperties, ProducerProperties> doGetBinder(String name, Class<? extends T> bindingTargetType) {
 		String configurationName;
 		// Fall back to a default if no argument is provided
+		// 什么情况下name为空？未配置spring.cloud.stream.bindings.xxx.binder 并且未指定全局默认binder（spring.cloud.stream.defaultBinder）
 		if (StringUtils.isEmpty(name)) {
 			Assert.notEmpty(this.binderConfigurations, "A default binder has been requested, but there is no binder available");
 			if (!StringUtils.hasText(this.defaultBinder)) {
@@ -142,7 +148,9 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 				else {
 					List<String> candidatesForBindableType = new ArrayList<>();
 					for (String defaultCandidateConfiguration : defaultCandidateConfigurations) {
+						// rabbit环境这里就会返回 RabbitMessageChannelBinder
 						Binder<Object, ?, ?> binderInstance = getBinderInstance(defaultCandidateConfiguration);
+						// 返回实现的Binder接口的第一个泛型？？？
 						Class<?> binderType = GenericsUtils.getParameterType(binderInstance.getClass(), Binder.class, 0);
 						if (binderType.isAssignableFrom(bindingTargetType)) {
 							candidatesForBindableType.add(defaultCandidateConfiguration);
@@ -153,9 +161,7 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 						this.defaultBinderForBindingTargetType.put(bindingTargetType.getName(), configurationName);
 					}
 					else {
-						String countMsg = (candidatesForBindableType.size() == 0)
-								? "are no binders"
-								: "is more than one binder";
+						String countMsg = (candidatesForBindableType.size() == 0) ? "are no binders" : "is more than one binder";
 						throw new IllegalStateException(
 								"A default binder has been requested, but there " + countMsg
 								+ " available for '" + bindingTargetType.getName() + "' : "
@@ -172,8 +178,7 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 			configurationName = name;
 		}
 		Binder<T, ConsumerProperties, ProducerProperties> binderInstance = getBinderInstance(configurationName);
-		Assert.state(verifyBinderTypeMatchesTarget(binderInstance, bindingTargetType),
-				"The binder '" + configurationName + "' cannot bind a " + bindingTargetType.getName());
+		Assert.state(verifyBinderTypeMatchesTarget(binderInstance, bindingTargetType), "The binder '" + configurationName + "' cannot bind a " + bindingTargetType.getName());
 		return binderInstance;
 	}
 
@@ -219,6 +224,8 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 			// infrastructure related configuration is not propagated in a multi binder scenario.
 			// See this GH issue for more details: https://github.com/spring-cloud/spring-cloud-stream/issues/1412
 			// and the associated PR: https://github.com/spring-cloud/spring-cloud-stream/pull/1413
+            // 重新构造一个容器的意义是什么？
+			// 个人猜测：项目配置了多个binder，因为每个binder都有自己的初始化参数，因为spring rabbit客户端的原因，会互相影响吧  ~~
 			SpringApplicationBuilder springApplicationBuilder = new SpringApplicationBuilder(SpelExpressionConverterConfiguration.class)
 					.sources(binderType.getConfigurationClasses())
 					.bannerMode(Mode.OFF)
@@ -246,8 +253,15 @@ public class DefaultBinderFactory implements BinderFactory, DisposableBean, Appl
 				binderEnvironment.merge(environment);
 				springApplicationBuilder.environment(binderEnvironment);
 			}
-			ConfigurableApplicationContext binderProducingContext = springApplicationBuilder
-					.run(args.toArray(new String[args.size()]));
+			/**
+			 * rabbit会自动读取
+			 * spring.rabbitmq.addresses=47.100.24.106
+			 * spring.rabbitmq.port=5672
+			 * spring.rabbitmq.virtual-host=my_vhost
+			 * spring.rabbitmq.username=admin
+			 * spring.rabbitmq.password=12345
+			 */
+			ConfigurableApplicationContext binderProducingContext = springApplicationBuilder.run(args.toArray(new String[args.size()]));
 
 			Binder<T, ?, ?> binder = binderProducingContext.getBean(Binder.class);
 			/*

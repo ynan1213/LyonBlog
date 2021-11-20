@@ -46,8 +46,7 @@ public class BindingHandlerAdvise implements ConfigurationPropertiesBindHandlerA
 
 	BindingHandlerAdvise(Map<ConfigurationPropertyName, ConfigurationPropertyName> additionalMappings, @Nullable Validator validator) {
 		this.mappings = new LinkedHashMap<>();
-		this.mappings.put(ConfigurationPropertyName.of("spring.cloud.stream.bindings"),
-				ConfigurationPropertyName.of("spring.cloud.stream.default"));
+		this.mappings.put(ConfigurationPropertyName.of("spring.cloud.stream.bindings"), ConfigurationPropertyName.of("spring.cloud.stream.default"));
 		if (!CollectionUtils.isEmpty(additionalMappings)) {
 			this.mappings.putAll(additionalMappings);
 		}

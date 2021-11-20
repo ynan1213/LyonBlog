@@ -30,6 +30,7 @@ import org.springframework.context.SmartLifecycle;
  * @author Oleg Zhurakousky
  */
 abstract class AbstractBindingLifecycle implements SmartLifecycle {
+
 	final BindingService bindingService;
 
 	private final Map<String, Bindable> bindables;

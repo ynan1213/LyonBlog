@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.validation.constraints.NotNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -72,15 +73,11 @@ public class BindingService {
 
 	private final BinderFactory binderFactory;
 
-	public BindingService(
-			BindingServiceProperties bindingServiceProperties,
-			BinderFactory binderFactory) {
+	public BindingService(BindingServiceProperties bindingServiceProperties, BinderFactory binderFactory) {
 		this(bindingServiceProperties, binderFactory, null);
 	}
 
-	public BindingService(
-			BindingServiceProperties bindingServiceProperties,
-			BinderFactory binderFactory, TaskScheduler taskScheduler) {
+	public BindingService(BindingServiceProperties bindingServiceProperties, BinderFactory binderFactory, TaskScheduler taskScheduler) {
 		this.bindingServiceProperties = bindingServiceProperties;
 		this.binderFactory = binderFactory;
 		this.validator = new CustomValidatorBean();
@@ -91,24 +88,18 @@ public class BindingService {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> Collection<Binding<T>> bindConsumer(T input, String inputName) {
 		Collection<Binding<T>> bindings = new ArrayList<>();
-		Binder<T, ConsumerProperties, ?> binder = (Binder<T, ConsumerProperties, ?>) getBinder(
-				inputName, input.getClass());
-		ConsumerProperties consumerProperties = this.bindingServiceProperties
-				.getConsumerProperties(inputName);
+		Binder<T, ConsumerProperties, ?> binder = (Binder<T, ConsumerProperties, ?>) getBinder(inputName, input.getClass());
+		ConsumerProperties consumerProperties = this.bindingServiceProperties.getConsumerProperties(inputName);
 		if (binder instanceof ExtendedPropertiesBinder) {
-			Object extension = ((ExtendedPropertiesBinder) binder)
-					.getExtendedConsumerProperties(inputName);
-			ExtendedConsumerProperties extendedConsumerProperties = new ExtendedConsumerProperties(
-					extension);
+			Object extension = ((ExtendedPropertiesBinder) binder).getExtendedConsumerProperties(inputName);
+			ExtendedConsumerProperties extendedConsumerProperties = new ExtendedConsumerProperties(extension);
 			BeanUtils.copyProperties(consumerProperties, extendedConsumerProperties);
-
 			consumerProperties = extendedConsumerProperties;
 		}
 
 		validate(consumerProperties);
 
-		String bindingTarget = this.bindingServiceProperties
-				.getBindingDestination(inputName);
+		String bindingTarget = this.bindingServiceProperties.getBindingDestination(inputName);
 
 		if (consumerProperties.isMultiplex()) {
 			bindings.add(doBindConsumer(input, inputName, binder, consumerProperties, bindingTarget));
@@ -119,7 +110,6 @@ public class BindingService {
 				Binding<T> binding = input instanceof PollableSource
 						? doBindPollableConsumer(input, inputName, binder, consumerProperties, target)
 						: doBindConsumer(input, inputName, binder, consumerProperties, target);
-
 				bindings.add(binding);
 			}
 		}
@@ -128,18 +118,13 @@ public class BindingService {
 		return bindings;
 	}
 
-	public <T> Binding<T> doBindConsumer(T input, String inputName, Binder<T, ConsumerProperties, ?> binder,
-			ConsumerProperties consumerProperties, String target) {
+	public <T> Binding<T> doBindConsumer(T input, String inputName, Binder<T, ConsumerProperties, ?> binder, ConsumerProperties consumerProperties, String target) {
 		if (this.taskScheduler == null || this.bindingServiceProperties.getBindingRetryInterval() <= 0) {
-			return binder.bindConsumer(target,
-					this.bindingServiceProperties.getGroup(inputName), input,
-					consumerProperties);
+			return binder.bindConsumer(target, this.bindingServiceProperties.getGroup(inputName), input, consumerProperties);
 		}
 		else {
 			try {
-				return binder.bindConsumer(target,
-						this.bindingServiceProperties.getGroup(inputName), input,
-						consumerProperties);
+				return binder.bindConsumer(target, this.bindingServiceProperties.getGroup(inputName), input, consumerProperties);
 			}
 			catch (RuntimeException e) {
 				LateBinding<T> late = new LateBinding<T>();
@@ -153,12 +138,10 @@ public class BindingService {
 			final Binder<T, ConsumerProperties, ?> binder, final ConsumerProperties consumerProperties,
 			final String target, final LateBinding<T> late, RuntimeException exception) {
 		assertNotIllegalException(exception);
-		this.log.error("Failed to create consumer binding; retrying in " +
-			this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
+		this.log.error("Failed to create consumer binding; retrying in " + this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
 		this.scheduleTask(() -> {
 			try {
-				late.setDelegate(binder.bindConsumer(target,
-						this.bindingServiceProperties.getGroup(inputName), input, consumerProperties));
+				late.setDelegate(binder.bindConsumer(target, this.bindingServiceProperties.getGroup(inputName), input, consumerProperties));
 			}
 			catch (RuntimeException e) {
 				rescheduleConsumerBinding(input, inputName, binder, consumerProperties, target, late, e);
@@ -167,18 +150,13 @@ public class BindingService {
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public <T> Binding<T> doBindPollableConsumer(T input, String inputName, Binder<T, ConsumerProperties, ?> binder,
-			ConsumerProperties consumerProperties, String target) {
+	public <T> Binding<T> doBindPollableConsumer(T input, String inputName, Binder<T, ConsumerProperties, ?> binder, ConsumerProperties consumerProperties, String target) {
 		if (this.taskScheduler == null || this.bindingServiceProperties.getBindingRetryInterval() <= 0) {
-			return ((PollableConsumerBinder) binder).bindPollableConsumer(target,
-					this.bindingServiceProperties.getGroup(inputName), (PollableSource) input,
-					consumerProperties);
+			return ((PollableConsumerBinder) binder).bindPollableConsumer(target, this.bindingServiceProperties.getGroup(inputName), (PollableSource) input, consumerProperties);
 		}
 		else {
 			try {
-				return ((PollableConsumerBinder) binder).bindPollableConsumer(target,
-						this.bindingServiceProperties.getGroup(inputName), (PollableSource) input,
-						consumerProperties);
+				return ((PollableConsumerBinder) binder).bindPollableConsumer(target, this.bindingServiceProperties.getGroup(inputName), (PollableSource) input, consumerProperties);
 			}
 			catch (RuntimeException e) {
 				LateBinding<T> late = new LateBinding<T>();
@@ -193,13 +171,11 @@ public class BindingService {
 			final Binder<T, ConsumerProperties, ?> binder, final ConsumerProperties consumerProperties,
 			final String target, final LateBinding<T> late, RuntimeException exception) {
 		assertNotIllegalException(exception);
-		this.log.error("Failed to create consumer binding; retrying in " +
-			this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
+		this.log.error("Failed to create consumer binding; retrying in " + this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
 		this.scheduleTask(() -> {
 			try {
-				late.setDelegate(((PollableConsumerBinder) binder).bindPollableConsumer(target,
-						this.bindingServiceProperties.getGroup(inputName), (PollableSource) input,
-						consumerProperties));
+				late.setDelegate(((PollableConsumerBinder) binder)
+					.bindPollableConsumer(target, this.bindingServiceProperties.getGroup(inputName), (PollableSource) input, consumerProperties));
 			}
 			catch (RuntimeException e) {
 				reschedulePollableConsumerBinding(input, inputName, binder, consumerProperties, target, late, e);
@@ -207,23 +183,32 @@ public class BindingService {
 		});
 	}
 
+	/**
+	 * 绑定@Output注解的方法
+	 * @param output 为方法的返回值，MessageChannel类型
+	 * @param outputName 为@Output注解的value值
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> Binding<T> bindProducer(T output, String outputName) {
-		String bindingTarget = this.bindingServiceProperties
-				.getBindingDestination(outputName);
-		Binder<T, ?, ProducerProperties> binder = (Binder<T, ?, ProducerProperties>) getBinder(
-				outputName, output.getClass());
-		ProducerProperties producerProperties = this.bindingServiceProperties
-				.getProducerProperties(outputName);
+		// 获取spring.cloud.stream.bindings.xxxx.destination配置的值，如果没有配置，默认就是outputName
+		String bindingTarget = this.bindingServiceProperties.getBindingDestination(outputName);
+		// 获取Binder
+		Binder<T, ?, ProducerProperties> binder = (Binder<T, ?, ProducerProperties>) getBinder(outputName, output.getClass());
+		// 获取 spring.cloud.stream.bindings.xxx-output.producer下面一系列的值
+		ProducerProperties producerProperties = this.bindingServiceProperties.getProducerProperties(outputName);
 		if (binder instanceof ExtendedPropertiesBinder) {
-			Object extension = ((ExtendedPropertiesBinder) binder)
-					.getExtendedProducerProperties(outputName);
-			ExtendedProducerProperties extendedProducerProperties = new ExtendedProducerProperties<>(
-					extension);
+			/**
+			 * 这里获取到的是这种类型，以rabbitmq为例：
+			 * 	spring.cloud.stream.rabbit.bindings.xxx-output.producer.batchSize=123
+			 * 	spring.cloud.stream.rabbit.bindings.xxx-output.producer.batchTimeout=4444
+			 * 	spring.cloud.stream.rabbit.bindings.xxx-output.producer.transacted=false
+			 */
+			Object extension = ((ExtendedPropertiesBinder) binder).getExtendedProducerProperties(outputName);
+			ExtendedProducerProperties extendedProducerProperties = new ExtendedProducerProperties<>(extension);
 			BeanUtils.copyProperties(producerProperties, extendedProducerProperties);
-
 			producerProperties = extendedProducerProperties;
 		}
+		// 校验配置的参数是否合法
 		validate(producerProperties);
 		Binding<T> binding = doBindProducer(output, bindingTarget, binder, producerProperties);
 		this.producerBindings.put(outputName, binding);
@@ -239,8 +224,7 @@ public class BindingService {
 		return null;
 	}
 
-	public <T> Binding<T> doBindProducer(T output, String bindingTarget, Binder<T, ?, ProducerProperties> binder,
-			ProducerProperties producerProperties) {
+	public <T> Binding<T> doBindProducer(T output, String bindingTarget, Binder<T, ?, ProducerProperties> binder, ProducerProperties producerProperties) {
 		if (this.taskScheduler == null || this.bindingServiceProperties.getBindingRetryInterval() <= 0) {
 			return binder.bindProducer(bindingTarget, output, producerProperties);
 		}
@@ -260,8 +244,7 @@ public class BindingService {
 			final Binder<T, ?, ProducerProperties> binder, final ProducerProperties producerProperties,
 			final LateBinding<T> late, final RuntimeException exception) {
 		assertNotIllegalException(exception);
-		this.log.error("Failed to create producer binding; retrying in " +
-				this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
+		this.log.error("Failed to create producer binding; retrying in " + this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
 		this.scheduleTask(() -> {
 			try {
 				late.setDelegate(binder.bindProducer(bindingTarget, output, producerProperties));
@@ -309,10 +292,12 @@ public class BindingService {
 	}
 
 	protected <T> Binder<T, ?, ?> getBinder(String channelName, Class<T> bindableType) {
+	    // 获取spring.cloud.stream.bindings.xxxx.binder配置的值，如果未配置，这里就为null
 		String binderConfigurationName = this.bindingServiceProperties.getBinder(channelName);
 		return binderFactory.getBinder(binderConfigurationName, bindableType);
 	}
 
+	// 校验配置参数的合法性
 	private void validate(Object properties) {
 		DataBinder dataBinder = new DataBinder(properties);
 		dataBinder.setValidator(validator);
@@ -323,8 +308,7 @@ public class BindingService {
 	}
 
 	private void scheduleTask(Runnable task) {
-		this.taskScheduler.schedule(task, new Date(System.currentTimeMillis() +
-				this.bindingServiceProperties.getBindingRetryInterval() * 1_000));
+		this.taskScheduler.schedule(task, new Date(System.currentTimeMillis() + this.bindingServiceProperties.getBindingRetryInterval() * 1_000));
 	}
 
 	private void assertNotIllegalException(RuntimeException exception) throws RuntimeException {

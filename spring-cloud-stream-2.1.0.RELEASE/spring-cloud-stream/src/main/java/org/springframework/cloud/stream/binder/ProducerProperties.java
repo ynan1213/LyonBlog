@@ -104,8 +104,7 @@ public class ProducerProperties {
 	}
 
 	public boolean isPartitioned() {
-		return this.partitionKeyExpression != null || this.partitionKeyExtractorName != null
-				|| this.partitionKeyExtractorClass != null;
+		return this.partitionKeyExpression != null || this.partitionKeyExtractorName != null || this.partitionKeyExtractorClass != null;
 	}
 
 	@Deprecated

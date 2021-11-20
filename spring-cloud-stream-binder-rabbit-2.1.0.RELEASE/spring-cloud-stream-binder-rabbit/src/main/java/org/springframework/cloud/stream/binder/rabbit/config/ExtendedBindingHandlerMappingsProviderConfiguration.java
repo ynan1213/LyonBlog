@@ -36,8 +36,7 @@ public class ExtendedBindingHandlerMappingsProviderConfiguration  {
 	public MappingsProvider rabbitExtendedPropertiesDefaultMappingsProvider() {
 		return () -> {
 			Map<ConfigurationPropertyName, ConfigurationPropertyName> mappings = new HashMap<>();
-			mappings.put(ConfigurationPropertyName.of("spring.cloud.stream.rabbit.bindings"),
-					ConfigurationPropertyName.of("spring.cloud.stream.rabbit.default"));
+			mappings.put(ConfigurationPropertyName.of("spring.cloud.stream.rabbit.bindings"), ConfigurationPropertyName.of("spring.cloud.stream.rabbit.default"));
 			return mappings;
 		};
 	}

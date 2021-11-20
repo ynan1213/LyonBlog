@@ -83,4 +83,5 @@ include '14-父子类覆盖的问题'
 include '15-类型转换'
 include '16-反射'
 include '17-@Bean'
+include '18-SmartLifecycle'
 

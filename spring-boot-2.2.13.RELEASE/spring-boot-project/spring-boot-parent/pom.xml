@@ -392,55 +392,55 @@
 					<parameters>true</parameters>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-enforcer-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>enforce-rules</id>
-						<goals>
-							<goal>enforce</goal>
-						</goals>
-						<configuration>
-							<rules>
-								<bannedDependencies>
-									<excludes>
-										<exclude>com.zaxxer:HikariCP-*</exclude>
-										<exclude>org.hamcrest:hamcrest-*</exclude>
-										<exclude>javax.*:*:*</exclude>
-									</excludes>
-									<includes>
-										<include>javax.batch:*:*</include>
-										<include>javax.cache:*:*</include>
-										<include>javax.inject:*:*</include>
-										<include>javax.money:*:*</include>
-									</includes>
-									<searchTransitive>true</searchTransitive>
-								</bannedDependencies>
-								<requireJavaVersion>
-									<version>[1.8,)</version>
-								</requireJavaVersion>
-								<requireMavenVersion>
-									<version>[3.5.0,)</version>
-								</requireMavenVersion>
-								<requireProperty>
-									<property>main.basedir</property>
-								</requireProperty>
-								<requireProperty>
-									<property>project.name</property>
-								</requireProperty>
-								<requireProperty>
-									<property>project.description</property>
-								</requireProperty>
-								<requireReleaseDeps>
-									<onlyWhenRelease>true</onlyWhenRelease>
-								</requireReleaseDeps>
-							</rules>
-							<fail>true</fail>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-enforcer-plugin</artifactId>-->
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>enforce-rules</id>-->
+<!--						<goals>-->
+<!--							<goal>enforce</goal>-->
+<!--						</goals>-->
+<!--						<configuration>-->
+<!--							<rules>-->
+<!--								<bannedDependencies>-->
+<!--									<excludes>-->
+<!--										<exclude>com.zaxxer:HikariCP-*</exclude>-->
+<!--										<exclude>org.hamcrest:hamcrest-*</exclude>-->
+<!--										<exclude>javax.*:*:*</exclude>-->
+<!--									</excludes>-->
+<!--									<includes>-->
+<!--										<include>javax.batch:*:*</include>-->
+<!--										<include>javax.cache:*:*</include>-->
+<!--										<include>javax.inject:*:*</include>-->
+<!--										<include>javax.money:*:*</include>-->
+<!--									</includes>-->
+<!--									<searchTransitive>true</searchTransitive>-->
+<!--								</bannedDependencies>-->
+<!--								<requireJavaVersion>-->
+<!--									<version>[1.8,)</version>-->
+<!--								</requireJavaVersion>-->
+<!--								<requireMavenVersion>-->
+<!--									<version>[3.5.0,)</version>-->
+<!--								</requireMavenVersion>-->
+<!--								<requireProperty>-->
+<!--									<property>main.basedir</property>-->
+<!--								</requireProperty>-->
+<!--								<requireProperty>-->
+<!--									<property>project.name</property>-->
+<!--								</requireProperty>-->
+<!--								<requireProperty>-->
+<!--									<property>project.description</property>-->
+<!--								</requireProperty>-->
+<!--								<requireReleaseDeps>-->
+<!--									<onlyWhenRelease>true</onlyWhenRelease>-->
+<!--								</requireReleaseDeps>-->
+<!--							</rules>-->
+<!--							<fail>true</fail>-->
+<!--						</configuration>-->
+<!--					</execution>-->
+<!--				</executions>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -460,26 +460,26 @@
 					</archive>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<includes>
-						<include>**/*Tests.java</include>
-					</includes>
-					<excludes>
-						<exclude>**/Abstract*.java</exclude>
-					</excludes>
-					<systemPropertyVariables>
-						<java.security.egd>file:/dev/./urandom</java.security.egd>
-						<java.awt.headless>true</java.awt.headless>
-					</systemPropertyVariables>
-					<argLine>-Xmx1024m</argLine>
-					<trimStackTrace>false</trimStackTrace>
-					<redirectTestOutputToFile>true</redirectTestOutputToFile>
-					<runOrder>alphabetical</runOrder>
-				</configuration>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.apache.maven.plugins</groupId>-->
+<!--				<artifactId>maven-surefire-plugin</artifactId>-->
+<!--				<configuration>-->
+<!--					<includes>-->
+<!--						<include>**/*Tests.java</include>-->
+<!--					</includes>-->
+<!--					<excludes>-->
+<!--						<exclude>**/Abstract*.java</exclude>-->
+<!--					</excludes>-->
+<!--					<systemPropertyVariables>-->
+<!--						<java.security.egd>file:/dev/./urandom</java.security.egd>-->
+<!--						<java.awt.headless>true</java.awt.headless>-->
+<!--					</systemPropertyVariables>-->
+<!--					<argLine>-Xmx1024m</argLine>-->
+<!--					<trimStackTrace>false</trimStackTrace>-->
+<!--					<redirectTestOutputToFile>true</redirectTestOutputToFile>-->
+<!--					<runOrder>alphabetical</runOrder>-->
+<!--				</configuration>-->
+<!--			</plugin>-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
@@ -519,29 +519,29 @@
 			</activation>
 			<build>
 				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<configuration>
-							<source>${java.version}</source>
-						</configuration>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-								<inherited>true</inherited>
-							</execution>
-						</executions>
-						<dependencies>
-							<dependency>
-								<groupId>org.apache.commons</groupId>
-								<artifactId>commons-lang3</artifactId>
-								<version>3.7</version>
-							</dependency>
-						</dependencies>
-					</plugin>
+<!--					<plugin>-->
+<!--						<groupId>org.apache.maven.plugins</groupId>-->
+<!--						<artifactId>maven-javadoc-plugin</artifactId>-->
+<!--						<configuration>-->
+<!--							<source>${java.version}</source>-->
+<!--						</configuration>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>attach-javadocs</id>-->
+<!--								<goals>-->
+<!--									<goal>jar</goal>-->
+<!--								</goals>-->
+<!--								<inherited>true</inherited>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--						<dependencies>-->
+<!--							<dependency>-->
+<!--								<groupId>org.apache.commons</groupId>-->
+<!--								<artifactId>commons-lang3</artifactId>-->
+<!--								<version>3.7</version>-->
+<!--							</dependency>-->
+<!--						</dependencies>-->
+<!--					</plugin>-->
 				</plugins>
 			</build>
 		</profile>

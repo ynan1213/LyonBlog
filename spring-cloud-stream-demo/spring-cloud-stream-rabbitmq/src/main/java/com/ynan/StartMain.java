@@ -1,9 +1,11 @@
 package com.ynan;
 
-import com.ynan.mq.OutputMessageBinding;
+import com.ynan.mq.XxxMessageBinding;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.SubscribableChannel;
 import org.springframework.messaging.support.MessageBuilder;
 
 /**
@@ -15,8 +17,16 @@ public class StartMain {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(StartMain.class, args);
-        OutputMessageBinding bind = context.getBean(OutputMessageBinding.class);
-        bind.xxxxxoutput().send(MessageBuilder.withPayload("xxxx yyyy").build());
+        XxxMessageBinding bind = context.getBean(XxxMessageBinding.class);
+
+        Object xxxInput = context.getBean(XxxMessageBinding.INPUT);
+        Object xxxOutput = context.getBean(XxxMessageBinding.OUTPUT);
+
+        SubscribableChannel subscribableChannel = bind.xxxInput();
+        MessageChannel messageChannel = bind.xxxOutput();
+        MessageChannel messageChannel1 = bind.yyyOutput();
+
+        bind.xxxOutput().send(MessageBuilder.withPayload("xxxx-yyyy").build());
         System.out.println("发送消息成功");
     }
 }

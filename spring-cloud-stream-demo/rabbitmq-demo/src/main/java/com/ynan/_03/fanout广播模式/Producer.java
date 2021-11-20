@@ -16,6 +16,7 @@ public class Producer {
         Connection connection = ConnectionUtils.getConnection();
         Channel channel = connection.createChannel();
 
+
         channel.exchangeDeclare("logs", "fanout");
 
         for (int i = 0; i < 6; i++) {

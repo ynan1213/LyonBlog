@@ -18,6 +18,9 @@
     <modules>
         <module>rabbitmq-demo</module>
         <module>spring-cloud-stream-rabbitmq</module>
+        <module>spring-cloud-stream-rabbitmq-01</module>
+        <module>spring-cloud-stream-rabbitmq-01/consumer-01</module>
+        <module>spring-cloud-stream-rabbitmq-01/consumer-02</module>
     </modules>
 
     <properties>

@@ -9,15 +9,19 @@ import org.springframework.messaging.SubscribableChannel;
  * @Author yuannan
  * @Date 2021/11/9 10:01
  */
-public interface OutputMessageBinding {
+public interface XxxMessageBinding {
 
-    String OUTPUT = "channel-out";
+    String OUTPUT = "xxx-output";
 
-    String INPUT = "channel-input";
+    String INPUT = "xxx-input";
 
+    // 如果没有指定，默认就是方法名
     @Output(OUTPUT)
-    MessageChannel xxxxxoutput();
+    MessageChannel xxxOutput();
 
     @Input(INPUT)
-    SubscribableChannel xxxxxinput();
+    SubscribableChannel xxxInput();
+
+    @Output
+    MessageChannel yyyOutput();
 }

@@ -16,9 +16,7 @@ public class Producer {
         Connection connection = ConnectionUtils.getConnection();
         Channel channel = connection.createChannel();
 
-        channel.queueDeclare("xxx", true, false, false, null);
-        channel.queueDeclare("yyy", true, false, false, null);
-        channel.queueDeclare("zzz", true, false, false, null);
+        channel.queueDeclare("HelloWorld", true, false, false, null);
         channel.basicPublish("", "HelloWorld", null, "hello world !!!".getBytes());
         System.out.println("发送消息成功");
 

@@ -31,10 +31,10 @@
 	</properties>
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>flatten-maven-plugin</artifactId>
-			</plugin>
+<!--			<plugin>-->
+<!--				<groupId>org.codehaus.mojo</groupId>-->
+<!--				<artifactId>flatten-maven-plugin</artifactId>-->
+<!--			</plugin>-->
 <!--			<plugin>-->
 <!--				<groupId>org.apache.maven.plugins</groupId>-->
 <!--				<artifactId>maven-eclipse-plugin</artifactId>-->
@@ -163,5 +163,6 @@
 		<module>spring-cloud-starter</module>
 		<module>spring-cloud-starter-loadbalancer</module>
 		<module>demo01</module>
+		<module>01-NamedContextFactory</module>
 	</modules>
 </project>

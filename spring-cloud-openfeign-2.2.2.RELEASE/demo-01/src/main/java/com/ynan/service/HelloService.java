@@ -1,8 +1,9 @@
 package com.ynan.service;
 
+import com.ynan.entity.User;
 import com.ynan.feign.RemoteService;
-import com.ynan.feign.RemoteServiceXxx;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,10 +17,23 @@ public class HelloService {
 	private RemoteService service;
 
 	@Autowired
-	private RemoteServiceXxx serviceXxx;
+	private ApplicationContext applicationContext;
+
+	//	@Autowired
+	//	private RemoteServiceXxx serviceXxx;
 
 	public String say(String str) {
-		return service.remote(str);
+		return service.remote(str, new User("xxx", 18), "上海");
+	}
+
+
+	public String t1(String str) {
+		// 方法一：通过 contextId + "FeignClient" 取bean
+		RemoteService service = (RemoteService) applicationContext.getBean("aaaFeignClient");
+
+		// 方法二：通过 qualifier 取bean
+		// RemoteService service = (RemoteService)applicationContext.getBean("aaa");
+		return service.remote(str, new User("xxx", 18), "上海111");
 	}
 
 }

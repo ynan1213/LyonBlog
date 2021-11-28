@@ -68,12 +68,10 @@ public class SpringEncoder implements Encoder {
 	}
 
 	@Override
-	public void encode(Object requestBody, Type bodyType, RequestTemplate request)
-			throws EncodeException {
+	public void encode(Object requestBody, Type bodyType, RequestTemplate request) throws EncodeException {
 		// template.body(conversionService.convert(object, String.class));
 		if (requestBody != null) {
-			Collection<String> contentTypes = request.headers()
-					.get(HttpEncoding.CONTENT_TYPE);
+			Collection<String> contentTypes = request.headers().get(HttpEncoding.CONTENT_TYPE);
 
 			MediaType requestContentType = null;
 			if (contentTypes != null && !contentTypes.isEmpty()) {
@@ -87,24 +85,19 @@ public class SpringEncoder implements Encoder {
 			}
 			else {
 				if (bodyType == MultipartFile.class) {
-					log.warn(
-							"For MultipartFile to be handled correctly, the 'consumes' parameter of @RequestMapping "
+					log.warn("For MultipartFile to be handled correctly, the 'consumes' parameter of @RequestMapping "
 									+ "should be specified as MediaType.MULTIPART_FORM_DATA_VALUE");
 				}
 			}
 
-			for (HttpMessageConverter messageConverter : this.messageConverters
-					.getObject().getConverters()) {
+			for (HttpMessageConverter messageConverter : this.messageConverters.getObject().getConverters()) {
 				FeignOutputMessage outputMessage;
 				try {
 					if (messageConverter instanceof GenericHttpMessageConverter) {
-						outputMessage = checkAndWrite(requestBody, bodyType,
-								requestContentType,
-								(GenericHttpMessageConverter) messageConverter, request);
+						outputMessage = checkAndWrite(requestBody, bodyType, requestContentType, (GenericHttpMessageConverter) messageConverter, request);
 					}
 					else {
-						outputMessage = checkAndWrite(requestBody, requestContentType,
-								messageConverter, request);
+						outputMessage = checkAndWrite(requestBody, requestContentType, messageConverter, request);
 					}
 				}
 				catch (IOException | HttpMessageConversionException ex) {
@@ -123,20 +116,17 @@ public class SpringEncoder implements Encoder {
 						charset = null;
 					}
 					else if (messageConverter instanceof ProtobufHttpMessageConverter
-							&& ProtobufHttpMessageConverter.PROTOBUF.isCompatibleWith(
-									outputMessage.getHeaders().getContentType())) {
+						&& ProtobufHttpMessageConverter.PROTOBUF.isCompatibleWith(outputMessage.getHeaders().getContentType())) {
 						charset = null;
 					}
 					else {
 						charset = StandardCharsets.UTF_8;
 					}
-					request.body(Request.Body.encoded(
-							outputMessage.getOutputStream().toByteArray(), charset));
+					request.body(Request.Body.encoded(outputMessage.getOutputStream().toByteArray(), charset));
 					return;
 				}
 			}
-			String message = "Could not write request: no suitable HttpMessageConverter "
-					+ "found for request type [" + requestBody.getClass().getName() + "]";
+			String message = "Could not write request: no suitable HttpMessageConverter found for request type [" + requestBody.getClass().getName() + "]";
 			if (requestContentType != null) {
 				message += " and content type [" + requestContentType + "]";
 			}
@@ -145,8 +135,7 @@ public class SpringEncoder implements Encoder {
 	}
 
 	@SuppressWarnings("unchecked")
-	private FeignOutputMessage checkAndWrite(Object body, MediaType contentType,
-			HttpMessageConverter converter, RequestTemplate request) throws IOException {
+	private FeignOutputMessage checkAndWrite(Object body, MediaType contentType, HttpMessageConverter converter, RequestTemplate request) throws IOException {
 		if (converter.canWrite(body.getClass(), contentType)) {
 			logBeforeWrite(body, contentType, converter);
 			FeignOutputMessage outputMessage = new FeignOutputMessage(request);
@@ -177,12 +166,10 @@ public class SpringEncoder implements Encoder {
 			HttpMessageConverter messageConverter) {
 		if (log.isDebugEnabled()) {
 			if (requestContentType != null) {
-				log.debug("Writing [" + requestBody + "] as \"" + requestContentType
-						+ "\" using [" + messageConverter + "]");
+				log.debug("Writing [" + requestBody + "] as \"" + requestContentType + "\" using [" + messageConverter + "]");
 			}
 			else {
-				log.debug(
-						"Writing [" + requestBody + "] using [" + messageConverter + "]");
+				log.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
 			}
 		}
 	}

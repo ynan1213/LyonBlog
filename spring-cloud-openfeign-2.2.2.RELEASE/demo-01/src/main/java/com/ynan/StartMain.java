@@ -1,7 +1,6 @@
 package com.ynan;
 
 import com.ynan.config.XxxDefaultConfiguration;
-import com.ynan.feign.RemoteService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;

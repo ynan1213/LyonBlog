@@ -63,8 +63,7 @@ public @interface FeignClient {
 	String serviceId() default "";
 
 	/**
-	 * This will be used as the bean name instead of name if present, but will not be used
-	 * as a service id.
+	 * This will be used as the bean name instead of name if present, but will not be used as a service id.
 	 * @return bean name instead of name if present
 	 */
 	String contextId() default "";

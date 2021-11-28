@@ -105,6 +105,7 @@ public class FeignClientsConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public Contract feignContract(ConversionService feignConversionService) {
+		// 适配SpringMVC那一套注解，如果不配置该Bean，默认就是Feign那一套
 		return new SpringMvcContract(this.parameterProcessors, feignConversionService);
 	}
 
@@ -148,6 +149,10 @@ public class FeignClientsConfiguration {
 	@ConditionalOnClass({ HystrixCommand.class, HystrixFeign.class })
 	protected static class HystrixFeignConfiguration {
 
+		/**
+		 * 为什么开启了 feign.hystrix.enabled，就会首先注入这个bean，而覆盖上面的bean呢？
+		 * 原因是 static 能提升bean的优先级
+		 */
 		@Bean
 		@Scope("prototype")
 		@ConditionalOnMissingBean

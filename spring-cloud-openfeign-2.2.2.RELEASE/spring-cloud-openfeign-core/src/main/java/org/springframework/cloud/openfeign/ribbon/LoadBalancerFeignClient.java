@@ -43,9 +43,7 @@ public class LoadBalancerFeignClient implements Client {
 
 	private SpringClientFactory clientFactory;
 
-	public LoadBalancerFeignClient(Client delegate,
-			CachingSpringLoadBalancerFactory lbClientFactory,
-			SpringClientFactory clientFactory) {
+	public LoadBalancerFeignClient(Client delegate, CachingSpringLoadBalancerFactory lbClientFactory, SpringClientFactory clientFactory) {
 		this.delegate = delegate;
 		this.lbClientFactory = lbClientFactory;
 		this.clientFactory = clientFactory;
@@ -54,16 +52,13 @@ public class LoadBalancerFeignClient implements Client {
 	static URI cleanUrl(String originalUrl, String host) {
 		String newUrl = originalUrl;
 		if (originalUrl.startsWith("https://")) {
-			newUrl = originalUrl.substring(0, 8)
-					+ originalUrl.substring(8 + host.length());
+			newUrl = originalUrl.substring(0, 8) + originalUrl.substring(8 + host.length());
 		}
 		else if (originalUrl.startsWith("http")) {
-			newUrl = originalUrl.substring(0, 7)
-					+ originalUrl.substring(7 + host.length());
+			newUrl = originalUrl.substring(0, 7) + originalUrl.substring(7 + host.length());
 		}
 		StringBuffer buffer = new StringBuffer(newUrl);
-		if ((newUrl.startsWith("https://") && newUrl.length() == 8)
-				|| (newUrl.startsWith("http://") && newUrl.length() == 7)) {
+		if ((newUrl.startsWith("https://") && newUrl.length() == 8) || (newUrl.startsWith("http://") && newUrl.length() == 7)) {
 			buffer.append("/");
 		}
 		return URI.create(buffer.toString());
@@ -75,12 +70,10 @@ public class LoadBalancerFeignClient implements Client {
 			URI asUri = URI.create(request.url());
 			String clientName = asUri.getHost();
 			URI uriWithoutHost = cleanUrl(request.url(), clientName);
-			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(
-					this.delegate, request, uriWithoutHost);
-
+			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(this.delegate, request, uriWithoutHost);
+			// 关注点：如果未配置超时时间，这里并不是默认的60s，而是ribbon的默认配置
 			IClientConfig requestConfig = getClientConfig(options, clientName);
-			return lbClient(clientName)
-					.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
+			return lbClient(clientName).executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
 		}
 		catch (ClientException e) {
 			IOException io = findIOException(e);
@@ -94,9 +87,11 @@ public class LoadBalancerFeignClient implements Client {
 	IClientConfig getClientConfig(Request.Options options, String clientName) {
 		IClientConfig requestConfig;
 		if (options == DEFAULT_OPTIONS) {
+			// 如果是默认的，并未取默认的数值，通过debug，里面取的是ribbon的默认值，连接和读取均是 1s，具体要看ribbon的源码
 			requestConfig = this.clientFactory.getClientConfig(clientName);
 		}
 		else {
+			// 自定义在这里生效
 			requestConfig = new FeignOptionsClientConfig(options);
 		}
 		return requestConfig;
@@ -123,8 +118,7 @@ public class LoadBalancerFeignClient implements Client {
 	static class FeignOptionsClientConfig extends DefaultClientConfigImpl {
 
 		FeignOptionsClientConfig(Request.Options options) {
-			setProperty(CommonClientConfigKey.ConnectTimeout,
-					options.connectTimeoutMillis());
+			setProperty(CommonClientConfigKey.ConnectTimeout, options.connectTimeoutMillis());
 			setProperty(CommonClientConfigKey.ReadTimeout, options.readTimeoutMillis());
 		}
 

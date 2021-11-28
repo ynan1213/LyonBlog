@@ -1,5 +1,6 @@
 package com.ynan;
 
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -26,6 +27,11 @@ public class RemoteStartMain {
 
 	@RequestMapping("/remote/name")
 	public String remote(@RequestParam String name) {
+		try {
+			TimeUnit.SECONDS.sleep(12);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		return applicationName + " : " + name;
 	}
 

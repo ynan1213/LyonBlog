@@ -96,6 +96,7 @@ public class FeignAutoConfiguration {
 		@Bean
 		@ConditionalOnMissingBean
 		public Targeter feignTargeter() {
+			// 没有降级功能
 			return new DefaultTargeter();
 		}
 

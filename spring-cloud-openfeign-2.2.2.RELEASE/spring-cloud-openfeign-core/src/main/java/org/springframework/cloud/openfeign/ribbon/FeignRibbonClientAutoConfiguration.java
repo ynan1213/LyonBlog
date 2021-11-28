@@ -48,8 +48,8 @@ import org.springframework.context.annotation.Primary;
 @AutoConfigureBefore(FeignAutoConfiguration.class)
 @EnableConfigurationProperties({ FeignHttpClientProperties.class })
 // Order is important here, last should be the default, first should be optional
-// see
-// https://github.com/spring-cloud/spring-cloud-netflix/issues/2086#issuecomment-316281653
+// see https://github.com/spring-cloud/spring-cloud-netflix/issues/2086#issuecomment-316281653
+// @Import是依次注入的，又因为每个bean的生效条件不一样，默认情况下是最后一个生效
 @Import({ HttpClientFeignLoadBalancedConfiguration.class,
 		OkHttpFeignLoadBalancedConfiguration.class,
 		DefaultFeignLoadBalancedConfiguration.class })

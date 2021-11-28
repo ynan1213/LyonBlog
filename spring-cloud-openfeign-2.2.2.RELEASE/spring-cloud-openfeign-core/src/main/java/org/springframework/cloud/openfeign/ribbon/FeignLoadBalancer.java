@@ -79,13 +79,11 @@ public class FeignLoadBalancer extends
 	}
 
 	@Override
-	public RibbonResponse execute(RibbonRequest request, IClientConfig configOverride)
-			throws IOException {
+	public RibbonResponse execute(RibbonRequest request, IClientConfig configOverride) throws IOException {
 		Request.Options options;
 		if (configOverride != null) {
 			RibbonProperties override = RibbonProperties.from(configOverride);
-			options = new Request.Options(override.connectTimeout(this.connectTimeout),
-					override.readTimeout(this.readTimeout));
+			options = new Request.Options(override.connectTimeout(this.connectTimeout), override.readTimeout(this.readTimeout));
 		}
 		else {
 			options = new Request.Options(this.connectTimeout, this.readTimeout);
@@ -131,10 +129,8 @@ public class FeignLoadBalancer extends
 		}
 
 		private Request toRequest(Request request) {
-			Map<String, Collection<String>> headers = new LinkedHashMap<>(
-					request.headers());
-			return Request.create(request.httpMethod(), getUri().toASCIIString(), headers,
-					request.body(), request.charset(), request.requestTemplate());
+			Map<String, Collection<String>> headers = new LinkedHashMap<>(request.headers());
+			return Request.create(request.httpMethod(), getUri().toASCIIString(), headers, request.body(), request.charset(), request.requestTemplate());
 		}
 
 		Request toRequest() {
@@ -149,8 +145,7 @@ public class FeignLoadBalancer extends
 			return new HttpRequest() {
 				@Override
 				public HttpMethod getMethod() {
-					return HttpMethod
-							.resolve(RibbonRequest.this.toRequest().httpMethod().name());
+					return HttpMethod.resolve(RibbonRequest.this.toRequest().httpMethod().name());
 				}
 
 				@Override
@@ -166,8 +161,7 @@ public class FeignLoadBalancer extends
 				@Override
 				public HttpHeaders getHeaders() {
 					Map<String, List<String>> headers = new HashMap<>();
-					Map<String, Collection<String>> feignHeaders = RibbonRequest.this
-							.toRequest().headers();
+					Map<String, Collection<String>> feignHeaders = RibbonRequest.this.toRequest().headers();
 					for (String key : feignHeaders.keySet()) {
 						headers.put(key, new ArrayList<String>(feignHeaders.get(key)));
 					}

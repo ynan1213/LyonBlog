@@ -137,6 +137,8 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		if (level != null) {
 			builder.logLevel(level);
 		}
+
+		// 每个client默认都会注入一个：NEVER_RETRY
 		Retryer retryer = getOptional(context, Retryer.class);
 		if (retryer != null) {
 			builder.retryer(retryer);
@@ -242,9 +244,15 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	}
 
 	protected <T> T loadBalance(Feign.Builder builder, FeignContext context, HardCodedTarget<T> target) {
+		/**
+		 * spring.factories 注入了 FeignRibbonClientAutoConfiguration 类，在该类上 @Import 三个client实现
+		 * 根据配置属性的不同会有不同的生效，默认是 DefaultFeignLoadBalancedConfiguration
+		 * 因为该对象是在父context中，所以每个@FeignClient共享同一个client
+		 */
 		Client client = getOptional(context, Client.class);
 		if (client != null) {
 			builder.client(client);
+			// Targeter 在父容器中，由 FeignAutoConfiguration 类注入
 			Targeter targeter = get(context, Targeter.class);
 			return targeter.target(this, builder, context, target);
 		}
@@ -267,7 +275,6 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		FeignContext context = this.applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
 
-		// 如果未配置url
 		if (!StringUtils.hasText(this.url)) {
 			if (!this.name.startsWith("http")) {
 				this.url = "http://" + this.name;
@@ -275,8 +282,9 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			else {
 				this.url = this.name;
 			}
-			// 拼接上 path，path就是一个前缀的作用
+			// 拼接上 path，path起通用前缀的作用
 			this.url += cleanPath();
+			// 如果未配置url，则走负载均衡，生成有负载均衡功能的代理类
 			return (T) loadBalance(builder, context, new HardCodedTarget<>(this.type, this.name, this.url));
 		}
 
@@ -285,10 +293,11 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		}
 		String url = this.url + cleanPath();
 		Client client = getOptional(context, Client.class);
+
+		// 如果指定了url，则不走注册中心的负载均衡
 		if (client != null) {
 			if (client instanceof LoadBalancerFeignClient) {
-				// not load balancing because we have a url,
-				// but ribbon is on the classpath, so unwrap
+				// not load balancing because we have a url, but ribbon is on the classpath, so unwrap
 				client = ((LoadBalancerFeignClient) client).getDelegate();
 			}
 			if (client instanceof FeignBlockingLoadBalancerClient) {

@@ -46,8 +46,7 @@ public class CachingSpringLoadBalancerFactory {
 		this.factory = factory;
 	}
 
-	public CachingSpringLoadBalancerFactory(SpringClientFactory factory,
-			LoadBalancedRetryFactory loadBalancedRetryPolicyFactory) {
+	public CachingSpringLoadBalancerFactory(SpringClientFactory factory, LoadBalancedRetryFactory loadBalancedRetryPolicyFactory) {
 		this.factory = factory;
 		this.loadBalancedRetryFactory = loadBalancedRetryPolicyFactory;
 	}
@@ -59,11 +58,9 @@ public class CachingSpringLoadBalancerFactory {
 		}
 		IClientConfig config = this.factory.getClientConfig(clientName);
 		ILoadBalancer lb = this.factory.getLoadBalancer(clientName);
-		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName,
-				ServerIntrospector.class);
+		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName, ServerIntrospector.class);
 		client = this.loadBalancedRetryFactory != null
-				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector,
-						this.loadBalancedRetryFactory)
+				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector, this.loadBalancedRetryFactory)
 				: new FeignLoadBalancer(lb, config, serverIntrospector);
 		this.cache.put(clientName, client);
 		return client;

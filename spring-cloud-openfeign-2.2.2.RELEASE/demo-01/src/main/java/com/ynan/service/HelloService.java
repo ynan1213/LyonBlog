@@ -23,7 +23,7 @@ public class HelloService {
 	//	private RemoteServiceXxx serviceXxx;
 
 	public String say(String str) {
-		return service.remote(str, new User("xxx", 18), "上海");
+		return service.remote(str, "上海");
 	}
 
 
@@ -33,7 +33,7 @@ public class HelloService {
 
 		// 方法二：通过 qualifier 取bean
 		// RemoteService service = (RemoteService)applicationContext.getBean("aaa");
-		return service.remote(str, new User("xxx", 18), "上海111");
+		return service.remote(str, "上海111");
 	}
 
 }

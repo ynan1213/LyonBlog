@@ -1,6 +1,5 @@
 package com.ynan.test;
 
-import com.ynan.config.XxxFallback;
 import com.ynan.service.HelloService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,13 +21,11 @@ public class StartTest {
 	/**
 	 * 子容器中的bean 在父容器中是没有的
 	 */
-//	@Autowired
-//	private XxxFallback fallback;
+	//	@Autowired
+	//	private XxxFallback fallback;
 
 	@Test
 	public void test1() {
-		//		for (int i = 0; i < 6; i++) {
 		System.out.println(service.t1("world"));
-		//		}
 	}
 }

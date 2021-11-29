@@ -1,5 +1,6 @@
 package com.ynan;
 
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -28,7 +29,9 @@ public class RemoteStartMain {
 	@RequestMapping("/remote/name")
 	public String remote(@RequestParam String name) {
 		try {
+			System.out.println("============================================== start : " + Thread.currentThread().getName() + "  time: "+ new Date().toString());
 			TimeUnit.SECONDS.sleep(12);
+			System.out.println("============================================== end : " + Thread.currentThread().getName() + "  time: "+ new Date().toString());
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

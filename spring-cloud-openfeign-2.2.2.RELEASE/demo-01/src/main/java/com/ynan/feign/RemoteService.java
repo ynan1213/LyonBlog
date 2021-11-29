@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 	contextId = "aaa",
 	path = "/remote",
 	/*configuration = XxxCustomConfiguration.class*/
-	fallbackFactory = XxxFallbackFactory.class,
+	/*fallbackFactory = XxxFallbackFactory.class,*/
 	fallback = XxxFallback.class
 )
 public interface RemoteService {
@@ -32,7 +32,7 @@ public interface RemoteService {
 	 * 3. produces、consumes、headers在这里同样也会生效，都可以配置多个，但是只有第一个会生效
 	 */
 	@RequestMapping("/name")
-	String remote(@RequestParam String name, @RequestParam("user") User user, String address);
+	String remote(@RequestParam String name, String address);
 
 
 	/**

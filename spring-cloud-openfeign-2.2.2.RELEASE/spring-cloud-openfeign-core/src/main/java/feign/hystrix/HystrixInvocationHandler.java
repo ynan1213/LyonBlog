@@ -42,8 +42,7 @@ final class HystrixInvocationHandler implements InvocationHandler {
 	private final Map<Method, Method> fallbackMethodMap;
 	private final Map<Method, Setter> setterMethodMap;
 
-	HystrixInvocationHandler(Target<?> target, Map<Method, MethodHandler> dispatch,
-		SetterFactory setterFactory, FallbackFactory<?> fallbackFactory) {
+	HystrixInvocationHandler(Target<?> target, Map<Method, MethodHandler> dispatch, SetterFactory setterFactory, FallbackFactory<?> fallbackFactory) {
 		this.target = checkNotNull(target, "target");
 		this.dispatch = checkNotNull(dispatch, "dispatch");
 		this.fallbackFactory = fallbackFactory;

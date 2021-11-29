@@ -38,14 +38,20 @@ class HystrixTargeter implements Targeter {
 		}
 		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feign;
 		String name = StringUtils.isEmpty(factory.getContextId()) ? factory.getName() : factory.getContextId();
+
+		// SetterFactory 用法不清楚
 		SetterFactory setterFactory = getOptional(name, context, SetterFactory.class);
 		if (setterFactory != null) {
 			builder.setterFactory(setterFactory);
 		}
+
+		// fallback优先级高，只要配置了 fallback，就会忽略 fallbackFactory
 		Class<?> fallback = factory.getFallback();
 		if (fallback != void.class) {
 			return targetWithFallback(name, context, target, builder, fallback);
 		}
+
+		// fallbackFactory 优先级低一些
 		Class<?> fallbackFactory = factory.getFallbackFactory();
 		if (fallbackFactory != void.class) {
 			return targetWithFallbackFactory(name, context, target, builder, fallbackFactory);
@@ -54,15 +60,12 @@ class HystrixTargeter implements Targeter {
 		return feign.target(target);
 	}
 
-	private <T> T targetWithFallbackFactory(String feignClientName, FeignContext context,
-			Target.HardCodedTarget<T> target, HystrixFeign.Builder builder, Class<?> fallbackFactoryClass) {
-		FallbackFactory<? extends T> fallbackFactory = (FallbackFactory<? extends T>) getFromContext(
-				"fallbackFactory", feignClientName, context, fallbackFactoryClass, FallbackFactory.class);
+	private <T> T targetWithFallbackFactory(String feignClientName, FeignContext context, Target.HardCodedTarget<T> target, HystrixFeign.Builder builder, Class<?> fallbackFactoryClass) {
+		FallbackFactory<? extends T> fallbackFactory = (FallbackFactory<? extends T>) getFromContext("fallbackFactory", feignClientName, context, fallbackFactoryClass, FallbackFactory.class);
 		return builder.target(target, fallbackFactory);
 	}
 
-	private <T> T targetWithFallback(String feignClientName, FeignContext context,
-			Target.HardCodedTarget<T> target, HystrixFeign.Builder builder, Class<?> fallback) {
+	private <T> T targetWithFallback(String feignClientName, FeignContext context, Target.HardCodedTarget<T> target, HystrixFeign.Builder builder, Class<?> fallback) {
 		T fallbackInstance = getFromContext("fallback", feignClientName, context, fallback, target.type());
 		return builder.target(target, fallbackInstance);
 	}

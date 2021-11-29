@@ -11,8 +11,8 @@ import feign.Response;
 public class XxxFallback implements RemoteService {
 
 	@Override
-	public String remote(String name, User user, String address) {
-		return "xxx";
+	public String remote(String name, String address) {
+		return "xxxyyy";
 	}
 
 	@Override

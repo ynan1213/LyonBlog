@@ -140,8 +140,7 @@ public final class HystrixFeign {
 		Feign build(final FallbackFactory<?> nullableFallbackFactory) {
 			super.invocationHandlerFactory(new InvocationHandlerFactory() {
 				@Override
-				public InvocationHandler create(Target target,
-					Map<Method, MethodHandler> dispatch) {
+				public InvocationHandler create(Target target, Map<Method, MethodHandler> dispatch) {
 					return new HystrixInvocationHandler(target, dispatch, setterFactory, nullableFallbackFactory);
 				}
 			});

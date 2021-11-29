@@ -43,6 +43,10 @@
 			<version>1.18.6</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>io.github.openfeign</groupId>
+			<artifactId>feign-httpclient</artifactId>
+		</dependency>
 	</dependencies>
 
 </project>

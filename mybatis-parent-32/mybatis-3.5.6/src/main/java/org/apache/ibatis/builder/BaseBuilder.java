@@ -113,6 +113,7 @@ public abstract class BaseBuilder {
       return null;
     }
     try {
+      // Configuration的构造方法初始化了很多别名
       return resolveAlias(alias);
     } catch (Exception e) {
       throw new BuilderException("Error resolving class. Cause: " + e, e);

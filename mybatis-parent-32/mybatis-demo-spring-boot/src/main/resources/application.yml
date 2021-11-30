@@ -1,0 +1,10 @@
+mybatis:
+    mapper-locations: classpath*:mapper/*.xml
+    type-aliases-package: com.ynan.entity
+
+
+jdbc:
+    driver: com.mysql.jdbc.Driver
+    url: jdbc:mysql://47.100.24.106:3306/test?serverTimezone=UTC&useSSL=false&characterEncoding=UTF-8
+    username: root
+    password: 123456

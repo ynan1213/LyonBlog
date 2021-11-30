@@ -88,6 +88,7 @@ public final class LogFactory {
   }
 
   private static void tryImplementation(Runnable runnable) {
+    // 只有当 logConstructor 为空，则往下执行
     if (logConstructor == null) {
       try {
         runnable.run();

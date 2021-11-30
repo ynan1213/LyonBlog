@@ -43,6 +43,8 @@
   <modules>
     <module>mybatis-demo</module>
     <module>mybatis-demo-spring</module>
+    <module>spring-boot-starter-mybatis-spring-boot-2.1.4</module>
+    <module>mybatis-demo-spring-boot</module>
   </modules>
 
   <developers>

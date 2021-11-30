@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
 
 <configuration>
 
@@ -17,17 +17,17 @@
     <typeAliases>
         <!-- 定义别名可以在实体类上注解 @Alisa -->
         <!-- 默认是类名小写 -->
-        <package name="com.epichust.entity"/>
+        <package name="com.ynan.main2.entity"/>
 
         <!--
         <typeAlias alias="Mail" type="com.sqsoft.entity.Mail" />
         -->
     </typeAliases>
 
-<!--    <plugins>-->
-<!--        &lt;!&ndash;<plugin interceptor="com.epichust.plugin.MySqlPagingPlugin"></plugin>&ndash;&gt;-->
-<!--        <plugin interceptor="com.epichust.plugin.CloseOneLevelCachePlugin"></plugin>-->
-<!--    </plugins>-->
+    <!--    <plugins>-->
+    <!--        &lt;!&ndash;<plugin interceptor="com.epichust.plugin.MySqlPagingPlugin"></plugin>&ndash;&gt;-->
+    <!--        <plugin interceptor="com.epichust.plugin.CloseOneLevelCachePlugin"></plugin>-->
+    <!--    </plugins>-->
 
     <environments default="development">
         <environment id="development">
@@ -49,10 +49,7 @@
     </databaseIdProvider>
 
     <mappers>
-        <!-- 		<mapper resource="mapper/ArticleMapper.xml" /> -->
-        <!-- 		<mapper resource="mapper/AuthorMapper.xml" /> -->
         <mapper resource="mapper/UserMapper.xml"/>
-        <mapper resource="mapper/ResultMap.xml"/>
         <!--<package name="com.sqsoft.dao"/>-->
     </mappers>
 

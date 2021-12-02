@@ -1,6 +1,9 @@
 mybatis:
     mapper-locations: classpath*:mapper/*.xml
     type-aliases-package: com.ynan.entity
+    configuration:
+       # logImpl: STDOUT_LOGGING
+        logImpl: com.ynan.log.MyCustomLog
 
 
 jdbc:

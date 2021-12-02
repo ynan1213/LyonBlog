@@ -102,6 +102,7 @@ public class MybatisAutoConfiguration implements InitializingBean {
     private final List<ConfigurationCustomizer> configurationCustomizers;
 
     public MybatisAutoConfiguration(
+        // mybatis 配置文件
         MybatisProperties properties,
         // 会注入容器中所有的 mybatis 插件类
         ObjectProvider<Interceptor[]> interceptorsProvider,

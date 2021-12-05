@@ -17,7 +17,6 @@
 package org.apache.rocketmq.namesrv.routeinfo;
 
 import io.netty.channel.Channel;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -29,14 +28,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import org.apache.rocketmq.common.DataVersion;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.common.constant.PermName;
-import org.apache.rocketmq.logging.InternalLogger;
-import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.common.namesrv.RegisterBrokerResult;
 import org.apache.rocketmq.common.protocol.body.ClusterInfo;
 import org.apache.rocketmq.common.protocol.body.TopicConfigSerializeWrapper;
@@ -45,10 +41,12 @@ import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.common.protocol.route.QueueData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 import org.apache.rocketmq.common.sysflag.TopicSysFlag;
+import org.apache.rocketmq.logging.InternalLogger;
+import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
 
-public class RouteInfoManager
-{
+public class RouteInfoManager {
+
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
 
     //NameServer 与 Broker 空闲时长，默认2分钟，在2分钟内 Nameserver 没有收到 Broker 的心跳包，则关闭该连接。
@@ -72,8 +70,7 @@ public class RouteInfoManager
     // key:brokerAddr，value:Filter Server，存储Broker上的FilterServer列表
     private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
-    public RouteInfoManager()
-    {
+    public RouteInfoManager() {
         this.topicQueueTable = new HashMap<String, List<QueueData>>(1024);
         this.brokerAddrTable = new HashMap<String, BrokerData>(128);
         this.clusterAddrTable = new HashMap<String, Set<String>>(32);
@@ -81,47 +78,36 @@ public class RouteInfoManager
         this.filterServerTable = new HashMap<String, List<String>>(256);
     }
 
-    public byte[] getAllClusterInfo()
-    {
+    public byte[] getAllClusterInfo() {
         ClusterInfo clusterInfoSerializeWrapper = new ClusterInfo();
         clusterInfoSerializeWrapper.setBrokerAddrTable(this.brokerAddrTable);
         clusterInfoSerializeWrapper.setClusterAddrTable(this.clusterAddrTable);
         return clusterInfoSerializeWrapper.encode();
     }
 
-    public void deleteTopic(final String topic)
-    {
-        try
-        {
-            try
-            {
+    public void deleteTopic(final String topic) {
+        try {
+            try {
                 this.lock.writeLock().lockInterruptibly();
                 this.topicQueueTable.remove(topic);
-            } finally
-            {
+            } finally {
                 this.lock.writeLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("deleteTopic Exception", e);
         }
     }
 
-    public byte[] getAllTopicList()
-    {
+    public byte[] getAllTopicList() {
         TopicList topicList = new TopicList();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 topicList.getTopicList().addAll(this.topicQueueTable.keySet());
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("getAllTopicList Exception", e);
         }
 
@@ -129,26 +115,22 @@ public class RouteInfoManager
     }
 
     public RegisterBrokerResult registerBroker(
-            final String clusterName,
-            final String brokerAddr,
-            final String brokerName,
-            final long brokerId,
-            final String haServerAddr,
-            final TopicConfigSerializeWrapper topicConfigWrapper,
-            final List<String> filterServerList,
-            final Channel channel)
-    {
+        final String clusterName,
+        final String brokerAddr,
+        final String brokerName,
+        final long brokerId,
+        final String haServerAddr,
+        final TopicConfigSerializeWrapper topicConfigWrapper,
+        final List<String> filterServerList,
+        final Channel channel) {
         RegisterBrokerResult result = new RegisterBrokerResult();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.writeLock().lockInterruptibly();
                 // 根据 broker 集群名称获取此集群下的所有 broker
                 Set<String> brokerNames = this.clusterAddrTable.get(clusterName);
                 // 如果此集群不存在则创建
-                if (null == brokerNames)
-                {
+                if (null == brokerNames) {
                     brokerNames = new HashSet<String>();
                     this.clusterAddrTable.put(clusterName, brokerNames);
                 }
@@ -159,8 +141,7 @@ public class RouteInfoManager
 
                 // 注意这里有个坑，不同的集群不同配置相同名称的broker
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
-                if (null == brokerData)
-                {
+                if (null == brokerData) {
                     registerFirst = true;
                     brokerData = new BrokerData(clusterName, brokerName, new HashMap<Long, String>());
                     this.brokerAddrTable.put(brokerName, brokerData);
@@ -169,11 +150,9 @@ public class RouteInfoManager
                 //Switch slave to master: first remove <1, IP:PORT> in namesrv, then add <0, IP:PORT>
                 //The same IP:PORT must only have one record in brokerAddrTable
                 Iterator<Entry<Long, String>> it = brokerAddrsMap.entrySet().iterator();
-                while (it.hasNext())
-                {
+                while (it.hasNext()) {
                     Entry<Long, String> item = it.next();
-                    if (null != brokerAddr && brokerAddr.equals(item.getValue()) && brokerId != item.getKey())
-                    {
+                    if (null != brokerAddr && brokerAddr.equals(item.getValue()) && brokerId != item.getKey()) {
                         it.remove();
                     }
                 }
@@ -182,16 +161,12 @@ public class RouteInfoManager
                 registerFirst = registerFirst || (null == oldAddr);
 
                 //只有master(brokerId == 0)才会创建QueueData，因为只有master才包含了读写队列的信息
-                if (null != topicConfigWrapper && MixAll.MASTER_ID == brokerId)
-                {
+                if (null != topicConfigWrapper && MixAll.MASTER_ID == brokerId) {
                     // 如果Topic配置信息发生变更 或者 该broker为第一次注册
-                    if (this.isBrokerTopicConfigChanged(brokerAddr, topicConfigWrapper.getDataVersion()) || registerFirst)
-                    {
+                    if (this.isBrokerTopicConfigChanged(brokerAddr, topicConfigWrapper.getDataVersion()) || registerFirst) {
                         ConcurrentMap<String, TopicConfig> tcTable = topicConfigWrapper.getTopicConfigTable();
-                        if (tcTable != null)
-                        {
-                            for (Map.Entry<String, TopicConfig> entry : tcTable.entrySet())
-                            {
+                        if (tcTable != null) {
+                            for (Map.Entry<String, TopicConfig> entry : tcTable.entrySet()) {
                                 this.createAndUpdateQueueData(brokerName, entry.getValue());
                             }
                         }
@@ -199,75 +174,61 @@ public class RouteInfoManager
                 }
 
                 //BrokerLiveInfo记录心跳包的时间戳
-                BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr, new BrokerLiveInfo(System.currentTimeMillis(), topicConfigWrapper.getDataVersion(), channel, haServerAddr));
-                if (null == prevBrokerLiveInfo)
-                {
+                BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable
+                    .put(brokerAddr, new BrokerLiveInfo(System.currentTimeMillis(), topicConfigWrapper.getDataVersion(), channel, haServerAddr));
+                if (null == prevBrokerLiveInfo) {
                     log.info("new broker registered, {} HAServer: {}", brokerAddr, haServerAddr);
                 }
 
-                if (filterServerList != null)
-                {
-                    if (filterServerList.isEmpty())
-                    {
+                if (filterServerList != null) {
+                    if (filterServerList.isEmpty()) {
                         this.filterServerTable.remove(brokerAddr);
-                    } else
-                    {
+                    } else {
                         this.filterServerTable.put(brokerAddr, filterServerList);
                     }
                 }
 
-                if (MixAll.MASTER_ID != brokerId)
-                {
+                if (MixAll.MASTER_ID != brokerId) {
                     String masterAddr = brokerData.getBrokerAddrs().get(MixAll.MASTER_ID);
-                    if (masterAddr != null)
-                    {
+                    if (masterAddr != null) {
                         BrokerLiveInfo brokerLiveInfo = this.brokerLiveTable.get(masterAddr);
-                        if (brokerLiveInfo != null)
-                        {
+                        if (brokerLiveInfo != null) {
                             result.setHaServerAddr(brokerLiveInfo.getHaServerAddr());
                             result.setMasterAddr(masterAddr);
                         }
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.writeLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("registerBroker Exception", e);
         }
 
         return result;
     }
 
-    public boolean isBrokerTopicConfigChanged(final String brokerAddr, final DataVersion dataVersion)
-    {
+    public boolean isBrokerTopicConfigChanged(final String brokerAddr, final DataVersion dataVersion) {
         DataVersion prev = queryBrokerTopicConfig(brokerAddr);
         return null == prev || !prev.equals(dataVersion);
     }
 
-    public DataVersion queryBrokerTopicConfig(final String brokerAddr)
-    {
+    public DataVersion queryBrokerTopicConfig(final String brokerAddr) {
         BrokerLiveInfo prev = this.brokerLiveTable.get(brokerAddr);
-        if (prev != null)
-        {
+        if (prev != null) {
             return prev.getDataVersion();
         }
         return null;
     }
 
-    public void updateBrokerInfoUpdateTimestamp(final String brokerAddr)
-    {
+    public void updateBrokerInfoUpdateTimestamp(final String brokerAddr) {
         BrokerLiveInfo prev = this.brokerLiveTable.get(brokerAddr);
-        if (prev != null)
-        {
+        if (prev != null) {
             prev.setLastUpdateTimestamp(System.currentTimeMillis());
         }
     }
 
-    private void createAndUpdateQueueData(final String brokerName, final TopicConfig topicConfig)
-    {
+    private void createAndUpdateQueueData(final String brokerName, final TopicConfig topicConfig) {
         QueueData queueData = new QueueData();
         queueData.setBrokerName(brokerName);
         queueData.setWriteQueueNums(topicConfig.getWriteQueueNums());
@@ -276,76 +237,59 @@ public class RouteInfoManager
         queueData.setTopicSynFlag(topicConfig.getTopicSysFlag());
 
         List<QueueData> queueDataList = this.topicQueueTable.get(topicConfig.getTopicName());
-        if (null == queueDataList)
-        {
+        if (null == queueDataList) {
             queueDataList = new LinkedList<QueueData>();
             queueDataList.add(queueData);
             this.topicQueueTable.put(topicConfig.getTopicName(), queueDataList);
             log.info("new topic registered, {} {}", topicConfig.getTopicName(), queueData);
-        } else
-        {
+        } else {
             boolean addNewOne = true;
 
             Iterator<QueueData> it = queueDataList.iterator();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 QueueData qd = it.next();
-                if (qd.getBrokerName().equals(brokerName))
-                {
-                    if (qd.equals(queueData))
-                    {
+                if (qd.getBrokerName().equals(brokerName)) {
+                    if (qd.equals(queueData)) {
                         addNewOne = false;
-                    } else
-                    {
-                        log.info("topic changed, {} OLD: {} NEW: {}", topicConfig.getTopicName(), qd,
-                                queueData);
+                    } else {
+                        log.info("topic changed, {} OLD: {} NEW: {}", topicConfig.getTopicName(), qd, queueData);
                         it.remove();
                     }
                 }
             }
 
-            if (addNewOne)
-            {
+            if (addNewOne) {
                 queueDataList.add(queueData);
             }
         }
     }
 
-    public int wipeWritePermOfBrokerByLock(final String brokerName)
-    {
-        try
-        {
-            try
-            {
+    public int wipeWritePermOfBrokerByLock(final String brokerName) {
+        try {
+            try {
                 this.lock.writeLock().lockInterruptibly();
                 return wipeWritePermOfBroker(brokerName);
-            } finally
-            {
+            } finally {
                 this.lock.writeLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("wipeWritePermOfBrokerByLock Exception", e);
         }
 
         return 0;
     }
 
-    private int wipeWritePermOfBroker(final String brokerName)
-    {
+    private int wipeWritePermOfBroker(final String brokerName) {
         int wipeTopicCnt = 0;
         Iterator<Entry<String, List<QueueData>>> itTopic = this.topicQueueTable.entrySet().iterator();
-        while (itTopic.hasNext())
-        {
+        while (itTopic.hasNext()) {
             Entry<String, List<QueueData>> entry = itTopic.next();
             List<QueueData> qdList = entry.getValue();
 
             Iterator<QueueData> it = qdList.iterator();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 QueueData qd = it.next();
-                if (qd.getBrokerName().equals(brokerName))
-                {
+                if (qd.getBrokerName().equals(brokerName)) {
                     int perm = qd.getPerm();
                     perm &= ~PermName.PERM_WRITE;
                     qd.setPerm(perm);
@@ -358,97 +302,82 @@ public class RouteInfoManager
     }
 
     public void unregisterBroker(
-            final String clusterName,
-            final String brokerAddr,
-            final String brokerName,
-            final long brokerId)
-    {
-        try
-        {
-            try
-            {
+        final String clusterName,
+        final String brokerAddr,
+        final String brokerName,
+        final long brokerId) {
+        try {
+            try {
                 this.lock.writeLock().lockInterruptibly();
                 BrokerLiveInfo brokerLiveInfo = this.brokerLiveTable.remove(brokerAddr);
                 log.info("unregisterBroker, remove from brokerLiveTable {}, {}",
-                        brokerLiveInfo != null ? "OK" : "Failed",
-                        brokerAddr
+                    brokerLiveInfo != null ? "OK" : "Failed",
+                    brokerAddr
                 );
 
                 this.filterServerTable.remove(brokerAddr);
 
                 boolean removeBrokerName = false;
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
-                if (null != brokerData)
-                {
+                if (null != brokerData) {
                     String addr = brokerData.getBrokerAddrs().remove(brokerId);
                     log.info("unregisterBroker, remove addr from brokerAddrTable {}, {}",
-                            addr != null ? "OK" : "Failed",
-                            brokerAddr
+                        addr != null ? "OK" : "Failed",
+                        brokerAddr
                     );
 
-                    if (brokerData.getBrokerAddrs().isEmpty())
-                    {
+                    if (brokerData.getBrokerAddrs().isEmpty()) {
                         this.brokerAddrTable.remove(brokerName);
                         log.info("unregisterBroker, remove name from brokerAddrTable OK, {}",
-                                brokerName
+                            brokerName
                         );
 
                         removeBrokerName = true;
                     }
                 }
 
-                if (removeBrokerName)
-                {
+                if (removeBrokerName) {
                     Set<String> nameSet = this.clusterAddrTable.get(clusterName);
-                    if (nameSet != null)
-                    {
+                    if (nameSet != null) {
                         boolean removed = nameSet.remove(brokerName);
                         log.info("unregisterBroker, remove name from clusterAddrTable {}, {}",
-                                removed ? "OK" : "Failed",
-                                brokerName);
+                            removed ? "OK" : "Failed",
+                            brokerName);
 
-                        if (nameSet.isEmpty())
-                        {
+                        if (nameSet.isEmpty()) {
                             this.clusterAddrTable.remove(clusterName);
                             log.info("unregisterBroker, remove cluster from clusterAddrTable {}",
-                                    clusterName
+                                clusterName
                             );
                         }
                     }
                     this.removeTopicByBrokerName(brokerName);
                 }
-            } finally
-            {
+            } finally {
                 this.lock.writeLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("unregisterBroker Exception", e);
         }
     }
 
-    private void removeTopicByBrokerName(final String brokerName)
-    {
+    private void removeTopicByBrokerName(final String brokerName) {
         Iterator<Entry<String, List<QueueData>>> itMap = this.topicQueueTable.entrySet().iterator();
-        while (itMap.hasNext())
-        {
+        while (itMap.hasNext()) {
             Entry<String, List<QueueData>> entry = itMap.next();
 
             String topic = entry.getKey();
             List<QueueData> queueDataList = entry.getValue();
             Iterator<QueueData> it = queueDataList.iterator();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 QueueData qd = it.next();
-                if (qd.getBrokerName().equals(brokerName))
-                {
+                if (qd.getBrokerName().equals(brokerName)) {
                     log.info("removeTopicByBrokerName, remove one broker's topic {} {}", topic, qd);
                     it.remove();
                 }
             }
 
-            if (queueDataList.isEmpty())
-            {
+            if (queueDataList.isEmpty()) {
                 log.info("removeTopicByBrokerName, remove the topic all queue {}", topic);
                 itMap.remove();
             }
@@ -458,8 +387,7 @@ public class RouteInfoManager
     /**
      * 获取topic的TopicRouteData信息
      */
-    public TopicRouteData pickupTopicRouteData(final String topic)
-    {
+    public TopicRouteData pickupTopicRouteData(final String topic) {
         TopicRouteData topicRouteData = new TopicRouteData();
         boolean foundQueueData = false;
         boolean foundBrokerData = false;
@@ -469,70 +397,58 @@ public class RouteInfoManager
 
         HashMap<String, List<String>> filterServerMap = new HashMap<String, List<String>>();
         topicRouteData.setFilterServerTable(filterServerMap);
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 List<QueueData> queueDataList = this.topicQueueTable.get(topic);
-                if (queueDataList != null)
-                {
+                if (queueDataList != null) {
                     topicRouteData.setQueueDatas(queueDataList);
                     foundQueueData = true;
 
                     Iterator<QueueData> it = queueDataList.iterator();
-                    while (it.hasNext())
-                    {
+                    while (it.hasNext()) {
                         QueueData qd = it.next();
                         // set集合
                         brokerNameSet.add(qd.getBrokerName());
                     }
 
-                    for (String brokerName : brokerNameSet)
-                    {
+                    for (String brokerName : brokerNameSet) {
                         BrokerData brokerData = this.brokerAddrTable.get(brokerName);
-                        if (null != brokerData)
-                        {
-                            BrokerData brokerDataClone = new BrokerData(brokerData.getCluster(), brokerData.getBrokerName(), (HashMap<Long, String>) brokerData.getBrokerAddrs().clone());
+                        if (null != brokerData) {
+                            BrokerData brokerDataClone = new BrokerData(brokerData.getCluster(), brokerData.getBrokerName(),
+                                (HashMap<Long, String>) brokerData.getBrokerAddrs().clone());
                             brokerDataList.add(brokerDataClone);
                             foundBrokerData = true;
-                            for (final String brokerAddr : brokerDataClone.getBrokerAddrs().values())
-                            {
+                            for (final String brokerAddr : brokerDataClone.getBrokerAddrs().values()) {
                                 List<String> filterServerList = this.filterServerTable.get(brokerAddr);
                                 filterServerMap.put(brokerAddr, filterServerList);
                             }
                         }
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("pickupTopicRouteData Exception", e);
         }
 
         log.debug("pickupTopicRouteData {} {}", topic, topicRouteData);
 
-        if (foundBrokerData && foundQueueData)
-        {
+        if (foundBrokerData && foundQueueData) {
             return topicRouteData;
         }
 
         return null;
     }
 
-    public void scanNotActiveBroker()
-    {
+    public void scanNotActiveBroker() {
         Iterator<Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
-        while (it.hasNext())
-        {
+        while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
             // 默认超过120秒未更新
-            if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis())
-            {
+            if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
                 // 关闭与broker的channel
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 // 从列表中移除
@@ -545,70 +461,54 @@ public class RouteInfoManager
     }
 
     // 通道关闭后的处理
-    public void onChannelDestroy(String remoteAddr, Channel channel)
-    {
+    public void onChannelDestroy(String remoteAddr, Channel channel) {
         String brokerAddrFound = null;
 
         // 第一步：先通过通道channel定位到brokerAddr
-        if (channel != null)
-        {
-            try
-            {
-                try
-                {
+        if (channel != null) {
+            try {
+                try {
                     this.lock.readLock().lockInterruptibly();
                     Iterator<Entry<String, BrokerLiveInfo>> itBrokerLiveTable = this.brokerLiveTable.entrySet().iterator();
-                    while (itBrokerLiveTable.hasNext())
-                    {
+                    while (itBrokerLiveTable.hasNext()) {
                         Entry<String, BrokerLiveInfo> entry = itBrokerLiveTable.next();
-                        if (entry.getValue().getChannel() == channel)
-                        {
+                        if (entry.getValue().getChannel() == channel) {
                             brokerAddrFound = entry.getKey();
                             break;
                         }
                     }
-                } finally
-                {
+                } finally {
                     this.lock.readLock().unlock();
                 }
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.error("onChannelDestroy Exception", e);
             }
         }
 
-        if (null == brokerAddrFound)
-        {
+        if (null == brokerAddrFound) {
             brokerAddrFound = remoteAddr;
-        } else
-        {
+        } else {
             log.info("the broker's channel destroyed, {}, clean it's data structure at once", brokerAddrFound);
         }
 
         // 第二步：找到了通道关闭对应的broker地址后
-        if (brokerAddrFound != null && brokerAddrFound.length() > 0)
-        {
-            try
-            {
-                try
-                {
+        if (brokerAddrFound != null && brokerAddrFound.length() > 0) {
+            try {
+                try {
                     this.lock.writeLock().lockInterruptibly();
                     this.brokerLiveTable.remove(brokerAddrFound);
                     this.filterServerTable.remove(brokerAddrFound);
                     String brokerNameFound = null;
                     boolean removeBrokerName = false;
                     Iterator<Entry<String, BrokerData>> itBrokerAddrTable = this.brokerAddrTable.entrySet().iterator();
-                    while (itBrokerAddrTable.hasNext() && (null == brokerNameFound))
-                    {
+                    while (itBrokerAddrTable.hasNext() && (null == brokerNameFound)) {
                         BrokerData brokerData = itBrokerAddrTable.next().getValue();
                         Iterator<Entry<Long, String>> it = brokerData.getBrokerAddrs().entrySet().iterator();
-                        while (it.hasNext())
-                        {
+                        while (it.hasNext()) {
                             Entry<Long, String> entry = it.next();
                             Long brokerId = entry.getKey();
                             String brokerAddr = entry.getValue();
-                            if (brokerAddr.equals(brokerAddrFound))
-                            {
+                            if (brokerAddr.equals(brokerAddrFound)) {
                                 brokerNameFound = brokerData.getBrokerName();
                                 it.remove();
                                 log.info("remove brokerAddr[{}, {}] from brokerAddrTable, because channel destroyed", brokerId, brokerAddr);
@@ -617,8 +517,7 @@ public class RouteInfoManager
                         }
 
                         // 如果当前集群下的当前broker为空了，将removeBrokerName置为true
-                        if (brokerData.getBrokerAddrs().isEmpty())
-                        {
+                        if (brokerData.getBrokerAddrs().isEmpty()) {
                             removeBrokerName = true;
                             itBrokerAddrTable.remove();
                             log.info("remove brokerName[{}] from brokerAddrTable, because channel destroyed", brokerData.getBrokerName());
@@ -627,22 +526,20 @@ public class RouteInfoManager
 
                     // removeBrokerName为true，说明关于当前的brokerName已经没有了路由信息，去集群缓存里删除
                     // 这里有个问题，上面删除的broker并未区分集群，然后这里也没有区分集群，会将所有集群下的相同name的broker全部删除
-                    if (brokerNameFound != null && removeBrokerName)
-                    {
+                    if (brokerNameFound != null && removeBrokerName) {
                         Iterator<Entry<String, Set<String>>> it = this.clusterAddrTable.entrySet().iterator();
-                        while (it.hasNext())
-                        {
+                        while (it.hasNext()) {
                             Entry<String, Set<String>> entry = it.next();
                             String clusterName = entry.getKey();
                             Set<String> brokerNames = entry.getValue();
                             boolean removed = brokerNames.remove(brokerNameFound);
-                            if (removed)
-                            {
-                                log.info("remove brokerName[{}], clusterName[{}] from clusterAddrTable, because channel destroyed", brokerNameFound, clusterName);
+                            if (removed) {
+                                log.info("remove brokerName[{}], clusterName[{}] from clusterAddrTable, because channel destroyed", brokerNameFound,
+                                    clusterName);
 
-                                if (brokerNames.isEmpty())
-                                {
-                                    log.info("remove the clusterName[{}] from clusterAddrTable, because channel destroyed and no broker in this cluster", clusterName);
+                                if (brokerNames.isEmpty()) {
+                                    log.info("remove the clusterName[{}] from clusterAddrTable, because channel destroyed and no broker in this cluster",
+                                        clusterName);
                                     it.remove();
                                 }
                                 break;
@@ -651,57 +548,46 @@ public class RouteInfoManager
                     }
 
                     // 第三步：删除了broker，也要删除该broker下面的QueueData
-                    if (removeBrokerName)
-                    {
+                    if (removeBrokerName) {
                         Iterator<Entry<String, List<QueueData>>> itTopicQueueTable = this.topicQueueTable.entrySet().iterator();
-                        while (itTopicQueueTable.hasNext())
-                        {
+                        while (itTopicQueueTable.hasNext()) {
                             Entry<String, List<QueueData>> entry = itTopicQueueTable.next();
                             String topic = entry.getKey();
                             List<QueueData> queueDataList = entry.getValue();
 
                             Iterator<QueueData> itQueueData = queueDataList.iterator();
-                            while (itQueueData.hasNext())
-                            {
+                            while (itQueueData.hasNext()) {
                                 QueueData queueData = itQueueData.next();
-                                if (queueData.getBrokerName().equals(brokerNameFound))
-                                {
+                                if (queueData.getBrokerName().equals(brokerNameFound)) {
                                     itQueueData.remove();
                                     log.info("remove topic[{} {}], from topicQueueTable, because channel destroyed", topic, queueData);
                                 }
                             }
 
-                            if (queueDataList.isEmpty())
-                            {
+                            if (queueDataList.isEmpty()) {
                                 itTopicQueueTable.remove();
                                 log.info("remove topic[{}] all queue, from topicQueueTable, because channel destroyed", topic);
                             }
                         }
                     }
-                } finally
-                {
+                } finally {
                     this.lock.writeLock().unlock();
                 }
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.error("onChannelDestroy Exception", e);
             }
         }
     }
 
-    public void printAllPeriodically()
-    {
-        try
-        {
-            try
-            {
+    public void printAllPeriodically() {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 log.info("--------------------------------------------------------");
                 {
                     log.info("topicQueueTable SIZE: {}", this.topicQueueTable.size());
                     Iterator<Entry<String, List<QueueData>>> it = this.topicQueueTable.entrySet().iterator();
-                    while (it.hasNext())
-                    {
+                    while (it.hasNext()) {
                         Entry<String, List<QueueData>> next = it.next();
                         log.info("topicQueueTable Topic: {} {}", next.getKey(), next.getValue());
                     }
@@ -710,8 +596,7 @@ public class RouteInfoManager
                 {
                     log.info("brokerAddrTable SIZE: {}", this.brokerAddrTable.size());
                     Iterator<Entry<String, BrokerData>> it = this.brokerAddrTable.entrySet().iterator();
-                    while (it.hasNext())
-                    {
+                    while (it.hasNext()) {
                         Entry<String, BrokerData> next = it.next();
                         log.info("brokerAddrTable brokerName: {} {}", next.getKey(), next.getValue());
                     }
@@ -720,8 +605,7 @@ public class RouteInfoManager
                 {
                     log.info("brokerLiveTable SIZE: {}", this.brokerLiveTable.size());
                     Iterator<Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
-                    while (it.hasNext())
-                    {
+                    while (it.hasNext()) {
                         Entry<String, BrokerLiveInfo> next = it.next();
                         log.info("brokerLiveTable brokerAddr: {} {}", next.getKey(), next.getValue());
                     }
@@ -730,194 +614,153 @@ public class RouteInfoManager
                 {
                     log.info("clusterAddrTable SIZE: {}", this.clusterAddrTable.size());
                     Iterator<Entry<String, Set<String>>> it = this.clusterAddrTable.entrySet().iterator();
-                    while (it.hasNext())
-                    {
+                    while (it.hasNext()) {
                         Entry<String, Set<String>> next = it.next();
                         log.info("clusterAddrTable clusterName: {} {}", next.getKey(), next.getValue());
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("printAllPeriodically Exception", e);
         }
     }
 
-    public byte[] getSystemTopicList()
-    {
+    public byte[] getSystemTopicList() {
         TopicList topicList = new TopicList();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
-                for (Map.Entry<String, Set<String>> entry : clusterAddrTable.entrySet())
-                {
+                for (Map.Entry<String, Set<String>> entry : clusterAddrTable.entrySet()) {
                     topicList.getTopicList().add(entry.getKey());
                     topicList.getTopicList().addAll(entry.getValue());
                 }
 
-                if (brokerAddrTable != null && !brokerAddrTable.isEmpty())
-                {
+                if (brokerAddrTable != null && !brokerAddrTable.isEmpty()) {
                     Iterator<String> it = brokerAddrTable.keySet().iterator();
-                    while (it.hasNext())
-                    {
+                    while (it.hasNext()) {
                         BrokerData bd = brokerAddrTable.get(it.next());
                         HashMap<Long, String> brokerAddrs = bd.getBrokerAddrs();
-                        if (brokerAddrs != null && !brokerAddrs.isEmpty())
-                        {
+                        if (brokerAddrs != null && !brokerAddrs.isEmpty()) {
                             Iterator<Long> it2 = brokerAddrs.keySet().iterator();
                             topicList.setBrokerAddr(brokerAddrs.get(it2.next()));
                             break;
                         }
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("getAllTopicList Exception", e);
         }
 
         return topicList.encode();
     }
 
-    public byte[] getTopicsByCluster(String cluster)
-    {
+    public byte[] getTopicsByCluster(String cluster) {
         TopicList topicList = new TopicList();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 Set<String> brokerNameSet = this.clusterAddrTable.get(cluster);
-                for (String brokerName : brokerNameSet)
-                {
+                for (String brokerName : brokerNameSet) {
                     Iterator<Entry<String, List<QueueData>>> topicTableIt =
-                            this.topicQueueTable.entrySet().iterator();
-                    while (topicTableIt.hasNext())
-                    {
+                        this.topicQueueTable.entrySet().iterator();
+                    while (topicTableIt.hasNext()) {
                         Entry<String, List<QueueData>> topicEntry = topicTableIt.next();
                         String topic = topicEntry.getKey();
                         List<QueueData> queueDatas = topicEntry.getValue();
-                        for (QueueData queueData : queueDatas)
-                        {
-                            if (brokerName.equals(queueData.getBrokerName()))
-                            {
+                        for (QueueData queueData : queueDatas) {
+                            if (brokerName.equals(queueData.getBrokerName())) {
                                 topicList.getTopicList().add(topic);
                                 break;
                             }
                         }
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("getAllTopicList Exception", e);
         }
 
         return topicList.encode();
     }
 
-    public byte[] getUnitTopics()
-    {
+    public byte[] getUnitTopics() {
         TopicList topicList = new TopicList();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 Iterator<Entry<String, List<QueueData>>> topicTableIt =
-                        this.topicQueueTable.entrySet().iterator();
-                while (topicTableIt.hasNext())
-                {
+                    this.topicQueueTable.entrySet().iterator();
+                while (topicTableIt.hasNext()) {
                     Entry<String, List<QueueData>> topicEntry = topicTableIt.next();
                     String topic = topicEntry.getKey();
                     List<QueueData> queueDatas = topicEntry.getValue();
                     if (queueDatas != null && queueDatas.size() > 0
-                            && TopicSysFlag.hasUnitFlag(queueDatas.get(0).getTopicSynFlag()))
-                    {
+                        && TopicSysFlag.hasUnitFlag(queueDatas.get(0).getTopicSynFlag())) {
                         topicList.getTopicList().add(topic);
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("getAllTopicList Exception", e);
         }
 
         return topicList.encode();
     }
 
-    public byte[] getHasUnitSubTopicList()
-    {
+    public byte[] getHasUnitSubTopicList() {
         TopicList topicList = new TopicList();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 Iterator<Entry<String, List<QueueData>>> topicTableIt =
-                        this.topicQueueTable.entrySet().iterator();
-                while (topicTableIt.hasNext())
-                {
+                    this.topicQueueTable.entrySet().iterator();
+                while (topicTableIt.hasNext()) {
                     Entry<String, List<QueueData>> topicEntry = topicTableIt.next();
                     String topic = topicEntry.getKey();
                     List<QueueData> queueDatas = topicEntry.getValue();
                     if (queueDatas != null && queueDatas.size() > 0
-                            && TopicSysFlag.hasUnitSubFlag(queueDatas.get(0).getTopicSynFlag()))
-                    {
+                        && TopicSysFlag.hasUnitSubFlag(queueDatas.get(0).getTopicSynFlag())) {
                         topicList.getTopicList().add(topic);
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("getAllTopicList Exception", e);
         }
 
         return topicList.encode();
     }
 
-    public byte[] getHasUnitSubUnUnitTopicList()
-    {
+    public byte[] getHasUnitSubUnUnitTopicList() {
         TopicList topicList = new TopicList();
-        try
-        {
-            try
-            {
+        try {
+            try {
                 this.lock.readLock().lockInterruptibly();
                 Iterator<Entry<String, List<QueueData>>> topicTableIt = this.topicQueueTable.entrySet().iterator();
-                while (topicTableIt.hasNext())
-                {
+                while (topicTableIt.hasNext()) {
                     Entry<String, List<QueueData>> topicEntry = topicTableIt.next();
                     String topic = topicEntry.getKey();
                     List<QueueData> queueDatas = topicEntry.getValue();
-                    if (queueDatas != null && queueDatas.size() > 0 && !TopicSysFlag.hasUnitFlag(queueDatas.get(0).getTopicSynFlag()) && TopicSysFlag.hasUnitSubFlag(queueDatas.get(0).getTopicSynFlag()))
-                    {
+                    if (queueDatas != null && queueDatas.size() > 0 && !TopicSysFlag.hasUnitFlag(queueDatas.get(0).getTopicSynFlag()) && TopicSysFlag
+                        .hasUnitSubFlag(queueDatas.get(0).getTopicSynFlag())) {
                         topicList.getTopicList().add(topic);
                     }
                 }
-            } finally
-            {
+            } finally {
                 this.lock.readLock().unlock();
             }
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             log.error("getAllTopicList Exception", e);
         }
 
@@ -925,64 +768,55 @@ public class RouteInfoManager
     }
 }
 
-class BrokerLiveInfo
-{
+class BrokerLiveInfo {
+
     private long lastUpdateTimestamp;
     private DataVersion dataVersion;
     private Channel channel;
     private String haServerAddr;
 
-    public BrokerLiveInfo(long lastUpdateTimestamp, DataVersion dataVersion, Channel channel, String haServerAddr)
-    {
+    public BrokerLiveInfo(long lastUpdateTimestamp, DataVersion dataVersion, Channel channel, String haServerAddr) {
         this.lastUpdateTimestamp = lastUpdateTimestamp;
         this.dataVersion = dataVersion;
         this.channel = channel;
         this.haServerAddr = haServerAddr;
     }
 
-    public long getLastUpdateTimestamp()
-    {
+    public long getLastUpdateTimestamp() {
         return lastUpdateTimestamp;
     }
 
-    public void setLastUpdateTimestamp(long lastUpdateTimestamp)
-    {
+    public void setLastUpdateTimestamp(long lastUpdateTimestamp) {
         this.lastUpdateTimestamp = lastUpdateTimestamp;
     }
 
-    public DataVersion getDataVersion()
-    {
+    public DataVersion getDataVersion() {
         return dataVersion;
     }
 
-    public void setDataVersion(DataVersion dataVersion)
-    {
+    public void setDataVersion(DataVersion dataVersion) {
         this.dataVersion = dataVersion;
     }
 
-    public Channel getChannel()
-    {
+    public Channel getChannel() {
         return channel;
     }
 
-    public void setChannel(Channel channel)
-    {
+    public void setChannel(Channel channel) {
         this.channel = channel;
     }
 
-    public String getHaServerAddr()
-    {
+    public String getHaServerAddr() {
         return haServerAddr;
     }
 
-    public void setHaServerAddr(String haServerAddr)
-    {
+    public void setHaServerAddr(String haServerAddr) {
         this.haServerAddr = haServerAddr;
     }
 
     @Override
-    public String toString()
-    {
-        return "BrokerLiveInfo [lastUpdateTimestamp=" + lastUpdateTimestamp + ", dataVersion=" + dataVersion + ", channel=" + channel + ", haServerAddr=" + haServerAddr + "]";
+    public String toString() {
+        return "BrokerLiveInfo [lastUpdateTimestamp=" + lastUpdateTimestamp + ", dataVersion=" + dataVersion + ", channel=" + channel + ", haServerAddr="
+            + haServerAddr + "]";
     }
 }

@@ -67,8 +67,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.MimeTypeUtils;
 
 @SuppressWarnings("WeakerAccess")
-public class DefaultRocketMQListenerContainer implements InitializingBean,
-    RocketMQListenerContainer, SmartLifecycle, ApplicationContextAware {
+public class DefaultRocketMQListenerContainer implements InitializingBean, RocketMQListenerContainer, SmartLifecycle, ApplicationContextAware {
     private final static Logger log = LoggerFactory.getLogger(DefaultRocketMQListenerContainer.class);
 
     private ApplicationContext applicationContext;

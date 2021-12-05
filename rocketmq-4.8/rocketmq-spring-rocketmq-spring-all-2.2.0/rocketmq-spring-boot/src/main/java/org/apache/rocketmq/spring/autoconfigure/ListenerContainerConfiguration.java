@@ -95,8 +95,7 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
         String consumerGroup = this.environment.resolvePlaceholders(annotation.consumerGroup());
         String topic = this.environment.resolvePlaceholders(annotation.topic());
 
-        boolean listenerEnabled =
-            (boolean) rocketMQProperties.getConsumer().getListeners().getOrDefault(consumerGroup, Collections.EMPTY_MAP)
+        boolean listenerEnabled = (boolean) rocketMQProperties.getConsumer().getListeners().getOrDefault(consumerGroup, Collections.EMPTY_MAP)
                 .getOrDefault(topic, true);
 
         if (!listenerEnabled) {
@@ -107,14 +106,12 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
         }
         validate(annotation);
 
-        String containerBeanName = String.format("%s_%s", DefaultRocketMQListenerContainer.class.getName(),
-            counter.incrementAndGet());
+        String containerBeanName = String.format("%s_%s", DefaultRocketMQListenerContainer.class.getName(), counter.incrementAndGet());
         GenericApplicationContext genericApplicationContext = (GenericApplicationContext) applicationContext;
 
         genericApplicationContext.registerBean(containerBeanName, DefaultRocketMQListenerContainer.class,
             () -> createRocketMQListenerContainer(containerBeanName, bean, annotation));
-        DefaultRocketMQListenerContainer container = genericApplicationContext.getBean(containerBeanName,
-            DefaultRocketMQListenerContainer.class);
+        DefaultRocketMQListenerContainer container = genericApplicationContext.getBean(containerBeanName, DefaultRocketMQListenerContainer.class);
         if (!container.isRunning()) {
             try {
                 container.start();
@@ -127,8 +124,7 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
         log.info("Register the listener to container, listenerBeanName:{}, containerBeanName:{}", beanName, containerBeanName);
     }
 
-    private DefaultRocketMQListenerContainer createRocketMQListenerContainer(String name, Object bean,
-        RocketMQMessageListener annotation) {
+    private DefaultRocketMQListenerContainer createRocketMQListenerContainer(String name, Object bean, RocketMQMessageListener annotation) {
         DefaultRocketMQListenerContainer container = new DefaultRocketMQListenerContainer();
 
         container.setRocketMQMessageListener(annotation);

@@ -55,15 +55,15 @@ import javax.annotation.PostConstruct;
 @EnableConfigurationProperties(RocketMQProperties.class)
 @ConditionalOnClass({MQAdmin.class})
 @ConditionalOnProperty(prefix = "rocketmq", value = "name-server", matchIfMissing = true)
-@Import({MessageConverterConfiguration.class, ListenerContainerConfiguration.class, ExtProducerResetConfiguration.class, ExtConsumerResetConfiguration.class, RocketMQTransactionConfiguration.class})
+@Import({MessageConverterConfiguration.class, ListenerContainerConfiguration.class,
+    ExtProducerResetConfiguration.class, ExtConsumerResetConfiguration.class, RocketMQTransactionConfiguration.class})
 @AutoConfigureAfter({MessageConverterConfiguration.class})
 @AutoConfigureBefore({RocketMQTransactionConfiguration.class})
 
 public class RocketMQAutoConfiguration implements ApplicationContextAware {
     private static final Logger log = LoggerFactory.getLogger(RocketMQAutoConfiguration.class);
 
-    public static final String ROCKETMQ_TEMPLATE_DEFAULT_GLOBAL_NAME =
-        "rocketMQTemplate";
+    public static final String ROCKETMQ_TEMPLATE_DEFAULT_GLOBAL_NAME = "rocketMQTemplate";
     public static final String PRODUCER_BEAN_NAME = "defaultMQProducer";
     public static final String CONSUMER_BEAN_NAME = "defaultLitePullConsumer";
 
@@ -115,15 +115,13 @@ public class RocketMQAutoConfiguration implements ApplicationContextAware {
         producer.setMaxMessageSize(producerConfig.getMaxMessageSize());
         producer.setCompressMsgBodyOverHowmuch(producerConfig.getCompressMessageBodyThreshold());
         producer.setRetryAnotherBrokerWhenNotStoreOK(producerConfig.isRetryNextServer());
-
         return producer;
     }
 
     @Bean(CONSUMER_BEAN_NAME)
     @ConditionalOnMissingBean(DefaultLitePullConsumer.class)
     @ConditionalOnProperty(prefix = "rocketmq", value = {"name-server", "consumer.group", "consumer.topic"})
-    public DefaultLitePullConsumer defaultLitePullConsumer(RocketMQProperties rocketMQProperties)
-            throws MQClientException {
+    public DefaultLitePullConsumer defaultLitePullConsumer(RocketMQProperties rocketMQProperties) throws MQClientException {
         RocketMQProperties.Consumer consumerConfig = rocketMQProperties.getConsumer();
         String nameServer = rocketMQProperties.getNameServer();
         String groupName = consumerConfig.getGroup();

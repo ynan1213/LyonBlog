@@ -55,7 +55,7 @@ public class Consumer
 
         // 可以订阅多个
         consumer.subscribe("topic01", "*");
-        consumer.subscribe("topic02", "*");
+        consumer.subscribe("aaaaaaaa", "*");
 
         // 取消主题订阅
         // consumer.unsubscribe("TOPIC_02");

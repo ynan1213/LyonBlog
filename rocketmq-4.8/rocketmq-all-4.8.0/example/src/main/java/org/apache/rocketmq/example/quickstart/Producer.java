@@ -16,7 +16,7 @@
  */
 package org.apache.rocketmq.example.quickstart;
 
-import ch.qos.logback.core.util.TimeUtil;
+import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -24,16 +24,13 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * This class demonstrates how to send messages to brokers using provided {@link DefaultMQProducer}.
  */
-public class Producer
-{
-    public static void main(String[] args) throws MQClientException, InterruptedException
-    {
-        DefaultMQProducer producer = new DefaultMQProducer("ns01", "please_rename_unique_group_name");
+public class Producer {
+
+    public static void main(String[] args) throws MQClientException, InterruptedException {
+        DefaultMQProducer producer = new DefaultMQProducer("ns01", "producer_group");
 
         //producer.setNamespace("");
         //producer.setProducerGroup("producerGroup");
@@ -60,11 +57,9 @@ public class Producer
 
         producer.start();
 
-        for (int i = 0; i < 100; i++)
-        {
-            try
-            {
-                Message msg = new Message("333333", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+        for (int i = 0; i < 200; i++) {
+            try {
+                Message msg = new Message("aaaaaaaa", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
 
                 // key用于建立索引，之后可以通过命令工具/API/或者管理平台查询key，可以为一个消息设置多个key，用空格""进行分割
                 // key存在properties中，
@@ -79,17 +74,14 @@ public class Producer
 
                 // 异步发送
                 // TimeUnit.SECONDS.sleep(3);
-                producer.send(msg, new SendCallback()
-                {
+                producer.send(msg, new SendCallback() {
                     @Override
-                    public void onSuccess(SendResult sendResult)
-                    {
+                    public void onSuccess(SendResult sendResult) {
                         System.out.println("异步发送成功");
                     }
 
                     @Override
-                    public void onException(Throwable e)
-                    {
+                    public void onException(Throwable e) {
                         System.out.println("异步发送失败：" + e.getMessage());
                     }
                 });
@@ -104,12 +96,13 @@ public class Producer
                 // 批量消息
                 //producer.send(Collection<Message> msgs)
 
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-        producer.shutdown();
+        while (true) {
+            TimeUnit.MICROSECONDS.sleep(10);
+        }
+        //producer.shutdown();
     }
 }

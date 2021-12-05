@@ -17,6 +17,10 @@
 package org.apache.rocketmq.spring.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.Objects;
 import org.apache.rocketmq.acl.common.AclClientRPCHook;
 import org.apache.rocketmq.acl.common.SessionCredentials;
 import org.apache.rocketmq.client.AccessChannel;
@@ -49,12 +53,8 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.lang.reflect.Field;
-import java.nio.charset.Charset;
-import java.util.Map;
-import java.util.Objects;
-
 public class RocketMQUtil {
+
     private final static Logger log = LoggerFactory.getLogger(RocketMQUtil.class);
 
     public static TransactionListener convert(RocketMQLocalTransactionListener listener) {
@@ -119,7 +119,8 @@ public class RocketMQUtil {
             properties.forEach((key, val) -> {
                 if (!MessageConst.STRING_HASH_SET.contains(key) && !MessageHeaders.ID.equals(key)
                     && !MessageHeaders.TIMESTAMP.equals(key) &&
-                    (!key.startsWith(RocketMQHeaders.PREFIX) || !MessageConst.STRING_HASH_SET.contains(key.replaceFirst("^" + RocketMQHeaders.PREFIX, "")))) {
+                    (!key.startsWith(RocketMQHeaders.PREFIX) || !MessageConst.STRING_HASH_SET
+                        .contains(key.replaceFirst("^" + RocketMQHeaders.PREFIX, "")))) {
                     messageBuilder.setHeader(key, val);
                 }
             });
@@ -205,7 +206,6 @@ public class RocketMQUtil {
                         rocketMsg.putUserProperty(entry.getKey(), String.valueOf(entry.getValue()));
                     }
                 });
-
         }
         return rocketMsg;
     }
@@ -226,8 +226,7 @@ public class RocketMQUtil {
             } else {
                 String jsonObj = (String) messageConverter.fromMessage(message, payloadObj.getClass());
                 if (null == jsonObj) {
-                    throw new RuntimeException(String.format(
-                        "empty after conversion [messageConverter:%s,payloadClass:%s,payloadObj:%s]",
+                    throw new RuntimeException(String.format("empty after conversion [messageConverter:%s,payloadClass:%s,payloadObj:%s]",
                         messageConverter.getClass(), payloadObj.getClass(), payloadObj));
                 }
                 payloads = jsonObj.getBytes(Charset.forName(charset));
@@ -254,9 +253,8 @@ public class RocketMQUtil {
         return null;
     }
 
-    public static DefaultMQProducer createDefaultMQProducer(String groupName, String ak, String sk,
-        boolean isEnableMsgTrace, String customizedTraceTopic) {
-
+    public static DefaultMQProducer createDefaultMQProducer(String groupName, String ak, String sk, boolean isEnableMsgTrace,
+        String customizedTraceTopic) {
         boolean isEnableAcl = !StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk);
         DefaultMQProducer producer;
         if (isEnableAcl) {
@@ -268,33 +266,31 @@ public class RocketMQUtil {
 
         if (isEnableMsgTrace) {
             try {
-                AsyncTraceDispatcher dispatcher = new AsyncTraceDispatcher(groupName, TraceDispatcher.Type.PRODUCE, customizedTraceTopic, isEnableAcl ? new AclClientRPCHook(new SessionCredentials(ak, sk)) : null);
+                AsyncTraceDispatcher dispatcher = new AsyncTraceDispatcher(groupName, TraceDispatcher.Type.PRODUCE, customizedTraceTopic,
+                    isEnableAcl ? new AclClientRPCHook(new SessionCredentials(ak, sk)) : null);
                 dispatcher.setHostProducer(producer.getDefaultMQProducerImpl());
                 Field field = DefaultMQProducer.class.getDeclaredField("traceDispatcher");
                 field.setAccessible(true);
                 field.set(producer, dispatcher);
-                producer.getDefaultMQProducerImpl().registerSendMessageHook(
-                    new SendMessageTraceHookImpl(dispatcher));
+                producer.getDefaultMQProducerImpl().registerSendMessageHook(new SendMessageTraceHookImpl(dispatcher));
             } catch (Throwable e) {
                 log.error("system trace hook init failed ,maybe can't send msg trace data");
             }
         }
-
         return producer;
     }
-    
+
     public static String getInstanceName(String identify) {
         char separator = '@';
         StringBuilder instanceName = new StringBuilder();
-        instanceName.append(identify)
-                .append(separator).append(UtilAll.getPid());
+        instanceName.append(identify).append(separator).append(UtilAll.getPid());
         return instanceName.toString();
     }
 
     public static DefaultLitePullConsumer createDefaultLitePullConsumer(String nameServer, String accessChannel,
-            String groupName, String topicName, MessageModel messageModel, SelectorType selectorType,
-            String selectorExpression, String ak, String sk, int pullBatchSize)
-            throws MQClientException {
+        String groupName, String topicName, MessageModel messageModel, SelectorType selectorType,
+        String selectorExpression, String ak, String sk, int pullBatchSize)
+        throws MQClientException {
         DefaultLitePullConsumer litePullConsumer = null;
         if (!StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk)) {
             litePullConsumer = new DefaultLitePullConsumer(groupName, new AclClientRPCHook(new SessionCredentials(ak, sk)));

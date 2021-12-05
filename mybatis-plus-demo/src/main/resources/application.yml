@@ -1,3 +1,4 @@
+# springboot 2.X 默认数据源类型是HikariDataSource
 spring:
     datasource:
         driver-class-name: com.mysql.cj.jdbc.Driver
@@ -5,16 +6,22 @@ spring:
         username: root
         password: 123456
 mybatis-plus:
+
+    # 即使不配置，默认也是这个，MybatisPlusProperties的mapperLocations属性
+    mapper-locations: classpath*:mapper/**/*Mapper.xm
+
     configuration:
         map-underscore-to-camel-case: true
         auto-mapping-behavior: full
         log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    mapper-locations: classpath*:mapper/**/*Mapper.xml
+
     global-config:
-        # 逻辑删除配置
         db-config:
+            id-type: auto
+        # 逻辑删除配置
+            # db-config:
             # 删除前
-            logic-not-delete-value: 1
+            # logic-not-delete-value: 1
             # 删除后
-            logic-delete-value: 0
+            # logic-delete-value: 0
 

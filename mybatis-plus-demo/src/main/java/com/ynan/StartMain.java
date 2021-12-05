@@ -1,5 +1,6 @@
 package com.ynan;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -8,10 +9,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Date 2021/11/8 14:23
  */
 @SpringBootApplication
-public class TestMain {
+@MapperScan("com.ynan.dao")
+public class StartMain {
 
     public static void main(String[] args) {
-        SpringApplication.run(TestMain.class, args);
+        SpringApplication.run(StartMain.class, args);
     }
 
 }

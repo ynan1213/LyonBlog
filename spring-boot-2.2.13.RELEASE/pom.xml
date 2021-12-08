@@ -8,9 +8,9 @@
 	<version>${revision}</version>
 	<modules>
 		<module>spring-boot-example</module>
-		<module>spring-boot-redis</module>
 		<module>01-spring-boot-test</module>
 		<module>02-import</module>
+		<module>03-redis</module>
 	</modules>
 	<packaging>pom</packaging>
 	<name>Spring Boot Build</name>

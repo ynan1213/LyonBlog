@@ -47,6 +47,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(RedisOperations.class)
 @EnableConfigurationProperties(RedisProperties.class)
+// 顺序在前面的会优先判断，所以优先级高一些
 @Import({ LettuceConnectionConfiguration.class, JedisConnectionConfiguration.class })
 public class RedisAutoConfiguration {
 

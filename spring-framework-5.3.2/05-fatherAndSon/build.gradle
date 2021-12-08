@@ -1,17 +1,40 @@
+buildscript {
+    repositories {
+        // 优先使用国内源
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        mavenCentral()
+    }
+    dependencies {
+        // 让spring-boot支持gradle
+        //classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.1.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.4.1")
+    }
+}
+
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '2.4.1'
 }
 
 group 'org.springframework'
 version '5.3.2'
 
+apply plugin: 'java'
+apply plugin: 'idea'
+// 使用spring boot
+apply plugin: "org.springframework.boot"
+// 使用spring boot的自动依赖管理
+apply plugin: 'io.spring.dependency-management'
+
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven { url 'https://maven.aliyun.com/repository/public' }
 }
 
 dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-web'
     compile(project(":spring-context"))
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }

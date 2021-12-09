@@ -29,6 +29,20 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
+	/**
+	 * spring.redis.host =
+	 * spring.redis.port = 6379
+	 * spring.redis.password =
+	 * spring.redis.database = 3
+	 * spring.redis.timeout = 2000
+	 * spring.redis.maxAttempts = 6
+	 * spring.redis.soTimeout = 10000
+	 * spring.redis.connectionTimeout = 2000
+	 * spring.redis.maxActive = 5
+	 * spring.redis.maxIdle = 5
+	 * spring.redis.minIdle = 1
+	 * spring.redis.maxWaitMillis = 10000
+	 */
 	@Resource
 	private RedisProperties redisProperties;
 

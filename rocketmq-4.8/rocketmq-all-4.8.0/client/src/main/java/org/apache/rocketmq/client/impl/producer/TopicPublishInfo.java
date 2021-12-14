@@ -27,6 +27,8 @@ public class TopicPublishInfo {
     private boolean orderTopic = false;
     private boolean haveTopicRouterInfo = false;
     private List<MessageQueue> messageQueueList = new ArrayList<MessageQueue>();
+
+    // 这里使用 ThreadLocalIndex 的目的是，保证每一个线程能获取到自己的 index，并在自己的index上进行叠加
     private volatile ThreadLocalIndex sendWhichQueue = new ThreadLocalIndex();
     private TopicRouteData topicRouteData;
 

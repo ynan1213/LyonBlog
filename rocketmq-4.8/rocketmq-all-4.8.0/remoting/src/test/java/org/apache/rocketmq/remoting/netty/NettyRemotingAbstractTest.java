@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NettyRemotingAbstractTest {
-    @Spy
+//    @Spy
     private NettyRemotingAbstract remotingAbstract = new NettyRemotingClient(new NettyClientConfig());
 
     @Test
@@ -60,8 +60,7 @@ public class NettyRemotingAbstractTest {
     @Test
     public void testProcessResponseCommand_NullCallBack() throws InterruptedException {
         final Semaphore semaphore = new Semaphore(0);
-        ResponseFuture responseFuture = new ResponseFuture(null,1, 3000, null,
-            new SemaphoreReleaseOnlyOnce(semaphore));
+        ResponseFuture responseFuture = new ResponseFuture(null,1, 3000, null, new SemaphoreReleaseOnlyOnce(semaphore));
 
         remotingAbstract.responseTable.putIfAbsent(1, responseFuture);
 
@@ -106,5 +105,13 @@ public class NettyRemotingAbstractTest {
         remotingAbstract.responseTable.putIfAbsent(dummyId, responseFuture);
         remotingAbstract.scanResponseTable();
         assertNull(remotingAbstract.responseTable.get(dummyId));
+    }
+
+    @Test
+    public void xxx() throws InterruptedException {
+        Semaphore semaphore = new Semaphore(2);
+        int i = semaphore.availablePermits();
+        semaphore.acquire(3);
+        System.out.println(i);
     }
 }

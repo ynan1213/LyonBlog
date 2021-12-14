@@ -37,7 +37,7 @@ public class SimpleProducer {
         System.out.printf("MessagingAccessPoint startup OK%n");
 
         producer.startup();
-        System.out.printf("Producer startup OK%n");
+        System.out.printf("ProducerSync startup OK%n");
 
         {
             Message message = producer.createBytesMessage("OMS_HELLO_TOPIC", "OMS_HELLO_BODY".getBytes(Charset.forName("UTF-8")));

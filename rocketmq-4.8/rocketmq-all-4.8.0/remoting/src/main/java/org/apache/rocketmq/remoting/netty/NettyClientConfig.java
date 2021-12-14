@@ -21,8 +21,11 @@ public class NettyClientConfig {
      * Worker thread number
      */
     private int clientWorkerThreads = 4;
+    // CPU核心数
     private int clientCallbackExecutorThreads = Runtime.getRuntime().availableProcessors();
+    // 默认65535
     private int clientOnewaySemaphoreValue = NettySystemConfig.CLIENT_ONEWAY_SEMAPHORE_VALUE;
+    // 默认65535
     private int clientAsyncSemaphoreValue = NettySystemConfig.CLIENT_ASYNC_SEMAPHORE_VALUE;
     private int connectTimeoutMillis = 3000;
     private long channelNotActiveInterval = 1000 * 60;
@@ -33,7 +36,9 @@ public class NettyClientConfig {
      */
     private int clientChannelMaxIdleTimeSeconds = 120;
 
+    // 默认65535
     private int clientSocketSndBufSize = NettySystemConfig.socketSndbufSize;
+    // 默认65535
     private int clientSocketRcvBufSize = NettySystemConfig.socketRcvbufSize;
     private boolean clientPooledByteBufAllocatorEnable = false;
     private boolean clientCloseSocketIfTimeout = false;

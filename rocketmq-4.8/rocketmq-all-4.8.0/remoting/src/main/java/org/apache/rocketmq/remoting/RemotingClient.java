@@ -28,7 +28,7 @@ import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
 public interface RemotingClient extends RemotingService
 {
-
+    // RemotingClient 独有的方法
     void updateNameServerAddressList(final List<String> addrs);
 
     List<String> getNameServerAddressList();
@@ -44,8 +44,10 @@ public interface RemotingClient extends RemotingService
 
     void registerProcessor(final int requestCode, final NettyRequestProcessor processor, final ExecutorService executor);
 
+    // RemotingClient 独有的方法
     void setCallbackExecutor(final ExecutorService callbackExecutor);
 
+    // RemotingClient 独有的方法
     ExecutorService getCallbackExecutor();
 
     boolean isChannelWritable(final String addr);

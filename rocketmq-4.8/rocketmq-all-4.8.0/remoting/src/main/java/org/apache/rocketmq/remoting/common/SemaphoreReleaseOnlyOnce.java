@@ -19,6 +19,9 @@ package org.apache.rocketmq.remoting.common;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 见名思意，只释放一次
+ */
 public class SemaphoreReleaseOnlyOnce {
     private final AtomicBoolean released = new AtomicBoolean(false);
     private final Semaphore semaphore;
@@ -29,6 +32,9 @@ public class SemaphoreReleaseOnlyOnce {
 
     public void release() {
         if (this.semaphore != null) {
+            // 因为在 remotingAbstract.scanResponseTable() 中如果超时了，移除的时候会被调用一次release()
+            // 紧接着会依次回调被移除的 ResponseFuture 的 executeInvokeCallback，里面又会 release() 一次
+            // 使用 AtomicBoolean 确保只会释放一次
             if (this.released.compareAndSet(false, true)) {
                 this.semaphore.release();
             }

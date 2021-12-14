@@ -23,85 +23,71 @@ package org.apache.rocketmq.common.protocol.route;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
-public class TopicRouteData extends RemotingSerializable
-{
+public class TopicRouteData extends RemotingSerializable {
+
     private String orderTopicConf;
     private List<QueueData> queueDatas;
     private List<BrokerData> brokerDatas;
     private HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
-    public TopicRouteData cloneTopicRouteData()
-    {
+    public TopicRouteData cloneTopicRouteData() {
         TopicRouteData topicRouteData = new TopicRouteData();
         topicRouteData.setQueueDatas(new ArrayList<QueueData>());
         topicRouteData.setBrokerDatas(new ArrayList<BrokerData>());
         topicRouteData.setFilterServerTable(new HashMap<String, List<String>>());
         topicRouteData.setOrderTopicConf(this.orderTopicConf);
 
-        if (this.queueDatas != null)
-        {
+        if (this.queueDatas != null) {
             topicRouteData.getQueueDatas().addAll(this.queueDatas);
         }
 
-        if (this.brokerDatas != null)
-        {
+        if (this.brokerDatas != null) {
             topicRouteData.getBrokerDatas().addAll(this.brokerDatas);
         }
 
-        if (this.filterServerTable != null)
-        {
+        if (this.filterServerTable != null) {
             topicRouteData.getFilterServerTable().putAll(this.filterServerTable);
         }
 
         return topicRouteData;
     }
 
-    public List<QueueData> getQueueDatas()
-    {
+    public List<QueueData> getQueueDatas() {
         return queueDatas;
     }
 
-    public void setQueueDatas(List<QueueData> queueDatas)
-    {
+    public void setQueueDatas(List<QueueData> queueDatas) {
         this.queueDatas = queueDatas;
     }
 
-    public List<BrokerData> getBrokerDatas()
-    {
+    public List<BrokerData> getBrokerDatas() {
         return brokerDatas;
     }
 
-    public void setBrokerDatas(List<BrokerData> brokerDatas)
-    {
+    public void setBrokerDatas(List<BrokerData> brokerDatas) {
         this.brokerDatas = brokerDatas;
     }
 
-    public HashMap<String, List<String>> getFilterServerTable()
-    {
+    public HashMap<String, List<String>> getFilterServerTable() {
         return filterServerTable;
     }
 
-    public void setFilterServerTable(HashMap<String, List<String>> filterServerTable)
-    {
+    public void setFilterServerTable(HashMap<String, List<String>> filterServerTable) {
         this.filterServerTable = filterServerTable;
     }
 
-    public String getOrderTopicConf()
-    {
+    public String getOrderTopicConf() {
         return orderTopicConf;
     }
 
-    public void setOrderTopicConf(String orderTopicConf)
-    {
+    public void setOrderTopicConf(String orderTopicConf) {
         this.orderTopicConf = orderTopicConf;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((brokerDatas == null) ? 0 : brokerDatas.hashCode());
@@ -112,46 +98,51 @@ public class TopicRouteData extends RemotingSerializable
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         TopicRouteData other = (TopicRouteData) obj;
-        if (brokerDatas == null)
-        {
-            if (other.brokerDatas != null)
+        if (brokerDatas == null) {
+            if (other.brokerDatas != null) {
                 return false;
-        } else if (!brokerDatas.equals(other.brokerDatas))
+            }
+        } else if (!brokerDatas.equals(other.brokerDatas)) {
             return false;
-        if (orderTopicConf == null)
-        {
-            if (other.orderTopicConf != null)
+        }
+        if (orderTopicConf == null) {
+            if (other.orderTopicConf != null) {
                 return false;
-        } else if (!orderTopicConf.equals(other.orderTopicConf))
+            }
+        } else if (!orderTopicConf.equals(other.orderTopicConf)) {
             return false;
-        if (queueDatas == null)
-        {
-            if (other.queueDatas != null)
+        }
+        if (queueDatas == null) {
+            if (other.queueDatas != null) {
                 return false;
-        } else if (!queueDatas.equals(other.queueDatas))
+            }
+        } else if (!queueDatas.equals(other.queueDatas)) {
             return false;
-        if (filterServerTable == null)
-        {
-            if (other.filterServerTable != null)
+        }
+        if (filterServerTable == null) {
+            if (other.filterServerTable != null) {
                 return false;
-        } else if (!filterServerTable.equals(other.filterServerTable))
+            }
+        } else if (!filterServerTable.equals(other.filterServerTable)) {
             return false;
+        }
         return true;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "TopicRouteData [orderTopicConf=" + orderTopicConf + ", queueDatas=" + queueDatas
-                + ", brokerDatas=" + brokerDatas + ", filterServerTable=" + filterServerTable + "]";
+            + ", brokerDatas=" + brokerDatas + ", filterServerTable=" + filterServerTable + "]";
     }
 }

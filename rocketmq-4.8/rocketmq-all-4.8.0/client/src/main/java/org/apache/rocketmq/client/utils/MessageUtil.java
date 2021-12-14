@@ -25,6 +25,7 @@ import org.apache.rocketmq.common.message.MessageAccessor;
 import org.apache.rocketmq.common.message.MessageConst;
 
 public class MessageUtil {
+
     public static Message createReplyMessage(final Message requestMessage, final byte[] body) throws MQClientException {
         if (requestMessage != null) {
             Message replyMessage = new Message();
@@ -40,13 +41,14 @@ public class MessageUtil {
                 MessageAccessor.putProperty(replyMessage, MessageConst.PROPERTY_CORRELATION_ID, correlationId);
                 MessageAccessor.putProperty(replyMessage, MessageConst.PROPERTY_MESSAGE_REPLY_TO_CLIENT, replyTo);
                 MessageAccessor.putProperty(replyMessage, MessageConst.PROPERTY_MESSAGE_TTL, ttl);
-
                 return replyMessage;
             } else {
-                throw new MQClientException(ClientErrorCode.CREATE_REPLY_MESSAGE_EXCEPTION, "create reply message fail, requestMessage error, property[" + MessageConst.PROPERTY_CLUSTER + "] is null.");
+                throw new MQClientException(ClientErrorCode.CREATE_REPLY_MESSAGE_EXCEPTION,
+                    "create reply message fail, requestMessage error, property[" + MessageConst.PROPERTY_CLUSTER + "] is null.");
             }
         }
-        throw new MQClientException(ClientErrorCode.CREATE_REPLY_MESSAGE_EXCEPTION, "create reply message fail, requestMessage cannot be null.");
+        throw new MQClientException(ClientErrorCode.CREATE_REPLY_MESSAGE_EXCEPTION,
+            "create reply message fail, requestMessage cannot be null.");
     }
 
     public static String getReplyToClient(final Message msg) {

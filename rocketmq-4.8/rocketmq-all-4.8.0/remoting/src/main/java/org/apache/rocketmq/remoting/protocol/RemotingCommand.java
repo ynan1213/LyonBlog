@@ -70,18 +70,20 @@ public class RemotingCommand {
         }
     }
 
-    private int code;// 请求码
+    private int code;
     private LanguageCode language = LanguageCode.JAVA;
     private int version = 0;
-    private int opaque = requestId.getAndIncrement();// 请求序号，每个RemotingCommand对象拥有唯一的一个
-    private int flag = 0;// 标记请求是普通请求，还是无回应的请求
-    private String remark;// 失败提示
-    private HashMap<String, String> extFields;// 参数字段的数值
-    private transient CommandCustomHeader customHeader;// 参数的类型
+    // 请求序号，每个RemotingCommand对象拥有唯一的一个
+    private int opaque = requestId.getAndIncrement();
+    // 标记请求是普通请求，还是无回应的请求
+    private int flag = 0;
+    private String remark;
+    private HashMap<String, String> extFields;
+    private transient CommandCustomHeader customHeader;
 
     private SerializeType serializeTypeCurrentRPC = serializeTypeConfigInThisServer;
 
-    private transient byte[] body;// 解码时缓存的字节流
+    private transient byte[] body;
 
     protected RemotingCommand() {
     }
@@ -128,7 +130,6 @@ public class RemotingCommand {
                 return null;
             }
         }
-
         return cmd;
     }
 
@@ -217,7 +218,7 @@ public class RemotingCommand {
         result[3] = (byte) (source & 0xFF);
         return result;
     }
-
+    // ???
     public void markResponseType() {
         int bits = 1 << RPC_TYPE;
         this.flag |= bits;
@@ -231,8 +232,7 @@ public class RemotingCommand {
         this.customHeader = customHeader;
     }
 
-    public CommandCustomHeader decodeCommandCustomHeader(
-        Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
+    public CommandCustomHeader decodeCommandCustomHeader(Class<? extends CommandCustomHeader> classHeader) throws RemotingCommandException {
         CommandCustomHeader objectHeader;
         try {
             objectHeader = classHeader.newInstance();
@@ -364,6 +364,7 @@ public class RemotingCommand {
         if (SerializeType.ROCKETMQ == serializeTypeCurrentRPC) {
             return RocketMQSerializable.rocketMQProtocolEncode(this);
         } else {
+            // json序列化
             return RemotingSerializable.encode(this);
         }
     }
@@ -376,8 +377,10 @@ public class RemotingCommand {
             }
 
             for (Field field : fields) {
+                // 非static方法
                 if (!Modifier.isStatic(field.getModifiers())) {
                     String name = field.getName();
+                    // 方法名称不能以this开头
                     if (!name.startsWith("this")) {
                         Object value = null;
                         try {
@@ -400,12 +403,16 @@ public class RemotingCommand {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
 
+    /**
+     * 对头部进行编码
+     */
     public ByteBuffer encodeHeader(final int bodyLength) {
         // 1> header length size
         int length = 4;
 
         // 2> header data length
         byte[] headerData;
+        // 进去发现：如果是json序列化则返回的是全部？  如果是rocketmq序列化方式，则返回header部分？？？
         headerData = this.headerEncode();
 
         length += headerData.length;

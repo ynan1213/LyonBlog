@@ -69,7 +69,7 @@ public class Producer {
         opt.setRequired(false);
         options.addOption(opt);
 
-        opt = new Option("g", "producerGroup", true, "Producer Group Name");
+        opt = new Option("g", "producerGroup", true, "ProducerSync Group Name");
         opt.setRequired(true);
         options.addOption(opt);
 

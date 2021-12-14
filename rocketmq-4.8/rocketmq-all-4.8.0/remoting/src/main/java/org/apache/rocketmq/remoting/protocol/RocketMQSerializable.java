@@ -25,6 +25,7 @@ import java.util.Map;
 public class RocketMQSerializable {
     private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
+    // 对header进行编码
     public static byte[] rocketMQProtocolEncode(RemotingCommand cmd) {
         // String remark
         byte[] remarkBytes = null;
@@ -85,14 +86,14 @@ public class RocketMQSerializable {
             Map.Entry<String, String> entry = it.next();
             if (entry.getKey() != null && entry.getValue() != null) {
                 kvLength =
-                    // keySize + Key
+                    // keySize + Key，前面 +2 ？？？ 看后面，short类型
                     2 + entry.getKey().getBytes(CHARSET_UTF8).length
-                        // valSize + val
+                        // valSize + val，前面 +4 ？？？
                         + 4 + entry.getValue().getBytes(CHARSET_UTF8).length;
                 totalLength += kvLength;
             }
         }
-
+        // 使用堆内存
         ByteBuffer content = ByteBuffer.allocate(totalLength);
         byte[] key;
         byte[] val;
@@ -102,10 +103,10 @@ public class RocketMQSerializable {
             if (entry.getKey() != null && entry.getValue() != null) {
                 key = entry.getKey().getBytes(CHARSET_UTF8);
                 val = entry.getValue().getBytes(CHARSET_UTF8);
-
+                // short 2个字节
                 content.putShort((short) key.length);
                 content.put(key);
-
+                // int 4个字节
                 content.putInt(val.length);
                 content.put(val);
             }

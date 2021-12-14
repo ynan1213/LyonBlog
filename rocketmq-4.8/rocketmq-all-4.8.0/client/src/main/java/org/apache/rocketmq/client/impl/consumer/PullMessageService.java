@@ -21,108 +21,84 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.client.log.ClientLogger;
 import org.apache.rocketmq.common.ServiceThread;
-import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.common.utils.ThreadUtils;
+import org.apache.rocketmq.logging.InternalLogger;
 
-public class PullMessageService extends ServiceThread
-{
+public class PullMessageService extends ServiceThread {
+
     private final InternalLogger log = ClientLogger.getLog();
     private final LinkedBlockingQueue<PullRequest> pullRequestQueue = new LinkedBlockingQueue<PullRequest>();
     private final MQClientInstance mQClientFactory;
-    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory()
-    {
+    private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
-        public Thread newThread(Runnable r)
-        {
+        public Thread newThread(Runnable r) {
             return new Thread(r, "PullMessageServiceScheduledThread");
         }
     });
 
-    public PullMessageService(MQClientInstance mQClientFactory)
-    {
+    public PullMessageService(MQClientInstance mQClientFactory) {
         this.mQClientFactory = mQClientFactory;
     }
 
     // 延迟添加拉取任务到任务队列中
-    public void executePullRequestLater(final PullRequest pullRequest, final long timeDelay)
-    {
-        if (!isStopped())
-        {
-            this.scheduledExecutorService.schedule(new Runnable()
-            {
+    public void executePullRequestLater(final PullRequest pullRequest, final long timeDelay) {
+        if (!isStopped()) {
+            this.scheduledExecutorService.schedule(new Runnable() {
                 @Override
-                public void run()
-                {
+                public void run() {
                     PullMessageService.this.executePullRequestImmediately(pullRequest);
                 }
             }, timeDelay, TimeUnit.MILLISECONDS);
-        } else
-        {
+        } else {
             log.warn("PullMessageServiceScheduledThread has shutdown");
         }
     }
 
     // 立即添加拉取任务到任务队列中
-    public void executePullRequestImmediately(final PullRequest pullRequest)
-    {
-        try
-        {
+    public void executePullRequestImmediately(final PullRequest pullRequest) {
+        try {
             this.pullRequestQueue.put(pullRequest);
-        } catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             log.error("executePullRequestImmediately pullRequestQueue.put", e);
         }
     }
 
-    public void executeTaskLater(final Runnable r, final long timeDelay)
-    {
-        if (!isStopped())
-        {
+    public void executeTaskLater(final Runnable r, final long timeDelay) {
+        if (!isStopped()) {
             this.scheduledExecutorService.schedule(r, timeDelay, TimeUnit.MILLISECONDS);
-        } else
-        {
+        } else {
             log.warn("PullMessageServiceScheduledThread has shutdown");
         }
     }
 
-    public ScheduledExecutorService getScheduledExecutorService()
-    {
+    public ScheduledExecutorService getScheduledExecutorService() {
         return scheduledExecutorService;
     }
 
-    private void pullMessage(final PullRequest pullRequest)
-    {
+    private void pullMessage(final PullRequest pullRequest) {
         // 从这里可以看出，同一个jvm中一个group下只能有一个consumer，多个是无效的
         final MQConsumerInner consumer = this.mQClientFactory.selectConsumer(pullRequest.getConsumerGroup());
-        if (consumer != null)
-        {
+        if (consumer != null) {
             DefaultMQPushConsumerImpl impl = (DefaultMQPushConsumerImpl) consumer;
             impl.pullMessage(pullRequest);
-        } else
-        {
+        } else {
             log.warn("No matched consumer for the PullRequest {}, drop it", pullRequest);
         }
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         log.info(this.getServiceName() + " service started");
-        while (!this.isStopped())
-        {
-            try
-            {
+        while (!this.isStopped()) {
+            try {
                 // 无界阻塞队列
                 PullRequest pullRequest = this.pullRequestQueue.take();
                 this.pullMessage(pullRequest);
-            } catch (InterruptedException ignored)
-            {
-            } catch (Exception e)
-            {
+            } catch (InterruptedException ignored) {
+            } catch (Exception e) {
                 log.error("Pull Message Service Run Method exception", e);
             }
         }
@@ -130,15 +106,13 @@ public class PullMessageService extends ServiceThread
     }
 
     @Override
-    public void shutdown(boolean interrupt)
-    {
+    public void shutdown(boolean interrupt) {
         super.shutdown(interrupt);
         ThreadUtils.shutdownGracefully(this.scheduledExecutorService, 1000, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public String getServiceName()
-    {
+    public String getServiceName() {
         return PullMessageService.class.getSimpleName();
     }
 

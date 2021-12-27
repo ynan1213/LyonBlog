@@ -26,9 +26,9 @@ public class SubscriptionGroupConfig {
     private boolean consumeEnable = true;
     private boolean consumeFromMinEnable = true;
 
-    private boolean consumeBroadcastEnable = true;
+    private boolean consumeBroadcastEnable = true;// 是否允许广播模式
 
-    private int retryQueueNums = 1;// 重试队列，默认为1
+    private int retryQueueNums = 1;// 重试队列大小，默认为1
 
     private int retryMaxTimes = 16;
 

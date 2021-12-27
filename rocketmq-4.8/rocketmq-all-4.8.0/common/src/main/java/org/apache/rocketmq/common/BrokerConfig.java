@@ -49,6 +49,13 @@ public class BrokerConfig {
     private boolean clusterTopicEnable = true;
 
     private boolean brokerTopicEnable = true;
+
+    /**
+     *  如果没注册的话就判断broker自动注册是否开启autoCreateSubscriptionGroup = true，
+     *  否则就要在broker启动时注册或者在控制台注册。如果是系统消费组的话，自动注册。
+     *
+     * @see org.apache.rocketmq.broker.processor.ClientManageProcessor#heartBeat
+     */
     @ImportantField
     private boolean autoCreateSubscriptionGroup = true;
     private String messageStorePlugIn = "";

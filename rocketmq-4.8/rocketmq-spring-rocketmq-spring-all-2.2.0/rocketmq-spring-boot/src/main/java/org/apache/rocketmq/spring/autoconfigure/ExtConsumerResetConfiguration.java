@@ -17,6 +17,8 @@
 
 package org.apache.rocketmq.spring.autoconfigure;
 
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.spring.annotation.ExtRocketMQConsumerConfiguration;
@@ -41,9 +43,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Configuration
 public class ExtConsumerResetConfiguration implements ApplicationContextAware, SmartInitializingSingleton {
 
@@ -58,7 +57,7 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
     private RocketMQMessageConverter rocketMQMessageConverter;
 
     public ExtConsumerResetConfiguration(RocketMQMessageConverter rocketMQMessageConverter,
-            StandardEnvironment environment, RocketMQProperties rocketMQProperties) {
+        StandardEnvironment environment, RocketMQProperties rocketMQProperties) {
         this.rocketMQMessageConverter = rocketMQMessageConverter;
         this.environment = environment;
         this.rocketMQProperties = rocketMQProperties;
@@ -72,10 +71,9 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
     @Override
     public void afterSingletonsInstantiated() {
         Map<String, Object> beans = this.applicationContext
-                .getBeansWithAnnotation(ExtRocketMQConsumerConfiguration.class)
-                .entrySet().stream().filter(entry -> !ScopedProxyUtils.isScopedTarget(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
+            .getBeansWithAnnotation(ExtRocketMQConsumerConfiguration.class)
+            .entrySet().stream().filter(entry -> !ScopedProxyUtils.isScopedTarget(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         beans.forEach(this::registerTemplate);
     }
 
@@ -105,8 +103,7 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
         log.info("Set real consumer to :{} {}", beanName, annotation.value());
     }
 
-    private DefaultLitePullConsumer createConsumer(ExtRocketMQConsumerConfiguration annotation)
-            throws MQClientException {
+    private DefaultLitePullConsumer createConsumer(ExtRocketMQConsumerConfiguration annotation) throws MQClientException {
 
         RocketMQProperties.Consumer consumerConfig = rocketMQProperties.getConsumer();
         if (consumerConfig == null) {
@@ -128,7 +125,7 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
         int pullBatchSize = annotation.pullBatchSize();
 
         DefaultLitePullConsumer litePullConsumer = RocketMQUtil.createDefaultLitePullConsumer(nameServer, accessChannel,
-                groupName, topicName, messageModel, selectorType, selectorExpression, ak, sk, pullBatchSize);
+            groupName, topicName, messageModel, selectorType, selectorExpression, ak, sk, pullBatchSize);
         return litePullConsumer;
     }
 
@@ -138,12 +135,11 @@ public class ExtConsumerResetConfiguration implements ApplicationContextAware, S
     }
 
     private void validate(ExtRocketMQConsumerConfiguration annotation,
-            GenericApplicationContext genericApplicationContext) {
+        GenericApplicationContext genericApplicationContext) {
         if (genericApplicationContext.isBeanNameInUse(annotation.value())) {
             throw new BeanDefinitionValidationException(
-                    String.format("Bean {} has been used in Spring Application Context, " +
-                                    "please check the @ExtRocketMQConsumerConfiguration",
-                            annotation.value()));
+                String.format("Bean {} has been used in Spring Application Context, please check the @ExtRocketMQConsumerConfiguration",
+                    annotation.value()));
         }
     }
 }

@@ -46,6 +46,7 @@ import org.springframework.util.StringUtils;
 
 @Configuration
 public class ListenerContainerConfiguration implements ApplicationContextAware, SmartInitializingSingleton {
+
     private final static Logger log = LoggerFactory.getLogger(ListenerContainerConfiguration.class);
 
     private ConfigurableApplicationContext applicationContext;
@@ -83,11 +84,13 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
         Class<?> clazz = AopProxyUtils.ultimateTargetClass(bean);
 
         if (RocketMQListener.class.isAssignableFrom(bean.getClass()) && RocketMQReplyListener.class.isAssignableFrom(bean.getClass())) {
-            throw new IllegalStateException(clazz + " cannot be both instance of " + RocketMQListener.class.getName() + " and " + RocketMQReplyListener.class.getName());
+            throw new IllegalStateException(clazz + " cannot be both instance of " + RocketMQListener.class.getName()
+                + " and " + RocketMQReplyListener.class.getName());
         }
 
         if (!RocketMQListener.class.isAssignableFrom(bean.getClass()) && !RocketMQReplyListener.class.isAssignableFrom(bean.getClass())) {
-            throw new IllegalStateException(clazz + " is not instance of " + RocketMQListener.class.getName() + " or " + RocketMQReplyListener.class.getName());
+            throw new IllegalStateException(
+                clazz + " is not instance of " + RocketMQListener.class.getName() + " or " + RocketMQReplyListener.class.getName());
         }
 
         RocketMQMessageListener annotation = clazz.getAnnotation(RocketMQMessageListener.class);
@@ -95,12 +98,12 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
         String consumerGroup = this.environment.resolvePlaceholders(annotation.consumerGroup());
         String topic = this.environment.resolvePlaceholders(annotation.topic());
 
-        boolean listenerEnabled = (boolean) rocketMQProperties.getConsumer().getListeners().getOrDefault(consumerGroup, Collections.EMPTY_MAP)
-                .getOrDefault(topic, true);
+        boolean listenerEnabled = (boolean) rocketMQProperties.getConsumer().getListeners()
+            .getOrDefault(consumerGroup, Collections.EMPTY_MAP)
+            .getOrDefault(topic, true);
 
         if (!listenerEnabled) {
-            log.debug(
-                "Consumer Listener (group:{},topic:{}) is not enabled by configuration, will ignore initialization.",
+            log.debug("Consumer Listener (group:{},topic:{}) is not enabled by configuration, will ignore initialization.",
                 consumerGroup, topic);
             return;
         }
@@ -111,7 +114,8 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
 
         genericApplicationContext.registerBean(containerBeanName, DefaultRocketMQListenerContainer.class,
             () -> createRocketMQListenerContainer(containerBeanName, bean, annotation));
-        DefaultRocketMQListenerContainer container = genericApplicationContext.getBean(containerBeanName, DefaultRocketMQListenerContainer.class);
+        DefaultRocketMQListenerContainer container = genericApplicationContext
+            .getBean(containerBeanName, DefaultRocketMQListenerContainer.class);
         if (!container.isRunning()) {
             try {
                 container.start();

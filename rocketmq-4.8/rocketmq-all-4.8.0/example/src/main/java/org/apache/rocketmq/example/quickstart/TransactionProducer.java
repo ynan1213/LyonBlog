@@ -17,7 +17,11 @@
 package org.apache.rocketmq.example.quickstart;
 
 import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.client.producer.*;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.LocalTransactionState;
+import org.apache.rocketmq.client.producer.TransactionListener;
+import org.apache.rocketmq.client.producer.TransactionMQProducer;
+import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
@@ -25,26 +29,22 @@ import org.apache.rocketmq.remoting.common.RemotingHelper;
 /**
  * This class demonstrates how to send messages to brokers using provided {@link DefaultMQProducer}.
  */
-public class TransactionProducer
-{
-    public static void main(String[] args) throws MQClientException, InterruptedException
-    {
+public class TransactionProducer {
+
+    public static void main(String[] args) throws MQClientException, InterruptedException {
         TransactionMQProducer producer = new TransactionMQProducer("ns01", "please_rename_unique_group_name");
 
-        producer.setNamesrvAddr("127.0.0.1:9876");
+        producer.setNamesrvAddr("47.100.24.106:9876");
 
-        producer.setTransactionListener(new TransactionListener()
-        {
+        producer.setTransactionListener(new TransactionListener() {
             @Override
-            public LocalTransactionState executeLocalTransaction(Message msg, Object arg)
-            {
-                System.out.println("执行本地事物");
+            public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
+                System.out.println("执行本地事物 : " + arg);
                 return null;
             }
 
             @Override
-            public LocalTransactionState checkLocalTransaction(MessageExt msg)
-            {
+            public LocalTransactionState checkLocalTransaction(MessageExt msg) {
                 System.out.println("执行消息回查");
                 return null;
             }
@@ -52,16 +52,12 @@ public class TransactionProducer
 
         producer.start();
 
-        for (int i = 0; i < 1; i++)
-        {
-            try
-            {
+        for (int i = 0; i < 1; i++) {
+            try {
                 Message msg = new Message("topic000001", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
-
-                TransactionSendResult sendResult = producer.sendMessageInTransaction(msg, null);
+                TransactionSendResult sendResult = producer.sendMessageInTransaction(msg, "hello");
                 System.out.printf("%s%n", sendResult);
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

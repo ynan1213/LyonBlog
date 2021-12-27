@@ -42,6 +42,7 @@ import org.springframework.util.StringUtils;
 
 @Configuration
 public class ExtProducerResetConfiguration implements ApplicationContextAware, SmartInitializingSingleton {
+
     private final static Logger log = LoggerFactory.getLogger(ExtProducerResetConfiguration.class);
 
     private ConfigurableApplicationContext applicationContext;
@@ -69,7 +70,6 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         Map<String, Object> beans = this.applicationContext.getBeansWithAnnotation(ExtRocketMQTemplateConfiguration.class)
             .entrySet().stream().filter(entry -> !ScopedProxyUtils.isScopedTarget(entry.getKey()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
         beans.forEach(this::registerTemplate);
     }
 
@@ -120,11 +120,17 @@ public class ExtProducerResetConfiguration implements ApplicationContextAware, S
         DefaultMQProducer producer = RocketMQUtil.createDefaultMQProducer(groupName, ak, sk, isEnableMsgTrace, customizedTraceTopic);
 
         producer.setNamesrvAddr(nameServer);
-        producer.setSendMsgTimeout(annotation.sendMessageTimeout() == -1 ? producerConfig.getSendMessageTimeout() : annotation.sendMessageTimeout());
-        producer.setRetryTimesWhenSendFailed(annotation.retryTimesWhenSendFailed() == -1 ? producerConfig.getRetryTimesWhenSendFailed() : annotation.retryTimesWhenSendFailed());
-        producer.setRetryTimesWhenSendAsyncFailed(annotation.retryTimesWhenSendAsyncFailed() == -1 ? producerConfig.getRetryTimesWhenSendAsyncFailed() : annotation.retryTimesWhenSendAsyncFailed());
+        producer.setSendMsgTimeout(
+            annotation.sendMessageTimeout() == -1 ? producerConfig.getSendMessageTimeout() : annotation.sendMessageTimeout());
+        producer.setRetryTimesWhenSendFailed(annotation.retryTimesWhenSendFailed() == -1 ? producerConfig.getRetryTimesWhenSendFailed()
+            : annotation.retryTimesWhenSendFailed());
+        producer.setRetryTimesWhenSendAsyncFailed(
+            annotation.retryTimesWhenSendAsyncFailed() == -1 ? producerConfig.getRetryTimesWhenSendAsyncFailed()
+                : annotation.retryTimesWhenSendAsyncFailed());
         producer.setMaxMessageSize(annotation.maxMessageSize() == -1 ? producerConfig.getMaxMessageSize() : annotation.maxMessageSize());
-        producer.setCompressMsgBodyOverHowmuch(annotation.compressMessageBodyThreshold() == -1 ? producerConfig.getCompressMessageBodyThreshold() : annotation.compressMessageBodyThreshold());
+        producer.setCompressMsgBodyOverHowmuch(
+            annotation.compressMessageBodyThreshold() == -1 ? producerConfig.getCompressMessageBodyThreshold()
+                : annotation.compressMessageBodyThreshold());
         producer.setRetryAnotherBrokerWhenNotStoreOK(annotation.retryNextServer());
 
         return producer;

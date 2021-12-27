@@ -26,16 +26,18 @@ import org.apache.rocketmq.common.ConfigManager;
 import org.apache.rocketmq.common.DataVersion;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.constant.LoggerName;
+import org.apache.rocketmq.common.subscription.SubscriptionGroupConfig;
 import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
-import org.apache.rocketmq.common.subscription.SubscriptionGroupConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
 public class SubscriptionGroupManager extends ConfigManager {
+
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
 
-    //SubscriptionGroupConfig可以理解为消费分组和broker之间的契约，如果broker不存在消费分组的订阅关系，那么该消费分组就无法从该broker消费任何消息
-    private final ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable = new ConcurrentHashMap<String, SubscriptionGroupConfig>(1024);
+    // 如果broker不存在消费分组的订阅关系，那么该消费分组就无法从该broker消费任何消息
+    private final ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable = new ConcurrentHashMap<String, SubscriptionGroupConfig>(
+        1024);
     private final DataVersion dataVersion = new DataVersion();
     private transient BrokerController brokerController;
 
@@ -51,25 +53,25 @@ public class SubscriptionGroupManager extends ConfigManager {
     private void init() {
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
-            subscriptionGroupConfig.setGroupName(MixAll.TOOLS_CONSUMER_GROUP);
+            subscriptionGroupConfig.setGroupName(MixAll.TOOLS_CONSUMER_GROUP);// TOOLS_CONSUMER
             this.subscriptionGroupTable.put(MixAll.TOOLS_CONSUMER_GROUP, subscriptionGroupConfig);
         }
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
-            subscriptionGroupConfig.setGroupName(MixAll.FILTERSRV_CONSUMER_GROUP);
+            subscriptionGroupConfig.setGroupName(MixAll.FILTERSRV_CONSUMER_GROUP);// FILTERSRV_CONSUMER
             this.subscriptionGroupTable.put(MixAll.FILTERSRV_CONSUMER_GROUP, subscriptionGroupConfig);
         }
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
-            subscriptionGroupConfig.setGroupName(MixAll.SELF_TEST_CONSUMER_GROUP);
+            subscriptionGroupConfig.setGroupName(MixAll.SELF_TEST_CONSUMER_GROUP);// SELF_TEST_C_GROUP
             this.subscriptionGroupTable.put(MixAll.SELF_TEST_CONSUMER_GROUP, subscriptionGroupConfig);
         }
 
         {
             SubscriptionGroupConfig subscriptionGroupConfig = new SubscriptionGroupConfig();
-            subscriptionGroupConfig.setGroupName(MixAll.ONS_HTTP_PROXY_GROUP);
+            subscriptionGroupConfig.setGroupName(MixAll.ONS_HTTP_PROXY_GROUP);// CID_ONS
             subscriptionGroupConfig.setConsumeBroadcastEnable(true);
             this.subscriptionGroupTable.put(MixAll.ONS_HTTP_PROXY_GROUP, subscriptionGroupConfig);
         }
@@ -120,6 +122,7 @@ public class SubscriptionGroupManager extends ConfigManager {
     public SubscriptionGroupConfig findSubscriptionGroupConfig(final String group) {
         SubscriptionGroupConfig subscriptionGroupConfig = this.subscriptionGroupTable.get(group);
         if (null == subscriptionGroupConfig) {
+            // 从未注册过，则进行注册，但是这里还有个属性开关控制
             // 如果开启了自动注册或者是系统消费组，则进行创建
             if (brokerController.getBrokerConfig().isAutoCreateSubscriptionGroup() || MixAll.isSysConsumerGroup(group)) {
                 subscriptionGroupConfig = new SubscriptionGroupConfig();
@@ -129,10 +132,10 @@ public class SubscriptionGroupManager extends ConfigManager {
                     log.info("auto create a subscription group, {}", subscriptionGroupConfig.toString());
                 }
                 this.dataVersion.nextVersion();
+                // 进行持久化
                 this.persist();
             }
         }
-
         return subscriptionGroupConfig;
     }
 

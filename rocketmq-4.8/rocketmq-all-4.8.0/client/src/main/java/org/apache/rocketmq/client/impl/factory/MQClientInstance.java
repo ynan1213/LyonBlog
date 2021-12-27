@@ -111,6 +111,8 @@ public class MQClientInstance {
     private final ClientRemotingProcessor clientRemotingProcessor;
     private final PullMessageService pullMessageService;
     private final RebalanceService rebalanceService;
+    // 这个producer有什么用？ 发现有个用处：在consumer消费返回LATER的情况下，会将message返还给broker，如果发送失败，会通过该producer发送
+    // 详情见：DefaultMQPushConsumerImpl.sendMessageBack
     private final DefaultMQProducer defaultMQProducer;
     private final ConsumerStatsManager consumerStatsManager;
 
@@ -243,10 +245,10 @@ public class MQClientInstance {
                     // 启动各种定时任务，包括：间隔30s获取主题路由信息、间隔30s发送心跳到broker
                     this.startScheduledTask();
 
-                    // 消息拉取服务，单线程执行，内部是循环从pullRequestQueue无界阻塞队列获取拉取任务pullRequest，pullRequest什么时候被放进去呢？
+                    // 消息拉取服务，单线程执行，内部是循环从 pullRequestQueue 无界阻塞队列获取拉取任务 pullRequest，pullRequest 什么时候被放进去呢？
                     this.pullMessageService.start();
 
-                    // Start rebalance service
+                    // 内部就是单线程循环执行，默认每 20s 执行 mqClientFactory.doRebalance()；
                     this.rebalanceService.start();
 
                     // Start push service
@@ -296,8 +298,10 @@ public class MQClientInstance {
             @Override
             public void run() {
                 try {
-                    // 清理下线的 broker
+                    // 上面的updateTopicRouteInfoFromNameServer定时任务会同时更新 topicRouteTable 和 brokerAddrTable 缓存表
+                    // 清理下线的 broker，是通过对比 brokerAddrTable缓存表与 topicRouteTable 中的区别来实现的
                     MQClientInstance.this.cleanOfflineBroker();
+                    // 向所有的 broker 发送心跳，心跳信息包括所有的 producer 和 consumer 信息
                     MQClientInstance.this.sendHeartbeatToAllBrokerWithLock();
                 } catch (Exception e) {
                     log.error("ScheduledTask sendHeartbeatToAllBroker exception", e);
@@ -394,6 +398,9 @@ public class MQClientInstance {
      */
     private void cleanOfflineBroker() {
         try {
+            // 加锁，但是这里会有多线程并发执行吗？
+            // 自己的理解：该方法不会有多线程并发执行的情况，但是这把锁和 updateTopicRouteInfoFromNameServer 方法是同一把
+            //           因为 updateTopicRouteInfoFromNameServer 会更新 brokerAddrTable 缓存表，这里也会操作缓存表
             if (this.lockNamesrv.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
                     ConcurrentHashMap<String, HashMap<Long, String>> updatedTable = new ConcurrentHashMap<String, HashMap<Long, String>>();
@@ -534,10 +541,13 @@ public class MQClientInstance {
                 }
             }
         }
-
         return false;
     }
 
+    /**
+     * brokerAddrTable 中缓存的 broker 信息来自 producer 和 consumer 所有关注的topic
+     * 即使 producer 和 consumer 关注了不同的topic，进而关注了指向了不同的 broker，这里也会向所有的 broker 发送心跳
+     */
     private void sendHeartbeatToAllBroker() {
         final HeartbeatData heartbeatData = this.prepareHeartbeatData();
         final boolean producerEmpty = heartbeatData.getProducerDataSet().isEmpty();
@@ -548,6 +558,7 @@ public class MQClientInstance {
         }
 
         if (!this.brokerAddrTable.isEmpty()) {
+            // 记录次数
             long times = this.sendHeartbeatTimesTotal.getAndIncrement();
             Iterator<Entry<String, HashMap<Long, String>>> it = this.brokerAddrTable.entrySet().iterator();
             while (it.hasNext()) {
@@ -559,6 +570,8 @@ public class MQClientInstance {
                         Long id = entry1.getKey();
                         String addr = entry1.getValue();
                         if (addr != null) {
+                            // 如果消费者为空，且当前brokerId != 0，则忽略当前broker，也即消费者不为空，则会往每一个broker发送心跳
+                            // 为什么呢？消费者也会关注salve节点吗？
                             if (consumerEmpty) {
                                 if (id != MixAll.MASTER_ID) {
                                     continue;
@@ -571,6 +584,7 @@ public class MQClientInstance {
                                     this.brokerVersionTable.put(brokerName, new HashMap<String, Integer>(4));
                                 }
                                 this.brokerVersionTable.get(brokerName).put(addr, version);
+                                // 每 20 次打印一次日志
                                 if (times % 20 == 0) {
                                     log.info("send heart beat to broker[{} {} {}] success", brokerName, id, addr);
                                     log.info(heartbeatData.toString());
@@ -728,8 +742,8 @@ public class MQClientInstance {
             if (impl != null) {
                 ConsumerData consumerData = new ConsumerData();
                 consumerData.setGroupName(impl.groupName());// 消费组名
-                consumerData.setConsumeType(impl.consumeType());
-                consumerData.setMessageModel(impl.messageModel());
+                consumerData.setConsumeType(impl.consumeType());// PULL or PUSH
+                consumerData.setMessageModel(impl.messageModel());// 广播 or 集群
                 consumerData.setConsumeFromWhere(impl.consumeFromWhere());
                 consumerData.getSubscriptionDataSet().addAll(impl.subscriptions());// 订阅的主题
                 consumerData.setUnitMode(impl.isUnitMode());
@@ -746,7 +760,6 @@ public class MQClientInstance {
                 heartbeatData.getProducerDataSet().add(producerData);
             }
         }
-
         return heartbeatData;
     }
 
@@ -990,6 +1003,7 @@ public class MQClientInstance {
     }
 
     public void rebalanceImmediately() {
+        // 唤醒睡眠的线程，立即执行。因为 rebalanceService 线程每执行一次后会睡眠20s
         this.rebalanceService.wakeup();
     }
 
@@ -1127,7 +1141,6 @@ public class MQClientInstance {
                 return bd.selectBrokerAddr();
             }
         }
-
         return null;
     }
 

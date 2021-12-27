@@ -33,5 +33,4 @@ class MessageConverterConfiguration {
     public RocketMQMessageConverter createRocketMQMessageConverter() {
         return new RocketMQMessageConverter();
     }
-
 }

@@ -247,7 +247,6 @@ public class RocketMQProperties {
 
         /**
          * Control how to selector message.
-         *
          */
         private String selectorType = "TAG";
 

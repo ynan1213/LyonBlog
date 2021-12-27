@@ -79,7 +79,7 @@ public class PullMessageService extends ServiceThread {
     }
 
     private void pullMessage(final PullRequest pullRequest) {
-        // 从这里可以看出，同一个jvm中一个group下只能有一个consumer，多个是无效的
+        // 同一个jvm中相同的group只能有一个consumer，多个是无效的（在启动阶段就会报错）
         final MQConsumerInner consumer = this.mQClientFactory.selectConsumer(pullRequest.getConsumerGroup());
         if (consumer != null) {
             DefaultMQPushConsumerImpl impl = (DefaultMQPushConsumerImpl) consumer;
@@ -94,7 +94,7 @@ public class PullMessageService extends ServiceThread {
         log.info(this.getServiceName() + " service started");
         while (!this.isStopped()) {
             try {
-                // 无界阻塞队列
+                // 无界阻塞队列，单线程运行
                 PullRequest pullRequest = this.pullRequestQueue.take();
                 this.pullMessage(pullRequest);
             } catch (InterruptedException ignored) {

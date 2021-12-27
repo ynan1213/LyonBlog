@@ -16,20 +16,17 @@
  */
 package org.apache.rocketmq.spring.support;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Arrays;
-import org.apache.rocketmq.acl.common.AclClientRPCHook;
-import org.apache.rocketmq.acl.common.SessionCredentials;
-import org.apache.rocketmq.common.UtilAll;
-import org.apache.rocketmq.remoting.RPCHook;
-import org.junit.Test;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
-
 import static org.apache.rocketmq.spring.support.RocketMQUtil.toRocketHeaderKey;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
+import org.apache.rocketmq.common.UtilAll;
+import org.junit.Test;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 
 public class RocketMQUtilTest {
 
@@ -113,8 +110,9 @@ public class RocketMQUtilTest {
         assertEquals("my_keys", rocketMsg.getProperty(RocketMQHeaders.KEYS));
 
         Message msgWithBytesPayload = MessageBuilder.withPayload("123".getBytes()).build();
-        org.apache.rocketmq.common.message.Message rocketMsgWithObj = RocketMQUtil.convertToRocketMessage(messageConverter.getMessageConverter(),
-            "UTF-8", "test-topic", msgWithBytesPayload);
+        org.apache.rocketmq.common.message.Message rocketMsgWithObj = RocketMQUtil
+            .convertToRocketMessage(messageConverter.getMessageConverter(),
+                "UTF-8", "test-topic", msgWithBytesPayload);
         assertEquals("123", new String(rocketMsgWithObj.getBody()));
     }
 
@@ -130,7 +128,7 @@ public class RocketMQUtilTest {
         assertEquals("tagA", message.getHeaders().get(toRocketHeaderKey(RocketMQHeaders.TAGS)));
         assertEquals("key1", message.getHeaders().get(toRocketHeaderKey(RocketMQHeaders.KEYS)));
     }
-    
+
     @Test
     public void testGetInstanceName() {
         String nameServer = "127.0.0.1:9876";

@@ -1,0 +1,7 @@
+server:
+    port: 8090
+
+rocketmq:
+    name-server: 47.100.24.106:9876
+    producer:
+        group: spring-boot-demo01

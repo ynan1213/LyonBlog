@@ -26,7 +26,10 @@ public class Message implements Serializable {
     private static final long serialVersionUID = 8445773977080406428L;
 
     private String topic;
-    private int flag; // 消息的标签，消费者在消费时，可以根据标签进行过滤，需要注意的是，一个生产者，只能指定一个tag
+
+    // 消息的标签，消费者在消费时，可以根据标签进行过滤，需要注意的是，一个生产者，只能指定一个tag
+    // 可选值：MessageSysFlag
+    private int flag;
     private Map<String, String> properties;
     private byte[] body;
     private String transactionId;

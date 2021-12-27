@@ -24,9 +24,9 @@ public enum ConsumeFromWhere {
     @Deprecated
     CONSUME_FROM_MAX_OFFSET,
 
-    CONSUME_FROM_LAST_OFFSET, //上一次消费偏移量
+    CONSUME_FROM_LAST_OFFSET, // 上一次消费偏移量，解释：一个新的订阅组第一次启动从队列的最后位置开始消费
 
-    CONSUME_FROM_FIRST_OFFSET, //从当前队列头开始
+    CONSUME_FROM_FIRST_OFFSET, // 从当前队列头开始
 
     CONSUME_FROM_TIMESTAMP, // 从消费者启动时间戳开始
 

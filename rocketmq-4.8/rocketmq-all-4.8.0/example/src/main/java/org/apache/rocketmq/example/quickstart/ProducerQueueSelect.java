@@ -42,7 +42,7 @@ public class ProducerQueueSelect {
         for (int i = 0; i < 10; i++) {
             try {
                 Message msg = new Message("bbb", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
-
+                // 自己选择队列后就无法重试了
                 SendResult sendResult = producer.send(msg, new MessageQueueSelector() {
                     @Override
                     public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {

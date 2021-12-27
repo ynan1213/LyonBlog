@@ -17,9 +17,10 @@
 
 package org.apache.rocketmq.spring.autoconfigure;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -43,9 +44,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class RocketMQAutoConfigurationTest {
+
     private ApplicationContextRunner runner = new ApplicationContextRunner()
         .withConfiguration(AutoConfigurations.of(RocketMQAutoConfiguration.class));
 
@@ -76,13 +76,13 @@ public class RocketMQAutoConfigurationTest {
     @Test
     public void testDefaultLitePullConsumerWithRelaxPropertyName() {
         runner.withPropertyValues("rocketmq.nameServer=127.0.0.1:9876",
-                "rocketmq.consumer.group=spring_rocketmq",
-                "rocketmq.consumer.topic=test",
-                "rocketmq.accessChannel=LOCAL").
-                run((context) -> {
-                    assertThat(context).hasSingleBean(DefaultLitePullConsumer.class);
-                    assertThat(context).hasSingleBean(RocketMQProperties.class);
-                });
+            "rocketmq.consumer.group=spring_rocketmq",
+            "rocketmq.consumer.topic=test",
+            "rocketmq.accessChannel=LOCAL").
+            run((context) -> {
+                assertThat(context).hasSingleBean(DefaultLitePullConsumer.class);
+                assertThat(context).hasSingleBean(RocketMQProperties.class);
+            });
 
     }
 
@@ -97,13 +97,13 @@ public class RocketMQAutoConfigurationTest {
             });
 
         runner.withPropertyValues("rocketmq.nameServer=127.0.0.1:9876",
-                "rocketmq.consumer.group=spring_rocketmq",
-                "rocketmq.consumer.topic=test",
-                "rocketmq.accessChannel=LOCAL123").
-                run((context) -> {
-                    //Should throw exception for bad accessChannel property
-                    assertThat(context).getFailure();
-                });
+            "rocketmq.consumer.group=spring_rocketmq",
+            "rocketmq.consumer.topic=test",
+            "rocketmq.accessChannel=LOCAL123").
+            run((context) -> {
+                //Should throw exception for bad accessChannel property
+                assertThat(context).getFailure();
+            });
     }
 
     @Test
@@ -118,11 +118,11 @@ public class RocketMQAutoConfigurationTest {
     @Test
     public void testDefaultLitePullConsumer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-                "rocketmq.consumer.group=spring_rocketmq",
-                "rocketmq.consumer.topic=test").
-                run((context) -> {
-                    assertThat(context).hasSingleBean(DefaultLitePullConsumer.class);
-                });
+            "rocketmq.consumer.group=spring_rocketmq",
+            "rocketmq.consumer.topic=test").
+            run((context) -> {
+                assertThat(context).hasSingleBean(DefaultLitePullConsumer.class);
+            });
     }
 
     @Test
@@ -140,10 +140,10 @@ public class RocketMQAutoConfigurationTest {
     @Test
     public void testExtRocketMQConsumer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.1.1:9876").
-                withUserConfiguration(TestExtRocketMQConsumerConfig.class, CustomObjectMappersConfig.class).
-                run((context) -> {
-                    assertThat(context).getBean("extRocketMQTemplate").hasFieldOrProperty("consumer");
-                });
+            withUserConfiguration(TestExtRocketMQConsumerConfig.class, CustomObjectMappersConfig.class).
+            run((context) -> {
+                assertThat(context).getBean("extRocketMQTemplate").hasFieldOrProperty("consumer");
+            });
     }
 
     @Test
@@ -154,8 +154,10 @@ public class RocketMQAutoConfigurationTest {
             "rocketmq.consumer.listeners.spring_rocketmq.FOO_TEST_TOPIC2=true").
             run((context) -> {
                 RocketMQProperties rocketMQProperties = context.getBean(RocketMQProperties.class);
-                assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC").booleanValue()).isEqualTo(false);
-                assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC2").booleanValue()).isEqualTo(true);
+                assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC").booleanValue())
+                    .isEqualTo(false);
+                assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC2").booleanValue())
+                    .isEqualTo(true);
             });
 
     }
@@ -344,6 +346,7 @@ public class RocketMQAutoConfigurationTest {
 
     @Configuration
     static class TestTransactionListenerConfig {
+
         @Bean
         public Object rocketMQLocalTransactionListener() {
             return new TestRocketMQLocalTransactionListener();

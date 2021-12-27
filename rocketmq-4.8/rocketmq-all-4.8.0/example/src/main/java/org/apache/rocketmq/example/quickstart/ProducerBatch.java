@@ -16,15 +16,19 @@
  */
 package org.apache.rocketmq.example.quickstart;
 
+import java.util.Arrays;
+import java.util.List;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 
 /**
  * This class demonstrates how to send messages to brokers using provided {@link DefaultMQProducer}.
  */
-public class ProducerTransaction {
+public class ProducerBatch {
 
     public static void main(String[] args) throws MQClientException, InterruptedException {
 
@@ -34,13 +38,24 @@ public class ProducerTransaction {
 
         producer.start();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             try {
-                Message msg = new Message("aaaaaaaa", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg = new Message("ccc", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg1 = new Message("ccc", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg2 = new Message("ccc", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg3 = new Message("ccc", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                List<Message> messages = Arrays.asList(msg, msg1, msg2, msg3);
+                producer.send(messages, new SendCallback() {
+                    @Override
+                    public void onSuccess(SendResult sendResult) {
+                        System.out.println("异步发送成功");
+                    }
 
-                // 事物消息
-                //producer.sendMessageInTransaction()
-
+                    @Override
+                    public void onException(Throwable e) {
+                        System.out.println("异步发送失败：" + e.getMessage());
+                    }
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }

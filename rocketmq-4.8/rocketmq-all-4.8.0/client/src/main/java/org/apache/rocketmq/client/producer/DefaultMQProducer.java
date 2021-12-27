@@ -254,8 +254,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
                     customizedTraceTopic, rpcHook);
                 dispatcher.setHostProducer(this.getDefaultMQProducerImpl());
                 traceDispatcher = dispatcher;
-                this.getDefaultMQProducerImpl().registerSendMessageHook(
-                    new SendMessageTraceHookImpl(traceDispatcher));
+                this.getDefaultMQProducerImpl().registerSendMessageHook(new SendMessageTraceHookImpl(traceDispatcher));
             } catch (Throwable e) {
                 log.error("system mqtrace hook init failed ,maybe can't send msg trace data");
             }
@@ -737,8 +736,7 @@ public class DefaultMQProducer extends ClientConfig implements MQProducer {
      * @return Transaction result.
      */
     @Override
-    public TransactionSendResult sendMessageInTransaction(Message msg,
-        Object arg) throws MQClientException {
+    public TransactionSendResult sendMessageInTransaction(Message msg, Object arg) throws MQClientException {
         throw new RuntimeException("sendMessageInTransaction not implement, please use TransactionMQProducer class");
     }
 

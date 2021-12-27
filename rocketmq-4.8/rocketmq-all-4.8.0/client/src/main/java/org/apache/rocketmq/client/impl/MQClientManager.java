@@ -45,7 +45,7 @@ public class MQClientManager {
 
     public MQClientInstance getOrCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
 
-        //clientId规则：IP@PID@unitName，如果不设置unitName，同一个JVM的clientId是相同的
+        // clientId规则：IP@PID@unitName，如果不设置unitName，同一个JVM的clientId是相同的
         String clientId = clientConfig.buildMQClientId();
 
         // 又因为当前this对象是单例的，只要clientId相同，MQClientInstance 实例相同

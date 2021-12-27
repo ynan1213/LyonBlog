@@ -16,11 +16,13 @@
  */
 package org.apache.rocketmq.example.quickstart;
 
-import java.util.List;
-
-import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.consumer.listener.*;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
+import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
+import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragelyByCircle;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -29,54 +31,66 @@ import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 /**
  * This example shows how to subscribe and consume messages using providing {@link DefaultMQPushConsumer}.
  */
-public class Consumer
-{
-    public static void main(String[] args) throws InterruptedException, MQClientException
-    {
+public class Consumer {
+
+    public static void main(String[] args) throws InterruptedException, MQClientException {
 
         System.setProperty("rocketmq.client.logUseSlf4j", "true");
 
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("ns01", "consume-group-001");
-        //DefaultMQPullConsumer pullConsumer = new DefaultMQPullConsumer();
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("xxx-group-xxx-030", true);
+        consumer.setNamespace("xxx");
+        //DefaultMQPullConsumer pullConsumer = new DefaultMQPullConsumer()
 
         // 消费组模式，集群还是广播，默认集群
         consumer.setMessageModel(MessageModel.CLUSTERING);
+        //consumer.setMessageModel(MessageModel.BROADCASTING);
 
         consumer.setNamesrvAddr("47.100.24.106:9876");
 
         // 默认是 CONSUME_FROM_LAST_OFFSET
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
 
-        // 从指定时间错开始消费
-        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
+        // 从指定时间戳开始消费
+        // consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
         // 必须是按照下面格式   年月日时分秒 如：20200722110701
-        consumer.setConsumeTimestamp("20200722110701");
-
+        // consumer.setConsumeTimestamp("20200722110701");
 
         // 可以订阅多个
-        consumer.subscribe("topic01", "*");
-        consumer.subscribe("aaaaaaaa", "*");
+        // subExpression 可以填多个，用 || 分隔
+        consumer.subscribe("request_topic111", "*");
 
         // 取消主题订阅
         // consumer.unsubscribe("TOPIC_02");
 
+        // 注册队列分配策略器
+        consumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragelyByCircle());
+
         // 注册消息消费钩子函数
         //consumer.getDefaultMQPushConsumerImpl().registerConsumeMessageHook(hook)
 
+        // 每次消费的条数，默认1条，也就是下面回调方法 消息条数
+        //consumer.setConsumeMessageBatchMaxSize();
+
+        // 默认为-1，重新消费次数，什么时候生效呢？
+        // 并发模式下：在消费消息返回LATER然后返回ACK消息给broker时会带上，在发送的时候会被默认设置为16 @see DefaultMQPushConsumerImpl.sendMessageBack
+        // 顺序模式下，是Integer.MAX_VALUE
+        consumer.setMaxReconsumeTimes(3);
+
         // 并发消费
         consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
-            System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msgs);
-            System.out.println("消息条数：" + msgs.size());
-            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+            MessageExt messageExt = msgs.get(0);
+            System.out.println("--------------");
+            System.out.println(messageExt.getProperties());
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         });
-
-        // 顺序消费
-        // consumer.registerMessageListener((MessageListenerOrderly) (msgs, context) -> {
-        //     return ConsumeOrderlyStatus.SUCCESS;
-        // });
+        AtomicInteger i = new AtomicInteger(0);
+        //顺序消费
+//        consumer.registerMessageListener((MessageListenerOrderly) (msgs, context) -> {
+//            System.out.println("-------- 第 " + i.incrementAndGet() + "次消费 ---------------");
+//            return ConsumeOrderlyStatus.SUCCESS;
+//        });
 
         consumer.start();
 
-        System.out.printf("Consumer Started.%n");
     }
 }

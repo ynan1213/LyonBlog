@@ -240,7 +240,8 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         }
         // 无参构造会默认设置为 DEFAULT_PRODUCER，但是这里为什么不能等于默认 DEFAULT_PRODUCER ？
         if (this.defaultMQProducer.getProducerGroup().equals(MixAll.DEFAULT_PRODUCER_GROUP)) {
-            throw new MQClientException("producerGroup can not equal " + MixAll.DEFAULT_PRODUCER_GROUP + ", please specify another one.", null);
+            throw new MQClientException("producerGroup can not equal " + MixAll.DEFAULT_PRODUCER_GROUP + ", please specify another one.",
+                null);
         }
     }
 
@@ -1223,8 +1224,8 @@ public class DefaultMQProducerImpl implements MQProducerInner {
     }
 
     public TransactionSendResult sendMessageInTransaction(final Message msg, final LocalTransactionExecuter localTransactionExecuter,
-        final Object arg)
-        throws MQClientException {
+        final Object arg) throws MQClientException {
+
         TransactionListener transactionListener = getCheckListener();
         if (null == localTransactionExecuter && null == transactionListener) {
             throw new MQClientException("tranExecutor is null", null);
@@ -1320,8 +1321,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
     }
 
     public void endTransaction(final SendResult sendResult, final LocalTransactionState localTransactionState,
-        final Throwable localException)
-        throws RemotingException, MQBrokerException, InterruptedException, UnknownHostException {
+        final Throwable localException) throws RemotingException, MQBrokerException, InterruptedException, UnknownHostException {
         final MessageId id;
         if (sendResult.getOffsetMsgId() != null) {
             id = MessageDecoder.decodeMessageId(sendResult.getOffsetMsgId());
@@ -1371,8 +1371,8 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         return this.sendDefaultImpl(msg, CommunicationMode.SYNC, null, timeout);
     }
 
-    public Message request(Message msg,
-        long timeout) throws RequestTimeoutException, MQClientException, RemotingException, MQBrokerException, InterruptedException {
+    public Message request(Message msg, long timeout)
+        throws RequestTimeoutException, MQClientException, RemotingException, MQBrokerException, InterruptedException {
         long beginTimestamp = System.currentTimeMillis();
         prepareSendRequest(msg, timeout);
         final String correlationId = msg.getProperty(MessageConst.PROPERTY_CORRELATION_ID);

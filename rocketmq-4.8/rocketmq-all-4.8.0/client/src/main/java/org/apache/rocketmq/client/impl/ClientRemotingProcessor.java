@@ -72,7 +72,7 @@ public class ClientRemotingProcessor extends AsyncNettyRequestProcessor implemen
                 return this.checkTransactionState(ctx, request);
 
             case RequestCode.NOTIFY_CONSUMER_IDS_CHANGED:
-                // Broker通知consumer数量发生变化，内部出发rebalance
+                // Broker通知consumer数量发生变化，内部出发 rebalance
                 return this.notifyConsumerIdsChanged(ctx, request);
 
             case RequestCode.RESET_CONSUMER_CLIENT_OFFSET:

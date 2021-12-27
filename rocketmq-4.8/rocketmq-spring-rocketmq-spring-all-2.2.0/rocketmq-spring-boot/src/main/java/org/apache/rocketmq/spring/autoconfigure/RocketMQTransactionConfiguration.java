@@ -45,15 +45,16 @@ public class RocketMQTransactionConfiguration implements ApplicationContextAware
 
     private ConfigurableApplicationContext applicationContext;
 
-    @Override public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = (ConfigurableApplicationContext) applicationContext;
     }
 
-    @Override public void afterSingletonsInstantiated() {
+    @Override
+    public void afterSingletonsInstantiated() {
         Map<String, Object> beans = this.applicationContext.getBeansWithAnnotation(RocketMQTransactionListener.class)
             .entrySet().stream().filter(entry -> !ScopedProxyUtils.isScopedTarget(entry.getKey()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
         beans.forEach(this::registerTransactionListener);
     }
 
@@ -68,9 +69,11 @@ public class RocketMQTransactionConfiguration implements ApplicationContextAware
         if (((TransactionMQProducer) rocketMQTemplate.getProducer()).getTransactionListener() != null) {
             throw new IllegalStateException(annotation.rocketMQTemplateBeanName() + " already exists RocketMQLocalTransactionListener");
         }
-        ((TransactionMQProducer) rocketMQTemplate.getProducer()).setExecutorService(new ThreadPoolExecutor(annotation.corePoolSize(), annotation.maximumPoolSize(),
-            annotation.keepAliveTime(), TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(annotation.blockingQueueSize())));
-        ((TransactionMQProducer) rocketMQTemplate.getProducer()).setTransactionListener(RocketMQUtil.convert((RocketMQLocalTransactionListener) bean));
+        ((TransactionMQProducer) rocketMQTemplate.getProducer())
+            .setExecutorService(new ThreadPoolExecutor(annotation.corePoolSize(), annotation.maximumPoolSize(),
+                annotation.keepAliveTime(), TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(annotation.blockingQueueSize())));
+        ((TransactionMQProducer) rocketMQTemplate.getProducer())
+            .setTransactionListener(RocketMQUtil.convert((RocketMQLocalTransactionListener) bean));
         log.debug("RocketMQLocalTransactionListener {} register to {} success", clazz.getName(), annotation.rocketMQTemplateBeanName());
     }
 }

@@ -31,20 +31,21 @@ public class ProducerSync {
 
         // DefaultMQProducer producer = new DefaultMQProducer("namespace0001", "producerGroupTest0001");
         // DefaultMQProducer producer = new DefaultMQProducer("producerGroupTest0001");
-        DefaultMQProducer producer = new DefaultMQProducer();
-        producer.setNamespace("xxxx");
+        // enableMsgTrace：开启消息轨迹
+        DefaultMQProducer producer = new DefaultMQProducer("groupName", true);
+        producer.setNamespace("xxx");
 
         producer.setNamesrvAddr("47.100.24.106:9876");
 
         producer.start();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1; i++) {
             try {
-                Message msg = new Message("aaaaaaaa", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg = new Message("signal_topic", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
 
                 // key用于建立索引，之后可以通过命令工具/API/或者管理平台查询key，可以为一个消息设置多个key，用空格""进行分割
                 // key存在properties中，
-                msg.setKeys("hello");
+                msg.setKeys("message_keys");
 
                 //同步发送
                 SendResult sendResult = producer.send(msg);

@@ -16,6 +16,8 @@
  */
 package org.apache.rocketmq.client.trace;
 
+import static org.apache.rocketmq.client.trace.TraceConstants.TRACE_INSTANCE_NAME;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,8 +51,6 @@ import org.apache.rocketmq.common.topic.TopicValidator;
 import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.remoting.RPCHook;
 
-import static org.apache.rocketmq.client.trace.TraceConstants.TRACE_INSTANCE_NAME;
-
 public class AsyncTraceDispatcher implements TraceDispatcher {
 
     private final static InternalLogger log = ClientLogger.getLog();
@@ -76,7 +76,7 @@ public class AsyncTraceDispatcher implements TraceDispatcher {
     private String group;
     private Type type;
 
-    public AsyncTraceDispatcher(String group, Type type,String traceTopicName, RPCHook rpcHook) {
+    public AsyncTraceDispatcher(String group, Type type, String traceTopicName, RPCHook rpcHook) {
         // queueSize is greater than or equal to the n power of 2 of value
         this.queueSize = 2048;
         this.batchSize = 100;
@@ -165,7 +165,7 @@ public class AsyncTraceDispatcher implements TraceDispatcher {
     }
 
     private String genGroupNameForTrace() {
-        return TraceConstants.GROUP_NAME_PREFIX + "-" + this.group + "-" + this.type ;
+        return TraceConstants.GROUP_NAME_PREFIX + "-" + this.group + "-" + this.type;
     }
 
     @Override
@@ -234,6 +234,7 @@ public class AsyncTraceDispatcher implements TraceDispatcher {
     }
 
     class AsyncRunnable implements Runnable {
+
         private boolean stopped;
 
         @Override
@@ -265,6 +266,7 @@ public class AsyncTraceDispatcher implements TraceDispatcher {
     }
 
     class AsyncAppenderRequest implements Runnable {
+
         List<TraceContext> contextList;
 
         public AsyncAppenderRequest(final List<TraceContext> contextList) {

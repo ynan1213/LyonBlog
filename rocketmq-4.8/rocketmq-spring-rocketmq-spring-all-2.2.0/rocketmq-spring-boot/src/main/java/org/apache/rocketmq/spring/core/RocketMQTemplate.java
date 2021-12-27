@@ -17,6 +17,15 @@
 
 package org.apache.rocketmq.spring.core;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -44,18 +53,9 @@ import org.springframework.messaging.core.MessagePostProcessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.MimeTypeUtils;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> implements InitializingBean, DisposableBean {
+
     private static final Logger log = LoggerFactory.getLogger(RocketMQTemplate.class);
 
     private DefaultMQProducer producer;
@@ -108,7 +108,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param destination formats: `topicName:tags`
      * @param message {@link org.springframework.messaging.Message} the message to be sent.
      * @param type The type of T
-     * @return
      */
     public <T> T sendAndReceive(String destination, Message<?> message, Type type) {
         return sendAndReceive(destination, message, type, null, producer.getSendMsgTimeout(), 0);
@@ -118,7 +117,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param destination formats: `topicName:tags`
      * @param payload the payload to be sent.
      * @param type The type of T
-     * @return
      */
     public <T> T sendAndReceive(String destination, Object payload, Type type) {
         return sendAndReceive(destination, payload, type, null, producer.getSendMsgTimeout(), 0);
@@ -129,7 +127,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param message {@link org.springframework.messaging.Message} the message to be sent.
      * @param type The type of T
      * @param timeout send timeout in millis
-     * @return
      */
     public <T> T sendAndReceive(String destination, Message<?> message, Type type, long timeout) {
         return sendAndReceive(destination, message, type, null, timeout, 0);
@@ -140,7 +137,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param payload the payload to be sent.
      * @param type The type of T
      * @param timeout send timeout in millis
-     * @return
      */
     public <T> T sendAndReceive(String destination, Object payload, Type type, long timeout) {
         return sendAndReceive(destination, payload, type, null, timeout, 0);
@@ -152,7 +148,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param type The type of T
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
     public <T> T sendAndReceive(String destination, Message<?> message, Type type, long timeout, int delayLevel) {
         return sendAndReceive(destination, message, type, null, timeout, delayLevel);
@@ -164,7 +159,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param type The type of T
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
     public <T> T sendAndReceive(String destination, Object payload, Type type, long timeout, int delayLevel) {
         return sendAndReceive(destination, payload, type, null, timeout, delayLevel);
@@ -175,7 +169,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param message {@link org.springframework.messaging.Message} the message to be sent.
      * @param type The type of T
      * @param hashKey needed when sending message orderly
-     * @return
      */
     public <T> T sendAndReceive(String destination, Message<?> message, Type type, String hashKey) {
         return sendAndReceive(destination, message, type, hashKey, producer.getSendMsgTimeout(), 0);
@@ -186,7 +179,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param payload the payload to be sent.
      * @param type The type of T
      * @param hashKey needed when sending message orderly
-     * @return
      */
     public <T> T sendAndReceive(String destination, Object payload, Type type, String hashKey) {
         return sendAndReceive(destination, payload, type, hashKey, producer.getSendMsgTimeout(), 0);
@@ -198,7 +190,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param type The type of T
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
-     * @return
      */
     public <T> T sendAndReceive(String destination, Message<?> message, Type type, String hashKey, long timeout) {
         return sendAndReceive(destination, message, type, hashKey, timeout, 0);
@@ -208,8 +199,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param destination formats: `topicName:tags`
      * @param payload the payload to be sent.
      * @param type The type of T
-     * @param hashKey
-     * @return
      */
     public <T> T sendAndReceive(String destination, Object payload, Type type, String hashKey, long timeout) {
         return sendAndReceive(destination, payload, type, hashKey, timeout, 0);
@@ -222,10 +211,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
-    public <T> T sendAndReceive(String destination, Message<?> message, Type type, String hashKey,
-        long timeout, int delayLevel) {
+    public <T> T sendAndReceive(String destination, Message<?> message, Type type, String hashKey, long timeout, int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
             log.error("send request message failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
@@ -257,10 +244,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
-    public <T> T sendAndReceive(String destination, Object payload, Type type, String hashKey,
-        long timeout, int delayLevel) {
+    public <T> T sendAndReceive(String destination, Object payload, Type type, String hashKey, long timeout, int delayLevel) {
         Message<?> message = MessageBuilder.withPayload(payload).build();
         return sendAndReceive(destination, message, type, hashKey, timeout, delayLevel);
     }
@@ -269,10 +254,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param destination formats: `topicName:tags`
      * @param message {@link org.springframework.messaging.Message} the message to be sent.
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
-     * @return
      */
-    public void sendAndReceive(String destination, Message<?> message,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback) {
+    public void sendAndReceive(String destination, Message<?> message, RocketMQLocalRequestCallback rocketMQLocalRequestCallback) {
         sendAndReceive(destination, message, rocketMQLocalRequestCallback, null, producer.getSendMsgTimeout(), 0);
     }
 
@@ -280,10 +263,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param destination formats: `topicName:tags`
      * @param payload the payload to be sent.
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
-     * @return
      */
-    public void sendAndReceive(String destination, Object payload,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback) {
+    public void sendAndReceive(String destination, Object payload, RocketMQLocalRequestCallback rocketMQLocalRequestCallback) {
         sendAndReceive(destination, payload, rocketMQLocalRequestCallback, null, producer.getSendMsgTimeout(), 0);
     }
 
@@ -292,10 +273,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param message {@link org.springframework.messaging.Message} the message to be sent.
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param timeout send timeout in millis
-     * @return
      */
-    public void sendAndReceive(String destination, Message<?> message,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, long timeout) {
+    public void sendAndReceive(String destination, Message<?> message, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        long timeout) {
         sendAndReceive(destination, message, rocketMQLocalRequestCallback, null, timeout, 0);
     }
 
@@ -304,10 +284,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param payload the payload to be sent.
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param timeout send timeout in millis
-     * @return
      */
-    public void sendAndReceive(String destination, Object payload,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, long timeout) {
+    public void sendAndReceive(String destination, Object payload, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        long timeout) {
         sendAndReceive(destination, payload, rocketMQLocalRequestCallback, null, timeout, 0);
     }
 
@@ -317,10 +296,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
-    public void sendAndReceive(String destination, Message<?> message,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, long timeout, int delayLevel) {
+    public void sendAndReceive(String destination, Message<?> message, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        long timeout, int delayLevel) {
         sendAndReceive(destination, message, rocketMQLocalRequestCallback, null, timeout, delayLevel);
     }
 
@@ -329,10 +307,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param payload the payload to be sent.
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param hashKey needed when sending message orderly
-     * @return
      */
-    public void sendAndReceive(String destination, Object payload,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey) {
+    public void sendAndReceive(String destination, Object payload, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        String hashKey) {
         sendAndReceive(destination, payload, rocketMQLocalRequestCallback, hashKey, producer.getSendMsgTimeout(), 0);
     }
 
@@ -342,10 +319,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
-     * @return
      */
-    public void sendAndReceive(String destination, Message<?> message,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey, long timeout) {
+    public void sendAndReceive(String destination, Message<?> message, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        String hashKey, long timeout) {
         sendAndReceive(destination, message, rocketMQLocalRequestCallback, hashKey, timeout, 0);
     }
 
@@ -355,10 +331,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
-     * @return
      */
-    public void sendAndReceive(String destination, Object payload,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey, long timeout) {
+    public void sendAndReceive(String destination, Object payload, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        String hashKey, long timeout) {
         sendAndReceive(destination, payload, rocketMQLocalRequestCallback, hashKey, timeout, 0);
     }
 
@@ -367,7 +342,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param message {@link org.springframework.messaging.Message} the message to be sent.
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param hashKey needed when sending message orderly
-     * @return
      */
     public void sendAndReceive(String destination, Message<?> message,
         RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey) {
@@ -380,10 +354,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param rocketMQLocalRequestCallback callback that will invoked when reply message received.
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
-    public void sendAndReceive(String destination, Object payload,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, long timeout, int delayLevel) {
+    public void sendAndReceive(String destination, Object payload, RocketMQLocalRequestCallback rocketMQLocalRequestCallback, long timeout,
+        int delayLevel) {
         sendAndReceive(destination, payload, rocketMQLocalRequestCallback, null, timeout, delayLevel);
     }
 
@@ -394,10 +367,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
-    public void sendAndReceive(String destination, Object payload,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey, long timeout, int delayLevel) {
+    public void sendAndReceive(String destination, Object payload, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        String hashKey, long timeout, int delayLevel) {
         Message<?> message = MessageBuilder.withPayload(payload).build();
         sendAndReceive(destination, message, rocketMQLocalRequestCallback, hashKey, timeout, delayLevel);
     }
@@ -412,10 +384,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param hashKey needed when sending message orderly
      * @param timeout send timeout in millis
      * @param delayLevel message delay level(0 means no delay)
-     * @return
      */
-    public void sendAndReceive(String destination, Message<?> message,
-        RocketMQLocalRequestCallback rocketMQLocalRequestCallback, String hashKey, long timeout, int delayLevel) {
+    public void sendAndReceive(String destination, Message<?> message, RocketMQLocalRequestCallback rocketMQLocalRequestCallback,
+        String hashKey, long timeout, int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
             log.error("send request message failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
@@ -432,11 +403,14 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             RequestCallback requestCallback = null;
             if (rocketMQLocalRequestCallback != null) {
                 requestCallback = new RequestCallback() {
-                    @Override public void onSuccess(org.apache.rocketmq.common.message.Message message) {
-                        rocketMQLocalRequestCallback.onSuccess(doConvertMessage((MessageExt) message, getMessageType(rocketMQLocalRequestCallback)));
+                    @Override
+                    public void onSuccess(org.apache.rocketmq.common.message.Message message) {
+                        rocketMQLocalRequestCallback
+                            .onSuccess(doConvertMessage((MessageExt) message, getMessageType(rocketMQLocalRequestCallback)));
                     }
 
-                    @Override public void onException(Throwable e) {
+                    @Override
+                    public void onException(Throwable e) {
                         rocketMQLocalRequestCallback.onException(e);
                     }
                 };
@@ -665,8 +639,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param timeout send timeout with millis
      * @param delayLevel level for the delay message
      */
-    public void asyncSend(String destination, Message<?> message, SendCallback sendCallback, long timeout,
-        int delayLevel) {
+    public void asyncSend(String destination, Message<?> message, SendCallback sendCallback, long timeout, int delayLevel) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
             log.error("asyncSend failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
@@ -747,8 +720,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param sendCallback {@link SendCallback}
      * @param timeout send timeout with millis
      */
-    public void asyncSendOrderly(String destination, Message<?> message, String hashKey, SendCallback sendCallback,
-        long timeout) {
+    public void asyncSendOrderly(String destination, Message<?> message, String hashKey, SendCallback sendCallback, long timeout) {
         if (Objects.isNull(message) || Objects.isNull(message.getPayload())) {
             log.error("asyncSendOrderly failed. destination:{}, message is null ", destination);
             throw new IllegalArgumentException("`message` and `message.payload` cannot be null");
@@ -795,8 +767,7 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param sendCallback {@link SendCallback}
      * @param timeout send timeout with millis
      */
-    public void asyncSendOrderly(String destination, Object payload, String hashKey, SendCallback sendCallback,
-        long timeout) {
+    public void asyncSendOrderly(String destination, Object payload, String hashKey, SendCallback sendCallback, long timeout) {
         Message<?> message = MessageBuilder.withPayload(payload).build();
         asyncSendOrderly(destination, message, hashKey, sendCallback, timeout);
     }
@@ -914,10 +885,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * @param message message {@link org.springframework.messaging.Message}
      * @param arg ext arg
      * @return TransactionSendResult
-     * @throws MessagingException
      */
-    public TransactionSendResult sendMessageInTransaction(final String destination,
-        final Message<?> message, final Object arg) throws MessagingException {
+    public TransactionSendResult sendMessageInTransaction(final String destination, final Message<?> message, final Object arg)
+        throws MessagingException {
         try {
             if (((TransactionMQProducer) producer).getTransactionListener() == null) {
                 throw new IllegalStateException("The rocketMQTemplate does not exist TransactionListener");
@@ -929,11 +899,9 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
         }
     }
 
-    private org.apache.rocketmq.common.message.Message createRocketMqMessage(
-        String destination, Message<?> message) {
+    private org.apache.rocketmq.common.message.Message createRocketMqMessage(String destination, Message<?> message) {
         Message<?> msg = this.doConvert(message.getPayload(), message.getHeaders(), null);
-        return RocketMQUtil.convertToRocketMessage(getMessageConverter(), charset,
-            destination, msg);
+        return RocketMQUtil.convertToRocketMessage(getMessageConverter(), charset, destination, msg);
     }
 
     private Object doConvertMessage(MessageExt messageExt, Type type) {
@@ -954,7 +922,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
                     } else {
                         //if the messageType has Generic Parameter, then use SmartMessageConverter#fromMessage with third parameter "conversionHint".
                         //we have validate the MessageConverter is SmartMessageConverter in this#getMethodParameter.
-                        return ((SmartMessageConverter) this.getMessageConverter()).fromMessage(MessageBuilder.withPayload(str).build(), (Class<?>) ((ParameterizedType) type).getRawType(), null);
+                        return ((SmartMessageConverter) this.getMessageConverter())
+                            .fromMessage(MessageBuilder.withPayload(str).build(), (Class<?>) ((ParameterizedType) type).getRawType(), null);
                     }
                 } catch (Exception e) {
                     log.error("convert failed. str:{}, msgType:{}", str, type);
@@ -971,7 +940,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
             Type[] interfaces = targetClass.getGenericInterfaces();
             if (Objects.nonNull(interfaces)) {
                 for (Type type : interfaces) {
-                    if (type instanceof ParameterizedType && (Objects.equals(((ParameterizedType) type).getRawType(), RocketMQLocalRequestCallback.class))) {
+                    if (type instanceof ParameterizedType && (Objects
+                        .equals(((ParameterizedType) type).getRawType(), RocketMQLocalRequestCallback.class))) {
                         matchedGenericInterface = type;
                         break;
                     }
@@ -994,7 +964,6 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
      * receive message  in pull mode.
      *
      * @param clazz message object type
-     * @param <T>
      * @return message list
      */
     public <T> List<T> receive(Class<T> clazz) {
@@ -1004,9 +973,8 @@ public class RocketMQTemplate extends AbstractMessageSendingTemplate<String> imp
     /**
      * Same to {@link #receive(Class<T>)} with receive timeout specified in addition.
      *
-     * @param clazz   message object type
+     * @param clazz message object type
      * @param timeout receive timeout with millis
-     * @param <T>
      * @return message list
      */
     public <T> List<T> receive(Class<T> clazz, long timeout) {

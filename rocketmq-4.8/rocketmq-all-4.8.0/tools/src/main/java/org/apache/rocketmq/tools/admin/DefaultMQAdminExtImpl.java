@@ -421,9 +421,8 @@ public class DefaultMQAdminExtImpl implements MQAdminExt, MQAdminExtInner {
     }
 
     @Override
-    public void deleteSubscriptionGroup(String addr,
-        String groupName) throws RemotingException, MQBrokerException, InterruptedException,
-        MQClientException {
+    public void deleteSubscriptionGroup(String addr, String groupName)
+        throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         this.mqClientInstance.getMQClientAPIImpl().deleteSubscriptionGroup(addr, groupName, timeoutMillis);
     }
 

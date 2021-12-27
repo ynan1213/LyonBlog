@@ -40,7 +40,6 @@ public class SubscriptionData implements Comparable<SubscriptionData> {
     private String filterClassSource;
 
     public SubscriptionData() {
-
     }
 
     public SubscriptionData(String topic, String subString) {

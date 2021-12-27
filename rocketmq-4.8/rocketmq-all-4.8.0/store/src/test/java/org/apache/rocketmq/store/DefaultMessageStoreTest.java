@@ -17,6 +17,10 @@
 
 package org.apache.rocketmq.store;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
@@ -45,12 +49,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultMessageStoreTest {
+
     private final String StoreMessage = "Once, there was a chance for me!";
     private int QUEUE_TOTAL = 100;
     private AtomicInteger QueueId = new AtomicInteger(0);
@@ -112,7 +113,8 @@ public class DefaultMessageStoreTest {
         messageStoreConfig.setMaxIndexNum(100 * 100);
         messageStoreConfig.setFlushDiskType(FlushDiskType.SYNC_FLUSH);
         messageStoreConfig.setFlushIntervalConsumeQueue(1);
-        return new DefaultMessageStore(messageStoreConfig, new BrokerStatsManager("simpleTest"), new MyMessageArrivingListener(), new BrokerConfig());
+        return new DefaultMessageStore(messageStoreConfig, new BrokerStatsManager("simpleTest"), new MyMessageArrivingListener(),
+            new BrokerConfig());
     }
 
     @Test
@@ -584,7 +586,8 @@ public class DefaultMessageStoreTest {
         //damage last message
         damageCommitlog(secondLastPhyOffset);
         //add abort file
-        String fileName = StorePathConfigHelper.getAbortFile(((DefaultMessageStore) messageStore).getMessageStoreConfig().getStorePathRootDir());
+        String fileName = StorePathConfigHelper
+            .getAbortFile(((DefaultMessageStore) messageStore).getMessageStoreConfig().getStorePathRootDir());
         File file = new File(fileName);
         MappedFile.ensureDirOK(file.getParent());
         file.createNewFile();
@@ -626,6 +629,7 @@ public class DefaultMessageStoreTest {
     }
 
     private class MyMessageArrivingListener implements MessageArrivingListener {
+
         @Override
         public void arriving(String topic, int queueId, long logicOffset, long tagsCode, long msgStoreTime,
             byte[] filterBitMap, Map<String, String> properties) {

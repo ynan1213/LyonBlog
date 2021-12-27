@@ -127,22 +127,19 @@ public class RocketMQUtil {
         }
     }
 
-    public static org.springframework.messaging.Message convertToSpringMessage(
-        org.apache.rocketmq.common.message.Message message) {
-        MessageBuilder messageBuilder =
-            MessageBuilder.withPayload(message.getBody()).
-                setHeader(toRocketHeaderKey(RocketMQHeaders.KEYS), message.getKeys()).
-                setHeader(toRocketHeaderKey(RocketMQHeaders.TAGS), message.getTags()).
-                setHeader(toRocketHeaderKey(RocketMQHeaders.TOPIC), message.getTopic()).
-                setHeader(toRocketHeaderKey(RocketMQHeaders.FLAG), message.getFlag()).
-                setHeader(toRocketHeaderKey(RocketMQHeaders.TRANSACTION_ID), message.getTransactionId());
+    public static org.springframework.messaging.Message convertToSpringMessage(org.apache.rocketmq.common.message.Message message) {
+        MessageBuilder messageBuilder = MessageBuilder.withPayload(message.getBody()).
+            setHeader(toRocketHeaderKey(RocketMQHeaders.KEYS), message.getKeys()).
+            setHeader(toRocketHeaderKey(RocketMQHeaders.TAGS), message.getTags()).
+            setHeader(toRocketHeaderKey(RocketMQHeaders.TOPIC), message.getTopic()).
+            setHeader(toRocketHeaderKey(RocketMQHeaders.FLAG), message.getFlag()).
+            setHeader(toRocketHeaderKey(RocketMQHeaders.TRANSACTION_ID), message.getTransactionId());
         addUserProperties(message.getProperties(), messageBuilder);
         return messageBuilder.build();
     }
 
     @Deprecated
-    public static org.apache.rocketmq.common.message.Message convertToRocketMessage(
-        ObjectMapper objectMapper, String charset,
+    public static org.apache.rocketmq.common.message.Message convertToRocketMessage(ObjectMapper objectMapper, String charset,
         String destination, org.springframework.messaging.Message message) {
         Object payloadObj = message.getPayload();
         byte[] payloads;
@@ -179,6 +176,7 @@ public class RocketMQUtil {
         if (Objects.nonNull(headers) && !headers.isEmpty()) {
             Object keys = headers.get(RocketMQHeaders.KEYS);
             // if headers not have 'KEYS', try add prefix when getting keys
+            // 如果没有KEYS，则使用 rocketmq_KEYS
             if (StringUtils.isEmpty(keys)) {
                 keys = headers.get(toRocketHeaderKey(RocketMQHeaders.KEYS));
             }
@@ -196,11 +194,12 @@ public class RocketMQUtil {
                 }
             }
             rocketMsg.setFlag(flag);
+
             Object waitStoreMsgOkObj = headers.getOrDefault("WAIT_STORE_MSG_OK", "true");
             rocketMsg.setWaitStoreMsgOK(Boolean.TRUE.equals(waitStoreMsgOkObj));
+
             headers.entrySet().stream()
-                .filter(entry -> !Objects.equals(entry.getKey(), "FLAG")
-                    && !Objects.equals(entry.getKey(), "WAIT_STORE_MSG_OK")) // exclude "FLAG", "WAIT_STORE_MSG_OK"
+                .filter(entry -> !Objects.equals(entry.getKey(), "FLAG") && !Objects.equals(entry.getKey(), "WAIT_STORE_MSG_OK")) // exclude "FLAG", "WAIT_STORE_MSG_OK"
                 .forEach(entry -> {
                     if (!MessageConst.STRING_HASH_SET.contains(entry.getKey())) {
                         rocketMsg.putUserProperty(entry.getKey(), String.valueOf(entry.getValue()));
@@ -210,9 +209,18 @@ public class RocketMQUtil {
         return rocketMsg;
     }
 
+    /**
+     * Spring的 Message payload 可以为任一类型，RocketMQ 的 Message 的 body 是 byte[] 类型
+     *
+     * destination 为 topic:tag
+     *
+     */
     public static org.apache.rocketmq.common.message.Message convertToRocketMessage(
-        MessageConverter messageConverter, String charset,
-        String destination, org.springframework.messaging.Message<?> message) {
+        MessageConverter messageConverter,
+        String charset,
+        String destination,
+        org.springframework.messaging.Message<?> message) {
+
         Object payloadObj = message.getPayload();
         byte[] payloads;
         try {
@@ -257,6 +265,7 @@ public class RocketMQUtil {
         String customizedTraceTopic) {
         boolean isEnableAcl = !StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk);
         DefaultMQProducer producer;
+        // 默认情况下不会开启
         if (isEnableAcl) {
             producer = new TransactionMQProducer(groupName, new AclClientRPCHook(new SessionCredentials(ak, sk)));
             producer.setVipChannelEnabled(false);
@@ -289,16 +298,18 @@ public class RocketMQUtil {
 
     public static DefaultLitePullConsumer createDefaultLitePullConsumer(String nameServer, String accessChannel,
         String groupName, String topicName, MessageModel messageModel, SelectorType selectorType,
-        String selectorExpression, String ak, String sk, int pullBatchSize)
-        throws MQClientException {
+        String selectorExpression, String ak, String sk, int pullBatchSize) throws MQClientException {
+
         DefaultLitePullConsumer litePullConsumer = null;
         if (!StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk)) {
             litePullConsumer = new DefaultLitePullConsumer(groupName, new AclClientRPCHook(new SessionCredentials(ak, sk)));
             litePullConsumer.setVipChannelEnabled(false);
         } else {
+            // 默认是该类型
             litePullConsumer = new DefaultLitePullConsumer(groupName);
         }
         litePullConsumer.setNamesrvAddr(nameServer);
+        // nameServer@pid
         litePullConsumer.setInstanceName(RocketMQUtil.getInstanceName(nameServer));
         litePullConsumer.setPullBatchSize(pullBatchSize);
         if (accessChannel != null) {

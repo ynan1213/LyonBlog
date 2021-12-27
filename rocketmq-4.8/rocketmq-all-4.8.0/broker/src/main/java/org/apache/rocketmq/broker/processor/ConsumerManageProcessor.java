@@ -21,7 +21,6 @@ import java.util.List;
 import org.apache.rocketmq.broker.BrokerController;
 import org.apache.rocketmq.broker.client.ConsumerGroupInfo;
 import org.apache.rocketmq.common.constant.LoggerName;
-import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.common.protocol.RequestCode;
 import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.header.GetConsumerListByGroupRequestHeader;
@@ -31,6 +30,7 @@ import org.apache.rocketmq.common.protocol.header.QueryConsumerOffsetRequestHead
 import org.apache.rocketmq.common.protocol.header.QueryConsumerOffsetResponseHeader;
 import org.apache.rocketmq.common.protocol.header.UpdateConsumerOffsetRequestHeader;
 import org.apache.rocketmq.common.protocol.header.UpdateConsumerOffsetResponseHeader;
+import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
@@ -39,6 +39,7 @@ import org.apache.rocketmq.remoting.netty.NettyRequestProcessor;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
 public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implements NettyRequestProcessor {
+
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
 
     private final BrokerController brokerController;
@@ -76,9 +77,8 @@ public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implemen
             (GetConsumerListByGroupRequestHeader) request
                 .decodeCommandCustomHeader(GetConsumerListByGroupRequestHeader.class);
 
-        ConsumerGroupInfo consumerGroupInfo =
-            this.brokerController.getConsumerManager().getConsumerGroupInfo(
-                requestHeader.getConsumerGroup());
+        ConsumerGroupInfo consumerGroupInfo = this.brokerController.getConsumerManager()
+            .getConsumerGroupInfo(requestHeader.getConsumerGroup());
         if (consumerGroupInfo != null) {
             List<String> clientIds = consumerGroupInfo.getAllClientId();
             if (!clientIds.isEmpty()) {
@@ -109,15 +109,15 @@ public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implemen
         final UpdateConsumerOffsetRequestHeader requestHeader =
             (UpdateConsumerOffsetRequestHeader) request
                 .decodeCommandCustomHeader(UpdateConsumerOffsetRequestHeader.class);
-        this.brokerController.getConsumerOffsetManager().commitOffset(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), requestHeader.getConsumerGroup(),
-            requestHeader.getTopic(), requestHeader.getQueueId(), requestHeader.getCommitOffset());
+        this.brokerController.getConsumerOffsetManager()
+            .commitOffset(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), requestHeader.getConsumerGroup(),
+                requestHeader.getTopic(), requestHeader.getQueueId(), requestHeader.getCommitOffset());
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
     }
 
-    private RemotingCommand queryConsumerOffset(ChannelHandlerContext ctx, RemotingCommand request)
-        throws RemotingCommandException {
+    private RemotingCommand queryConsumerOffset(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response =
             RemotingCommand.createResponseCommand(QueryConsumerOffsetResponseHeader.class);
         final QueryConsumerOffsetResponseHeader responseHeader =
@@ -126,21 +126,23 @@ public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implemen
             (QueryConsumerOffsetRequestHeader) request
                 .decodeCommandCustomHeader(QueryConsumerOffsetRequestHeader.class);
 
-        long offset =
-            this.brokerController.getConsumerOffsetManager().queryOffset(
-                requestHeader.getConsumerGroup(), requestHeader.getTopic(), requestHeader.getQueueId());
+        // 如果没有该消费组的偏移量记录，返回 -1
+        long offset = this.brokerController.getConsumerOffsetManager().queryOffset(
+            requestHeader.getConsumerGroup(), requestHeader.getTopic(), requestHeader.getQueueId());
 
         if (offset >= 0) {
             responseHeader.setOffset(offset);
             response.setCode(ResponseCode.SUCCESS);
             response.setRemark(null);
         } else {
-            long minOffset =
-                this.brokerController.getMessageStore().getMinOffsetInQueue(requestHeader.getTopic(),
-                    requestHeader.getQueueId());
+            // 如果上面没有找到，再查找该 messageQueue 最小的偏移量
+            // 获取topic对应的队列的最小偏移量。新的队列或消息数据未清理过的话，返回值为0（注意：如果新扩容队列也是新队列）
+            long minOffset = this.brokerController.getMessageStore()
+                .getMinOffsetInQueue(requestHeader.getTopic(), requestHeader.getQueueId());
             if (minOffset <= 0
-                && !this.brokerController.getMessageStore().checkInDiskByConsumeOffset(
-                requestHeader.getTopic(), requestHeader.getQueueId(), 0)) {
+                // 检查此队列的最老的数据是否还在内存，在内存则返回0
+                && !this.brokerController.getMessageStore()
+                .checkInDiskByConsumeOffset(requestHeader.getTopic(), requestHeader.getQueueId(), 0)) {
                 responseHeader.setOffset(0L);
                 response.setCode(ResponseCode.SUCCESS);
                 response.setRemark(null);

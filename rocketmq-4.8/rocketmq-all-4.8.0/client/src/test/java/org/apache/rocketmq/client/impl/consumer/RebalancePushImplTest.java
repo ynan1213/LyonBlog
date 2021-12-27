@@ -16,6 +16,12 @@
  */
 package org.apache.rocketmq.client.impl.consumer;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,27 +41,31 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class RebalancePushImplTest {
+
     @Spy
-    private DefaultMQPushConsumerImpl defaultMQPushConsumer = new DefaultMQPushConsumerImpl(new DefaultMQPushConsumer("RebalancePushImplTest"), null);
+    private DefaultMQPushConsumerImpl defaultMQPushConsumer = new DefaultMQPushConsumerImpl(
+        new DefaultMQPushConsumer("RebalancePushImplTest"), null);
+
     @Mock
     private MQClientInstance mqClientInstance;
+
     @Mock
     private OffsetStore offsetStore;
+
     private String consumerGroup = "CID_RebalancePushImplTest";
     private String topic = "TopicA";
 
     @Test
     public void testMessageQueueChanged_CountThreshold() {
-        RebalancePushImpl rebalancePush = new RebalancePushImpl(consumerGroup, MessageModel.CLUSTERING,
-            new AllocateMessageQueueAveragely(), mqClientInstance, defaultMQPushConsumer);
+        RebalancePushImpl rebalancePush = new RebalancePushImpl(
+            consumerGroup,
+            MessageModel.CLUSTERING,
+            new AllocateMessageQueueAveragely(),
+            mqClientInstance,
+            defaultMQPushConsumer);
+
         init(rebalancePush);
 
         // Just set pullThresholdForQueue
@@ -84,9 +94,9 @@ public class RebalancePushImplTest {
     }
 
     private void init(final RebalancePushImpl rebalancePush) {
-        rebalancePush.getSubscriptionInner().putIfAbsent(topic, new SubscriptionData());
+        SubscriptionData subscriptionData = rebalancePush.getSubscriptionInner().putIfAbsent(topic, new SubscriptionData());
 
-        rebalancePush.subscriptionInner.putIfAbsent(topic, new SubscriptionData());
+        SubscriptionData subscriptionData1 = rebalancePush.subscriptionInner.putIfAbsent(topic, new SubscriptionData());
 
         when(mqClientInstance.findConsumerIdList(anyString(), anyString())).thenReturn(Collections.singletonList(consumerGroup));
         when(mqClientInstance.getClientId()).thenReturn(consumerGroup);

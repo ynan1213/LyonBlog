@@ -39,11 +39,12 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.exception.RemotingCommandException;
-import org.apache.rocketmq.remoting.netty.NettyRequestProcessor;
 import org.apache.rocketmq.remoting.netty.AsyncNettyRequestProcessor;
+import org.apache.rocketmq.remoting.netty.NettyRequestProcessor;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
 public class ClientManageProcessor extends AsyncNettyRequestProcessor implements NettyRequestProcessor {
+
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final BrokerController brokerController;
 
@@ -75,30 +76,36 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
     public RemotingCommand heartBeat(ChannelHandlerContext ctx, RemotingCommand request) {
         RemotingCommand response = RemotingCommand.createResponseCommand(null);
         HeartbeatData heartbeatData = HeartbeatData.decode(request.getBody(), HeartbeatData.class);
-        ClientChannelInfo clientChannelInfo = new ClientChannelInfo(ctx.channel(), heartbeatData.getClientID(), request.getLanguage(), request.getVersion());
+        ClientChannelInfo clientChannelInfo = new ClientChannelInfo(ctx.channel(), heartbeatData.getClientID(), request.getLanguage(),
+            request.getVersion());
 
-        // 为什么一个心跳包会有多个消费者呢？ 如果一共jvm中有多个consumer，都会注册到同一个 MQClientInstance 中，发送心跳包是由 MQClientInstance发送的
+        // 为什么一个心跳包会有多个消费者呢？ 如果一个jvm中有多个consumer，都会注册到同一个 MQClientInstance 中，发送心跳包是由 MQClientInstance发送的
         for (ConsumerData data : heartbeatData.getConsumerDataSet()) {
-            // 查找当前消费组是否存在，也就是是否已经在本broker上注册，
-            // 如果没注册的话就判断自动注册是否开启autoCreateSubscriptionGroup = true，
-            // 否则就要在broker启动时注册或者在控制台注册。如果是系统消费组的话，自动注册。
-            SubscriptionGroupConfig subscriptionGroupConfig = this.brokerController.getSubscriptionGroupManager().findSubscriptionGroupConfig(data.getGroupName());
+            // 查找当前消费组，如果在该broker注册过就直接返回，如果没注册过就判断broker的autoCreateSubscriptionGroup的配置属性
+            // 为true就创建一个SubscriptionGroupConfig并返回
+            // 为false就返回null（这种情况强行消费就会抛出subscription group not exist），这种情况的解决方法：控制台注册
+            SubscriptionGroupConfig subscriptionGroupConfig = this.brokerController.getSubscriptionGroupManager()
+                .findSubscriptionGroupConfig(data.getGroupName());
             boolean isNotifyConsumerIdsChangedEnable = true;
             if (null != subscriptionGroupConfig) {
                 isNotifyConsumerIdsChangedEnable = subscriptionGroupConfig.isNotifyConsumerIdsChangedEnable();
                 int topicSysFlag = 0;
+
+                // 默认为false，不知道该属性的作用 ？？？
                 if (data.isUnitMode()) {
                     topicSysFlag = TopicSysFlag.buildSysFlag(false, true);
                 }
 
-                // 创建消费组的重试topic，并且在broker上创建该信息，然后同步给配置中心。
+                // 创建消费组的重试topic【%RETRY% + groupName】，并且同步namesrv，不过之前有了的话是不会再次创建了的
+                // 每个 consumer 启动的时候都会默认订阅topic为 【%RETRY% + groupName】
+                // 重试topic 的队列大小默认就为 1
                 String newTopic = MixAll.getRetryTopic(data.getGroupName());
                 this.brokerController.getTopicConfigManager().createTopicInSendMessageBackMethod(
                     newTopic, subscriptionGroupConfig.getRetryQueueNums(), PermName.PERM_WRITE | PermName.PERM_READ, topicSysFlag);
             }
 
-            // 在本地注册消费组信息，更新网络通道信息，订阅信息等。
-            // 最后根据消费组配置notifyConsumerIdsChangedEnable = true来发布消费组更新事件，发布注册事件
+            // 上面是注册了订阅组信息，接下来注册消费组信息，更新网络通道信息，订阅信息等。
+            // 最后根据消费组配置 isNotifyConsumerIdsChangedEnable = true来发布消费组更新事件，发布注册事件
             boolean changed = this.brokerController.getConsumerManager().registerConsumer(
                 data.getGroupName(),
                 clientChannelInfo,
@@ -122,13 +129,11 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
         return response;
     }
 
-    public RemotingCommand unregisterClient(ChannelHandlerContext ctx, RemotingCommand request)
-        throws RemotingCommandException {
+    public RemotingCommand unregisterClient(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response =
             RemotingCommand.createResponseCommand(UnregisterClientResponseHeader.class);
         final UnregisterClientRequestHeader requestHeader =
-            (UnregisterClientRequestHeader) request
-                .decodeCommandCustomHeader(UnregisterClientRequestHeader.class);
+            (UnregisterClientRequestHeader) request.decodeCommandCustomHeader(UnregisterClientRequestHeader.class);
 
         ClientChannelInfo clientChannelInfo = new ClientChannelInfo(
             ctx.channel(),

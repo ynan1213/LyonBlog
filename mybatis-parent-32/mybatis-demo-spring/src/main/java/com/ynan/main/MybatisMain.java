@@ -4,6 +4,8 @@ import com.ynan.config.RootAnnoConfig;
 import com.ynan.config.RootConfig;
 import com.ynan.dao.UserDao;
 import com.ynan.entity.User;
+import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -64,6 +66,14 @@ public class MybatisMain {
         }
         //        sqlSession.flushStatements();
         //        userDao.flush();
+    }
+
+    @Test
+    public void test4map() {
+        AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootConfig.class);
+        UserDao userDao = ac.getBean(UserDao.class);
+        Map map = userDao.returnMap();
+        System.out.println(map);
     }
 
 }

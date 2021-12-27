@@ -2,7 +2,9 @@ package com.ynan.dao;
 
 import com.ynan.entity.User;
 import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.annotations.Flush;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -19,4 +21,7 @@ public interface UserDao {
 
     @Flush
     void flush();
+
+    @MapKey("name")
+    Map returnMap();
 }

@@ -21,25 +21,25 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
  * @create: 2021-06-25 18:42
  */
 
-//@Configuration
-//@ComponentScan("com.ynan")
-//@PropertySource("classpath:db.properties")
+@Configuration
+@ComponentScan("com.ynan")
+@PropertySource("classpath:db.properties")
 public class RootConfig {
 
     /**
      * 不知道为什么 @Value读取不到@PropertySource注入的配置
      * 但是 Environment 可以
      */
-    @Value("${jdbc.driver}")
+//    @Value("${jdbc.driver}")
     private String driverClassName;
 
-    @Value("${jdbc.url}")
+//    @Value("${jdbc.url}")
     private String url;
 
-    @Value("${jdbc.username}")
+//    @Value("${jdbc.username}")
     private String username;
 
-    @Value("${jdbc.password}")
+//    @Value("${jdbc.password}")
     private String password;
 
     @Bean

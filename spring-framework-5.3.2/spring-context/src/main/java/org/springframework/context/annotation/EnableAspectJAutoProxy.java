@@ -116,6 +116,12 @@ import java.lang.annotation.Target;
  * @since 3.1
  * @see org.aspectj.lang.annotation.Aspect
  */
+
+/**
+ * Spring5 AOP 默认依旧使用 JDK 动态代理
+ * SpringBoot 2.x 版本中，AOP 默认使用 cglib，且无法通过proxyTargetClass进行修改。
+ * 那是不是 SpringBoot 2.x 版本做了一些改动呢？
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented

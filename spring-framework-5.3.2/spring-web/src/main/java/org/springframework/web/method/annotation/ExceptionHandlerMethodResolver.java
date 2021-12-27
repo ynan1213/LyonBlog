@@ -75,7 +75,9 @@ public class ExceptionHandlerMethodResolver {
 	@SuppressWarnings("unchecked")
 	private List<Class<? extends Throwable>> detectExceptionMappings(Method method) {
 		List<Class<? extends Throwable>> result = new ArrayList<>();
+		// 首先查找 @ExceptionHandler 注解的value值
 		detectAnnotationExceptionMappings(method, result);
+		// @ExceptionHandler注解的value值为空才取参数中找，也就是说注解的优先级高
 		if (result.isEmpty()) {
 			for (Class<?> paramType : method.getParameterTypes()) {
 				if (Throwable.class.isAssignableFrom(paramType)) {
@@ -97,6 +99,7 @@ public class ExceptionHandlerMethodResolver {
 
 	private void addExceptionMapping(Class<? extends Throwable> exceptionType, Method method) {
 		Method oldMethod = this.mappedMethods.put(exceptionType, method);
+		// 不能重复
 		if (oldMethod != null && !oldMethod.equals(method)) {
 			throw new IllegalStateException("Ambiguous @ExceptionHandler method mapped for [" +
 					exceptionType + "]: {" + oldMethod + ", " + method + "}");

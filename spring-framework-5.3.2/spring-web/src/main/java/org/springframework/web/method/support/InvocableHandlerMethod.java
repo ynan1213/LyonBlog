@@ -225,6 +225,7 @@ public class InvocableHandlerMethod extends HandlerMethod
 		} catch (InvocationTargetException ex)
 		{
 			// Unwrap for HandlerExceptionResolvers ...
+			// 注意：业务方法抛出的异常，在反射调用时都会被 InvocationTargetException 包装，所以这里会取出原先的异常
 			Throwable targetException = ex.getTargetException();
 			if (targetException instanceof RuntimeException)
 			{

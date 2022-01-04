@@ -162,6 +162,7 @@ final class HystrixInvocationHandler implements InvocationHandler {
 		} else if (isReturnsCompletableFuture(method)) {
 			return new ObservableCompletableFuture<>(hystrixCommand);
 		}
+		// execute 是同步执行，queue 是异步执行
 		return hystrixCommand.execute();
 	}
 

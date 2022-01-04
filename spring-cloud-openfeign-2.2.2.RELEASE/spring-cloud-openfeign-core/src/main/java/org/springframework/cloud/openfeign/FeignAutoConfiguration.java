@@ -77,6 +77,7 @@ public class FeignAutoConfiguration {
 		return context;
 	}
 
+	// spring-cloud-openfeign-core模块默认已经引入了Hystrix 的依赖
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(name = "feign.hystrix.HystrixFeign")
 	protected static class HystrixFeignTargeterConfiguration {

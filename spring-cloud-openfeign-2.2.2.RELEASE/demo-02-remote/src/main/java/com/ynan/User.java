@@ -1,11 +1,11 @@
-package com.ynan.entity;
+package com.ynan;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * @Author yuannan
- * @Date 2021/11/27 17:54
+ * @Date 2022/1/1 20:53
  */
 @Data
 @AllArgsConstructor

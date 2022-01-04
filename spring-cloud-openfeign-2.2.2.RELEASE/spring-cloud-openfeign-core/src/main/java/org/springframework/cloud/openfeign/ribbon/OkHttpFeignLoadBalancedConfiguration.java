@@ -33,6 +33,13 @@ import org.springframework.context.annotation.Import;
  * @author Olga Maciaszek-Sharma
  */
 @Configuration(proxyBeanMethods = false)
+/**
+ * <dependency>
+ *     <groupId>io.github.openfeign</groupId>
+ *     <artifactId>feign-okhttp</artifactId>
+ * </dependency>
+ * 需要主动引入该依赖才会生效
+ */
 @ConditionalOnClass(OkHttpClient.class)
 @ConditionalOnProperty("feign.okhttp.enabled")
 @Import(OkHttpFeignConfiguration.class)

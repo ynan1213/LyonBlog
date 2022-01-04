@@ -2,6 +2,7 @@ package com.ynan.config;
 
 import com.ynan.entity.User;
 import com.ynan.feign.RemoteService;
+import feign.Request.Options;
 import feign.Response;
 
 /**
@@ -11,12 +12,17 @@ import feign.Response;
 public class XxxFallback implements RemoteService {
 
 	@Override
-	public String remote(String name, String address) {
-		return "xxxyyy";
+	public User remote(String name, User user, String address) {
+		return new User("zzzzzzzzzzz", 12, "降级");
 	}
 
 	@Override
 	public Response remote1(String name, User user, String address) {
+		return null;
+	}
+
+	@Override
+	public String bbb(String name, Options options) {
 		return null;
 	}
 

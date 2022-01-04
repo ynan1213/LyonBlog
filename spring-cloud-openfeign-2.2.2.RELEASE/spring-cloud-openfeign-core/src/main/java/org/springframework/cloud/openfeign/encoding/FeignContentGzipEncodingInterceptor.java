@@ -33,8 +33,7 @@ public class FeignContentGzipEncodingInterceptor extends BaseRequestInterceptor 
 	 * Creates new instance of {@link FeignContentGzipEncodingInterceptor}.
 	 * @param properties the encoding properties
 	 */
-	protected FeignContentGzipEncodingInterceptor(
-			FeignClientEncodingProperties properties) {
+	protected FeignContentGzipEncodingInterceptor(FeignClientEncodingProperties properties) {
 		super(properties);
 	}
 
@@ -43,10 +42,8 @@ public class FeignContentGzipEncodingInterceptor extends BaseRequestInterceptor 
 	 */
 	@Override
 	public void apply(RequestTemplate template) {
-
 		if (requiresCompression(template)) {
-			addHeader(template, HttpEncoding.CONTENT_ENCODING_HEADER,
-					HttpEncoding.GZIP_ENCODING, HttpEncoding.DEFLATE_ENCODING);
+			addHeader(template, HttpEncoding.CONTENT_ENCODING_HEADER, HttpEncoding.GZIP_ENCODING, HttpEncoding.DEFLATE_ENCODING);
 		}
 	}
 
@@ -58,8 +55,7 @@ public class FeignContentGzipEncodingInterceptor extends BaseRequestInterceptor 
 	private boolean requiresCompression(RequestTemplate template) {
 
 		final Map<String, Collection<String>> headers = template.headers();
-		return matchesMimeType(headers.get(HttpEncoding.CONTENT_TYPE))
-				&& contentLengthExceedThreshold(headers.get(HttpEncoding.CONTENT_LENGTH));
+		return matchesMimeType(headers.get(HttpEncoding.CONTENT_TYPE)) && contentLengthExceedThreshold(headers.get(HttpEncoding.CONTENT_LENGTH));
 	}
 
 	/**

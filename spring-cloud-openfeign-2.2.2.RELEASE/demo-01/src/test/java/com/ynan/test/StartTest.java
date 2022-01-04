@@ -26,6 +26,10 @@ public class StartTest {
 
 	@Test
 	public void test1() {
-		System.out.println(service.t1("world"));
+		try {
+			System.out.println(service.t1("world"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

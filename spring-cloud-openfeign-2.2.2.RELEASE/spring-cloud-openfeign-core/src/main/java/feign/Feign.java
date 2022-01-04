@@ -247,7 +247,8 @@ public abstract class Feign {
 		}
 
 		public <T> T target(Target<T> target) {
-			return build().newInstance(target);
+			Feign feign = this.build();
+			return feign.newInstance(target);
 		}
 
 		public Feign build() {

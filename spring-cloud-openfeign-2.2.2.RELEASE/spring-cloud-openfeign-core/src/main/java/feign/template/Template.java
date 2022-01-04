@@ -46,9 +46,7 @@ public class Template {
 	 * @param encode all values.
 	 * @param encodeSlash if slash characters should be encoded.
 	 */
-	Template(
-		String value, ExpansionOptions allowUnresolved, EncodingOptions encode, boolean encodeSlash,
-		Charset charset) {
+	Template(String value, ExpansionOptions allowUnresolved, EncodingOptions encode, boolean encodeSlash, Charset charset) {
 		if (value == null) {
 			throw new IllegalArgumentException("template is required.");
 		}
@@ -100,9 +98,7 @@ public class Template {
 		return resolved.toString();
 	}
 
-	protected String resolveExpression(
-		Expression expression,
-		Map<String, ?> variables) {
+	protected String resolveExpression(Expression expression, Map<String, ?> variables) {
 		String resolved = null;
 		Object value = variables.get(expression.getName());
 		if (value != null) {
@@ -204,8 +200,7 @@ public class Template {
 
 	@Override
 	public String toString() {
-		return this.templateChunks.stream()
-			.map(TemplateChunk::getValue).collect(Collectors.joining());
+		return this.templateChunks.stream().map(TemplateChunk::getValue).collect(Collectors.joining());
 	}
 
 	public boolean encodeLiteral() {

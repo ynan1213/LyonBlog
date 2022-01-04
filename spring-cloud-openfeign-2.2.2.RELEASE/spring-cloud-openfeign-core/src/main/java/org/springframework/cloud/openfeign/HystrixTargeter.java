@@ -32,11 +32,12 @@ import org.springframework.util.StringUtils;
 class HystrixTargeter implements Targeter {
 
 	@Override
-	public <T> T target(FeignClientFactoryBean factory, Feign.Builder feign, FeignContext context, Target.HardCodedTarget<T> target) {
-		if (!(feign instanceof feign.hystrix.HystrixFeign.Builder)) {
-			return feign.target(target);
+	public <T> T target(FeignClientFactoryBean factory, Feign.Builder feignBuilder, FeignContext context, Target.HardCodedTarget<T> target) {
+		if (!(feignBuilder instanceof feign.hystrix.HystrixFeign.Builder)) {
+			return feignBuilder.target(target);
 		}
-		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feign;
+		// 想要走到这里，必须配置 feign.hystrix.enabled=true（或者自定义Builder的类型)
+		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feignBuilder;
 		String name = StringUtils.isEmpty(factory.getContextId()) ? factory.getName() : factory.getContextId();
 
 		// SetterFactory 用法不清楚
@@ -56,8 +57,8 @@ class HystrixTargeter implements Targeter {
 		if (fallbackFactory != void.class) {
 			return targetWithFallbackFactory(name, context, target, builder, fallbackFactory);
 		}
-
-		return feign.target(target);
+		// 如果未配置 fallback 和 fallbackFactory，则会走到这里，不带降级功能
+		return feignBuilder.target(target);
 	}
 
 	private <T> T targetWithFallbackFactory(String feignClientName, FeignContext context, Target.HardCodedTarget<T> target, HystrixFeign.Builder builder, Class<?> fallbackFactoryClass) {

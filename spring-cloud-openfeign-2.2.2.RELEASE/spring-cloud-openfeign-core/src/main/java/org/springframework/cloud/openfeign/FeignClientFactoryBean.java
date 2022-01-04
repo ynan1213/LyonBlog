@@ -147,6 +147,8 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		if (errorDecoder != null) {
 			builder.errorDecoder(errorDecoder);
 		}
+		// 如果没有自定义，则注入的是父容器中 FeignRibbonClientAutoConfiguration 配置类注入的全局 Options
+		// 默认：connectTimeout=10，readTimeout=60
 		Request.Options options = getOptional(context, Request.Options.class);
 		if (options != null) {
 			builder.options(options);
@@ -275,6 +277,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		FeignContext context = this.applicationContext.getBean(FeignContext.class);
 		Feign.Builder builder = feign(context);
 
+		// 如果未配置url，则进入if，生成有负载均衡功能的代理类
 		if (!StringUtils.hasText(this.url)) {
 			if (!this.name.startsWith("http")) {
 				this.url = "http://" + this.name;
@@ -284,14 +287,20 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			}
 			// 拼接上 path，path起通用前缀的作用
 			this.url += cleanPath();
-			// 如果未配置url，则走负载均衡，生成有负载均衡功能的代理类
 			return (T) loadBalance(builder, context, new HardCodedTarget<>(this.type, this.name, this.url));
 		}
 
+		// 如果 url 不以 http:// 开头，则拼接上
 		if (StringUtils.hasText(this.url) && !this.url.startsWith("http")) {
 			this.url = "http://" + this.url;
 		}
+		// 拼接上 path，path起通用前缀的作用
 		String url = this.url + cleanPath();
+		/**
+		 * spring.factories 注入了 FeignRibbonClientAutoConfiguration 类，在该类上 @Import 三个client实现
+		 * 根据配置属性的不同会有不同的生效，默认是 DefaultFeignLoadBalancedConfiguration
+		 * 因为该对象是在父context中，所以每个@FeignClient共享同一个client
+		 */
 		Client client = getOptional(context, Client.class);
 
 		// 如果指定了url，则不走注册中心的负载均衡
@@ -307,6 +316,8 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 			}
 			builder.client(client);
 		}
+		// Targeter 在父容器中，由 FeignAutoConfiguration 类注入
+		// 由于spring-cloud-openfeign-core模块默认已经引入了Hystrix 的依赖，所以这里默认是HystrixTargeter；
 		Targeter targeter = get(context, Targeter.class);
 		return (T) targeter.target(this, builder, context, new HardCodedTarget<>(this.type, this.name, url));
 	}

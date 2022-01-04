@@ -1,8 +1,8 @@
 package com.ynan.feign;
 
 import com.ynan.config.XxxFallback;
-import com.ynan.config.XxxFallbackFactory;
 import com.ynan.entity.User;
+import feign.Request.Options;
 import feign.Response;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 	/*url = "http://localhost:8002",*/
 	contextId = "aaa",
 	path = "/remote",
-	/*configuration = XxxCustomConfiguration.class*/
+	/*configuration = XxxCustomConfiguration.class,*/
 	/*fallbackFactory = XxxFallbackFactory.class,*/
 	fallback = XxxFallback.class
 )
@@ -31,9 +31,12 @@ public interface RemoteService {
 	 * 2. 同样的path只能配置一个值，path可以配置${}占位符；
 	 * 3. produces、consumes、headers在这里同样也会生效，都可以配置多个，但是只有第一个会生效
 	 */
-	@RequestMapping("/name")
-	String remote(@RequestParam String name, String address);
-
+	@RequestMapping(
+		value = "/name",
+		//produces = "application/xml",
+		consumes = "application/json"
+	)
+	User remote(@RequestParam String name, @RequestParam("user") User user, String address);
 
 	/**
 	 * 方法返回值可以直接 Response 类型
@@ -46,6 +49,12 @@ public interface RemoteService {
 	 */
 	//@PostMapping("/aaa")
 	//String aaa(@RequestParam String name, @RequestBody User user, String address);
+
+	/**
+	 * 可以在参数中传入 Options 对象，实现对单个接口的超时设置
+	 */
+	@GetMapping("/bbb")
+	String bbb(@RequestParam String name, Options options);
 
 	/**
 	 * 这样不会报错，难道get请求也可以发送请求体吗？

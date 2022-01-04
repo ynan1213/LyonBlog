@@ -1,5 +1,6 @@
 package com.ynan.config;
 
+import feign.Logger;
 import feign.Logger.Level;
 import feign.Request.Options;
 import feign.Retryer;
@@ -24,10 +25,18 @@ public class XxxDefaultConfiguration {
 	}
 
 	@Bean
-	public Options getOptions() {
-		return new Options(5, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, true);
+	public Logger getLogger() {
+		return new MyCustomFeignLogger();
 	}
 
+//	@Bean
+//	public Options getOptions() {
+//		return new Options(5, TimeUnit.SECONDS, 5, TimeUnit.SECONDS, true);
+//	}
+
+	/**
+	 * openfeign默认是不重试的
+	 */
 	@Bean
 	public Retryer feignRetryer() {
 		// period=100 发起当前请求的时间间隔,单位毫秒

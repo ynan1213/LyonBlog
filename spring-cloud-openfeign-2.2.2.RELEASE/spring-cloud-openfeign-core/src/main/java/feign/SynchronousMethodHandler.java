@@ -79,16 +79,21 @@ final class SynchronousMethodHandler implements MethodHandler {
 		// 对于没有注解或者是被 @RequestBody 注解的参数，被写入到 RequestTemplate 的请求体body中
 		RequestTemplate template = buildTemplateFromArgs.create(argv);
 
-		// 方法参数中传递 Options 对象，这种用法没见过，可能是兼容老版本
+		// 如果方法参数中传递了 Options 对象，这种用法没见过，可能是兼容老版本
+		// 如果方法参数中没有传递，则返回全局的 Options
 		Options options = findOptions(argv);
+
+		// 复制一份是因为 Retryer 对象是有状态的，里面有重试次数等属性
 		Retryer retryer = this.retryer.clone();
 		while (true) {
 			try {
 				return executeAndDecode(template, options);
 			} catch (RetryableException e) {
 				try {
+					// 解析是否重试，或者是否还有重试次数，如果否的话会将 RetryableException 异常原封抛出
 					retryer.continueOrPropagate(e);
 				} catch (RetryableException th) {
+					// 从 RetryableException 中取出原先的异常然后往外抛出
 					Throwable cause = th.getCause();
 					if (propagationPolicy == UNWRAP && cause != null) {
 						throw cause;
@@ -105,6 +110,8 @@ final class SynchronousMethodHandler implements MethodHandler {
 	}
 
 	Object executeAndDecode(RequestTemplate template, Options options) throws Throwable {
+
+		// RequestInterceptor 在这里生效
 		Request request = targetRequest(template);
 
 		if (logLevel != Logger.Level.NONE) {
@@ -118,12 +125,11 @@ final class SynchronousMethodHandler implements MethodHandler {
 			// ensure the request is set. TODO: remove in Feign 12
 			response = response.toBuilder().request(request).requestTemplate(template).build();
 		} catch (IOException e) {
-			// 不知道什么情况下会抛出 IOException 异常
-			// 比如读取超时，可以自己写demo模拟
+			// 不知道是不是 读取超时，或者connect不通等情况下只会抛出 IOException 异常
 			if (logLevel != Logger.Level.NONE) {
 				logger.logIOException(metadata.configKey(), logLevel, e, elapsedTime(start));
 			}
-			// 抛出 RetryableException 异常
+			// 将 IOException 封装成 RetryableException 异常并抛出
 			throw errorExecuting(request, e);
 		}
 		long elapsedTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
@@ -132,8 +138,7 @@ final class SynchronousMethodHandler implements MethodHandler {
 		// 对于正常返回包括 404、500 等都会走下面
 		try {
 			if (logLevel != Logger.Level.NONE) {
-				// todo 先注掉
-				// response = logger.logAndRebufferResponse(metadata.configKey(), logLevel, response, elapsedTime);
+				response = logger.logAndRebufferResponse(metadata.configKey(), logLevel, response, elapsedTime);
 			}
 			// 方法返回值是response
 			if (Response.class == metadata.returnType()) {

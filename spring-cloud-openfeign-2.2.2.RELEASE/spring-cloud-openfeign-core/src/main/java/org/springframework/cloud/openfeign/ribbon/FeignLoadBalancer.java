@@ -53,8 +53,7 @@ import static org.springframework.cloud.netflix.ribbon.RibbonUtils.updateToSecur
  * @author Tim Ysewyn
  * @author Olga Maciaszek-Sharma
  */
-public class FeignLoadBalancer extends
-		AbstractLoadBalancerAwareClient<FeignLoadBalancer.RibbonRequest, FeignLoadBalancer.RibbonResponse> {
+public class FeignLoadBalancer extends AbstractLoadBalancerAwareClient<FeignLoadBalancer.RibbonRequest, FeignLoadBalancer.RibbonResponse> {
 
 	private final RibbonProperties ribbon;
 
@@ -66,8 +65,7 @@ public class FeignLoadBalancer extends
 
 	protected ServerIntrospector serverIntrospector;
 
-	public FeignLoadBalancer(ILoadBalancer lb, IClientConfig clientConfig,
-			ServerIntrospector serverIntrospector) {
+	public FeignLoadBalancer(ILoadBalancer lb, IClientConfig clientConfig, ServerIntrospector serverIntrospector) {
 		super(lb, clientConfig);
 		this.setRetryHandler(RetryHandler.DEFAULT);
 		this.clientConfig = clientConfig;
@@ -93,19 +91,15 @@ public class FeignLoadBalancer extends
 	}
 
 	@Override
-	public RequestSpecificRetryHandler getRequestSpecificRetryHandler(
-			RibbonRequest request, IClientConfig requestConfig) {
+	public RequestSpecificRetryHandler getRequestSpecificRetryHandler(RibbonRequest request, IClientConfig requestConfig) {
 		if (this.ribbon.isOkToRetryOnAllOperations()) {
-			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(),
-					requestConfig);
+			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(), requestConfig);
 		}
 		if (!request.toRequest().httpMethod().name().equals("GET")) {
-			return new RequestSpecificRetryHandler(true, false, this.getRetryHandler(),
-					requestConfig);
+			return new RequestSpecificRetryHandler(true, false, this.getRetryHandler(), requestConfig);
 		}
 		else {
-			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(),
-					requestConfig);
+			return new RequestSpecificRetryHandler(true, true, this.getRetryHandler(), requestConfig);
 		}
 	}
 

@@ -35,6 +35,7 @@ import org.springframework.cloud.netflix.ribbon.SpringClientFactory;
  */
 public class LoadBalancerFeignClient implements Client {
 
+	// 默认的选项：connectTimeout=10，readTimeout=60
 	static final Request.Options DEFAULT_OPTIONS = new Request.Options();
 
 	private final Client delegate;
@@ -87,7 +88,8 @@ public class LoadBalancerFeignClient implements Client {
 	IClientConfig getClientConfig(Request.Options options, String clientName) {
 		IClientConfig requestConfig;
 		if (options == DEFAULT_OPTIONS) {
-			// 如果是默认的，并未取默认的数值，通过debug，里面取的是ribbon的默认值，连接和读取均是 1s，具体要看ribbon的源码
+			// 如果是默认的，并未取默认的数值，通过debug，里面取的是ribbon的默认值（有个父子容器），连接和读取均是 1s，具体要看ribbon的源码
+			// clientFactory 是一个 NamedContextFactory
 			requestConfig = this.clientFactory.getClientConfig(clientName);
 		}
 		else {

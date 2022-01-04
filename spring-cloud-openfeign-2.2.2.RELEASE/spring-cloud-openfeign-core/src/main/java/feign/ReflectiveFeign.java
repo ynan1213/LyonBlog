@@ -42,8 +42,7 @@ public class ReflectiveFeign extends Feign {
 	private final InvocationHandlerFactory factory;
 	private final QueryMapEncoder queryMapEncoder;
 
-	ReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory,
-		QueryMapEncoder queryMapEncoder) {
+	ReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory, QueryMapEncoder queryMapEncoder) {
 		this.targetToHandlersByName = targetToHandlersByName;
 		this.factory = factory;
 		this.queryMapEncoder = queryMapEncoder;
@@ -56,6 +55,7 @@ public class ReflectiveFeign extends Feign {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T newInstance(Target<T> target) {
+		// 解析 method
 		Map<String, MethodHandler> nameToHandler = targetToHandlersByName.apply(target);
 		Map<Method, MethodHandler> methodToHandler = new LinkedHashMap<Method, MethodHandler>();
 		List<DefaultMethodHandler> defaultMethodHandlers = new LinkedList<DefaultMethodHandler>();
@@ -64,16 +64,23 @@ public class ReflectiveFeign extends Feign {
 			if (method.getDeclaringClass() == Object.class) {
 				continue;
 			} else if (Util.isDefault(method)) {
+				// default 方法封装成 DefaultMethodHandler
 				DefaultMethodHandler handler = new DefaultMethodHandler(method);
 				defaultMethodHandlers.add(handler);
 				methodToHandler.put(method, handler);
 			} else {
+				// 其它方法在上面已经解析成了 SynchronousMethodHandler
 				methodToHandler.put(method, nameToHandler.get(Feign.configKey(target.type(), method)));
 			}
 		}
+
+		// 到这里 methodToHandler 缓存的内容：
+		// 		key 是 @FeignClient 注解所在接口的原生 method
+		//		value 是原生 method 包装成的 SynchronousMethodHandler
 		InvocationHandler handler = factory.create(target, methodToHandler);
 		T proxy = (T) Proxy.newProxyInstance(target.type().getClassLoader(), new Class<?>[]{target.type()}, handler);
 
+		// default 方法
 		for (DefaultMethodHandler defaultMethodHandler : defaultMethodHandlers) {
 			defaultMethodHandler.bindTo(proxy);
 		}
@@ -166,7 +173,7 @@ public class ReflectiveFeign extends Feign {
 					// 如果表单参数不为空并且请求体模板为空
 					buildTemplate = new BuildFormEncodedTemplateFromArgs(md, encoder, queryMapEncoder, target);
 				} else if (md.bodyIndex() != null) {
-					// 请求体
+					// 有请求体
 					buildTemplate = new BuildEncodedTemplateFromArgs(md, encoder, queryMapEncoder, target);
 				} else {
 					// 普通的请求参数
@@ -223,7 +230,7 @@ public class ReflectiveFeign extends Feign {
 
 			// 从Contract的分析可知这里的urlIndex，代表的是方法中的参数可以是一个URI，会在这里抽取出来被拼接到原本的url的前面。
 			// 不知道具体用法，估计是以前的遗留功能，后来没用了吧
-			// 后面发现，可以通过这种方法实现url的动态切换，在方法中传入一个URI，动态替换
+			// 后面发现，可以通过这种方法实现url的动态切换，在方法中传入一个URI，此时@FeignClient中的url值在该方法中将不再生效。
 			if (metadata.urlIndex() != null) {
 				int urlIndex = metadata.urlIndex();
 				checkArgument(argv[urlIndex] != null, "URI parameter %s was null", urlIndex);
@@ -381,8 +388,7 @@ public class ReflectiveFeign extends Feign {
 
 		private final Encoder encoder;
 
-		private BuildEncodedTemplateFromArgs(MethodMetadata metadata, Encoder encoder,
-			QueryMapEncoder queryMapEncoder, Target target) {
+		private BuildEncodedTemplateFromArgs(MethodMetadata metadata, Encoder encoder, QueryMapEncoder queryMapEncoder, Target target) {
 			super(metadata, queryMapEncoder, target);
 			this.encoder = encoder;
 		}

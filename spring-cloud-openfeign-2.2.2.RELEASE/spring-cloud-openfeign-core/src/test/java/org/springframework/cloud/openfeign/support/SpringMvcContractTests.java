@@ -704,13 +704,10 @@ public class SpringMvcContractTests {
 	public interface TestTemplate_Advanced {
 
 		@ExceptionHandler
-		@RequestMapping(path = "/test/{id}", method = RequestMethod.PUT,
-				produces = MediaType.APPLICATION_JSON_VALUE)
-		ResponseEntity<TestObject> getTest(@RequestHeader("Authorization") String auth,
-				@PathVariable("id") String id, @RequestParam("amount") Integer amount);
+		@RequestMapping(path = "/test/{id}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+		ResponseEntity<TestObject> getTest(@RequestHeader("Authorization") String auth, @PathVariable("id") String id, @RequestParam("amount") Integer amount);
 
-		@RequestMapping(path = "/test2", method = RequestMethod.PUT,
-				produces = MediaType.APPLICATION_JSON_VALUE)
+		@RequestMapping(path = "/test2", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 		ResponseEntity<TestObject> getTest2(
 				@RequestHeader(name = "Authorization") String auth,
 				@RequestParam(name = "amount") Integer amount);

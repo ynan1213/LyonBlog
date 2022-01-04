@@ -52,8 +52,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = FeignHttpClientUrlTests.TestConfig.class,
 		webEnvironment = DEFINED_PORT,
-		value = { "spring.application.name=feignclienturltest",
-				"feign.hystrix.enabled=false", "feign.okhttp.enabled=false" })
+		value = { "spring.application.name=feignclienturltest", "feign.hystrix.enabled=false", "feign.okhttp.enabled=false" })
 @DirtiesContext
 public class FeignHttpClientUrlTests {
 
@@ -132,8 +131,7 @@ public class FeignHttpClientUrlTests {
 	@Configuration(proxyBeanMethods = false)
 	@EnableAutoConfiguration
 	@RestController
-	@EnableFeignClients(clients = { UrlClient.class, BeanUrlClient.class,
-			BeanUrlClientNoProtocol.class })
+	@EnableFeignClients(clients = { UrlClient.class, BeanUrlClient.class, BeanUrlClientNoProtocol.class })
 	@Import(NoSecurityConfiguration.class)
 	protected static class TestConfig {
 
@@ -161,21 +159,17 @@ public class FeignHttpClientUrlTests {
 		public Targeter feignTargeter() {
 			return new Targeter() {
 				@Override
-				public <T> T target(FeignClientFactoryBean factory, Feign.Builder feign,
-						FeignContext context, Target.HardCodedTarget<T> target) {
-					Field field = ReflectionUtils.findField(Feign.Builder.class,
-							"client");
+				public <T> T target(FeignClientFactoryBean factory, Feign.Builder feign, FeignContext context, Target.HardCodedTarget<T> target) {
+					Field field = ReflectionUtils.findField(Feign.Builder.class, "client");
 					ReflectionUtils.makeAccessible(field);
 					Client client = (Client) ReflectionUtils.getField(field, feign);
 					if (target.name().equals("localappurl")) {
-						assertThat(client).isInstanceOf(ApacheHttpClient.class)
-								.as("client was wrong type");
+						assertThat(client).isInstanceOf(ApacheHttpClient.class).as("client was wrong type");
 					}
 					return feign.target(target);
 				}
 			};
 		}
-
 	}
 
 	public static class Hello {

@@ -96,11 +96,11 @@ public interface Target<T> {
 
 		/* no authentication or other special activity. just insert the url. */
 		@Override
-		public Request apply(RequestTemplate input) {
-			if (input.url().indexOf("http") != 0) {
-				input.target(url());
+		public Request apply(RequestTemplate requestTemplate) {
+			if (requestTemplate.url().indexOf("http") != 0) {
+				requestTemplate.target(url());
 			}
-			return input.request();
+			return requestTemplate.request();
 		}
 
 		@Override

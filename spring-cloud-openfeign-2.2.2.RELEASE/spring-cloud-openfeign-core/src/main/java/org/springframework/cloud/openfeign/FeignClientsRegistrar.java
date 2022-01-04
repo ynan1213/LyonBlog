@@ -205,6 +205,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
 					// 按contextId、value、name、serviceId(已被遗弃)的顺序取值，前一个没有取后一个，直到取到一个不为空立即返回
 					// 如果均没有配置，则抛异常：Either 'name' or 'value' must be provided
 					String name = getClientName(attributes);
+					// 即使 @FeignClient 没有配置 configuration 属性这里也会注入
 					registerClientConfiguration(registry, name, attributes.get("configuration"));
 
 					registerFeignClient(registry, annotationMetadata, attributes);

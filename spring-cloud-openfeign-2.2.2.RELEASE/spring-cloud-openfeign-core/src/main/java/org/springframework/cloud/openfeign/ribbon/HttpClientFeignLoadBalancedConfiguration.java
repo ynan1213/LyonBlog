@@ -34,6 +34,13 @@ import org.springframework.context.annotation.Import;
  * @author Olga Maciaszek-Sharma
  */
 @Configuration(proxyBeanMethods = false)
+/**
+ * <dependency>
+ * 		<groupId>io.github.openfeign</groupId>
+ * 		<artifactId>feign-httpclient</artifactId>
+ * </dependency>
+ * 需要主动引入该依赖才会生效
+ */
 @ConditionalOnClass(ApacheHttpClient.class)
 @ConditionalOnProperty(value = "feign.httpclient.enabled", matchIfMissing = true)
 @Import(HttpClientFeignConfiguration.class)

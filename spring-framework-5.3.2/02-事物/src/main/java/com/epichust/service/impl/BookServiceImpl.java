@@ -31,11 +31,11 @@ public class BookServiceImpl implements BookService
 	public int insert(Book book) throws Exception
 	{
 		System.out.println("外层事物---- before");
-		dao.insert(book);
-		if(1 == 1)
-		{
-			throw new FileNotFoundException("xxx");
-		}
+		bookServiceImpl2.insert(book);
+//		if(1 == 1)
+//		{
+//			throw new FileNotFoundException("xxx");
+//		}
 		System.out.println("外层事物---- after");
 		return 1;
 	}

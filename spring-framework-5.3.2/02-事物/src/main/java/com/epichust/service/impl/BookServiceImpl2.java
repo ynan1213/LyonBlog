@@ -21,8 +21,9 @@ public class BookServiceImpl2 implements BookService
 	@Transactional(timeout = 1)
 	public int insert(Book book) throws InterruptedException
 	{
+		System.out.println("内层事务开始执行");
 		// TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-		TimeUnit.SECONDS.sleep(2);
+		// TimeUnit.SECONDS.sleep(2);
 		return dao.insert(book);
 	}
 

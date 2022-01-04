@@ -164,5 +164,6 @@
 		<module>spring-cloud-starter-loadbalancer</module>
 		<module>demo01</module>
 		<module>01-NamedContextFactory</module>
+		<module>02-ribbon-no-register-center</module>
 	</modules>
 </project>

@@ -5,15 +5,11 @@ import com.ynan.base.BaseBean;
 import com.ynan.base.BaseConfig;
 import com.ynan.client.ClientCommonBean;
 import com.ynan.client.ClientCommonConfig;
-import com.ynan.service1.Service1Bean1;
-import com.ynan.service1.Service1Bean2;
 import com.ynan.service1.Service1Config1;
 import com.ynan.service1.Service1Config2;
-import com.ynan.service2.Service2Bean;
 import com.ynan.service2.Service2Config;
 import com.ynan.test.TestClient;
 import com.ynan.test.TestSpec;
-import org.junit.Assert;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**

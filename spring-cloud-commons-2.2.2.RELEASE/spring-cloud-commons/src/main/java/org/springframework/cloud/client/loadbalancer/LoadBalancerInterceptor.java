@@ -18,7 +18,6 @@ package org.springframework.cloud.client.loadbalancer;
 
 import java.io.IOException;
 import java.net.URI;
-
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -31,20 +30,18 @@ import org.springframework.util.Assert;
  * @author Ryan Baxter
  * @author William Tran
  */
-public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor
-{
+public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor {
+
 	private LoadBalancerClient loadBalancer;
 
 	private LoadBalancerRequestFactory requestFactory;
 
-	public LoadBalancerInterceptor(LoadBalancerClient loadBalancer, LoadBalancerRequestFactory requestFactory)
-	{
+	public LoadBalancerInterceptor(LoadBalancerClient loadBalancer, LoadBalancerRequestFactory requestFactory) {
 		this.loadBalancer = loadBalancer;
 		this.requestFactory = requestFactory;
 	}
 
-	public LoadBalancerInterceptor(LoadBalancerClient loadBalancer)
-	{
+	public LoadBalancerInterceptor(LoadBalancerClient loadBalancer) {
 		// for backwards compatibility
 		this(loadBalancer, new LoadBalancerRequestFactory(loadBalancer));
 	}
@@ -53,8 +50,7 @@ public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor
 	 * 当一个被@LoadBalanced注解修饰的RestTemplate对象向外发起HTTP请求时，会被LoadBalancerInterceptor类的intercept方法拦截
 	 */
 	@Override
-	public ClientHttpResponse intercept(final HttpRequest request, final byte[] body, final ClientHttpRequestExecution execution) throws IOException
-	{
+	public ClientHttpResponse intercept(final HttpRequest request, final byte[] body, final ClientHttpRequestExecution execution) throws IOException {
 		final URI originalUri = request.getURI();
 
 		// host 就是服务名

@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: xxx
+
+server:
+  port: 8000
+
+test-server:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: localhost:8001,localhost:8002
+    ServerListRefreshInterval: 5000
+
+logging:
+  level:
+    com.netflix.loadbalancer.BaseLoadBalancer: debug

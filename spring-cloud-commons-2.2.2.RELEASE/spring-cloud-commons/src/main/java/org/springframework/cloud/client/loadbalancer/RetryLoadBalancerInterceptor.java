@@ -59,14 +59,11 @@ public class RetryLoadBalancerInterceptor implements ClientHttpRequestIntercepto
 	}
 
 	@Override
-	public ClientHttpResponse intercept(final HttpRequest request, final byte[] body,
-			final ClientHttpRequestExecution execution) throws IOException {
+	public ClientHttpResponse intercept(final HttpRequest request, final byte[] body, final ClientHttpRequestExecution execution) throws IOException {
 		final URI originalUri = request.getURI();
 		final String serviceName = originalUri.getHost();
-		Assert.state(serviceName != null,
-				"Request URI does not contain a valid hostname: " + originalUri);
-		final LoadBalancedRetryPolicy retryPolicy = this.lbRetryFactory
-				.createRetryPolicy(serviceName, this.loadBalancer);
+		Assert.state(serviceName != null, "Request URI does not contain a valid hostname: " + originalUri);
+		final LoadBalancedRetryPolicy retryPolicy = this.lbRetryFactory.createRetryPolicy(serviceName, this.loadBalancer);
 		RetryTemplate template = createRetryTemplate(serviceName, request, retryPolicy);
 		return template.execute(context -> {
 			ServiceInstance serviceInstance = null;
@@ -78,14 +75,12 @@ public class RetryLoadBalancerInterceptor implements ClientHttpRequestIntercepto
 				serviceInstance = this.loadBalancer.choose(serviceName);
 			}
 			ClientHttpResponse response = RetryLoadBalancerInterceptor.this.loadBalancer
-					.execute(serviceName, serviceInstance,
-							this.requestFactory.createRequest(request, body, execution));
+					.execute(serviceName, serviceInstance, this.requestFactory.createRequest(request, body, execution));
 			int statusCode = response.getRawStatusCode();
 			if (retryPolicy != null && retryPolicy.retryableStatusCode(statusCode)) {
 				byte[] bodyCopy = StreamUtils.copyToByteArray(response.getBody());
 				response.close();
-				throw new ClientHttpResponseStatusCodeException(serviceName, response,
-						bodyCopy);
+				throw new ClientHttpResponseStatusCodeException(serviceName, response, bodyCopy);
 			}
 			return response;
 		}, new LoadBalancedRecoveryCallback<ClientHttpResponse, ClientHttpResponse>() {
@@ -100,22 +95,17 @@ public class RetryLoadBalancerInterceptor implements ClientHttpRequestIntercepto
 		});
 	}
 
-	private RetryTemplate createRetryTemplate(String serviceName, HttpRequest request,
-			LoadBalancedRetryPolicy retryPolicy) {
+	private RetryTemplate createRetryTemplate(String serviceName, HttpRequest request, LoadBalancedRetryPolicy retryPolicy) {
 		RetryTemplate template = new RetryTemplate();
-		BackOffPolicy backOffPolicy = this.lbRetryFactory
-				.createBackOffPolicy(serviceName);
-		template.setBackOffPolicy(
-				backOffPolicy == null ? new NoBackOffPolicy() : backOffPolicy);
+		BackOffPolicy backOffPolicy = this.lbRetryFactory.createBackOffPolicy(serviceName);
+		template.setBackOffPolicy(backOffPolicy == null ? new NoBackOffPolicy() : backOffPolicy);
 		template.setThrowLastExceptionOnExhausted(true);
-		RetryListener[] retryListeners = this.lbRetryFactory
-				.createRetryListeners(serviceName);
+		RetryListener[] retryListeners = this.lbRetryFactory.createRetryListeners(serviceName);
 		if (retryListeners != null && retryListeners.length != 0) {
 			template.setListeners(retryListeners);
 		}
 		template.setRetryPolicy(!this.lbProperties.isEnabled() || retryPolicy == null
-				? new NeverRetryPolicy() : new InterceptorRetryPolicy(request,
-						retryPolicy, this.loadBalancer, serviceName));
+				? new NeverRetryPolicy() : new InterceptorRetryPolicy(request, retryPolicy, this.loadBalancer, serviceName));
 		return template;
 	}
 

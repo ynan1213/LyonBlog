@@ -7,10 +7,9 @@ import org.springframework.messaging.SubscribableChannel;
 
 /**
  * @Author yuannan
- * @Date 2021/11/9 10:01
+ * @Date 2022/1/9 20:12
  */
 public interface XxxMessageBinding {
-
     String OUTPUT = "xxx-output";
 
     String INPUT = "xxx-input";
@@ -22,6 +21,6 @@ public interface XxxMessageBinding {
     @Input(INPUT)
     SubscribableChannel xxxInput();
 
-//    @Output
-//    MessageChannel yyyOutput();
+    @Output
+    MessageChannel yyyOutput();
 }

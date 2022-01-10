@@ -23,11 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.validation.constraints.NotNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.cloud.stream.binder.Binder;
 import org.springframework.cloud.stream.binder.BinderFactory;
@@ -99,14 +96,14 @@ public class BindingService {
 
 		validate(consumerProperties);
 
-		String bindingTarget = this.bindingServiceProperties.getBindingDestination(inputName);
+		String destination = this.bindingServiceProperties.getBindingDestination(inputName);
 
 		if (consumerProperties.isMultiplex()) {
-			bindings.add(doBindConsumer(input, inputName, binder, consumerProperties, bindingTarget));
+			bindings.add(doBindConsumer(input, inputName, binder, consumerProperties, destination));
 		}
 		else {
-			String[] bindingTargets = StringUtils.commaDelimitedListToStringArray(bindingTarget);
-			for (String target : bindingTargets) {
+			String[] destinations = StringUtils.commaDelimitedListToStringArray(destination);
+			for (String target : destinations) {
 				Binding<T> binding = input instanceof PollableSource
 						? doBindPollableConsumer(input, inputName, binder, consumerProperties, target)
 						: doBindConsumer(input, inputName, binder, consumerProperties, target);
@@ -190,8 +187,8 @@ public class BindingService {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public <T> Binding<T> bindProducer(T output, String outputName) {
-		// 获取spring.cloud.stream.bindings.xxx.destination配置的值，如果没有配置，默认就是outputName
-		String bindingTarget = this.bindingServiceProperties.getBindingDestination(outputName);
+		// 获取spring.cloud.stream.bindings.xxx.destination 配置的值，如果没有配置，默认就是outputName
+		String destination = this.bindingServiceProperties.getBindingDestination(outputName);
 		// 获取Binder，通常由第三方提供
 		Binder<T, ?, ProducerProperties> binder = (Binder<T, ?, ProducerProperties>) getBinder(outputName, output.getClass());
 		// 获取 spring.cloud.stream.bindings.xxx-output.producer下面一系列的值
@@ -210,7 +207,7 @@ public class BindingService {
 		}
 		// 校验配置的参数是否合法
 		validate(producerProperties);
-		Binding<T> binding = doBindProducer(output, bindingTarget, binder, producerProperties);
+		Binding<T> binding = doBindProducer(output, destination, binder, producerProperties);
 		this.producerBindings.put(outputName, binding);
 		return binding;
 	}
@@ -224,32 +221,35 @@ public class BindingService {
 		return null;
 	}
 
-	public <T> Binding<T> doBindProducer(T output, String bindingTarget, Binder<T, ?, ProducerProperties> binder, ProducerProperties producerProperties) {
+	public <T> Binding<T> doBindProducer(T output, String destination, Binder<T, ?, ProducerProperties> binder, ProducerProperties producerProperties) {
 		if (this.taskScheduler == null || this.bindingServiceProperties.getBindingRetryInterval() <= 0) {
-			return binder.bindProducer(bindingTarget, output, producerProperties);
-		}
-		else {
+			return binder.bindProducer(destination, output, producerProperties);
+		} else {
 			try {
-				return binder.bindProducer(bindingTarget, output, producerProperties);
-			}
-			catch (RuntimeException e) {
+				return binder.bindProducer(destination, output, producerProperties);
+			} catch (RuntimeException e) {
 				LateBinding<T> late = new LateBinding<T>();
-				rescheduleProducerBinding(output, bindingTarget, binder, producerProperties, late, e);
+				// 抛异常可以稍后重试
+				rescheduleProducerBinding(output, destination, binder, producerProperties, late, e);
 				return late;
 			}
 		}
 	}
 
-	public <T> void rescheduleProducerBinding(final T output, final String bindingTarget,
-			final Binder<T, ?, ProducerProperties> binder, final ProducerProperties producerProperties,
-			final LateBinding<T> late, final RuntimeException exception) {
+	public <T> void rescheduleProducerBinding(
+		final T output,
+		final String bindingTarget,
+		final Binder<T, ?, ProducerProperties> binder,
+		final ProducerProperties producerProperties,
+		final LateBinding<T> late,
+		final RuntimeException exception) {
 		assertNotIllegalException(exception);
-		this.log.error("Failed to create producer binding; retrying in " + this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
+		this.log.error("Failed to create producer binding; retrying in "
+					+ this.bindingServiceProperties.getBindingRetryInterval() + " seconds", exception);
 		this.scheduleTask(() -> {
 			try {
 				late.setDelegate(binder.bindProducer(bindingTarget, output, producerProperties));
-			}
-			catch (RuntimeException e) {
+			} catch (RuntimeException e) {
 				rescheduleProducerBinding(output, bindingTarget, binder, producerProperties, late, e);
 			}
 		});

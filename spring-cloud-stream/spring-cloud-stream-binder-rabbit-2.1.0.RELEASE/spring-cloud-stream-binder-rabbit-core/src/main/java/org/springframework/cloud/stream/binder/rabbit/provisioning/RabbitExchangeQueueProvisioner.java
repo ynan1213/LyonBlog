@@ -88,12 +88,15 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 
 	@Override
 	public ProducerDestination provisionProducerDestination(String name, ExtendedProducerProperties<RabbitProducerProperties> producerProperties) {
+		// 拼接前缀 spring.cloud.stream.rabbit.bindings.xxx-output.producer.prefix=xxx-prefix:
 		final String exchangeName = applyPrefix(producerProperties.getExtension().getPrefix(), name);
 		Exchange exchange = buildExchange(producerProperties.getExtension(), exchangeName);
+		// 是否声明 exchange
 		if (producerProperties.getExtension().isDeclareExchange()) {
 			declareExchange(exchangeName, exchange);
 		}
 		Binding binding = null;
+		// 不清楚 requiredGroups 的用法
 		for (String requiredGroupName : producerProperties.getRequiredGroups()) {
 			String baseQueueName = producerProperties.getExtension().isQueueNameGroupOnly() ? requiredGroupName : (exchangeName + "." + requiredGroupName);
 			if (!producerProperties.isPartitioned()) {
@@ -137,20 +140,20 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 		return consumerDestination;
 	}
 
-	private ConsumerDestination doProvisionConsumerDestination(String name, String group, ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
+	private ConsumerDestination doProvisionConsumerDestination(String destination, String group, ExtendedConsumerProperties<RabbitConsumerProperties> properties) {
 		boolean anonymous = !StringUtils.hasText(group);
 		String  baseQueueName;
 		if (properties.getExtension().isQueueNameGroupOnly()) {
-				baseQueueName =  anonymous ? ANONYMOUS_GROUP_NAME_GENERATOR.generateName() : group;
+			baseQueueName =  anonymous ? ANONYMOUS_GROUP_NAME_GENERATOR.generateName() : group;
 		}
 		else {
-				baseQueueName = groupedName(name, anonymous ? ANONYMOUS_GROUP_NAME_GENERATOR.generateName() : group);
+			baseQueueName = groupedName(destination, anonymous ? ANONYMOUS_GROUP_NAME_GENERATOR.generateName() : group);
 		}
 		if (this.logger.isInfoEnabled()) {
-			this.logger.info("declaring queue for inbound: " + baseQueueName + ", bound to: " + name);
+			this.logger.info("declaring queue for inbound: " + baseQueueName + ", bound to: " + destination);
 		}
 		String prefix = properties.getExtension().getPrefix();
-		final String exchangeName = applyPrefix(prefix, name);
+		final String exchangeName = applyPrefix(prefix, destination);
 		Exchange exchange = buildExchange(properties.getExtension(), exchangeName);
 		if (properties.getExtension().isDeclareExchange()) {
 			declareExchange(exchangeName, exchange);
@@ -177,7 +180,7 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 		Binding binding = null;
 		if (properties.getExtension().isBindQueue()) {
 			declareQueue(queueName, queue);
-			binding = declareConsumerBindings(name, properties, exchange, partitioned, queue);
+			binding = declareConsumerBindings(destination, properties, exchange, partitioned, queue);
 		}
 		if (durable) {
 			autoBindDLQ(applyPrefix(properties.getExtension().getPrefix(), baseQueueName), queueName, properties.getExtension());
@@ -188,12 +191,12 @@ public class RabbitExchangeQueueProvisioner implements ApplicationListener<Decla
 	/**
 	 * Construct a name comprised of the name and group.
 	 *
-	 * @param name  the name.
+	 * @param destination  the name.
 	 * @param group the group.
 	 * @return the constructed name.
 	 */
-	protected final String groupedName(String name, String group) {
-		return name + GROUP_INDEX_DELIMITER + (StringUtils.hasText(group) ? group : "default");
+	protected final String groupedName(String destination, String group) {
+		return destination + GROUP_INDEX_DELIMITER + (StringUtils.hasText(group) ? group : "default");
 	}
 
 	private Binding partitionedBinding(String destination, Exchange exchange, Queue queue, RabbitCommonProperties extendedProperties, int index) {

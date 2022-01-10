@@ -13,13 +13,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class XxxMessageReceiver1 {
 
-    @StreamListener(value = XxxMessageBinding.INPUT)
-    public void receive(@Payload Object payload, @Headers Map headers) {
-        for (Object o : headers.keySet()) {
-            System.out.println(o.toString() + " ：" + headers.get(o).toString());
-        }
-        System.out.println("XxxMessageReceiver1类 接收到消息体：" + payload);
-    }
+//    @StreamListener(value = XxxMessageBinding.INPUT)
+//    public void receive(@Payload Object payload, @Headers Map headers) {
+//        for (Object o : headers.keySet()) {
+//            System.out.println(o.toString() + " ：" + headers.get(o).toString());
+//        }
+//        System.out.println("XxxMessageReceiver1类 接收到消息体：" + payload);
+//    }
 
     // ooo-input 不存在，初始化过程中是会报错的，因为会通过 000
     //    @StreamListener("ooo-input")

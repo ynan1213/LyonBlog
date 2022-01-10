@@ -25,8 +25,14 @@ public class StartMain {
         SubscribableChannel subscribableChannel = bind.xxxInput();
 //        MessageChannel messageChannel = bind.xxxOutput();
 //        MessageChannel messageChannel1 = bind.yyyOutput();
-//
-//        bind.xxxOutput().send(MessageBuilder.withPayload("xxxx-yyyy").build());
+
+        MessageChannel messageChannel = bind.xxxOutput();
+//        messageChannel.send(MessageBuilder.withPayload("xxxx-yyyy").build());
+        // 发送带 routingKey
+        messageChannel.send(MessageBuilder.withPayload("xxx-yyy").setHeader("shopId", "xxx").build());
+        messageChannel.send(MessageBuilder.withPayload("xxx-yyy").setHeader("shopId", "xxx").build());
+        messageChannel.send(MessageBuilder.withPayload("xxx-yyy").setHeader("shopId", "xxx").build());
+        messageChannel.send(MessageBuilder.withPayload("xxx-yyy").setHeader("shopId", "yyy").build());
         System.out.println("发送消息成功");
     }
 }

@@ -169,6 +169,9 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 		final MessageHandler producerMessageHandler;
 		final ProducerDestination producerDestination;
 		try {
+			/**
+			 * 在rabbitmq的实现中，这里面是创建并声明exchange
+			 */
 			producerDestination = this.provisioningProvider.provisionProducerDestination(destination, producerProperties);
 			SubscribableChannel errorChannel = producerProperties.isErrorChannelEnabled() ? registerErrorInfrastructure(producerDestination) : null;
 			producerMessageHandler = createProducerMessageHandler(producerDestination, producerProperties, outputChannel, errorChannel);
@@ -196,14 +199,13 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			outputChannel = this.postProcessOutboundChannelForFunction(outputChannel, producerProperties);
 		}
 
-		((SubscribableChannel) outputChannel).subscribe(new SendingHandler(producerMessageHandler,
-			HeaderMode.embeddedHeaders.equals(producerProperties.getHeaderMode()),
-			this.headersToEmbed,
-			useNativeEncoding(producerProperties)));
+		boolean equals = HeaderMode.embeddedHeaders.equals(producerProperties.getHeaderMode());
+		SendingHandler sendingHandler = new SendingHandler(producerMessageHandler, equals, this.headersToEmbed,
+			useNativeEncoding(producerProperties));
+		((SubscribableChannel) outputChannel).subscribe(sendingHandler);
 
-
-		Binding<MessageChannel> binding = new DefaultBinding<MessageChannel>(destination, outputChannel, producerMessageHandler instanceof Lifecycle ? (Lifecycle) producerMessageHandler : null) {
-
+		Lifecycle lifecycle = producerMessageHandler instanceof Lifecycle ? (Lifecycle) producerMessageHandler : null;
+		Binding<MessageChannel> binding = new DefaultBinding<MessageChannel>(destination, outputChannel, lifecycle) {
 			@Override
 			public Map<String, Object> getExtendedInfo() {
 				return doGetExtendedInfo(destination, producerProperties);
@@ -323,7 +325,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 	 * called on it. Similarly, if the returned consumer endpoint is a {@link Lifecycle},
 	 * then {@link Lifecycle#start()} will be called on it.
 	 *
-	 * @param name the name of the destination
+	 * @param destination the name of the destination
 	 * @param group the consumer group
 	 * @param inputChannel the channel to be bound
 	 * @param properties the {@link ConsumerProperties} of the binding
@@ -331,10 +333,11 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 	 * @throws BinderException on internal errors during binding
 	 */
 	@Override
-	public final Binding<MessageChannel> doBindConsumer(String name, String group, MessageChannel inputChannel, final C properties) throws BinderException {
+	public final Binding<MessageChannel> doBindConsumer(String destination, String group, MessageChannel inputChannel, final C properties)
+		throws BinderException {
 		MessageProducer consumerEndpoint = null;
 		try {
-			ConsumerDestination destination = this.provisioningProvider.provisionConsumerDestination(name, group, properties);
+			ConsumerDestination consumerDestination = this.provisioningProvider.provisionConsumerDestination(destination, group, properties);
 			// the function support for the inbound channel is only for Sink
 			if (this.streamFunctionProperties != null && StringUtils.hasText(this.streamFunctionProperties.getDefinition()) && isInheritedIntegrationFlow()) {
 				inputChannel = this.postProcessInboundChannelForFunction(inputChannel, (ConsumerProperties) properties);
@@ -342,7 +345,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			if (HeaderMode.embeddedHeaders.equals(properties.getHeaderMode())) {
 				enhanceMessageChannel(inputChannel);
 			}
-			consumerEndpoint = createConsumerEndpoint(destination, group, properties);
+			consumerEndpoint = createConsumerEndpoint(consumerDestination, group, properties);
 			consumerEndpoint.setOutputChannel(inputChannel);
 			if (consumerEndpoint instanceof InitializingBean) {
 				((InitializingBean) consumerEndpoint).afterPropertiesSet();
@@ -351,12 +354,12 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 				((Lifecycle) consumerEndpoint).start();
 			}
 
-			Binding<MessageChannel> binding = new DefaultBinding<MessageChannel>(name, group, inputChannel,
+			Binding<MessageChannel> binding = new DefaultBinding<MessageChannel>(destination, group, inputChannel,
 					consumerEndpoint instanceof Lifecycle ? (Lifecycle) consumerEndpoint : null) {
 
 				@Override
 				public Map<String, Object> getExtendedInfo() {
-					return doGetExtendedInfo(destination, properties);
+					return doGetExtendedInfo(consumerDestination, properties);
 				}
 
 				@Override
@@ -367,11 +370,10 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 						}
 					}
 					catch (Exception e) {
-						AbstractMessageChannelBinder.this.logger
-								.error("Exception thrown while unbinding " + toString(), e);
+						AbstractMessageChannelBinder.this.logger.error("Exception thrown while unbinding " + toString(), e);
 					}
-					afterUnbindConsumer(destination, this.group, properties);
-					destroyErrorInfrastructure(destination, group, properties);
+					afterUnbindConsumer(consumerDestination, this.group, properties);
+					destroyErrorInfrastructure(consumerDestination, group, properties);
 				}
 
 			};
@@ -908,8 +910,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 
 		@Override
 		protected void handleMessageInternal(Message<?> message) throws Exception {
-			Message<?> messageToSend = (this.useNativeEncoding) ? message
-					: serializeAndEmbedHeadersIfApplicable(message);
+			Message<?> messageToSend = (this.useNativeEncoding) ? message : serializeAndEmbedHeadersIfApplicable(message);
 			this.delegate.handleMessage(messageToSend);
 		}
 

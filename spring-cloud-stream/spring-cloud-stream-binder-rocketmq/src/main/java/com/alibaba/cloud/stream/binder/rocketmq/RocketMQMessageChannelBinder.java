@@ -95,6 +95,7 @@ public class RocketMQMessageChannelBinder
                 RocketMQBinderUtils.mergeProperties(rocketBinderConfigurationProperties, rocketMQProperties);
 
             RocketMQTemplate rocketMQTemplate;
+            // 如果开启了事务开关，会从容器中获取 RocketMQTemplate ，然后自定义的那些配置不会生效
             if (producerProperties.getExtension().getTransactional()) {
                 Map<String, RocketMQTemplate> rocketMQTemplates = getBeanFactory().getBeansOfType(RocketMQTemplate.class);
                 if (rocketMQTemplates.size() == 0) {

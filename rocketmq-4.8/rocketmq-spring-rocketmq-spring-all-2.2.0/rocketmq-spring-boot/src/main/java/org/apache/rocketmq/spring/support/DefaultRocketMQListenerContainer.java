@@ -387,8 +387,7 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
         }
     }
 
-    private void handleMessage(
-        MessageExt messageExt) throws MQClientException, RemotingException, InterruptedException {
+    private void handleMessage(MessageExt messageExt) throws MQClientException, RemotingException, InterruptedException {
         if (rocketMQListener != null) {
             rocketMQListener.onMessage(doConvertMessage(messageExt));
         } else if (rocketMQReplyListener != null) {
@@ -550,15 +549,14 @@ public class DefaultRocketMQListenerContainer implements InitializingBean, Rocke
             this.rocketMQMessageListener.accessKey(), this.rocketMQMessageListener.secretKey());
         boolean enableMsgTrace = rocketMQMessageListener.enableMsgTrace();
         if (Objects.nonNull(rpcHook)) {
-            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely(),
-                enableMsgTrace, this.applicationContext.getEnvironment().
-                resolveRequiredPlaceholders(this.rocketMQMessageListener.customizedTraceTopic()));
+            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely(), enableMsgTrace,
+                this.applicationContext.getEnvironment().resolveRequiredPlaceholders(this.rocketMQMessageListener.customizedTraceTopic()));
             consumer.setVipChannelEnabled(false);
         } else {
             log.debug("Access-key or secret-key not configure in " + this + ".");
-            consumer = new DefaultMQPushConsumer(consumerGroup, enableMsgTrace,
-                this.applicationContext.getEnvironment().
-                    resolveRequiredPlaceholders(this.rocketMQMessageListener.customizedTraceTopic()));
+            String customizedTraceTopic = this.applicationContext.getEnvironment()
+                .resolveRequiredPlaceholders(this.rocketMQMessageListener.customizedTraceTopic());
+            consumer = new DefaultMQPushConsumer(consumerGroup, enableMsgTrace, customizedTraceTopic);
         }
         
         consumer.setInstanceName(RocketMQUtil.getInstanceName(nameServer));

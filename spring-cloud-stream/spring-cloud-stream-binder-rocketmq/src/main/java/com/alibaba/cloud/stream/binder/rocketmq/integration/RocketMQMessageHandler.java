@@ -80,21 +80,17 @@ public class RocketMQMessageHandler extends AbstractMessageHandler implements Li
 
 	@Override
 	public void start() {
+	    // 如果开启了事务，rocketMQTemplate 是从容器中获取的，不需要手动调用回调了
 		if (!transactional) {
-			instrumentationManager
-					.addHealthInstrumentation(new Instrumentation(destination));
+			instrumentationManager.addHealthInstrumentation(new Instrumentation(destination));
 			try {
 				rocketMQTemplate.afterPropertiesSet();
-				instrumentationManager.getHealthInstrumentation(destination)
-						.markStartedSuccessfully();
+				instrumentationManager.getHealthInstrumentation(destination).markStartedSuccessfully();
 			}
 			catch (Exception e) {
-				instrumentationManager.getHealthInstrumentation(destination)
-						.markStartFailed(e);
+				instrumentationManager.getHealthInstrumentation(destination).markStartFailed(e);
 				log.error("RocketMQTemplate startup failed, Caused by " + e.getMessage());
-				throw new MessagingException(MessageBuilder.withPayload(
-						"RocketMQTemplate startup failed, Caused by " + e.getMessage())
-						.build(), e);
+				throw new MessagingException(MessageBuilder.withPayload("RocketMQTemplate startup failed, Caused by " + e.getMessage()).build(), e);
 			}
 		}
 		running = true;
@@ -114,28 +110,26 @@ public class RocketMQMessageHandler extends AbstractMessageHandler implements Li
 	}
 
 	@Override
-	protected void handleMessageInternal(org.springframework.messaging.Message<?> message)
-			throws Exception {
+	protected void handleMessageInternal(org.springframework.messaging.Message<?> message) throws Exception {
 		try {
 			final StringBuilder topicWithTags = new StringBuilder(destination);
-			String tags = Optional
-					.ofNullable(message.getHeaders().get(RocketMQHeaders.TAGS)).orElse("")
-					.toString();
+			String tags = Optional.ofNullable(message.getHeaders().get(RocketMQHeaders.TAGS)).orElse("").toString();
 			if (!StringUtils.isEmpty(tags)) {
 				topicWithTags.append(":").append(tags);
 			}
 			SendResult sendRes = null;
 			if (transactional) {
-				sendRes = rocketMQTemplate.sendMessageInTransaction(groupName,
-						topicWithTags.toString(), message, message.getHeaders()
-								.get(RocketMQBinderConstants.ROCKET_TRANSACTIONAL_ARG));
+				sendRes = rocketMQTemplate.sendMessageInTransaction(
+					groupName,
+					topicWithTags.toString(),
+					message,
+					message.getHeaders().get(RocketMQBinderConstants.ROCKET_TRANSACTIONAL_ARG));
 				log.debug("transactional send to topic " + topicWithTags + " " + sendRes);
 			}
 			else {
 				int delayLevel = 0;
 				try {
-					Object delayLevelObj = message.getHeaders()
-							.getOrDefault(MessageConst.PROPERTY_DELAY_TIME_LEVEL, 0);
+					Object delayLevelObj = message.getHeaders().getOrDefault(MessageConst.PROPERTY_DELAY_TIME_LEVEL, 0);
 					if (delayLevelObj instanceof Number) {
 						delayLevel = ((Number) delayLevelObj).intValue();
 					}
@@ -147,35 +141,25 @@ public class RocketMQMessageHandler extends AbstractMessageHandler implements Li
 					// ignore
 				}
 				if (sync) {
-					sendRes = rocketMQTemplate.syncSend(topicWithTags.toString(), message,
-							rocketMQTemplate.getProducer().getSendMsgTimeout(),
-							delayLevel);
+					sendRes = rocketMQTemplate.syncSend(topicWithTags.toString(), message, rocketMQTemplate.getProducer().getSendMsgTimeout(), delayLevel);
 					log.debug("sync send to topic " + topicWithTags + " " + sendRes);
 				}
 				else {
-					rocketMQTemplate.asyncSend(topicWithTags.toString(), message,
-							new SendCallback() {
-								@Override
-								public void onSuccess(SendResult sendResult) {
-									log.debug("async send to topic " + topicWithTags + " "
-											+ sendResult);
-								}
+					rocketMQTemplate.asyncSend(topicWithTags.toString(), message, new SendCallback() {
+						@Override
+						public void onSuccess(SendResult sendResult) {
+							log.debug("async send to topic " + topicWithTags + " " + sendResult);
+						}
 
-								@Override
-								public void onException(Throwable e) {
-									log.error(
-											"RocketMQ Message hasn't been sent. Caused by "
-													+ e.getMessage());
-									if (getSendFailureChannel() != null) {
-										getSendFailureChannel().send(
-												RocketMQMessageHandler.this.errorMessageStrategy
-														.buildErrorMessage(
-																new MessagingException(
-																		message, e),
-																null));
-									}
-								}
-							});
+						@Override
+						public void onException(Throwable e) {
+							log.error("RocketMQ Message hasn't been sent. Caused by " + e.getMessage());
+							if (getSendFailureChannel() != null) {
+								getSendFailureChannel().send(RocketMQMessageHandler.this.errorMessageStrategy
+									.buildErrorMessage(new MessagingException(message, e), null));
+							}
+						}
+					});
 				}
 			}
 			if (sendRes != null && !sendRes.getSendStatus().equals(SendStatus.SEND_OK)) {
@@ -183,16 +167,14 @@ public class RocketMQMessageHandler extends AbstractMessageHandler implements Li
 					this.getSendFailureChannel().send(message);
 				}
 				else {
-					throw new MessagingException(message,
-							new MQClientException("message hasn't been sent", null));
+					throw new MessagingException(message, new MQClientException("message hasn't been sent", null));
 				}
 			}
 		}
 		catch (Exception e) {
 			log.error("RocketMQ Message hasn't been sent. Caused by " + e.getMessage());
 			if (getSendFailureChannel() != null) {
-				getSendFailureChannel().send(this.errorMessageStrategy
-						.buildErrorMessage(new MessagingException(message, e), null));
+				getSendFailureChannel().send(this.errorMessageStrategy.buildErrorMessage(new MessagingException(message, e), null));
 			}
 			else {
 				throw new MessagingException(message, e);

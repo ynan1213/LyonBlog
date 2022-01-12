@@ -171,6 +171,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 		try {
 			/**
 			 * 在rabbitmq的实现中，这里面是创建并声明exchange
+			 * 在rockermq的实现中，destination 就是 topic，这里仅仅只是对 topic 做了校验
 			 */
 			producerDestination = this.provisioningProvider.provisionProducerDestination(destination, producerProperties);
 			SubscribableChannel errorChannel = producerProperties.isErrorChannelEnabled() ? registerErrorInfrastructure(producerDestination) : null;
@@ -191,6 +192,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 			}
 		}
 		if (producerMessageHandler instanceof Lifecycle) {
+			// rocketmq 的实现中 producer 在这里 start
 			((Lifecycle) producerMessageHandler).start();
 		}
 		this.postProcessOutputChannel(outputChannel, producerProperties);
@@ -200,8 +202,7 @@ public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties,
 		}
 
 		boolean equals = HeaderMode.embeddedHeaders.equals(producerProperties.getHeaderMode());
-		SendingHandler sendingHandler = new SendingHandler(producerMessageHandler, equals, this.headersToEmbed,
-			useNativeEncoding(producerProperties));
+		SendingHandler sendingHandler = new SendingHandler(producerMessageHandler, equals, this.headersToEmbed, useNativeEncoding(producerProperties));
 		((SubscribableChannel) outputChannel).subscribe(sendingHandler);
 
 		Lifecycle lifecycle = producerMessageHandler instanceof Lifecycle ? (Lifecycle) producerMessageHandler : null;

@@ -57,7 +57,7 @@ public class Consumer {
 
         // 可以订阅多个
         // subExpression 可以填多个，用 || 分隔
-        consumer.subscribe("request_topic111", "*");
+        consumer.subscribe("signal_topic", "*");
 
         // 取消主题订阅
         // consumer.unsubscribe("TOPIC_02");

@@ -199,7 +199,8 @@ public class RocketMQUtil {
             rocketMsg.setWaitStoreMsgOK(Boolean.TRUE.equals(waitStoreMsgOkObj));
 
             headers.entrySet().stream()
-                .filter(entry -> !Objects.equals(entry.getKey(), "FLAG") && !Objects.equals(entry.getKey(), "WAIT_STORE_MSG_OK")) // exclude "FLAG", "WAIT_STORE_MSG_OK"
+                .filter(entry -> !Objects.equals(entry.getKey(), "FLAG") && !Objects
+                    .equals(entry.getKey(), "WAIT_STORE_MSG_OK")) // exclude "FLAG", "WAIT_STORE_MSG_OK"
                 .forEach(entry -> {
                     if (!MessageConst.STRING_HASH_SET.contains(entry.getKey())) {
                         rocketMsg.putUserProperty(entry.getKey(), String.valueOf(entry.getValue()));
@@ -213,7 +214,6 @@ public class RocketMQUtil {
      * Spring的 Message payload 可以为任一类型，RocketMQ 的 Message 的 body 是 byte[] 类型
      *
      * destination 为 topic:tag
-     *
      */
     public static org.apache.rocketmq.common.message.Message convertToRocketMessage(
         MessageConverter messageConverter,
@@ -261,7 +261,11 @@ public class RocketMQUtil {
         return null;
     }
 
-    public static DefaultMQProducer createDefaultMQProducer(String groupName, String ak, String sk, boolean isEnableMsgTrace,
+    public static DefaultMQProducer createDefaultMQProducer(
+        String groupName,
+        String ak,
+        String sk,
+        boolean isEnableMsgTrace,
         String customizedTraceTopic) {
         boolean isEnableAcl = !StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk);
         DefaultMQProducer producer;

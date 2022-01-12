@@ -95,6 +95,7 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
 
         RocketMQMessageListener annotation = clazz.getAnnotation(RocketMQMessageListener.class);
 
+        // consumerGroup 和 group 都可以使用占位符
         String consumerGroup = this.environment.resolvePlaceholders(annotation.consumerGroup());
         String topic = this.environment.resolvePlaceholders(annotation.topic());
 
@@ -114,8 +115,7 @@ public class ListenerContainerConfiguration implements ApplicationContextAware, 
 
         genericApplicationContext.registerBean(containerBeanName, DefaultRocketMQListenerContainer.class,
             () -> createRocketMQListenerContainer(containerBeanName, bean, annotation));
-        DefaultRocketMQListenerContainer container = genericApplicationContext
-            .getBean(containerBeanName, DefaultRocketMQListenerContainer.class);
+        DefaultRocketMQListenerContainer container = genericApplicationContext.getBean(containerBeanName, DefaultRocketMQListenerContainer.class);
         if (!container.isRunning()) {
             try {
                 container.start();

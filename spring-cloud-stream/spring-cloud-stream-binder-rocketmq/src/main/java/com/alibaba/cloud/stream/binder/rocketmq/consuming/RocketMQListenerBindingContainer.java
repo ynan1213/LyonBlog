@@ -56,11 +56,9 @@ import com.alibaba.cloud.stream.binder.rocketmq.properties.RocketMQConsumerPrope
 /**
  * @author <a href="mailto:fangjian0423@gmail.com">Jim</a>
  */
-public class RocketMQListenerBindingContainer
-		implements InitializingBean, RocketMQListenerContainer, SmartLifecycle {
+public class RocketMQListenerBindingContainer implements InitializingBean, RocketMQListenerContainer, SmartLifecycle {
 
-	private final static Logger log = LoggerFactory
-			.getLogger(RocketMQListenerBindingContainer.class);
+	private final static Logger log = LoggerFactory.getLogger(RocketMQListenerBindingContainer.class);
 
 	private long suspendCurrentQueueTimeMillis = 1000;
 
@@ -155,8 +153,7 @@ public class RocketMQListenerBindingContainer
 	@Override
 	public void start() {
 		if (this.isRunning()) {
-			throw new IllegalStateException(
-					"container already running. " + this.toString());
+			throw new IllegalStateException("container already running. " + this.toString());
 		}
 
 		try {
@@ -204,17 +201,13 @@ public class RocketMQListenerBindingContainer
 		String sk = rocketBinderConfigurationProperties.getSecretKey();
 		if (!StringUtils.isEmpty(ak) && !StringUtils.isEmpty(sk)) {
 			RPCHook rpcHook = new AclClientRPCHook(new SessionCredentials(ak, sk));
-			consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook,
-					new AllocateMessageQueueAveragely(),
-					rocketBinderConfigurationProperties.isEnableMsgTrace(),
-					rocketBinderConfigurationProperties.getCustomizedTraceTopic());
-			consumer.setInstanceName(RocketMQUtil.getInstanceName(rpcHook,
-					topic + "|" + UtilAll.getPid()));
+			consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely(),
+					rocketBinderConfigurationProperties.isEnableMsgTrace(), rocketBinderConfigurationProperties.getCustomizedTraceTopic());
+			consumer.setInstanceName(RocketMQUtil.getInstanceName(rpcHook, topic + "|" + UtilAll.getPid()));
 			consumer.setVipChannelEnabled(false);
 		}
 		else {
-			consumer = new DefaultMQPushConsumer(consumerGroup,
-					rocketBinderConfigurationProperties.isEnableMsgTrace(),
+			consumer = new DefaultMQPushConsumer(consumerGroup, rocketBinderConfigurationProperties.isEnableMsgTrace(),
 					rocketBinderConfigurationProperties.getCustomizedTraceTopic());
 		}
 
@@ -224,12 +217,10 @@ public class RocketMQListenerBindingContainer
 
 		switch (messageModel) {
 		case BROADCASTING:
-			consumer.setMessageModel(
-					org.apache.rocketmq.common.protocol.heartbeat.MessageModel.BROADCASTING);
+			consumer.setMessageModel(org.apache.rocketmq.common.protocol.heartbeat.MessageModel.BROADCASTING);
 			break;
 		case CLUSTERING:
-			consumer.setMessageModel(
-					org.apache.rocketmq.common.protocol.heartbeat.MessageModel.CLUSTERING);
+			consumer.setMessageModel(org.apache.rocketmq.common.protocol.heartbeat.MessageModel.CLUSTERING);
 			break;
 		default:
 			throw new IllegalArgumentException("Property 'messageModel' was wrong.");
@@ -258,8 +249,7 @@ public class RocketMQListenerBindingContainer
 		}
 
 		if (rocketMQListener instanceof RocketMQPushConsumerLifecycleListener) {
-			((RocketMQPushConsumerLifecycleListener) rocketMQListener)
-					.prepareStart(consumer);
+			((RocketMQPushConsumerLifecycleListener) rocketMQListener).prepareStart(consumer);
 		}
 
 	}
@@ -365,19 +355,16 @@ public class RocketMQListenerBindingContainer
 		return messageModel;
 	}
 
-	public class DefaultMessageListenerConcurrently
-			implements MessageListenerConcurrently {
+	public class DefaultMessageListenerConcurrently implements MessageListenerConcurrently {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-				ConsumeConcurrentlyContext context) {
+		public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 			for (MessageExt messageExt : msgs) {
 				log.debug("received msg: {}", messageExt);
 				try {
 					long now = System.currentTimeMillis();
-					rocketMQListener
-							.onMessage(RocketMQUtil.convertToSpringMessage(messageExt));
+					rocketMQListener.onMessage(RocketMQUtil.convertToSpringMessage(messageExt));
 					long costTime = System.currentTimeMillis() - now;
 					log.debug("consume {} cost: {} ms", messageExt.getMsgId(), costTime);
 				}
@@ -387,7 +374,6 @@ public class RocketMQListenerBindingContainer
 					return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 				}
 			}
-
 			return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 		}
 	}
@@ -396,25 +382,21 @@ public class RocketMQListenerBindingContainer
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
-				ConsumeOrderlyContext context) {
+		public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
 			for (MessageExt messageExt : msgs) {
 				log.debug("received msg: {}", messageExt);
 				try {
 					long now = System.currentTimeMillis();
-					rocketMQListener
-							.onMessage(RocketMQUtil.convertToSpringMessage(messageExt));
+					rocketMQListener.onMessage(RocketMQUtil.convertToSpringMessage(messageExt));
 					long costTime = System.currentTimeMillis() - now;
 					log.info("consume {} cost: {} ms", messageExt.getMsgId(), costTime);
 				}
 				catch (Exception e) {
 					log.warn("consume message failed. messageExt:{}", messageExt, e);
-					context.setSuspendCurrentQueueTimeMillis(
-							suspendCurrentQueueTimeMillis);
+					context.setSuspendCurrentQueueTimeMillis(suspendCurrentQueueTimeMillis);
 					return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 				}
 			}
-
 			return ConsumeOrderlyStatus.SUCCESS;
 		}
 	}

@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author <a href="mailto:fangjian0423@gmail.com">Jim</a>
  */
 @Configuration
+// 在 rocketmq-spring-boot 自动化配置类之后，但是自动化配置类不一定生效
 @AutoConfigureAfter(RocketMQAutoConfiguration.class)
 @ConditionalOnMissingBean(DefaultMQProducer.class)
 public class RocketMQComponent4BinderAutoConfiguration {
@@ -92,8 +93,7 @@ public class RocketMQComponent4BinderAutoConfiguration {
 
 	@Bean(name = RocketMQConfigUtils.ROCKETMQ_TRANSACTION_ANNOTATION_PROCESSOR_BEAN_NAME)
 	@ConditionalOnBean(TransactionHandlerRegistry.class)
-	public static RocketMQTransactionAnnotationProcessor transactionAnnotationProcessor(
-			TransactionHandlerRegistry transactionHandlerRegistry) {
+	public static RocketMQTransactionAnnotationProcessor transactionAnnotationProcessor(TransactionHandlerRegistry transactionHandlerRegistry) {
 		return new RocketMQTransactionAnnotationProcessor(transactionHandlerRegistry);
 	}
 

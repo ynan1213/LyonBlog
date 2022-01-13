@@ -2,6 +2,8 @@ package com.ynan;
 
 import com.ynan.config.XxxDefaultConfiguration;
 import com.ynan.service.HelloService;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

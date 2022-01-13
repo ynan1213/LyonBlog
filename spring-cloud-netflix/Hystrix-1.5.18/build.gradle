@@ -1,0 +1,78 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        //maven { url "https://repo.spring.io/libs-spring-framework-build" }
+        //maven { url "https://repo.spring.io/snapshot" } // Reactor
+        maven { url 'https://maven.aliyun.com/repository/spring'}
+        maven { url 'https://maven.aliyun.com/repository/public'}
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+        maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'}
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
+        classpath 'com.netflix.nebula:gradle-netflixoss-project-plugin:5.1.1'}
+}
+
+plugins {
+    //id 'nebula.netflixoss' version '3.4.0'
+    id 'nebula.netflixoss' version '5.1.1'
+    id 'me.champeau.gradle.jmh' version '0.3.1'
+    id 'net.saliman.cobertura' version '2.2.8'
+}
+
+ext {
+    githubProjectName = rootProject.name
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        //maven { url "https://repo.spring.io/libs-spring-framework-build" }
+        //maven { url "https://repo.spring.io/snapshot" } // Reactor
+        maven { url 'https://maven.aliyun.com/repository/spring'}
+        maven { url 'https://maven.aliyun.com/repository/public'}
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+        maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'}
+        jcenter()
+    }
+
+    apply plugin: 'net.saliman.cobertura'
+    apply plugin: 'nebula.netflixoss'
+
+    tasks.withType(Javadoc) {
+        options.addBooleanOption('Xdoclint:none', true)
+    }
+}
+
+subprojects {
+    apply plugin: 'nebula.netflixoss'
+    apply plugin: 'java'
+    apply plugin: 'nebula.provided-base'
+	apply plugin: 'nebula.compile-api'
+	
+    //sourceCompatibility = 1.6
+    //targetCompatibility = 1.6
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    group = "com.netflix.${githubProjectName}"
+
+    eclipse {
+        classpath {
+            // include 'provided' dependencies on the classpath
+            plusConfigurations += [configurations.provided]
+            downloadSources = true
+            downloadJavadoc = true
+        }
+    }
+
+    idea {
+        module {
+            // include 'provided' dependencies on the classpath
+            scopes.COMPILE.plus += [configurations.provided]
+        }
+    }
+}

@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+}
+
+group 'com.netflix'
+version '0.1.0-dev.0.uncommitted'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileApi 'io.reactivex:rxjava:1.2.0'
+}

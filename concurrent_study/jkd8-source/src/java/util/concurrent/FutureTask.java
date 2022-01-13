@@ -88,10 +88,11 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * NEW -> COMPLETING -> EXCEPTIONAL
      * NEW -> CANCELLED
      * NEW -> INTERRUPTING -> INTERRUPTED
-     *
+     * <p>
      * 任务的中间状态是一个瞬态，它非常的短暂。
      * 而且任务的中间态并不代表任务正在执行，而是任务已经执行完了，正在设置最终的返回结果，所以可以这么说：
      * 只要state不处于 NEW 状态，就说明任务已经执行完毕
+     * </p>
      */
     private volatile int state; // state属性代表了任务的状态
     private static final int NEW          = 0;// 初始状态
@@ -300,8 +301,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      */
     protected boolean runAndReset() {
         if (state != NEW ||
-            !UNSAFE.compareAndSwapObject(this, runnerOffset,
-                                         null, Thread.currentThread()))
+            !UNSAFE.compareAndSwapObject(this, runnerOffset, null, Thread.currentThread()))
             return false;
         boolean ran = false;
         int s = state;
@@ -386,10 +386,8 @@ public class FutureTask<V> implements RunnableFuture<V> {
                 break;
             }
         }
-
         // 提供给子类覆写的
         done();
-
         callable = null;        // to reduce footprint
     }
 
@@ -405,6 +403,9 @@ public class FutureTask<V> implements RunnableFuture<V> {
         WaitNode q = null;
         boolean queued = false;
         for (;;) {
+            /**
+             * Thread.interrupted()：返回调用线程的中断状态，如果中断过，返回true并清除中断状态，否则false
+             */
             if (Thread.interrupted()) {
                 removeWaiter(q);
                 throw new InterruptedException();
@@ -412,15 +413,19 @@ public class FutureTask<V> implements RunnableFuture<V> {
 
             int s = state;
             if (s > COMPLETING) {
+                // 如果状态大于COMPLETING，说明任务已经结束（要么正常结束，要么异常结束，要么被取消）
                 if (q != null)
                     q.thread = null;
                 return s;
             }
             else if (s == COMPLETING) // cannot time out yet
+                // 如果状态处于中间状态COMPLETING ，这个时候让出执行权让其他线程优先执行
                 Thread.yield();
             else if (q == null)
+                // 如果等待节点为空，则构造一个等待节点，然后进行下一轮循环
                 q = new WaitNode();
             else if (!queued)
+                // 如果还没有入队列，则把当前节点加入waiters首节点并替换原来waiters
                 queued = UNSAFE.compareAndSwapObject(this, waitersOffset, q.next = waiters, q);
             else if (timed) {
                 nanos = deadline - System.nanoTime();
@@ -459,8 +464,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
                         if (pred.thread == null) // check for race
                             continue retry;
                     }
-                    else if (!UNSAFE.compareAndSwapObject(this, waitersOffset,
-                                                          q, s))
+                    else if (!UNSAFE.compareAndSwapObject(this, waitersOffset, q, s))
                         continue retry;
                 }
                 break;

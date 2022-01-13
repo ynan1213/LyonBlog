@@ -49,8 +49,9 @@ public interface RunnableFuture<V> extends Runnable, Future<V> {
     /**
      * Sets this Future to the result of its computation
      * unless it has been cancelled.
-     *
+     * <p>
      * 既然已经继承了Runnable，该接口自然就继承了run方法，为什么要在该接口的内部再写一个run方法？
+     * </p>
      */
     void run();
 }

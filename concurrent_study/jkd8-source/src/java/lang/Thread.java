@@ -25,6 +25,7 @@
 
 package java.lang;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -130,7 +131,7 @@ import sun.security.util.SecurityConstants;
  * or method in this class will cause a {@link NullPointerException} to be
  * thrown.
  *
- * @author  unascribed
+ * @author  unascribed --》意思是：该代码第一原作者不是我，但我实在也不知道是谁，就记作无名氏吧（版权意识）
  * @see     Runnable
  * @see     Runtime#exit(int)
  * @see     #run()
@@ -179,7 +180,7 @@ class Thread implements Runnable {
     }
 
     /**
-     *  ThreadLocal values pertaining to this thread. This map is maintained by the ThreadLocal class.
+     *  ThreadLocal values pertaining to this thread. This map is maintained by the ThreadLocal class. <p>
      *  没加修饰符，默认为default，表示本包和类内部可方法， protected与default的区别就是多了一个子类继承可访问
      */
     ThreadLocal.ThreadLocalMap threadLocals = null;
@@ -671,8 +672,7 @@ class Thread implements Runnable {
      *
      * @since 1.4
      */
-    public Thread(ThreadGroup group, Runnable target, String name,
-                  long stackSize) {
+    public Thread(ThreadGroup group, Runnable target, String name, long stackSize) {
         init(group, target, name, stackSize);
     }
 
@@ -1736,9 +1736,12 @@ class Thread implements Runnable {
      * @since   1.5
      * @see #getState
      */
+     // JVM中的线程必须只能是以上6种状态的一种。这些状态是JVM状态并不能和操作系统线程状态互相映射。
     public enum State {
         /**
          * Thread state for a thread which has not yet started.
+         *
+         * 线程刚创建，还未执行（start方法）
          */
         NEW,
 
@@ -1747,6 +1750,8 @@ class Thread implements Runnable {
          * state is executing in the Java virtual machine but it may
          * be waiting for other resources from the operating system
          * such as processor.
+         *
+         * 已就绪可运行的状态。处于此状态的线程是正在JVM中运行的，但可能在等待操作系统级别的资源，例如CPU时间片
          */
         RUNNABLE,
 
@@ -1756,6 +1761,8 @@ class Thread implements Runnable {
          * to enter a synchronized block/method or
          * reenter a synchronized block/method after calling
          * {@link Object#wait() Object.wait}.
+         *
+         * 阻塞等待监视器锁。处于此状态的线程正在阻塞等待监视器锁，以进入一个同步块/方法，或者在执行完wait()方法后重入同步块/方法。
          */
         BLOCKED,
 

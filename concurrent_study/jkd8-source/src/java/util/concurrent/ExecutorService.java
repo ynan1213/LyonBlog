@@ -233,6 +233,7 @@ public interface ExecutorService extends Executor {
      *         scheduled for execution
      * @throws NullPointerException if the task is null
      */
+    // 方法返回值前的泛型作用
     <T> Future<T> submit(Callable<T> task);
 
     /**

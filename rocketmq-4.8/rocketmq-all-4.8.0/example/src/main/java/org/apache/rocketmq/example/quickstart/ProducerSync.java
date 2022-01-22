@@ -29,11 +29,13 @@ public class ProducerSync {
 
     public static void main(String[] args) throws MQClientException, InterruptedException {
 
+        System.setProperty("rocketmq.client.name", "xxx" + "@" + System.currentTimeMillis());
+
         // DefaultMQProducer producer = new DefaultMQProducer("namespace0001", "producerGroupTest0001");
         // DefaultMQProducer producer = new DefaultMQProducer("producerGroupTest0001");
         // enableMsgTrace：开启消息轨迹
         DefaultMQProducer producer = new DefaultMQProducer("groupName", true);
-        producer.setNamespace("xxx");
+        producer.setNamespace("namespaceName");
 
         producer.setNamesrvAddr("47.100.24.106:9876");
 

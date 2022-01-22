@@ -36,9 +36,9 @@ public class ProducerAsync {
 
         producer.start();
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 1; i++) {
             try {
-                Message msg = new Message("aaaaaaaa", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                Message msg = new Message("signal_topic", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
                 // 异步发送
                 producer.send(msg, new SendCallback() {
                     @Override

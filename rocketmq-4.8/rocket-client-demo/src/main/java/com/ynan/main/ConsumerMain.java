@@ -19,7 +19,7 @@ public class ConsumerMain {
     public static void main(String[] args) throws MQClientException {
 
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("localConsumerGroup01");
-
+        consumer.setNamespace("namespaceName");
         consumer.setNamesrvAddr("127.0.0.1:9876");
 
         consumer.setMessageModel(MessageModel.CLUSTERING);
@@ -27,7 +27,7 @@ public class ConsumerMain {
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 
         consumer.subscribe("TopicA", "*");
-
+        consumer.setMaxReconsumeTimes(2);
         consumer.registerMessageListener(new MessageListenerConcurrently() {
             @Override
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {

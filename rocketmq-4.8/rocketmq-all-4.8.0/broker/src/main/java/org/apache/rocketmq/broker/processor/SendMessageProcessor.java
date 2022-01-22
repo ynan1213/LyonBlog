@@ -191,7 +191,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
             MessageAccessor.putProperty(msgExt, MessageConst.PROPERTY_RETRY_TOPIC, msgExt.getTopic());
         }
         msgExt.setWaitStoreMsgOK(false);
-        // consumer 重试返回的 delayLevel 好像都是 0 ？？？
+        // consumer 重试返回的 delayLevel 好像都是 0 ？？？ 在消费回调的业务代码里由人工手动设置
         int delayLevel = requestHeader.getDelayLevel();
 
         // 默认最大重试次数：16，requestHeader 可以携带 consumer过来的次数

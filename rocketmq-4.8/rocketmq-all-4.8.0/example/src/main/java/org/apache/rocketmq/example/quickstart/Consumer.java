@@ -37,8 +37,8 @@ public class Consumer {
 
         System.setProperty("rocketmq.client.logUseSlf4j", "true");
 
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("xxx-group-xxx-030", true);
-        consumer.setNamespace("xxx");
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("groupName");
+        consumer.setNamespace("namespaceName");
         //DefaultMQPullConsumer pullConsumer = new DefaultMQPullConsumer()
 
         // 消费组模式，集群还是广播，默认集群
@@ -58,6 +58,7 @@ public class Consumer {
         // 可以订阅多个
         // subExpression 可以填多个，用 || 分隔
         consumer.subscribe("signal_topic", "*");
+//        consumer.subscribe("aaa111", "EXP_A || EXP_B");
 
         // 取消主题订阅
         // consumer.unsubscribe("TOPIC_02");
@@ -79,9 +80,11 @@ public class Consumer {
         // 并发消费
         consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
             MessageExt messageExt = msgs.get(0);
-            System.out.println("--------------");
+            System.out.println("------------------------------------------ 消息消费次数：" + messageExt.getReconsumeTimes());
             System.out.println(messageExt.getProperties());
-            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+//            context.setDelayLevelWhenNextConsume(1);
+//            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
         });
         AtomicInteger i = new AtomicInteger(0);
         //顺序消费

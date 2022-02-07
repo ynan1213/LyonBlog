@@ -3,8 +3,8 @@ package com.epichust.main;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class MainTest2Xml
-{
+public class MainTest2Xml {
+
 	/**
 	 * ClassPathXmlApplicationContext继承自AbstractRefreshableApplicationContext，
 	 * 该类型和GenericApplicationContext最大的区别就是：
@@ -13,8 +13,7 @@ public class MainTest2Xml
 	 * 先判断`BeanFactory`是否已创建，一般情况下没有创建，如果有创建，关闭它，然后创建一个新的。
 	 * 3.GenericApplicationContext需要手动刷新，AbstractRefreshableApplicationContext会自动刷新
 	 */
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		ApplicationContext ac = new ClassPathXmlApplicationContext("classpath:spring-application.xml");
 		// AService service = ac.getBean("AService", AService.class);
 		// service.print();

@@ -168,9 +168,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 	 * @param referenceType the reference type used for entries (soft or weak)
 	 */
 	@SuppressWarnings("unchecked")
-	public ConcurrentReferenceHashMap(
-			int initialCapacity, float loadFactor, int concurrencyLevel, ReferenceType referenceType) {
-
+	public ConcurrentReferenceHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, ReferenceType referenceType) {
 		Assert.isTrue(initialCapacity >= 0, "Initial capacity must not be negative");
 		Assert.isTrue(loadFactor > 0f, "Load factor must be positive");
 		Assert.isTrue(concurrencyLevel > 0, "Concurrency level must be positive");
@@ -603,8 +601,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 				}
 
 				// Either create a new table or reuse the existing one
-				Reference<K, V>[] restructured =
-						(resizing ? createReferenceArray(restructureSize) : this.references);
+				Reference<K, V>[] restructured = (resizing ? createReferenceArray(restructureSize) : this.references);
 
 				// Restructure
 				for (int i = 0; i < this.references.length; i++) {

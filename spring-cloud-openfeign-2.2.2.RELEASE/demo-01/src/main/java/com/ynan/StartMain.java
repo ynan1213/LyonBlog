@@ -1,6 +1,9 @@
 package com.ynan;
 
 import com.ynan.config.XxxDefaultConfiguration;
+import com.ynan.entity.User;
+import com.ynan.feign.RemoteService;
+import com.ynan.feign.RemoteServiceXxx;
 import com.ynan.service.HelloService;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -25,12 +28,23 @@ public class StartMain {
 	@Autowired
 	private HelloService service;
 
+	@Autowired
+	private RemoteService remoteService;
+
+	@Autowired
+	private RemoteServiceXxx remoteServiceXxx;
+
 	public static void main(String[] args) {
 		SpringApplication.run(StartMain.class, args);
 	}
 
 	@RequestMapping("/xxx")
 	public String xxx() {
-		return service.t1("world");
+		return remoteService.remote("world", new User("zhangsan", 23, ""), "上海111").toString();
+	}
+
+	@RequestMapping("/yyy")
+	public String yyy() {
+		return remoteServiceXxx.remote("yyy");
 	}
 }

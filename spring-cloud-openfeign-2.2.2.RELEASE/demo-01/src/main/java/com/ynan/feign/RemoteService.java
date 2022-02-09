@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(
 	value = "remote-demo",
 	/*url = "http://localhost:8002",*/
-	contextId = "aaa",
+	/*contextId = "aaa",*/
 	path = "/remote",
 	/*configuration = XxxCustomConfiguration.class,*/
 	/*fallbackFactory = XxxFallbackFactory.class,*/

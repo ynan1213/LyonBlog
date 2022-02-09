@@ -29,19 +29,24 @@ public class RemoteStartMain {
 
 	@RequestMapping("/remote/name")
 	public User remote(@RequestParam String name, @RequestHeader("Accept") String headers) {
-		try {
-			System.out.println(
-				"============================================== start : " + Thread.currentThread().getName() + "  time: " + new Date()
-					.toString());
-			TimeUnit.SECONDS.sleep(10);
-			System.out.println(
-				"============================================== end : " + Thread.currentThread().getName() + "  time: " + new Date()
-					.toString());
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			System.out.println(
+//				"============================================== start : " + Thread.currentThread().getName() + "  time: " + new Date()
+//					.toString());
+//			TimeUnit.SECONDS.sleep(10);
+//			System.out.println(
+//				"============================================== end : " + Thread.currentThread().getName() + "  time: " + new Date()
+//					.toString());
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
 		System.out.println(headers);
 		return new User(name, 11, applicationName + " : " + name);
+	}
+
+	@RequestMapping("/remote/s")
+	public String remote(@RequestParam("name") String name) {
+		return "hello world :" + name;
 	}
 
 }

@@ -11,4 +11,5 @@ repositories {
 
 dependencies {
     compileApi 'io.reactivex:rxjava:1.2.0'
+    compileApi project(':hystrix-core')
 }

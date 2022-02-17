@@ -155,10 +155,18 @@ import rx.subscriptions.CompositeSubscription;
         return name;
     }
 
-    protected AbstractCommand(HystrixCommandGroupKey group, HystrixCommandKey key, HystrixThreadPoolKey threadPoolKey,
-        HystrixCircuitBreaker circuitBreaker, HystrixThreadPool threadPool, HystrixCommandProperties.Setter commandPropertiesDefaults,
-        HystrixThreadPoolProperties.Setter threadPoolPropertiesDefaults, HystrixCommandMetrics metrics, TryableSemaphore fallbackSemaphore,
-        TryableSemaphore executionSemaphore, HystrixPropertiesStrategy propertiesStrategy, HystrixCommandExecutionHook executionHook) {
+    protected AbstractCommand(HystrixCommandGroupKey group,
+        HystrixCommandKey key,
+        HystrixThreadPoolKey threadPoolKey,
+        HystrixCircuitBreaker circuitBreaker,
+        HystrixThreadPool threadPool,
+        HystrixCommandProperties.Setter commandPropertiesDefaults,
+        HystrixThreadPoolProperties.Setter threadPoolPropertiesDefaults,
+        HystrixCommandMetrics metrics,
+        TryableSemaphore fallbackSemaphore,
+        TryableSemaphore executionSemaphore,
+        HystrixPropertiesStrategy propertiesStrategy,
+        HystrixCommandExecutionHook executionHook) {
 
         this.commandGroup = initGroupKey(group);
         this.commandKey = initCommandKey(key, getClass());

@@ -167,7 +167,9 @@ public final class MethodProvider {
         abstract boolean canHandle(Class<?> enclosingType, Method commandMethod);
 
         private FallbackMethod doFind(Class<?> enclosingType, Method commandMethod, boolean extended) {
+            // 获取 @HystrixCommand 注解的 fallbackMethod 属性
             String name = getFallbackName(enclosingType, commandMethod);
+            // 参数列表
             Class<?>[] fallbackParameterTypes = null;
             if (isDefault()) {
                 fallbackParameterTypes = new Class[0];
@@ -179,8 +181,7 @@ public final class MethodProvider {
                 fallbackParameterTypes = ArrayUtils.remove(fallbackParameterTypes, fallbackParameterTypes.length - 1);
             }
 
-            Class<?>[] extendedFallbackParameterTypes = Arrays.copyOf(fallbackParameterTypes,
-                    fallbackParameterTypes.length + 1);
+            Class<?>[] extendedFallbackParameterTypes = Arrays.copyOf(fallbackParameterTypes, fallbackParameterTypes.length + 1);
             extendedFallbackParameterTypes[fallbackParameterTypes.length] = Throwable.class;
 
             Optional<Method> exFallbackMethod = getMethod(enclosingType, name, extendedFallbackParameterTypes);

@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        mavenCentral()
+        mavenLocal()
         //maven { url "https://repo.spring.io/libs-spring-framework-build" }
         //maven { url "https://repo.spring.io/snapshot" } // Reactor
         maven { url 'https://maven.aliyun.com/repository/spring'}
@@ -9,6 +9,7 @@ buildscript {
         maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
         maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'}
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
@@ -28,7 +29,7 @@ ext {
 
 allprojects {
     repositories {
-        mavenCentral()
+        mavenLocal()
         //maven { url "https://repo.spring.io/libs-spring-framework-build" }
         //maven { url "https://repo.spring.io/snapshot" } // Reactor
         maven { url 'https://maven.aliyun.com/repository/spring'}
@@ -36,6 +37,7 @@ allprojects {
         maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
         maven { url 'https://maven.aliyun.com/nexus/content/groups/public/'}
         maven { url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'}
+        mavenCentral()
         jcenter()
     }
 

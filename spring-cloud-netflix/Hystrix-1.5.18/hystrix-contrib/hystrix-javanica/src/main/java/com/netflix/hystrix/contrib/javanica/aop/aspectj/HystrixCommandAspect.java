@@ -73,7 +73,6 @@ public class HystrixCommandAspect {
     }
 
     @Pointcut("@annotation(com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand)")
-
     public void hystrixCommandAnnotationPointcut() {
     }
 
@@ -168,8 +167,11 @@ public class HystrixCommandAspect {
 
         MetaHolder.Builder metaHolderBuilder(Object proxy, Method method, Object obj, Object[] args, final ProceedingJoinPoint joinPoint) {
             MetaHolder.Builder builder = MetaHolder.builder()
-                    .args(args).method(method).obj(obj).proxyObj(proxy)
-                    .joinPoint(joinPoint);
+                .args(args)
+                .method(method)
+                .obj(obj)
+                .proxyObj(proxy)
+                .joinPoint(joinPoint);
 
             setFallbackMethod(builder, obj.getClass(), method);
             builder = setDefaultProperties(builder, obj.getClass(), joinPoint);
@@ -323,6 +325,7 @@ public class HystrixCommandAspect {
     }
 
     private static MetaHolder.Builder setFallbackMethod(MetaHolder.Builder builder, Class<?> declaringClass, Method commandMethod) {
+        // 获取回调方法，也就是 @HystrixCommand 注解的 fallbackMethod 属性
         FallbackMethod fallbackMethod = MethodProvider.getInstance().getFallbackMethod(declaringClass, commandMethod);
         if (fallbackMethod.isPresent()) {
             fallbackMethod.validateReturnType(commandMethod);

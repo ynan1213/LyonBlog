@@ -1,18 +1,22 @@
 package com.ynan.config;
 
+import feign.Feign;
 import feign.Logger;
 import feign.Logger.Level;
 import feign.Request.Options;
 import feign.Retryer;
 import java.util.concurrent.TimeUnit;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 /**
  * @Author yuannan
  * @Date 2021/11/22 19:26
  */
-//@Configuration(proxyBeanMethods = false)
+@Configuration(proxyBeanMethods = false)
 public class XxxDefaultConfiguration {
 
 	public XxxDefaultConfiguration(ApplicationContext context) {
@@ -51,5 +55,11 @@ public class XxxDefaultConfiguration {
 		return new XxxFallback();
 	}
 
+	@Bean
+	@Scope("prototype")
+//	@ConditionalOnMissingBean
+	public Feign.Builder feignBuilder(Retryer retryer) {
+		return Feign.builder().retryer(retryer);
+	}
 
 }

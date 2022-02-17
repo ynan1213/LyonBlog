@@ -31,8 +31,8 @@ public class StartMain {
 	@Autowired
 	private RemoteService remoteService;
 
-	@Autowired
-	private RemoteServiceXxx remoteServiceXxx;
+//	@Autowired
+//	private RemoteServiceXxx remoteServiceXxx;
 
 	public static void main(String[] args) {
 		SpringApplication.run(StartMain.class, args);
@@ -43,8 +43,8 @@ public class StartMain {
 		return remoteService.remote("world", new User("zhangsan", 23, ""), "上海111").toString();
 	}
 
-	@RequestMapping("/yyy")
-	public String yyy() {
-		return remoteServiceXxx.remote("yyy");
-	}
+//	@RequestMapping("/yyy")
+//	public String yyy() {
+//		return remoteServiceXxx.remote("yyy");
+//	}
 }

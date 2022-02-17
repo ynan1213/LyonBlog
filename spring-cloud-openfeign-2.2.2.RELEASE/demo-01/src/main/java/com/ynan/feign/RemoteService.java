@@ -1,5 +1,6 @@
 package com.ynan.feign;
 
+import com.ynan.config.XxxCustomConfiguration;
 import com.ynan.config.XxxFallback;
 import com.ynan.entity.User;
 import feign.Request.Options;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 	/*url = "http://localhost:8002",*/
 	/*contextId = "aaa",*/
 	path = "/remote",
-	/*configuration = XxxCustomConfiguration.class,*/
+	configuration = XxxCustomConfiguration.class,
 	/*fallbackFactory = XxxFallbackFactory.class,*/
 	fallback = XxxFallback.class
 )

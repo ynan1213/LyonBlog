@@ -26,7 +26,7 @@
 		</encoder>
 	</appender>
 
-	<logger name="================== com.ynan" level="DEBUG" additivity="true">
+	<logger name="com.ynan.xx" level="DEBUG" additivity="true">
 		<appender-ref ref="FILE"></appender-ref>
 	</logger>
 

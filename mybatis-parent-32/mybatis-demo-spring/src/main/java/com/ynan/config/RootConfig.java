@@ -28,6 +28,9 @@ public class RootConfig {
 
     /**
      * 不知道为什么 @Value读取不到@PropertySource注入的配置
+     * 
+     * 后面试试加入PropertySourcesPlaceholderConfigurer
+     * 
      * 但是 Environment 可以
      */
 //    @Value("${jdbc.driver}")

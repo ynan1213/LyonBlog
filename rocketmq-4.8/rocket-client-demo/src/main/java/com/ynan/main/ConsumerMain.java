@@ -1,6 +1,7 @@
 package com.ynan.main;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
@@ -20,22 +21,29 @@ public class ConsumerMain {
 
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("localConsumerGroup01");
         consumer.setNamespace("namespaceName");
-        consumer.setNamesrvAddr("127.0.0.1:9876");
+        consumer.setNamesrvAddr("47.100.24.106:9876");
 
         consumer.setMessageModel(MessageModel.CLUSTERING);
 
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 
-        consumer.subscribe("TopicA", "*");
-        consumer.setMaxReconsumeTimes(2);
+        consumer.subscribe("TopicAyyy", "*");
+        //        consumer.setMaxReconsumeTimes(2);
         consumer.registerMessageListener(new MessageListenerConcurrently() {
             @Override
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
                 System.out.println("收到消息");
-                return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             }
         });
 
         consumer.start();
+        while (true) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -17,11 +17,12 @@ public class ProducerMain {
 
         DefaultMQProducer producer = new DefaultMQProducer("groupName");
         producer.setNamespace("namespaceName");
-        producer.setNamesrvAddr("127.0.0.1:9876");
+        producer.setNamesrvAddr("47.100.24.106:9876");
 
         producer.start();
 
-        Message message = new Message("TopicA", "TAG", "hello world".getBytes());
+        Message message = new Message("TopicAyyy", "TAG", "hello world".getBytes());
+        message.setKeys("xxx-key");
 
         SendResult sendResult = producer.send(message);
         System.out.println(sendResult);

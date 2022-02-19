@@ -273,8 +273,7 @@ public interface BlockingQueue<E> extends Queue<E> {
      *         specified waiting time elapses before an element is available
      * @throws InterruptedException if interrupted while waiting
      */
-    E poll(long timeout, TimeUnit unit)
-        throws InterruptedException;
+    E poll(long timeout, TimeUnit unit) throws InterruptedException;
 
     /**
      * Returns the number of additional elements that this queue can ideally

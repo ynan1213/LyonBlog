@@ -150,6 +150,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      * @throws NullPointerException if the runnable is null
      */
     public FutureTask(Runnable runnable, V result) {
+        // 将 runnable 封装成 callable
         this.callable = Executors.callable(runnable, result);
         this.state = NEW;       // ensure visibility of callable
     }
@@ -162,6 +163,9 @@ public class FutureTask<V> implements RunnableFuture<V> {
         return state != NEW;
     }
 
+    /**
+     * 该方法用来尝试取消一个任务的执行
+     */
     public boolean cancel(boolean mayInterruptIfRunning) {
         // 只要state不为NEW，则直接返回false
         if (!(state == NEW && UNSAFE.compareAndSwapInt(this, stateOffset, NEW, mayInterruptIfRunning ? INTERRUPTING : CANCELLED)))
@@ -196,13 +200,11 @@ public class FutureTask<V> implements RunnableFuture<V> {
     /**
      * @throws CancellationException {@inheritDoc}
      */
-    public V get(long timeout, TimeUnit unit)
-        throws InterruptedException, ExecutionException, TimeoutException {
+    public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         if (unit == null)
             throw new NullPointerException();
         int s = state;
-        if (s <= COMPLETING &&
-            (s = awaitDone(true, unit.toNanos(timeout))) <= COMPLETING)
+        if (s <= COMPLETING && (s = awaitDone(true, unit.toNanos(timeout))) <= COMPLETING)
             throw new TimeoutException();
         return report(s);
     }
@@ -234,6 +236,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
             outcome = v;
             // 然后直接把state状态设置成NORMAL
             UNSAFE.putOrderedInt(this, stateOffset, NORMAL); // final state
+            // 唤醒所有的节点
             finishCompletion();
         }
     }

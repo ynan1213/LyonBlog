@@ -1,4 +1,4 @@
-package com.ynan._10.exception.readWriteLock;
+package com.ynan._10.readWriteLock;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 

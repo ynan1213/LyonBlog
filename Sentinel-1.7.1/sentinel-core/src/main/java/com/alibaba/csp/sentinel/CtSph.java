@@ -167,7 +167,7 @@ public class CtSph implements Sph
          * Means amount of resources (slot chain) exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE},
          * so no rule checking will be done.
          *
-         * 根据 lookProcessChain 方法，当 resource 超过 Constants.MAX_SLOT_CHAIN_SIZE也就是 6000 的时候，
+         * lookProcessChain 方法内，当 resource 超过 Constants.MAX_SLOT_CHAIN_SIZE也就是 6000 的时候，
          * Sentinel 开始不处理新的请求，这么做主要是为了 Sentinel 的性能考虑
          */
         if (chain == null)
@@ -180,9 +180,11 @@ public class CtSph implements Sph
          * 如果正确返回了 Entry ，那表示调用者可以正常访问被 Sentinel 保护的后方服务了，否则 Sentinel 会抛出一个BlockException
          *
          * 1.每执行一次SphU.entry()，都会创建一个对应的 CtEntry ，然后设置 context 的 curEntry 为此 CtEntry
-         * 2.如果先判断的 context 的curEntry不为空，则与当前的CtEntry组成双向队列，什么时候context的curEntry不为空的？ 先执行 SphU.entry("xxx")，再执行一次 SphU.entry("yyy")
+         * 2.如果先判断的 context 的curEntry不为空，则与当前的CtEntry组成双向队列，什么时候context的curEntry不为空的？
+         *   先执行 SphU.entry("xxx")，再执行一次 SphU.entry("yyy")
          */
         Entry e = new CtEntry(resourceWrapper, chain, context);
+        // 创建完之后，context的 curEntry 就指向该 Entry
         try
         {
             // 执行这个责任链。如果抛出 BlockException，说明链上的某一环拒绝了该请求，

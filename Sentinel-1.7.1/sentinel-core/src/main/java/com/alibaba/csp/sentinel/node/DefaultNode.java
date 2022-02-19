@@ -15,15 +15,14 @@
  */
 package com.alibaba.csp.sentinel.node;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.SphO;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.context.Context;
+import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
 import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -81,24 +80,19 @@ public class DefaultNode extends StatisticNode
      *
      * @param node valid child node
      */
-    public void addChild(Node node)
-    {
-        if (node == null)
-        {
+    public void addChild(Node node) {
+        if (node == null) {
             RecordLog.warn("Trying to add null child to node <{0}>, ignored", id.getName());
             return;
         }
-        if (!childList.contains(node))
-        {
-            synchronized (this)
-            {
-                if (!childList.contains(node))
-                {
-                    // 为什么不直接 childList.add(node)
+        if (!childList.contains(node)) {
+            synchronized (this) {
+                if (!childList.contains(node)) {
                     Set<Node> newSet = new HashSet<>(childList.size() + 1);
                     newSet.addAll(childList);
                     newSet.add(node);
                     childList = newSet;
+                    // 上面四行代码为什么不直接使用一句：childList.add(node);
                 }
             }
             RecordLog.info("Add child <{0}> to node <{1}>", ((DefaultNode) node).id.getName(), id.getName());

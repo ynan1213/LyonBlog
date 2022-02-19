@@ -150,7 +150,7 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object>
          * The answer is all {@link DefaultNode}s with same resource name share one
          * {@link ClusterNode}. See {@link ClusterBuilderSlot} for detail.
          *
-         * 这里有两个注意点：
+         * 注意点：
          *   1. 相同的 resource name 使用同一个责任链实例，所以相同的 resource 共享同一个 NodeSelectorSlot
          *   2. 如果context name不一样，不会共享同一个 DefaultNode
          *   3. context name 不一样，EntranceNode也就不一样，DefaultNode 也不一样

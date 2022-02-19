@@ -103,8 +103,7 @@ public class ContextTest {
         final String origin = "originA";
         ContextUtil.enter(contextName, origin);
 
-        Context contextB = Context.newAsyncContext(null, "contextB")
-            .setOrigin("originA");
+        Context contextB = Context.newAsyncContext(null, "contextB").setOrigin("originA");
         Context contextA = ContextUtil.replaceContext(contextB);
         assertEquals(contextName, contextA.getName());
         assertEquals(origin, contextA.getOrigin());
@@ -125,8 +124,7 @@ public class ContextTest {
         final String origin = "originA";
         ContextUtil.enter(contextName, origin);
 
-        final Context contextB = Context.newAsyncContext(null, "contextB")
-            .setOrigin("originB");
+        final Context contextB = Context.newAsyncContext(null, "contextB").setOrigin("originB");
         assertEquals(contextName, ContextUtil.getContext().getName());
         ContextUtil.runOnContext(contextB, new Runnable() {
             @Override

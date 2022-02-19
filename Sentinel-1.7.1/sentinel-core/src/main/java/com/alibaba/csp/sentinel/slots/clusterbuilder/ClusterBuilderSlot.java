@@ -76,7 +76,7 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
         /**
          * 相同的 resource name 全局共享一个 clusterNode，因为 ProcessorSlot 在全局层面是以 resource name 来区分的
          * 在 NodeSelectorSlot 中是以 context 和 resource 两个层面统计 node
-         * 在 ClusterBuilderSlot 中是以 resouce 层面统计node
+         * 在 ClusterBuilderSlot 中是以 resource 层面统计node
          */
         if (clusterNode == null)
         {

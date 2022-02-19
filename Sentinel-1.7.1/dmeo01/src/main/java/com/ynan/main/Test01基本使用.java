@@ -30,14 +30,13 @@ public class Test01基本使用
              * 也就是说每个线程必须绑定一个 Context，因为有全局 contextNameNodeMap（key为 context name，value为 EntranceNode）缓存的存在
              * 只要 context name相同，即使不同线程创建不同的 Context，但是Context 内部的 EntranceNode 是同一个
              *
-             * name 代表什么呢？
-             * 就把它理解成项目调用环境，比如 RPC、dubbo 或者 http
+             * name 代表什么呢？就把它理解成项目调用环境，比如 RPC、dubbo 或者 http，创建EntranceNode时name作为构造参数
              */
             Context context = ContextUtil.enter("dubbo1", "appA");
 
             /**
              *  A 代表什么呢？ 内部会将 A 封装为 ResourceWrapper，也就是封装为一个资源
-             *  所以A代表的应该是一个资源，什么是资源呢？就是这句代码后面要执行的代码
+             *  所以A代表的应该是一个资源，什么是资源呢？就是这句代码后面要执行的代码或者是一个方法
              */
             entry = SphU.entry("A");
             entry = SphU.entry("B");

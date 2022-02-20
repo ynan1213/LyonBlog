@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
-import javax.inject.Named;
+//import javax.inject.Inject;
+//import javax.inject.Named;
 import java.util.Iterator;
 
 @Controller
@@ -17,8 +17,8 @@ public class UserController
 	// @Resource(name = "userService1")
 	// private UserService userService2;
 
-	@Inject
-	@Named("userService2")
+//	@Inject
+//	@Named("userService2")
 	private UserService userService;
 
 	public void test()

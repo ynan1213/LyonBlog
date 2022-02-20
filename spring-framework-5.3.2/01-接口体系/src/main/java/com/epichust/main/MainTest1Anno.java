@@ -34,6 +34,7 @@ public class MainTest1Anno {
 		/*
 		 * 方式三：指定类，无需手动刷新
 		 */
+		System.setProperty("xxx", "hello");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(RootConfig.class);
 
 		UserController userController = context.getBean(UserController.class);

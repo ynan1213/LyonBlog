@@ -785,8 +785,7 @@ class ConstructorResolver {
 							"] - did you specify the correct bean references as arguments?");
 				}
 				try {
-					Object autowiredArgument = resolveAutowiredArgument(
-							methodParam, beanName, autowiredBeanNames, converter, fallback);
+					Object autowiredArgument = resolveAutowiredArgument(methodParam, beanName, autowiredBeanNames, converter, fallback);
 					args.rawArguments[paramIndex] = autowiredArgument;
 					args.arguments[paramIndex] = autowiredArgument;
 					args.preparedArguments[paramIndex] = autowiredArgumentMarker;
@@ -864,6 +863,7 @@ class ConstructorResolver {
 		}
 		return constructor;
 	}
+
 
 	/**
 	 * Template method for resolving the specified argument which is supposed to be autowired.

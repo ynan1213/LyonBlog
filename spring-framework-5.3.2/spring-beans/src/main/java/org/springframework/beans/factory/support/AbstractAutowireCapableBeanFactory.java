@@ -1238,13 +1238,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
-		// Preferred constructors for default construction?
+		// Preferred constructors for default construction? 获得一个首选的构造函数？？？
 		ctors = mbd.getPreferredConstructors();
 		if (ctors != null) {
 			return autowireConstructor(beanName, mbd, ctors, null);
 		}
 
-		// No special handling: simply use no-arg constructor.
+		// No special handling: simply use no-arg constructor. 没有指定，使用默认的无构造函数
 		return instantiateBean(beanName, mbd);
 	}
 

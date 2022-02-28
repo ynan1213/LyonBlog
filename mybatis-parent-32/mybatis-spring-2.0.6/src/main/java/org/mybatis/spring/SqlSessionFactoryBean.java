@@ -546,8 +546,10 @@ public class SqlSessionFactoryBean implements FactoryBean<SqlSessionFactory>, In
         }
 
         if (hasLength(this.typeHandlersPackage)) {
-            scanClasses(this.typeHandlersPackage, TypeHandler.class).stream().filter(clazz -> !clazz.isAnonymousClass())
-                .filter(clazz -> !clazz.isInterface()).filter(clazz -> !Modifier.isAbstract(clazz.getModifiers()))
+            scanClasses(this.typeHandlersPackage, TypeHandler.class).stream()
+                .filter(clazz -> !clazz.isAnonymousClass())
+                .filter(clazz -> !clazz.isInterface())
+                .filter(clazz -> !Modifier.isAbstract(clazz.getModifiers()))
                 .forEach(targetConfiguration.getTypeHandlerRegistry()::register);
         }
 

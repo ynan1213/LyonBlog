@@ -22,7 +22,7 @@ public class TestMain {
 
     @Test
     public void testInsertOrderInfo() {
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10; i++) {
             long userId = i;
             long orderId = i + 1;
             OrderInfo orderInfo = new OrderInfo();

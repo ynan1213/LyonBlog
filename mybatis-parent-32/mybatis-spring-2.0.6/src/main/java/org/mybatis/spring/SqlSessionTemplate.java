@@ -66,7 +66,6 @@ import org.springframework.dao.support.PersistenceExceptionTranslator;
  * @author Putthiphong Boonphong
  * @author Hunter Presnall
  * @author Eduardo Macarron
- *
  * @see SqlSessionFactory
  * @see MyBatisExceptionTranslator
  */
@@ -83,8 +82,7 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
     /**
      * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory} provided as an argument.
      *
-     * @param sqlSessionFactory
-     *          a factory of SqlSession
+     * @param sqlSessionFactory a factory of SqlSession
      */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
         this(sqlSessionFactory, sqlSessionFactory.getConfiguration().getDefaultExecutorType());
@@ -94,13 +92,12 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
      * Constructs a Spring managed SqlSession with the {@code SqlSessionFactory} provided as an argument and the given
      * {@code ExecutorType} {@code ExecutorType} cannot be changed once the {@code SqlSessionTemplate} is constructed.
      *
-     * @param sqlSessionFactory
-     *          a factory of SqlSession
-     * @param executorType
-     *          an executor type on session
+     * @param sqlSessionFactory a factory of SqlSession
+     * @param executorType an executor type on session
      */
     public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType) {
-        this(sqlSessionFactory, executorType, new MyBatisExceptionTranslator(sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), true));
+        this(sqlSessionFactory, executorType,
+            new MyBatisExceptionTranslator(sqlSessionFactory.getConfiguration().getEnvironment().getDataSource(), true));
     }
 
     /**
@@ -109,14 +106,12 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
      * MyBatis can be custom translated to a {@code RuntimeException} The {@code SQLExceptionTranslator} can also be null
      * and thus no exception translation will be done and MyBatis exceptions will be thrown
      *
-     * @param sqlSessionFactory
-     *          a factory of SqlSession
-     * @param executorType
-     *          an executor type on session
-     * @param exceptionTranslator
-     *          a translator of exception
+     * @param sqlSessionFactory a factory of SqlSession
+     * @param executorType an executor type on session
+     * @param exceptionTranslator a translator of exception
      */
-    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType, PersistenceExceptionTranslator exceptionTranslator) {
+    public SqlSessionTemplate(SqlSessionFactory sqlSessionFactory, ExecutorType executorType,
+        PersistenceExceptionTranslator exceptionTranslator) {
 
         notNull(sqlSessionFactory, "Property 'sqlSessionFactory' is required");
         notNull(executorType, "Property 'executorType' is required");
@@ -126,7 +121,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
         this.exceptionTranslator = exceptionTranslator;
 
         // 创建代理
-        this.sqlSessionProxy = (SqlSession) newProxyInstance(SqlSessionFactory.class.getClassLoader(), new Class[]{SqlSession.class}, new SqlSessionInterceptor());
+        this.sqlSessionProxy = (SqlSession) newProxyInstance(SqlSessionFactory.class.getClassLoader(), new Class[]{SqlSession.class},
+            new SqlSessionInterceptor());
     }
 
     public SqlSessionFactory getSqlSessionFactory() {
@@ -359,7 +355,6 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
 
     /**
      * {@inheritDoc}
-     *
      */
     @Override
     public Configuration getConfiguration() {
@@ -378,7 +373,6 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
      * {@inheritDoc}
      *
      * @since 1.0.2
-     *
      */
     @Override
     public List<BatchResult> flushStatements() {
@@ -422,7 +416,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
             // 这个 SqlSession 和非Spring环境的 SqlSession 的区别：
             //  1. 来源不同，非Spring环境是每次都创建一个新的，Spring环境是首先从ThreadLocal中取，没有就通过 SqlSessionFactory 创建一个再返回
             //  2. 内部 executor 的 Transaction 类型不一样；
-            SqlSession sqlSession = getSqlSession(SqlSessionTemplate.this.sqlSessionFactory, SqlSessionTemplate.this.executorType, SqlSessionTemplate.this.exceptionTranslator);
+            SqlSession sqlSession = getSqlSession(SqlSessionTemplate.this.sqlSessionFactory,
+                SqlSessionTemplate.this.executorType, SqlSessionTemplate.this.exceptionTranslator);
             try {
                 // 这里同一个 Method对象被不同的 sqlSession对象调用
                 Object result = method.invoke(sqlSession, args);
@@ -437,7 +432,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
                     // release the connection to avoid a deadlock if the translator is no loaded. See issue #22
                     closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
                     sqlSession = null;
-                    Throwable translated = SqlSessionTemplate.this.exceptionTranslator.translateExceptionIfPossible((PersistenceException) unwrapped);
+                    Throwable translated = SqlSessionTemplate.this.exceptionTranslator
+                        .translateExceptionIfPossible((PersistenceException) unwrapped);
                     if (translated != null) {
                         unwrapped = translated;
                     }

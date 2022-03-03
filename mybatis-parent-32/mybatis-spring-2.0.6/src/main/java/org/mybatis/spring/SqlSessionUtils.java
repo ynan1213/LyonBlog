@@ -116,7 +116,8 @@ public final class SqlSessionUtils {
      * @param exceptionTranslator persistenceExceptionTranslator used for registration.
      * @param session sqlSession used for registration.
      */
-    private static void registerSessionHolder(SqlSessionFactory sessionFactory, ExecutorType executorType, PersistenceExceptionTranslator exceptionTranslator, SqlSession session) {
+    private static void registerSessionHolder(SqlSessionFactory sessionFactory, ExecutorType executorType,
+        PersistenceExceptionTranslator exceptionTranslator, SqlSession session) {
         SqlSessionHolder holder;
         // 能进入if，就说明开启了Spring事务
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -126,8 +127,9 @@ public final class SqlSessionUtils {
                 LOGGER.debug(() -> "Registering transaction synchronization for SqlSession [" + session + "]");
 
                 holder = new SqlSessionHolder(session, executorType, exceptionTranslator);
-                // mybatis 会把 SqlSessionHolder 存到 ThreadLocal 中，key 为 SqlSessionFactory
+                // 把 SqlSessionHolder 存到 ThreadLocal 中，key 为 SqlSessionFactory
                 TransactionSynchronizationManager.bindResource(sessionFactory, holder);
+                // 注册Synchronization，作用是在事务提交之前执行 sqlSession#commit()方法，commit具体是做什么的还不清楚。
                 TransactionSynchronizationManager.registerSynchronization(new SqlSessionSynchronization(holder, sessionFactory));
                 holder.setSynchronizedWithTransaction(true);
                 holder.requested();

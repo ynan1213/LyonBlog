@@ -1,9 +1,12 @@
 mybatis:
     mapper-locations: classpath*:mapper/*.xml
     type-aliases-package: com.ynan.entity
+    type-handlers-package: com.ynan.typeHandler
+    # executor-type: REUSE
     configuration:
        # logImpl: STDOUT_LOGGING
         logImpl: com.ynan.log.MyCustomLog
+        cache-enabled: false
 
 
 jdbc:

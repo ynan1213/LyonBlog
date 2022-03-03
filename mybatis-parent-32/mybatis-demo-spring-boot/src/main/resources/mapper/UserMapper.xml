@@ -7,14 +7,14 @@
     <resultMap type="User" id="xxxUserResultMap" autoMapping="true">
         <result column="id" property="id"/>
         <result column="name" property="name"/>
-        <result column="age" property="age"/>
+        <result column="age" property="age" typeHandler="com.ynan.typeHandler.MyEnumTypeHandler"/>
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into user(name, age) values( #{name}, #{age})
     </insert>
 
-    <select id="getById" resultMap="xxxUserResultMap">
+    <select id="getById" resultMap="xxxUserResultMap" statementType="PREPARED">
         select * from user where id = #{xxxx}
     </select>
 

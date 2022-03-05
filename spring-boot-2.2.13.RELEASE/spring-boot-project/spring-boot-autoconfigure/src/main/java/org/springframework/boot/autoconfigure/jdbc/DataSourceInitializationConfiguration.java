@@ -28,6 +28,9 @@ import org.springframework.core.type.AnnotationMetadata;
  * Configures DataSource initialization.
  *
  * @author Stephane Nicoll
+ *
+ * 为了方便他人操作自己的项目，在项目中配置好需要用到的数据库表和相关数据
+ * 只要在资源路径中添加 schema.sql 和 data.sql 文件，springboot 在运行的时候就会自动关联数据库创建相应的表和数据
  */
 @Configuration(proxyBeanMethods = false)
 @Import({ DataSourceInitializerInvoker.class, DataSourceInitializationConfiguration.Registrar.class })
@@ -43,8 +46,7 @@ class DataSourceInitializationConfiguration {
 		private static final String BEAN_NAME = "dataSourceInitializerPostProcessor";
 
 		@Override
-		public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
-				BeanDefinitionRegistry registry) {
+		public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 			if (!registry.containsBeanDefinition(BEAN_NAME)) {
 				GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
 				beanDefinition.setBeanClass(DataSourceInitializerPostProcessor.class);

@@ -57,18 +57,26 @@ import org.springframework.util.StringUtils;
 public class DataSourceAutoConfiguration {
 
 	@Configuration(proxyBeanMethods = false)
+	// 判断是否引入 内置数据库：H2，DERBY，HSQL，引入了才生效
 	@Conditional(EmbeddedDatabaseCondition.class)
 	@ConditionalOnMissingBean({ DataSource.class, XADataSource.class })
+	// 如果这是没有DataSource/XADataSource 对应的 BeanDefinition，就通过导入 EmbeddedDataSourceConfiguration.class 来，配置内置数据库对应的数据源
 	@Import(EmbeddedDataSourceConfiguration.class)
 	protected static class EmbeddedDatabaseConfiguration {
 
 	}
 
 	@Configuration(proxyBeanMethods = false)
+	// 判断是否引入依赖的数据源的jar包：HikariDataSource、tomcat.jdbc.pool.DataSource、BasicDataSource
 	@Conditional(PooledDataSourceCondition.class)
+	// 且没有自定义数据源
 	@ConditionalOnMissingBean({ DataSource.class, XADataSource.class })
-	@Import({ DataSourceConfiguration.Hikari.class, DataSourceConfiguration.Tomcat.class,
-			DataSourceConfiguration.Dbcp2.class, DataSourceConfiguration.Generic.class,
+	// 如果上面条件都满足的话，就解析下面的类，注意顺序，hikari优先
+	@Import({ DataSourceConfiguration.Hikari.class,
+			DataSourceConfiguration.Tomcat.class,
+			DataSourceConfiguration.Dbcp2.class,
+			// 当指定spring.datasource.type且不为 hikari 这里就会生效
+			DataSourceConfiguration.Generic.class,
 			DataSourceJmxConfiguration.class })
 	protected static class PooledDataSourceConfiguration {
 
@@ -84,11 +92,13 @@ public class DataSourceAutoConfiguration {
 			super(ConfigurationPhase.PARSE_CONFIGURATION);
 		}
 
+		// 条件一：是否配置了 spring.datasource.type 属性
 		@ConditionalOnProperty(prefix = "spring.datasource", name = "type")
 		static class ExplicitType {
 
 		}
 
+		// 条件二：项目中是否引入了数据源依赖(如，hikari)
 		@Conditional(PooledDataSourceAvailableCondition.class)
 		static class PooledDataSourceAvailable {
 

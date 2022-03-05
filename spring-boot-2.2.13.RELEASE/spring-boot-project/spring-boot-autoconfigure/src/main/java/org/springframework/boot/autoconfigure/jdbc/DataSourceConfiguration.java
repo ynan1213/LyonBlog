@@ -75,8 +75,11 @@ abstract class DataSourceConfiguration {
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(HikariDataSource.class)
 	@ConditionalOnMissingBean(DataSource.class)
-	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "com.zaxxer.hikari.HikariDataSource",
-			matchIfMissing = true)
+	// 注意这里指定了havingValue
+	// 1. 如果容器没有配置 spring.datasource.type，因为 matchIfMissing = true 所以这里会通过。
+	// 2. 如果spring.datasource.type有配置，当且仅当spring.datasource.type=com.zaxxer.hikari.HikariDataSource时才生效。
+	// 这也就是为什么如果我们将type指定为 druid 后这里就不会生效了。
+	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "com.zaxxer.hikari.HikariDataSource", matchIfMissing = true)
 	static class Hikari {
 
 		@Bean
@@ -97,8 +100,7 @@ abstract class DataSourceConfiguration {
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(org.apache.commons.dbcp2.BasicDataSource.class)
 	@ConditionalOnMissingBean(DataSource.class)
-	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "org.apache.commons.dbcp2.BasicDataSource",
-			matchIfMissing = true)
+	@ConditionalOnProperty(name = "spring.datasource.type", havingValue = "org.apache.commons.dbcp2.BasicDataSource", matchIfMissing = true)
 	static class Dbcp2 {
 
 		@Bean

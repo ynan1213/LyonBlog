@@ -34,6 +34,8 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author Stephane Nicoll
  * @since 1.2.0
+ *
+ * 为数据源注册一个DataSourcePoolMetadataProvider实例，这个实例主要用于获取内置数据源的一些状态
  */
 @Configuration(proxyBeanMethods = false)
 public class DataSourcePoolMetadataProvidersConfiguration {

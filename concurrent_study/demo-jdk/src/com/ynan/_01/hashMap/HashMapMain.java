@@ -1,27 +1,22 @@
 package com.ynan._01.hashMap;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class HashMapMain
 {
     public static void main(String[] args)
     {
-        HashMap map = new HashMap(5);
+        HashMap map = new HashMap();
+        map.put("1", "2");
 
-        map.put("asdsadsadsa", 111);
-        map.put("123", 111);
-        map.put(123, 111);
-        map.put(0, 111);
-        map.put("a", 111);
-        map.put("asdsadsadsa", 111);
+        Map map1 = Collections.emptyMap();
 
-        A a = new  A();
+        Set<Map.Entry> set = map1.entrySet();
+        for (Entry entry : set) {
+            System.out.println(entry.getKey());
+        }
 
 
     }
-
-}
-
-class A{
-
 }

@@ -9,11 +9,6 @@ import java.util.Optional;
 public class MapDemo {
 
     public static void main(String[] args) {
-        User user = new User("lisi");
-
-        String s1 = Optional.ofNullable(user).map(User::getName).orElse("unKnown");
-        System.out.println(s1);
-
 
 
 

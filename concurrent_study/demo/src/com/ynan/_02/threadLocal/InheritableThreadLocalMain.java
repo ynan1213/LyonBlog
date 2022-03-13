@@ -6,15 +6,16 @@ package com.ynan._02.threadLocal;
  * @author: yn
  * @create: 2021-06-21 10:16
  */
-public class InheritableThreadLocalMain
-{
-    public static void main(String[] args)
-    {
+public class InheritableThreadLocalMain {
+
+    public static void main(String[] args) {
+        // 父线程的 InheritableThreadLocal
         InheritableThreadLocal<String> inheritableThreadLocal = new InheritableThreadLocal();
 
         // 父线程set值
         inheritableThreadLocal.set("hello");
 
+        // 创建子线程的时候
         new Thread(() -> {
             // 子线程获取值
             String s = inheritableThreadLocal.get();

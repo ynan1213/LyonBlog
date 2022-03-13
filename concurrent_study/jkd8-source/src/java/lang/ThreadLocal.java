@@ -423,13 +423,14 @@ public class ThreadLocal<T> {
          * @return the entry associated with key, or null if no such
          *
          * 该方法被threadLocal.get实例方法调用，所以进入到该方法的key肯定不为null
-         *
+         * <p>
          * 总结：
          *  1. 计算出key对象的下标，如果当前下标命中，直接返回；
          *  2. 如果未命中，向后遍历；
          *  3. 如果向后遍历过程命中，返回；
          *  4. 如果向后遍历过程找到无效的Entry，会将无效Entry后面的都清理一遍；
          *  5. 如果遍历到一个空slot，则返回null
+         * </p>
          */
         private Entry getEntry(ThreadLocal<?> key) {
             // hash函数计算hash值
@@ -475,6 +476,8 @@ public class ThreadLocal<T> {
                 if (k == null)
                     // entry!=null但是key==null说明该entry对应的ThreadLocal已经被回收，entry无效，调用expungeStaleEntry清理
                     // 关键点在里面，除了会将当前entry和value置为null外，还会进行一次rehash
+                    // expunge：删除
+                    // stale：失效的
                     expungeStaleEntry(i);
                 else
                     // 找下一个
@@ -643,7 +646,7 @@ public class ThreadLocal<T> {
          * for expunging).
          *
          *  expunge：删除
-         *  Stale：  过期的
+         *  Stale：  过期的、失效的
          *
          * 方法总结：
          *  1、将staleSlot下标的slot置为null，并从staleSlot往后遍历，碰到slot为null就退出，并将 下标 i 返回；

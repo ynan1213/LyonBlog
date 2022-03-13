@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ynan.dao.UserMapper">
+    <insert id="insertUser">
+        insert into xx1(name,age,address) values(#{name},#{age},#{address})
+    </insert>
+    <insert id="insertDog">
+        insert into dog(name,age) values(#{name},#{age})
+    </insert>
+
+    <insert id="insertDic">
+        insert into dic(name,value) values(#{name},#{value})
+    </insert>
+
+    <select id="listAll" resultType="com.ynan.entity.User">
+        select * from xx1
+    </select>
+    <select id="listAllDog" resultType="com.ynan.entity.Dog">
+        select * from dog
+    </select>
+    <select id="listAllDic" resultType="com.ynan.entity.Dic">
+        select * from dic
+    </select>
+
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ynan.dao.UserMapper">
+    <insert id="insertUser">
+        insert into user(name,status) values(#{name},#{status})
+    </insert>
+
+    <insert id="insertDic">
+        insert into dic(code,value) values(#{code},#{value})
+    </insert>
+
+    <select id="listAll" resultType="com.ynan.entity.User">
+        select t1.*, t2.value as statusName from user t1 left join dic t2 on t1.status = t2.code
+    </select>
+
+    <select id="listAllDic" resultType="com.ynan.entity.Dic">
+        select * from dic
+    </select>
+
+</mapper>

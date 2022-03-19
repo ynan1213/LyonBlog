@@ -23,7 +23,7 @@ import java.util.concurrent.locks.LockSupport;
 
 /**
  * Expose helper methods which create different {@link RejectedExecutionHandler}s.
- * // todo 这是个辅助方法,用于创建拒绝执行处理器, 指明什么情况下不去执行用户提交的任务
+ * 这是个辅助方法,用于创建拒绝执行处理器, 指明什么情况下不去执行用户提交的任务
  * */
 public final class RejectedExecutionHandlers {
     private static final RejectedExecutionHandler REJECT = new RejectedExecutionHandler() {

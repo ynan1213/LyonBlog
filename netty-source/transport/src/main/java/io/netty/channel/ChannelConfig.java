@@ -150,8 +150,8 @@ public interface ChannelConfig {
      * It is similar to what a spin lock is used for in concurrency programming.
      * It improves memory utilization and write throughput depending on
      * the platform that JVM runs on.  The default value is {@code 16}.
-     * todo 返回最大的循环尝试次数 默认是 16
-     * todo 在并发编程成使用 使用自旋锁可以提高 程序内存的吞吐量
+     * 返回最大的循环尝试次数 默认是 16
+     * 在并发编程成使用 使用自旋锁可以提高 程序内存的吞吐量
      */
     int getWriteSpinCount();
 

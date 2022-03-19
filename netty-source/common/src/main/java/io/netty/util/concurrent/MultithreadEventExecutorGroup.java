@@ -38,7 +38,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final AtomicInteger terminatedChildren = new AtomicInteger();
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
 
-    //chooser == EventExecutorChooser 他是一个用于做选择的组件
+    // chooser == EventExecutorChooser 他是一个用于做选择的组件
     private final EventExecutorChooserFactory.EventExecutorChooser chooser;
 
     /**
@@ -78,10 +78,8 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         if (executor == null) {
-            // newDefaultThreadFactory根据它的特性,可以给线程加名字等,
-            // 比传统的好处是 把创建线程和 定义线程需要做的任务分开, 我们只关心任务,  两者解耦
-            // 每次执行任务都会创建一个线程实体
-            // NioEventLoop 线程命名规则  nioEventLoop-1-XX    1代表是第几个group   XX第几个eventLoop
+            // newDefaultThreadFactory 返回一个线程工厂，线程命名规则：nioEventLoop-1-XX，1代表是第几个group，XX第几个eventLoop
+            // ThreadPerTaskExecutor 实现了jdk的Executor接口，是个线程池，最终是传递给 childrenEventExecutor 内部每一个 EventExecutor
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
@@ -91,7 +89,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (int i = 0; i < nThreads; i++) {
             boolean success = false;
             try {
-                // 实例化每一个EventExecutor,其实就是NioEventLoop，因为NioEventLoop间接实现了EventExecutor接口
+                // 实例化每一个EventExecutor,其实就是 NioEventLoop，因为NioEventLoop间接实现了EventExecutor接口
                 // 实例化的内容：
                 //      1.每个NioEventLoop创建了两个阻塞队列TaskQueue（tailTasks和taskQueue），具体作用后面补充
                 //      2.将上面创建的 executor 传递给每一个NioEventLoop
@@ -103,6 +101,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
                 if (!success) {
+                    // 只要碰到一个不成功，就会将前面已经创建了的全部shutdown
                     for (int j = 0; j < i; j++) {
                         children[j].shutdownGracefully();
                     }
@@ -110,11 +109,15 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                     for (int j = 0; j < i; j++) {
                         EventExecutor e = children[j];
                         try {
+                            // 还要等待每一个线程完全关闭
                             while (!e.isTerminated()) {
                                 e.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
                             }
                         } catch (InterruptedException interrupted) {
                             // Let the caller handle the interruption.
+                            // 如果内部线程在shutdown过程中有被interrupted，后面就会break，就不等待了。
+                            // 这里有一点要注意，Thread.currentThread().interrupt() 是设置当前线程的中断状态，和内部线程池无关
+                            // 也就是说，给调用者一个信号。
                             Thread.currentThread().interrupt();
                             break;
                         }
@@ -126,7 +129,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         // chooser 在这里 初始化了
         chooser = chooserFactory.newChooser(children);
 
-        //设置监听器，不清楚terminationFuture任务的用途
+        // 设置监听器，不清楚terminationFuture任务的用途
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
@@ -137,6 +140,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         };
 
         for (EventExecutor e : children) {
+            // 将 terminationListener 注册到每一个children中，当所有的children都shutdown的时候，就会将parent的 terminationFuture 置为success
             e.terminationFuture().addListener(terminationListener);
         }
 

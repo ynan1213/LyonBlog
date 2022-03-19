@@ -105,7 +105,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             throw new IllegalStateException("childGroup set already");
         }
         // childGroup给自己维护
-        // 在注册 Channel的步骤中,获取childGruop(),Channel要注册进事件循环组!!! 它发生在他的父类中!!!(AbstractBootStrap)
+        // 在注册 Channel的步骤中,获取childGroup(),Channel要注册进事件循环组!!! 它发生在他的父类中!!!(AbstractBootStrap)
         this.childGroup = childGroup;
 
         // 链式编程风格
@@ -203,36 +203,30 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
 
         /**
-         *  默认会往NioServerSocketChannel的管道里面添加了一个 ChannelInitializer ,
-         *  ChannelInitializer是个辅助类，当它被添加到pipeline中时，调用handlerAdded -> initChannel，这样内部的handler被添加到了pipeline中
-         *  但是它的作用和普通 handler 有点不一样，它纯碎是用来辅助将其他的 handler 加入到 pipeline 中的。
-         *  (我们自己添加的ChildHandler就继承了的这个ChannelInitializer, 而ChannelInitializer实现了ChannelHandler)
-         *  initChannel(final Channel ch)方法就是往pipeline中添加handler，具体什么时候被调用呢？
+         *  往 NioServerSocketChannel 的 ChannelPipeline 里面添加了一个 ChannelInitializer
+         *  ChannelInitializer 是个辅助类，主要作用就是将 handler 添加到 Pipeline中
+         *  疑问：这里为什么不直接添加呢？而是封装为 ChannelInitializer对象 ？
+         *
+         *  此时addLast进pipeline的handler并不会被初始化，而是会添加到pendingHandlerCallbackHead链表中，后序再初始化
          */
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
-                /**
-                 * 获取Bootstrap的handler对象，注册进pipeline
-                 * 这个handler针对BossGroup的Channel, 给他添加上我们在server类中添加的handler()里面添加处理器
-                 * 这个config中的handler是什么时候创建的？
-                 *      其实就是在ServetBootStrap中添加的ServetBootStrap.handler()，非ServetBootStrap.childHandler
-                 */
+
+                // config 是 ServerBootstrap 的成员变量，这里的handler方法返回的是 ServerBootstrap 的handler，注意不是childHandler
                 ChannelHandler handler = config.handler();
+                // 做了非空判断，也就是说 ServerBootstrap 的 handler可以不设置
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
 
-                /**
-                 * 不知道为什么这里为什么不直接addLast，而是添加到任务队列中
-                 */
+                // 疑问：这里同样为什么不直接addLast，而是添加到任务队列中
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
                         /**
-                         * ServerBootstrapAcceptor接收器, 是一个特殊的chanelHandler
-                         * 这个很重要,在ServerBootStrap里面,netty已经为我们生成了接收器
+                         * ServerBootstrapAcceptor接收器, 是一个特殊的 channelHandler
                          * 专门处理新连接的接入, 把新连接的channel绑定在 workerGroup中的某一条线程上
                          */
                         pipeline.addLast(new ServerBootstrapAcceptor(

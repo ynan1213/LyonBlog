@@ -140,8 +140,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                  SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler) {
 
         /**
-         * 进入到父类,  着重看他是如何创建出TaskQueue的(创建了两个队列，tailTasks和taskQueue）
-         * 注意第三个参数addTaskWakesUp置为false
+         * 父类创建TaskQueue(创建了两个队列，tailTasks和taskQueue）
+         * 注意第三个参数 addTaskWakesUp 置为false
          */
         super(parent, executor, false, DEFAULT_MAX_PENDING_TASKS, rejectedExecutionHandler);
 
@@ -156,7 +156,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         provider = selectorProvider;
 
         // 每一个NioEventLoop都创建了个属于自己的Selector
-        // 获取Selector选择器, 可以着重看一下这个 openSelector方法, 看看netty如果打开选择器, 和原生jdk有哪些出入
+        // 获取Selector选择器, 和原生jdk有些出入
         final SelectorTuple selectorTuple = openSelector();
 
         // SelectorTuple是netty维护jdk 原生的Selector的包装类, 下面看,他有两个Selector,一个是经过包装的,一个是未经过包装的
@@ -289,12 +289,17 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     /**
      * 来这里之前, 我们将线程的执行器executor交给了EventLoop管理, 使得EventLoop拥有了执行任务的能力
      * 现在, 为每一个EventLoop创建一个任务队列, MpscQueue, 这个队列的特点就是使用于Netty现在使用的线程模型, 单消费者,多生产者
+     *
+     * • SPSC：单个生产者对单个消费者（无等待、有界和无界都有实现）
+     * • MPSC：多个生产者对单个消费者（无锁、有界和无界都有实现）
+     * • SPMC：单生产者对多个消费者（无锁 有界）
+     * • MPMC：多生产者对多个消费者（无锁、有界）
      */
     @Override
     protected Queue<Runnable> newTaskQueue(int maxPendingTasks) {
         // This event loop never calls takeTask()
-        return maxPendingTasks == Integer.MAX_VALUE ? PlatformDependent.<Runnable>newMpscQueue()
-                : PlatformDependent.<Runnable>newMpscQueue(maxPendingTasks);
+        return maxPendingTasks == Integer.MAX_VALUE ?
+            PlatformDependent.<Runnable>newMpscQueue() : PlatformDependent.<Runnable>newMpscQueue(maxPendingTasks);
     }
 
     @Override

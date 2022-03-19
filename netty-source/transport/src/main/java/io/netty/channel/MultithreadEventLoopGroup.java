@@ -83,7 +83,8 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
         // 注意下面的register方法和所在的方法的异同点
         //      相同点：NioEventLoop同样实现了NioEventLoopGroup,所有也有register方法
         //      不同点：上面的register方式是bossGroup的方法实现，内部原理是选择内部的一个NioEventLoop来执行,下面的register方法由NioEventLoop自己实现
-        return next().register(channel);
+        EventLoop eventLoop = next();
+        return eventLoop.register(channel);
     }
 
     @Override

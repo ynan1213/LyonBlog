@@ -46,11 +46,9 @@ public class DefaultChannelConfig implements ChannelConfig {
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 30000;
 
-    private static final AtomicIntegerFieldUpdater<DefaultChannelConfig> AUTOREAD_UPDATER =
-            AtomicIntegerFieldUpdater.newUpdater(DefaultChannelConfig.class, "autoRead");
+    private static final AtomicIntegerFieldUpdater<DefaultChannelConfig> AUTOREAD_UPDATER = AtomicIntegerFieldUpdater.newUpdater(DefaultChannelConfig.class, "autoRead");
     private static final AtomicReferenceFieldUpdater<DefaultChannelConfig, WriteBufferWaterMark> WATERMARK_UPDATER =
-            AtomicReferenceFieldUpdater.newUpdater(
-                    DefaultChannelConfig.class, WriteBufferWaterMark.class, "writeBufferWaterMark");
+            AtomicReferenceFieldUpdater.newUpdater(DefaultChannelConfig.class, WriteBufferWaterMark.class, "writeBufferWaterMark");
 
     protected final Channel channel;
 
@@ -264,8 +262,7 @@ public class DefaultChannelConfig implements ChannelConfig {
     @Override
     public ChannelConfig setWriteSpinCount(int writeSpinCount) {
         if (writeSpinCount <= 0) {
-            throw new IllegalArgumentException(
-                    "writeSpinCount must be a positive integer.");
+            throw new IllegalArgumentException("writeSpinCount must be a positive integer.");
         }
         this.writeSpinCount = writeSpinCount;
         return this;
@@ -360,9 +357,8 @@ public class DefaultChannelConfig implements ChannelConfig {
             WriteBufferWaterMark waterMark = writeBufferWaterMark;
             if (writeBufferHighWaterMark < waterMark.low()) {
                 throw new IllegalArgumentException(
-                        "writeBufferHighWaterMark cannot be less than " +
-                                "writeBufferLowWaterMark (" + waterMark.low() + "): " +
-                                writeBufferHighWaterMark);
+                        "writeBufferHighWaterMark cannot be less than writeBufferLowWaterMark ("
+                            + waterMark.low() + "): " + writeBufferHighWaterMark);
             }
             if (WATERMARK_UPDATER.compareAndSet(this, waterMark,
                     new WriteBufferWaterMark(waterMark.low(), writeBufferHighWaterMark, false))) {

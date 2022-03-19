@@ -35,8 +35,7 @@ import static io.netty.channel.ChannelOption.SO_REUSEADDR;
 /**
  * The default {@link ServerSocketChannelConfig} implementation.
  */
-public class DefaultServerSocketChannelConfig extends DefaultChannelConfig
-                                              implements ServerSocketChannelConfig {
+public class DefaultServerSocketChannelConfig extends DefaultChannelConfig implements ServerSocketChannelConfig {
 
     protected final ServerSocket javaSocket;
     private volatile int backlog = NetUtil.SOMAXCONN;
@@ -45,7 +44,6 @@ public class DefaultServerSocketChannelConfig extends DefaultChannelConfig
      * Creates a new instance.
      */
     public DefaultServerSocketChannelConfig(ServerSocketChannel channel, ServerSocket javaSocket) {
-        //接着跟进去, 进入 DefaultChannelConfig
         super(channel);
         if (javaSocket == null) {
             throw new NullPointerException("javaSocket");

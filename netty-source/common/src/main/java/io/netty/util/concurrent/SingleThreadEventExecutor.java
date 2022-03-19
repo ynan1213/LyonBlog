@@ -580,8 +580,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             throw new IllegalArgumentException("quietPeriod: " + quietPeriod + " (expected >= 0)");
         }
         if (timeout < quietPeriod) {
-            throw new IllegalArgumentException(
-                    "timeout: " + timeout + " (expected >= quietPeriod (" + quietPeriod + "))");
+            throw new IllegalArgumentException("timeout: " + timeout + " (expected >= quietPeriod (" + quietPeriod + "))");
         }
         if (unit == null) {
             throw new NullPointerException("unit");
@@ -926,15 +925,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                      */
                     SingleThreadEventExecutor.this.run();
                     //System.out.println("因为进入了NioEventLoop的无限循环，所以不会走到这里");
-                    //什么情况下会走到这里呢？？？
+                    //什么情况下会走到这里呢？？？ shutdown的时候
                     success = true;
                 } catch (Throwable t) {
                     logger.warn("Unexpected exception from an event executor: ", t);
                 } finally {
                     for (;;) {
                         int oldState = state;
-                        if (oldState >= ST_SHUTTING_DOWN || STATE_UPDATER.compareAndSet(
-                                SingleThreadEventExecutor.this, oldState, ST_SHUTTING_DOWN)) {
+                        if (oldState >= ST_SHUTTING_DOWN || STATE_UPDATER.compareAndSet(SingleThreadEventExecutor.this, oldState, ST_SHUTTING_DOWN)) {
                             break;
                         }
                     }

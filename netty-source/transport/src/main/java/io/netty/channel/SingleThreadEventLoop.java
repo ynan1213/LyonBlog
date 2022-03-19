@@ -99,14 +99,12 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     @Override
     public ChannelFuture register(final ChannelPromise promise) {
         ObjectUtil.checkNotNull(promise, "promise");
-        // 重点!!!
-        promise.channel().unsafe().register(this, promise);
-
-        //unsafe对象是channel类的私有内部类
-        //关于内部类的用法需要注意，unsafe的实际类型是NioMessageUnsafe，该类是私有内部类
-        //虽然私有内部类在别的类中是无法引用的，但是这里可以通过接口引用，也就是不关心实现，学习了。
-        //Channel.Unsafe unsafe = promise.channel().unsafe();
-        //unsafe.register(this, promise);
+        // unsafe对象是channel类的私有内部类
+        // 关于内部类的用法需要注意，unsafe的实际类型是NioMessageUnsafe，该类是私有内部类
+        // 虽然私有内部类在别的类中是无法引用的，但是这里可以通过接口引用，也就是不关心实现，学习了。!
+        // promise.channel().unsafe().register(this, promise);
+        Channel.Unsafe unsafe = promise.channel().unsafe();
+        unsafe.register(this, promise);
         return promise;
     }
 

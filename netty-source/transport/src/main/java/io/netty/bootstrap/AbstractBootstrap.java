@@ -112,7 +112,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (channelClass == null) {
             throw new NullPointerException("channelClass");
         }
-        // 我们传递进来的 NioServerSocketChannel对象,赋值给了 RegflectiveChannelFactory
+        // 我们传递进来的 NioServerSocketChannel对象,赋值给了 ReflectiveChannelFactory
         return channelFactory(new ReflectiveChannelFactory<C>(channelClass));
     }
 
@@ -299,11 +299,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     public ChannelFuture bind(SocketAddress localAddress) {
         // 验证group事件循环组和 channelFactory是否被设置好了
         validate();
-
         if (localAddress == null) {
             throw new NullPointerException("localAddress");
         }
-        // ！！！
         return doBind(localAddress);
     }
 
@@ -313,6 +311,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      */
     private ChannelFuture doBind(final SocketAddress localAddress) {
 
+        /**
+         * 分为三步：
+         *  1. 创建Channel(NioServerSocketChannel或者NioSocketChannel)；
+         *  2. 初始化，也就是设置tcp参数等；
+         *  3. 将 Channel register 到 NioEventLoopGroup，内部就是将channel和NioEventLoop进行绑定
+         *      （一个channel只能register一次，一个NioEventLoop可以绑定多个channel）
+         */
         final ChannelFuture regFuture = initAndRegister();
 
         final Channel channel = regFuture.channel();
@@ -375,9 +380,12 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         /**
          * config()--> ServerBootstrapConfig
          * group()--> NioEventLoopGroup(bossGroup)
-         * 交给bossGroup注册
+         * 也就是说register是交给 NioEventLoopGroup 进行的，NioEventLoopGroup 内部又是选择一个 NioEventLoop
+         * 然后将 NioEventLoop 和 channel内部类对象 unsafe进行绑定
          */
-        ChannelFuture regFuture = config().group().register(channel);
+        AbstractBootstrapConfig<B, C> config = config();
+        EventLoopGroup group = config.group();
+        ChannelFuture regFuture = group.register(channel);
 
         //main线程继续往后走，通过promise获取异步任务结果
         if (regFuture.cause() != null) {
@@ -395,9 +403,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     // 模版方法, 由子类实现实现
     abstract void init(Channel channel) throws Exception;
 
-    private static void doBind0(
-            final ChannelFuture regFuture, final Channel channel,
-            final SocketAddress localAddress, final ChannelPromise promise) {
+    private static void doBind0(final ChannelFuture regFuture, final Channel channel, final SocketAddress localAddress,
+        final ChannelPromise promise) {
 
         /**
          * This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
@@ -513,8 +520,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
                 logger.warn("Unknown channel option '{}' for channel '{}'", option, channel);
             }
         } catch (Throwable t) {
-            logger.warn(
-                    "Failed to set channel option '{}' with value '{}' for channel '{}'", option, value, channel, t);
+            logger.warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option, value, channel, t);
         }
     }
 

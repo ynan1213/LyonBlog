@@ -39,10 +39,6 @@ import java.util.concurrent.RejectedExecutionException;
 
 /**
  * A skeletal {@link Channel} implementation.
- *
- * 它本身就实现了Channel接口,重写了它的方法,还添加这一步就是 构造一个 创建一个channel 的骨架, 让用户更方便的创建channel
- * 他有大量的子类, 虽然子类并没有直接的初始化pipeline,但是通过构造函数的之间的传递,最终会来到这里,在他的有参构造函数中实例化了 pipeline
- * 所以他的子孙们,其实内置pipeline
  */
 public abstract class AbstractChannel extends DefaultAttributeMap implements Channel {
 
@@ -85,11 +81,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
-        // channelId 代表Chanel唯一的身份标志
         id = newId();
-        // 创建一个unsafe对象
         unsafe = newUnsafe();
-        // 在这里初始化了每一个channel都会有的pipeline组件
         pipeline = newChannelPipeline();
     }
 

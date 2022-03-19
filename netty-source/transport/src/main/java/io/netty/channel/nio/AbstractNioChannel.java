@@ -45,8 +45,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract base class for {@link Channel} implementations which use a Selector based approach.
- *
- * 是NioServerSocketChannel的第二代父类, AbstractNioChannel
  */
 public abstract class AbstractNioChannel extends AbstractChannel {
 
@@ -54,7 +52,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     private static final ClosedChannelException DO_CLOSE_CLOSED_CHANNEL_EXCEPTION = ThrowableUtil.unknownStackTrace(new ClosedChannelException(), AbstractNioChannel.class, "doClose()");
 
-    //SelectableChannel原生的jdk的channel
+    // jdk原生channel
     private final SelectableChannel ch;
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;

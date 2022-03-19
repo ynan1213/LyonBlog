@@ -15,25 +15,14 @@
  */
 package io.netty.util;
 
-/**  todo AttributeKey 与 Attribute 相伴相生, 一个是key 一个是value, 他们之间的映射关系是 AttributeMap维护的
- *   todo 他们三者实际上netty对其的一层封装   底层就是一个Map
- *
- *   todo 那么问题来了? Attribute是什么呢?
- *          todo  它维护的是业务数据 , ChannelOption则
- *
- *
- *
- *
+/**
  * Key which can be used to access {@link Attribute} out of the {@link Attribute}. Be aware that it is not be
  * possible to have multiple keys with the same name.
- * //todo 可以用于在 AttributeMap 外面去访问 Attribute , 请注意不可能存在多个key 同名
  * @param <T>   the type of the {@link Attribute} which can be accessed via this {@link AttributeKey}.
  */
 @SuppressWarnings("UnusedDeclaration") // 'T' is used only at compile time
-// todo  他和ChannelOption都继承自  AbstractConstant
 public final class AttributeKey<T> extends AbstractConstant<AttributeKey<T>> {
 
-    // todo 同样这里的整个的实现 和 ChannelOption类似
     private static final ConstantPool<AttributeKey<Object>> pool = new ConstantPool<AttributeKey<Object>>() {
         @Override
         protected AttributeKey<Object> newConstant(int id, String name) {

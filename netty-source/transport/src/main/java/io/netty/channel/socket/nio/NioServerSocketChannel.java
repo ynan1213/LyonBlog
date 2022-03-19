@@ -99,7 +99,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel implements
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
-        //  通过追踪, javaChannel() 获取的就是,我们通过上一行的super父类构造方法中创建的ServerSocketChannel
+        //  通过追踪, javaChannel() 获取的就是,我们通过上一行的super父类构造方法中创建的jdk对象ServerSocketChannel
         //  调用socket方法,返回值就是 ServerSocket 实例--- > 可能去绑定端口
         //  NioServerSocketChannelConfig 是Tcp配置参数类
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
@@ -216,11 +216,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel implements
         throw new UnsupportedOperationException();
     }
 
-    //是NioServerSocketChannel的私有的内部类
     private final class NioServerSocketChannelConfig extends DefaultServerSocketChannelConfig {
-        // 参数被传递到这里  NioServerSocketChannel    ServerSocket
         private NioServerSocketChannelConfig(NioServerSocketChannel channel, ServerSocket javaSocket) {
-            // 传递给他的父类
             super(channel, javaSocket);
         }
 

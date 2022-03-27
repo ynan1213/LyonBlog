@@ -106,6 +106,12 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         this.name = ObjectUtil.checkNotNull(name, "name");
         this.pipeline = pipeline;
         this.executor = executor;
+        /**
+         * TailContext 是 ChannelInboundHandler，它的executionMask是：0 0000 0001 1111 1111，也就是1<<9 -1=512-1=511。
+         * HeadContext 是 ChannelInboundHandler 和 ChannelOutboundHandler 合体，mask值是(1<<17)-1，也就是131071，二进制：1 1111 1111 1111 1111
+         *
+         * 利用计算机中的位运算，通过或、与、非操作，进行0和1的变换从而进行筛选。可以提高效率。
+         */
         this.executionMask = mask(handlerClass);
         // Its ordered if its driven by the EventLoop or the given Executor is an instanceof OrderedEventExecutor.
         ordered = executor == null || executor instanceof OrderedEventExecutor;
@@ -447,39 +453,17 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
+    // -------------- 下面的为 Outbound 事件 ----------------
+
     @Override
     public ChannelFuture bind(SocketAddress localAddress) {
         return bind(localAddress, newPromise());
     }
 
     @Override
-    public ChannelFuture connect(SocketAddress remoteAddress) {
-        return connect(remoteAddress, newPromise());
-    }
-
-    @Override
-    public ChannelFuture connect(SocketAddress remoteAddress, SocketAddress localAddress) {
-        return connect(remoteAddress, localAddress, newPromise());
-    }
-
-    @Override
-    public ChannelFuture disconnect() {
-        return disconnect(newPromise());
-    }
-
-    @Override
-    public ChannelFuture close() {
-        return close(newPromise());
-    }
-
-    @Override
-    public ChannelFuture deregister() {
-        return deregister(newPromise());
-    }
-
-    @Override
     public ChannelFuture bind(final SocketAddress localAddress, final ChannelPromise promise) {
         ObjectUtil.checkNotNull(localAddress, "localAddress");
+        // promise 已失效，抛异常或者直接返回
         if (isNotValidPromise(promise, false)) {
             // cancelled
             return promise;
@@ -513,13 +497,22 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     @Override
+    public ChannelFuture connect(SocketAddress remoteAddress) {
+        return connect(remoteAddress, newPromise());
+    }
+
+    @Override
+    public ChannelFuture connect(SocketAddress remoteAddress, SocketAddress localAddress) {
+        return connect(remoteAddress, localAddress, newPromise());
+    }
+
+    @Override
     public ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) {
         return connect(remoteAddress, null, promise);
     }
 
     @Override
-    public ChannelFuture connect(
-            final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
+    public ChannelFuture connect(final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
         ObjectUtil.checkNotNull(remoteAddress, "remoteAddress");
 
         if (isNotValidPromise(promise, false)) {
@@ -555,10 +548,17 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     @Override
+    public ChannelFuture disconnect() {
+        return disconnect(newPromise());
+    }
+
+    @Override
     public ChannelFuture disconnect(final ChannelPromise promise) {
         if (!channel().metadata().hasDisconnect()) {
             // Translate disconnect to close if the channel has no notion of disconnect-reconnect.
+            // 如果通道没有断开重新连接的概念，则将disconnect转换为close
             // So far, UDP/IP is the only transport that has such behavior.
+            // 到目前为止，UDP/IP是唯一具有这种行为的传输。
             return close(promise);
         }
         if (isNotValidPromise(promise, false)) {
@@ -594,6 +594,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     @Override
+    public ChannelFuture close() {
+        return close(newPromise());
+    }
+
+    @Override
     public ChannelFuture close(final ChannelPromise promise) {
         if (isNotValidPromise(promise, false)) {
             // cancelled
@@ -621,11 +626,17 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             try {
                 ((ChannelOutboundHandler) handler()).close(this, promise);
             } catch (Throwable t) {
+                // 内部仅仅是执行 promise.tryFailure 并且打印日志
                 notifyOutboundHandlerException(t, promise);
             }
         } else {
             close(promise);
         }
+    }
+
+    @Override
+    public ChannelFuture deregister() {
+        return deregister(newPromise());
     }
 
     @Override
@@ -700,8 +711,41 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     @Override
     public ChannelFuture write(final Object msg, final ChannelPromise promise) {
         write(msg, false, promise);
-
         return promise;
+    }
+
+    private void write(Object msg, boolean flush, ChannelPromise promise) {
+        ObjectUtil.checkNotNull(msg, "msg");
+        try {
+            if (isNotValidPromise(promise, true)) {
+                ReferenceCountUtil.release(msg);
+                // cancelled
+                return;
+            }
+        } catch (RuntimeException e) {
+            ReferenceCountUtil.release(msg);
+            throw e;
+        }
+
+        final AbstractChannelHandlerContext next = findContextOutbound(flush ? (MASK_WRITE | MASK_FLUSH) : MASK_WRITE);
+        final Object m = pipeline.touch(msg, next);
+        EventExecutor executor = next.executor();
+        if (executor.inEventLoop()) {
+            if (flush) {
+                next.invokeWriteAndFlush(m, promise);
+            } else {
+                next.invokeWrite(m, promise);
+            }
+        } else {
+            final WriteTask task = WriteTask.newInstance(next, m, promise, flush);
+            if (!safeExecute(executor, task, promise, m, !flush)) {
+                // We failed to submit the WriteTask. We need to cancel it so we decrement the pending bytes
+                // and put it back in the Recycler for re-use later.
+                //
+                // See https://github.com/netty/netty/issues/8343.
+                task.cancel();
+            }
+        }
     }
 
     void invokeWrite(Object msg, ChannelPromise promise) {
@@ -733,7 +777,6 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             }
             safeExecute(executor, tasks.invokeFlushTask, channel().voidPromise(), null, false);
         }
-
         return this;
     }
 
@@ -768,49 +811,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
-    private void write(Object msg, boolean flush, ChannelPromise promise) {
-        ObjectUtil.checkNotNull(msg, "msg");
-        try {
-            if (isNotValidPromise(promise, true)) {
-                ReferenceCountUtil.release(msg);
-                // cancelled
-                return;
-            }
-        } catch (RuntimeException e) {
-            ReferenceCountUtil.release(msg);
-            throw e;
-        }
-
-        final AbstractChannelHandlerContext next = findContextOutbound(flush ?
-                (MASK_WRITE | MASK_FLUSH) : MASK_WRITE);
-        final Object m = pipeline.touch(msg, next);
-        EventExecutor executor = next.executor();
-        if (executor.inEventLoop()) {
-            if (flush) {
-                next.invokeWriteAndFlush(m, promise);
-            } else {
-                next.invokeWrite(m, promise);
-            }
-        } else {
-            final WriteTask task = WriteTask.newInstance(next, m, promise, flush);
-            if (!safeExecute(executor, task, promise, m, !flush)) {
-                // We failed to submit the WriteTask. We need to cancel it so we decrement the pending bytes
-                // and put it back in the Recycler for re-use later.
-                //
-                // See https://github.com/netty/netty/issues/8343.
-                task.cancel();
-            }
-        }
-    }
-
     @Override
     public ChannelFuture writeAndFlush(Object msg) {
         return writeAndFlush(msg, newPromise());
     }
 
     private static void notifyOutboundHandlerException(Throwable cause, ChannelPromise promise) {
-        // Only log if the given promise is not of type VoidChannelPromise as tryFailure(...) is expected to return
-        // false.
+        // Only log if the given promise is not of type VoidChannelPromise as tryFailure(...) is expected to return false.
         PromiseNotificationUtil.tryFailure(promise, cause, promise instanceof VoidChannelPromise ? null : logger);
     }
 
@@ -842,9 +849,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         ObjectUtil.checkNotNull(promise, "promise");
 
         if (promise.isDone()) {
-            // Check if the promise was cancelled and if so signal that the processing of the operation
-            // should not be performed.
-            //
+            // Check if the promise was cancelled and if so signal that the processing of the operation should not be performed.
             // See https://github.com/netty/netty/issues/2349
             if (promise.isCancelled()) {
                 return true;
@@ -853,8 +858,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
 
         if (promise.channel() != channel()) {
-            throw new IllegalArgumentException(String.format(
-                    "promise.channel does not match: %s (expected: %s)", promise.channel(), channel()));
+            throw new IllegalArgumentException(String.format("promise.channel does not match: %s (expected: %s)", promise.channel(), channel()));
         }
 
         if (promise.getClass() == DefaultChannelPromise.class) {
@@ -862,13 +866,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
 
         if (!allowVoidPromise && promise instanceof VoidChannelPromise) {
-            throw new IllegalArgumentException(
-                    StringUtil.simpleClassName(VoidChannelPromise.class) + " not allowed for this operation");
+            throw new IllegalArgumentException(StringUtil.simpleClassName(VoidChannelPromise.class) + " not allowed for this operation");
         }
 
         if (promise instanceof AbstractChannel.CloseFuture) {
-            throw new IllegalArgumentException(
-                    StringUtil.simpleClassName(AbstractChannel.CloseFuture.class) + " not allowed in a pipeline");
+            throw new IllegalArgumentException(StringUtil.simpleClassName(AbstractChannel.CloseFuture.class) + " not allowed in a pipeline");
         }
         return false;
     }
@@ -891,8 +893,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
-    private static boolean skipContext(
-            AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
+    private static boolean skipContext(AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
         // Ensure we correctly handle MASK_EXCEPTION_CAUGHT which is not included in the MASK_EXCEPTION_CAUGHT
         return (ctx.executionMask & (onlyMask | mask)) == 0 ||
                 // We can only skip if the EventExecutor is the same as otherwise we need to ensure we offload
@@ -958,6 +959,8 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
      * If this method returns {@code false} we will not invoke the {@link ChannelHandler} but just forward the event.
      * This is needed as {@link DefaultChannelPipeline} may already put the {@link ChannelHandler} in the linked-list
      * but not called {@link ChannelHandler#handlerAdded(ChannelHandlerContext)}.
+     * <br/>
+     * 只有当状态为 ADD_COMPLETE 也就是调用过 ChannelHandler#handlerAdded 方法才会执行
      */
     private boolean invokeHandler() {
         // Store in local variable to reduce volatile reads.
@@ -980,8 +983,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return channel().hasAttr(key);
     }
 
-    private static boolean safeExecute(EventExecutor executor, Runnable runnable,
-            ChannelPromise promise, Object msg, boolean lazy) {
+    private static boolean safeExecute(EventExecutor executor, Runnable runnable, ChannelPromise promise, Object msg, boolean lazy) {
         try {
             if (lazy && executor instanceof AbstractEventExecutor) {
                 ((AbstractEventExecutor) executor).lazyExecute(runnable);
@@ -1019,8 +1021,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             }
         });
 
-        static WriteTask newInstance(AbstractChannelHandlerContext ctx,
-                Object msg, ChannelPromise promise, boolean flush) {
+        static WriteTask newInstance(AbstractChannelHandlerContext ctx, Object msg, ChannelPromise promise, boolean flush) {
             WriteTask task = RECYCLER.get();
             init(task, ctx, msg, promise, flush);
             return task;
@@ -1044,8 +1045,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             this.handle = (Handle<WriteTask>) handle;
         }
 
-        protected static void init(WriteTask task, AbstractChannelHandlerContext ctx,
-                                   Object msg, ChannelPromise promise, boolean flush) {
+        protected static void init(WriteTask task, AbstractChannelHandlerContext ctx, Object msg, ChannelPromise promise, boolean flush) {
             task.ctx = ctx;
             task.msg = msg;
             task.promise = promise;

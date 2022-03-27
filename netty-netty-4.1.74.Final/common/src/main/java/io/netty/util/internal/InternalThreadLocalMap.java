@@ -40,8 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(InternalThreadLocalMap.class);
-    private static final ThreadLocal<InternalThreadLocalMap> slowThreadLocalMap =
-            new ThreadLocal<InternalThreadLocalMap>();
+    private static final ThreadLocal<InternalThreadLocalMap> slowThreadLocalMap = new ThreadLocal<InternalThreadLocalMap>();
     private static final AtomicInteger nextIndex = new AtomicInteger();
 
     private static final int DEFAULT_ARRAY_LIST_INITIAL_CAPACITY = 8;
@@ -326,6 +325,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
             lookup[index] = value;
             return oldValue == UNSET;
         } else {
+            // 扩容
             expandIndexedVariableTableAndSet(index, value);
             return true;
         }

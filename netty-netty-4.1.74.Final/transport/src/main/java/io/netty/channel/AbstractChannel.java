@@ -464,22 +464,26 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         @Override
         public final void register(EventLoop eventLoop, final ChannelPromise promise) {
             ObjectUtil.checkNotNull(eventLoop, "eventLoop");
+            // 一个Channel只能注册一次，如果已经注册过，终止注册
             if (isRegistered()) {
                 promise.setFailure(new IllegalStateException("registered to an event loop already"));
                 return;
             }
+            // Compatible：兼容的
             if (!isCompatible(eventLoop)) {
-                promise.setFailure(
-                        new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
+                promise.setFailure(new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
                 return;
             }
 
+            // 将Channel的eventLoop 指向当前这个 eventLoop，这样一个Channel就绑定了一个 eventLoop
             AbstractChannel.this.eventLoop = eventLoop;
 
+            // 当前是否运行在当前eventLoop内的线程中，通常走到这里eventLoop中的Thread都还未创建，所以不会进入if
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
                 try {
+                    // 首次提交，内部会先创建并启动Thread，然后再提交任务
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -487,8 +491,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         }
                     });
                 } catch (Throwable t) {
-                    logger.warn(
-                            "Force-closing a channel whose registration task was not accepted by an event loop: {}",
+                    logger.warn("Force-closing a channel whose registration task was not accepted by an event loop: {}",
                             AbstractChannel.this, t);
                     closeForcibly();
                     closeFuture.setClosed();
@@ -517,6 +520,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
+                // 对于服务端的实现是:javaChannel().socket().isBound()，即当Channel绑定上了端口，isActive()才会返回true
+                // 对于客户端的实现是:ch.isOpen() && ch.isConnected(),即当Channel是open并且连接上服务端才返回true
                 if (isActive()) {
                     if (firstRegistration) {
                         pipeline.fireChannelActive();
@@ -525,6 +530,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         // again so that we process inbound data.
                         //
                         // See https://github.com/netty/netty/issues/4805
+                        // 可以接受客户端的数据了
                         beginRead();
                     }
                 }

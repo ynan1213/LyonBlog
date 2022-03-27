@@ -69,6 +69,14 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         this(nThreads, threadFactory, SelectorProvider.provider());
     }
 
+    /**
+     * SelectorProvider provider = SelectorProvider.provider();创建SelectorProvider对象
+     * windows平台下默认实现是WindowsSelectorProvider
+     * SelectorProvider对象的作用：
+     *    provider.openSelector();
+     *    provider.openServerSocketChannel();
+     *    provider.openSocketChannel();
+     */
     public NioEventLoopGroup(int nThreads, Executor executor) {
         this(nThreads, executor, SelectorProvider.provider());
     }
@@ -87,8 +95,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         super(nThreads, threadFactory, selectorProvider, selectStrategyFactory, RejectedExecutionHandlers.reject());
     }
 
-    public NioEventLoopGroup(
-            int nThreads, Executor executor, final SelectorProvider selectorProvider) {
+    public NioEventLoopGroup(int nThreads, Executor executor, final SelectorProvider selectorProvider) {
         this(nThreads, executor, selectorProvider, DefaultSelectStrategyFactory.INSTANCE);
     }
 

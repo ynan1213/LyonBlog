@@ -139,15 +139,23 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions);
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs);
 
+        /**
+         *  往 NioServerSocketChannel 的 ChannelPipeline 里面添加了一个 ChannelInitializer
+         *  ChannelInitializer 是个辅助类，主要作用就是将 handler 添加到 Pipeline中
+         *  疑问：这里为什么不直接添加呢？而是封装为 ChannelInitializer对象 ？
+         *
+         *  此时addLast进pipeline的handler并不会被初始化，而是会添加到pendingHandlerCallbackHead链表中，后序再初始化
+         */
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
+                // config 是 ServerBootstrap 的成员变量，这里的handler方法返回的是 ServerBootstrap 的handler，注意不是childHandler
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
-
+                // 疑问：这里同样为什么不直接addLast，而是添加到任务队列中。个人觉得添提交到任务队列中后该handler就执行不了接下来的fireChannelRegistered方法。
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

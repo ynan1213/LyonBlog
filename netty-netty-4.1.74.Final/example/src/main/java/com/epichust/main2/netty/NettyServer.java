@@ -15,6 +15,8 @@ public class NettyServer {
 
     public static void main(String[] args) {
         NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        bossGroup.setIoRatio(20);
+
         // 无参构造内部线程池大小是 cpu核心数 * 2
         NioEventLoopGroup workGroup = new NioEventLoopGroup();
         try {
@@ -36,6 +38,7 @@ public class NettyServer {
                     }
                 });
             ChannelFuture bindFuture = bootstrap.bind(6666);
+            // 为什么需要下面这句而不是直接跳到下下句呢？ 个人觉得是bindFuturer如果没有bind成功，可能连channel都没初始化
             ChannelFuture syncFuture = bindFuture.sync();
             syncFuture.channel().closeFuture().sync();
         } catch (Exception e) {

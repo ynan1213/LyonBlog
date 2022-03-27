@@ -138,17 +138,26 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     NioEventLoop(NioEventLoopGroup parent, Executor executor, SelectorProvider selectorProvider,
                  SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler,
                  EventLoopTaskQueueFactory taskQueueFactory, EventLoopTaskQueueFactory tailTaskQueueFactory) {
+        /**
+         * 父类创建TaskQueue(创建了两个队列，tailTasks和taskQueue）
+         * 注意第三个参数 addTaskWakesUp 置为false
+         */
         super(parent, executor, false, newTaskQueue(taskQueueFactory), newTaskQueue(tailTaskQueueFactory),
                 rejectedExecutionHandler);
         this.provider = ObjectUtil.checkNotNull(selectorProvider, "selectorProvider");
         this.selectStrategy = ObjectUtil.checkNotNull(strategy, "selectStrategy");
+
+        // 每一个NioEventLoop都创建了个属于自己的Selector
+        // 获取Selector选择器, 和原生jdk有些出入
         final SelectorTuple selectorTuple = openSelector();
+
+        // SelectorTuple是netty维护jdk 原生的Selector的包装类, 他有两个Selector,一个是经过包装的,一个是未经过包装
         this.selector = selectorTuple.selector;
+        // Jdk 原生的Selector
         this.unwrappedSelector = selectorTuple.unwrappedSelector;
     }
 
-    private static Queue<Runnable> newTaskQueue(
-            EventLoopTaskQueueFactory queueFactory) {
+    private static Queue<Runnable> newTaskQueue(EventLoopTaskQueueFactory queueFactory) {
         if (queueFactory == null) {
             return newTaskQueue0(DEFAULT_MAX_PENDING_TASKS);
         }
@@ -170,14 +179,25 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * 这里进行了优化,netty把hashSet转换成了数组
+     * 因为在JDK的NIO模型中,获取Selector时,Selector里面内置的存放SelectionKey的容器是Set集合
+     *
+     * 说这个优化之前就不得不回想一下原生的JDK的 NIO编程模型中的几大组件, 1. Selector 2. Channel 3. ByteBuffer
+     * 其中的Selector 中主要维护了三个set集合, 分别是 1. keySet  2. Selectedkey  3.cannelledKey  这三个容器的底层都是set结构
+     *
+     * 而netty把上面的SelectedKey 替换成了自己的的数据接口, 数组, 从而使在任何情况下,它的时间复杂度都是 O1
+     */
     private SelectorTuple openSelector() {
         final Selector unwrappedSelector;
         try {
+            // 使用原生jdk的api创建新的selector
             unwrappedSelector = provider.openSelector();
         } catch (IOException e) {
             throw new ChannelException("failed to open a new selector", e);
         }
 
+        // 如果不需要优化,就返回原生的selector , 默认为false 即使用优化
         if (DISABLE_KEY_SET_OPTIMIZATION) {
             return new SelectorTuple(unwrappedSelector);
         }
@@ -186,6 +206,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             @Override
             public Object run() {
                 try {
+                    // 通过反射  sun.nio.ch.SelectorImpl
                     return Class.forName(
                             "sun.nio.ch.SelectorImpl",
                             false,
@@ -196,6 +217,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         });
 
+        // 判断是否获取到了这个类
         if (!(maybeSelectorImplClass instanceof Class) ||
             // ensure the current selector implementation is what we can instrument.
             !((Class<?>) maybeSelectorImplClass).isAssignableFrom(unwrappedSelector.getClass())) {
@@ -213,6 +235,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             @Override
             public Object run() {
                 try {
+                    // 通过反射, 获取到 selectorImplClass的两个字段 selectedKeys   publicSelectedKeys
+                    // selectedKeys   publicSelectedKeys底层都是 hashSet() 实现的, 现在获取出来了, 放入上面的数组数据结构中
                     Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
                     Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
 
@@ -220,28 +244,27 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // Let us try to use sun.misc.Unsafe to replace the SelectionKeySet.
                         // This allows us to also do this in Java9+ without any extra flags.
                         long selectedKeysFieldOffset = PlatformDependent.objectFieldOffset(selectedKeysField);
-                        long publicSelectedKeysFieldOffset =
-                                PlatformDependent.objectFieldOffset(publicSelectedKeysField);
+                        long publicSelectedKeysFieldOffset = PlatformDependent.objectFieldOffset(publicSelectedKeysField);
 
                         if (selectedKeysFieldOffset != -1 && publicSelectedKeysFieldOffset != -1) {
-                            PlatformDependent.putObject(
-                                    unwrappedSelector, selectedKeysFieldOffset, selectedKeySet);
-                            PlatformDependent.putObject(
-                                    unwrappedSelector, publicSelectedKeysFieldOffset, selectedKeySet);
+                            PlatformDependent.putObject(unwrappedSelector, selectedKeysFieldOffset, selectedKeySet);
+                            PlatformDependent.putObject(unwrappedSelector, publicSelectedKeysFieldOffset, selectedKeySet);
                             return null;
                         }
                         // We could not retrieve the offset, lets try reflection as last-resort.
                     }
-
+                    // trySetAccessible 可以强制访问私有的对象
                     Throwable cause = ReflectionUtil.trySetAccessible(selectedKeysField, true);
                     if (cause != null) {
                         return cause;
                     }
+                    // trySetAccessible 可以强制访问私有的对象
                     cause = ReflectionUtil.trySetAccessible(publicSelectedKeysField, true);
                     if (cause != null) {
                         return cause;
                     }
-
+                    // 真正的把通过反射得到的 那两个字段放入我们自己的数据结构中
+                    // 下面是把我们的NioEventLoop中的 unwrappedSelector 的 selectedKeysField的属性 直接设置成 优化后的selectedKeySet
                     selectedKeysField.set(unwrappedSelector, selectedKeySet);
                     publicSelectedKeysField.set(unwrappedSelector, selectedKeySet);
                     return null;
@@ -259,6 +282,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             logger.trace("failed to instrument a special java.util.Set into: {}", unwrappedSelector, e);
             return new SelectorTuple(unwrappedSelector);
         }
+        // 初始化自己维护被选中的key的集合  --> 数组类型的
         selectedKeys = selectedKeySet;
         logger.trace("instrumented a special java.util.Set into: {}", unwrappedSelector);
         return new SelectorTuple(unwrappedSelector,
@@ -441,21 +465,35 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             try {
                 int strategy;
                 try {
+                    /**
+                     * 根据是否有非IO任务(hasTasks方法) 判断：
+                     *    如果有，执行Selector.selectNow()，该方法返回值 >= 0，不会进入任何case
+                     *    如果没有，进入case:SelectStrategy.SELECT。
+                     *
+                     * 从run方法的整体顺序中可以看到，每次循环都是先执行IO任务，再执行非IO任务。
+                     * 如果队列中有非IO任务待处理，那么为提高框架处理性能，就不允许执行阻塞的select方法，
+                     * 而是执行非阻塞的selectNow方法，这样就能快速处理完channel事件后去处理队列中的任务。
+                     *
+                     * 当SelectStrategy的实现类是DefaultSelectStrategy的情况下，该实现类好像永远进不了case:SelectStrategy.CONTINUE
+                     */
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
-                    case SelectStrategy.CONTINUE:
+                    case SelectStrategy.CONTINUE:// -2
                         continue;
 
-                    case SelectStrategy.BUSY_WAIT:
+                    case SelectStrategy.BUSY_WAIT:// -3
                         // fall-through to SELECT since the busy-wait is not supported with NIO
 
-                    case SelectStrategy.SELECT:
+                    case SelectStrategy.SELECT:// -1
+                        // 进入这里，说明任务队列没有非IO任务
+                        // 获取下一个定时任务的执行时间，没有的话返回 -1，返回了-1，就将 curDeadlineNanos 置为 Long.MAX_VALUE
                         long curDeadlineNanos = nextScheduledTaskDeadlineNanos();
                         if (curDeadlineNanos == -1L) {
                             curDeadlineNanos = NONE; // nothing on the calendar
                         }
                         nextWakeupNanos.set(curDeadlineNanos);
                         try {
+                            // 再次判断如果没有非IO任务，则执行一次select
                             if (!hasTasks()) {
                                 strategy = select(curDeadlineNanos);
                             }
@@ -490,7 +528,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         // Ensure we always run tasks.
                         ranTasks = runAllTasks();
                     }
-                } else if (strategy > 0) {
+                } else if (strategy > 0) { // 大于0说明有IO任务
                     final long ioStartTime = System.nanoTime();
                     try {
                         processSelectedKeys();
@@ -499,14 +537,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         final long ioTime = System.nanoTime() - ioStartTime;
                         ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
-                } else {
+                } else { // 进入else，说明没有IO任务，直接执行非IO任务
                     ranTasks = runAllTasks(0); // This will run the minimum number of tasks
                 }
 
                 if (ranTasks || strategy > 0) {
                     if (selectCnt > MIN_PREMATURE_SELECTOR_RETURNS && logger.isDebugEnabled()) {
-                        logger.debug("Selector.select() returned prematurely {} times in a row for Selector {}.",
-                                selectCnt - 1, selector);
+                        logger.debug("Selector.select() returned prematurely {} times in a row for Selector {}.", selectCnt - 1, selector);
                     }
                     selectCnt = 0;
                 } else if (unexpectedSelectorWakeup(selectCnt)) { // Unexpected wakeup (unusual case)
@@ -515,8 +552,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             } catch (CancelledKeyException e) {
                 // Harmless exception - log anyway
                 if (logger.isDebugEnabled()) {
-                    logger.debug(CancelledKeyException.class.getSimpleName() + " raised by a Selector {} - JDK bug?",
-                            selector, e);
+                    logger.debug(CancelledKeyException.class.getSimpleName() + " raised by a Selector {} - JDK bug?", selector, e);
                 }
             } catch (Error e) {
                 throw e;

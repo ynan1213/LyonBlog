@@ -36,6 +36,7 @@ final class ChannelHandlerMask {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ChannelHandlerMask.class);
 
     // Using to mask which methods must be called for a ChannelHandler.
+    // 前面8个对应 ChannelInboundHandler 的8个方法
     static final int MASK_EXCEPTION_CAUGHT = 1;
     static final int MASK_CHANNEL_REGISTERED = 1 << 1;
     static final int MASK_CHANNEL_UNREGISTERED = 1 << 2;
@@ -45,6 +46,8 @@ final class ChannelHandlerMask {
     static final int MASK_CHANNEL_READ_COMPLETE = 1 << 6;
     static final int MASK_USER_EVENT_TRIGGERED = 1 << 7;
     static final int MASK_CHANNEL_WRITABILITY_CHANGED = 1 << 8;
+
+    // 后面8个对应 ChannelOutboundHandler 的8个方法
     static final int MASK_BIND = 1 << 9;
     static final int MASK_CONNECT = 1 << 10;
     static final int MASK_DISCONNECT = 1 << 11;
@@ -143,8 +146,7 @@ final class ChannelHandlerMask {
                 if (isSkippable(handlerType, "read", ChannelHandlerContext.class)) {
                     mask &= ~MASK_READ;
                 }
-                if (isSkippable(handlerType, "write", ChannelHandlerContext.class,
-                        Object.class, ChannelPromise.class)) {
+                if (isSkippable(handlerType, "write", ChannelHandlerContext.class, Object.class, ChannelPromise.class)) {
                     mask &= ~MASK_WRITE;
                 }
                 if (isSkippable(handlerType, "flush", ChannelHandlerContext.class)) {
@@ -164,8 +166,7 @@ final class ChannelHandlerMask {
     }
 
     @SuppressWarnings("rawtypes")
-    private static boolean isSkippable(
-            final Class<?> handlerType, final String methodName, final Class<?>... paramTypes) throws Exception {
+    private static boolean isSkippable(final Class<?> handlerType, final String methodName, final Class<?>... paramTypes) throws Exception {
         return AccessController.doPrivileged(new PrivilegedExceptionAction<Boolean>() {
             @Override
             public Boolean run() throws Exception {
@@ -174,8 +175,7 @@ final class ChannelHandlerMask {
                     m = handlerType.getMethod(methodName, paramTypes);
                 } catch (NoSuchMethodException e) {
                     if (logger.isDebugEnabled()) {
-                        logger.debug(
-                            "Class {} missing method {}, assume we can not skip execution", handlerType, methodName, e);
+                        logger.debug("Class {} missing method {}, assume we can not skip execution", handlerType, methodName, e);
                     }
                     return false;
                 }

@@ -54,7 +54,8 @@ public final class ThreadExecutorMap {
         return new Executor() {
             @Override
             public void execute(final Runnable command) {
-                executor.execute(apply(command, eventExecutor));
+                Runnable runnable = apply(command, eventExecutor);
+                executor.execute(runnable);
             }
         };
     }
@@ -69,6 +70,7 @@ public final class ThreadExecutorMap {
         return new Runnable() {
             @Override
             public void run() {
+                // 将 eventExecutor 存到当前 Thread 的FastThreadLocal中，尚不清楚哪里需要用到
                 setCurrentEventExecutor(eventExecutor);
                 try {
                     command.run();

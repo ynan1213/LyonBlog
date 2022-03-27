@@ -59,10 +59,22 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
         tailTasks = newTaskQueue(maxPendingTasks);
     }
 
+    /**
+     * addTaskWakesUp变量:
+     *      不是用来控制【添加任务时是否唤醒线程】的，真正的理解恰好相反，【添加任务时线程能否自动被唤醒】
+     *      如果addTask(Runnable)添加任务时能唤醒线程，那么addTaskWakesUp=true；
+     *      如果addTask(Runnable)添加任务时不能唤醒线程，那么addTaskWakesUp=false；
+     * 1) DefaultEventExecutor 是 SingleThreadEventExecutor 的默认实现，taskQueue是个阻塞队列，如果添加新的任务
+     *    taskQueue会被唤醒，从而run方法可以继续执行。这样就实现了添加任务唤醒线程的作用。所以DefaultEventExecutor
+     *    的构造方法中会传给父类addTaskWakesUp=true；
+     * 2) 对于NioEventLoop来说，阻塞的是selector.select()方法，该阻塞在添加任务时不能被唤醒，所以需要执行
+     *    wakeup(inEventLoop)主动唤醒，所以，addTaskWakesUp=false。
+     */
     protected SingleThreadEventLoop(EventLoopGroup parent, Executor executor,
                                     boolean addTaskWakesUp, Queue<Runnable> taskQueue, Queue<Runnable> tailTaskQueue,
                                     RejectedExecutionHandler rejectedExecutionHandler) {
         super(parent, executor, addTaskWakesUp, taskQueue, rejectedExecutionHandler);
+        // 不知道和父类的用途区别
         tailTasks = ObjectUtil.checkNotNull(tailTaskQueue, "tailTaskQueue");
     }
 
@@ -84,7 +96,13 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     @Override
     public ChannelFuture register(final ChannelPromise promise) {
         ObjectUtil.checkNotNull(promise, "promise");
-        promise.channel().unsafe().register(this, promise);
+        // unsafe对象是channel类的私有内部类
+        // 关于内部类的用法需要注意，unsafe的实际类型是NioMessageUnsafe，该类是私有内部类
+        // 虽然私有内部类在别的类中是无法引用的，但是这里可以通过接口引用，也就是不关心实现，学习了。!
+        // promise.channel().unsafe().register(this, promise);
+        Channel channel = promise.channel();
+        Channel.Unsafe unsafe = channel.unsafe();
+        unsafe.register(this, promise);
         return promise;
     }
 

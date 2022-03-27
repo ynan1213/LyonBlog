@@ -43,6 +43,11 @@ import java.util.Set;
  */
 public class FastThreadLocal<V> {
 
+    /**
+     * static final 修饰，类加载阶段初始化，所以这个值只会为0 ？？？
+     * 不一定，如果自己的业务代码主动调用了 InternalThreadLocalMap.nextVariableIndex()，然后才初始化 FastThreadLocal 就会为 1 了
+     * 但是可以保证的是 FastThreadLocal 的 index 一定比它大
+     */
     private static final int variablesToRemoveIndex = InternalThreadLocalMap.nextVariableIndex();
 
     /**
@@ -55,14 +60,12 @@ public class FastThreadLocal<V> {
         if (threadLocalMap == null) {
             return;
         }
-
         try {
             Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
             if (v != null && v != InternalThreadLocalMap.UNSET) {
                 @SuppressWarnings("unchecked")
                 Set<FastThreadLocal<?>> variablesToRemove = (Set<FastThreadLocal<?>>) v;
-                FastThreadLocal<?>[] variablesToRemoveArray =
-                        variablesToRemove.toArray(new FastThreadLocal[0]);
+                FastThreadLocal<?>[] variablesToRemoveArray = variablesToRemove.toArray(new FastThreadLocal[0]);
                 for (FastThreadLocal<?> tlv: variablesToRemoveArray) {
                     tlv.remove(threadLocalMap);
                 }
@@ -96,20 +99,24 @@ public class FastThreadLocal<V> {
 
     @SuppressWarnings("unchecked")
     private static void addToVariablesToRemove(InternalThreadLocalMap threadLocalMap, FastThreadLocal<?> variable) {
+        // 获取数组0位置上的元素
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
         Set<FastThreadLocal<?>> variablesToRemove;
+        // 如果这个元素为null或者为UNSET
         if (v == InternalThreadLocalMap.UNSET || v == null) {
+            /**
+             * 注意 IdentityHashMap判断键相同的方式是通过==判断，而不是HashMap的equals方法）
+             */
             variablesToRemove = Collections.newSetFromMap(new IdentityHashMap<FastThreadLocal<?>, Boolean>());
             threadLocalMap.setIndexedVariable(variablesToRemoveIndex, variablesToRemove);
         } else {
             variablesToRemove = (Set<FastThreadLocal<?>>) v;
         }
-
+        // 将该 FastThreadLocal 添加到当前线程独享的 InternalThreadLocalMap 中的零号位
         variablesToRemove.add(variable);
     }
 
-    private static void removeFromVariablesToRemove(
-            InternalThreadLocalMap threadLocalMap, FastThreadLocal<?> variable) {
+    private static void removeFromVariablesToRemove(InternalThreadLocalMap threadLocalMap, FastThreadLocal<?> variable) {
 
         Object v = threadLocalMap.indexedVariable(variablesToRemoveIndex);
 
@@ -122,9 +129,16 @@ public class FastThreadLocal<V> {
         variablesToRemove.remove(variable);
     }
 
+    /**
+     * jdk原生的 ThreadLocal 有个 final 修饰的 threadLocalHashCode，在 ThreadLocal 实例化的时候就会被初始化
+     * 它的值是在前一个对象的值上加 0x61c88647，主要是为了和2的n次方取模更均匀
+     *
+     * 和上面类似，FastThreadLocal也有个 final 修饰的 index，但不同的是它的index是从0开始往上叠加
+     */
     private final int index;
 
     public FastThreadLocal() {
+        // 0 被 variablesToRemoveIndex 占用了，所以这里只会从1开始
         index = InternalThreadLocalMap.nextVariableIndex();
     }
 
@@ -133,7 +147,14 @@ public class FastThreadLocal<V> {
      */
     @SuppressWarnings("unchecked")
     public final V get() {
+        /**
+         * 和jdk原生的ThreadLocal不同：
+         *      Thread t = Thread.currentThread();
+         *      ThreadLocalMap map = getMap(t);
+         * 但是可以保证的是 InternalThreadLocalMap 是当前线程独有
+         */
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.get();
+        // 直接数组下标取值
         Object v = threadLocalMap.indexedVariable(index);
         if (v != InternalThreadLocalMap.UNSET) {
             return (V) v;
@@ -180,6 +201,7 @@ public class FastThreadLocal<V> {
         }
 
         threadLocalMap.setIndexedVariable(index, v);
+        // 将该 FastThreadLocal 添加到当前线程独享的 InternalThreadLocalMap 中的零号位
         addToVariablesToRemove(threadLocalMap, this);
         return v;
     }

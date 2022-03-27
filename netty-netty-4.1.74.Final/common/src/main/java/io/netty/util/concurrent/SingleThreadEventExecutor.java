@@ -471,7 +471,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             runTasks ++;
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
+            // 每64次循环才检查一次是否超时，因为 nanoTime() 方法比较耗性能
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
+            // 和 TODO FIXME 一样，XXX代表的是标识处代码虽然实现了功能，但是实现的方法有待商榷，希望将来能改进
             if ((runTasks & 0x3F) == 0) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 if (lastExecutionTime >= deadline) {
@@ -480,7 +482,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             }
 
             task = pollTask();
+
             if (task == null) {
+                // 没有了非IO任务，记录当前时间并 break
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 break;
             }
@@ -983,6 +987,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    // 执行 NioEventLoop while死循环，至此 NioEventLoop 算是启动成功
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {
@@ -1042,8 +1047,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                             threadLock.countDown();
                             int numUserTasks = drainTasks();
                             if (numUserTasks > 0 && logger.isWarnEnabled()) {
-                                logger.warn("An event executor terminated with " +
-                                        "non-empty task queue (" + numUserTasks + ')');
+                                logger.warn("An event executor terminated with non-empty task queue (" + numUserTasks + ')');
                             }
                             terminationFuture.setSuccess(null);
                         }

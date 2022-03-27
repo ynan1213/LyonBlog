@@ -31,7 +31,7 @@ public class NioServer
             /**
              * int select()：阻塞到至少有一个通道在你注册的事件上就绪了。
              * int select(long timeout)：和select()一样，但最长阻塞时间为timeout毫秒。
-             * int selectNow()：非阻塞，只要有通道就绪就立刻返回。
+             * int selectNow()：非阻塞，立刻返回，如果没有继续事件返回0
              *
              * 等待请求，每次等待阻塞3s，超过时间则向下执行，若传入0或不传值，则在接收到请求前一直阻塞
              */

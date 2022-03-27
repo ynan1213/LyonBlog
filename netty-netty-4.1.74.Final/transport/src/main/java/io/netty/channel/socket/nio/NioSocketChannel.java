@@ -312,6 +312,13 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
         boolean success = false;
         try {
+            /**
+             * 为什么这里会返回false？？？
+             * 原因：在非阻塞模式下，connect操作会立即返回false
+             * 这里如何区分成功还是失败？
+             * 这里无法区分connect是否成功，只能通过注册OP_CONNECT事件，等轮循到IO事件的时候才能判断
+             * 所以这个事件发生的时候不能简单呢的认为连接成功，要使用finishConnect判断下，如果连接失败，会抛出异常
+             */
             boolean connected = SocketUtils.connect(javaChannel(), remoteAddress);
             if (!connected) {
                 selectionKey().interestOps(SelectionKey.OP_CONNECT);

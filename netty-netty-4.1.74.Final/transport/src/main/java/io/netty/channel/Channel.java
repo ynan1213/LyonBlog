@@ -111,6 +111,9 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
 
     /**
      * Return {@code true} if the {@link Channel} is active and so connected.
+     *
+     * 对于服务端的实现是:javaChannel().socket().isBound()，即当Channel绑定上了端口，isActive()才会返回true
+     * 对于客户端的实现是:ch.isOpen() && ch.isConnected(),即当Channel是open并且连接上服务端才返回true
      */
     boolean isActive();
 

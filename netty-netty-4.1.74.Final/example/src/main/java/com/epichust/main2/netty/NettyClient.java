@@ -33,8 +33,15 @@ public class NettyClient {
                         pipeline.addLast(new StringEncoder());
                     }
                 });
-            ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 6666).sync();
-            channelFuture.channel().writeAndFlush("你好，中国 ===============").addListener(new ChannelFutureListener() {
+            ChannelFuture connectFuture = bootstrap.connect("127.0.0.1", 6666);
+            System.out.println("connectFuture sync 之前");
+            /**
+             * 在sync过程中，main线程会阻塞住，如果再connect过程中发生了异常：Connection refused: /127.0.0.1:6666
+             * 会唤醒main线程，然后main线程发现异常不为空，就会往外抛
+             */
+            connectFuture.sync();
+            System.out.println("connectFuture sync 之后");
+            connectFuture.channel().writeAndFlush("你好，中国 ===============").addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
                     if (future.isSuccess()) {
@@ -45,7 +52,7 @@ public class NettyClient {
                 }
             });
 
-            channelFuture.channel().isWritable();
+            connectFuture.channel().isWritable();
 
             // await() 和 sync() 功能是一样的，不过如果任务失败，await()它不会抛出执行过程中的异常
             //channelFuture.await();
@@ -60,21 +67,19 @@ public class NettyClient {
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String s = scanner.nextLine();
-                ByteBuf buffer = channelFuture.channel().alloc().buffer(s.length());
+                ByteBuf buffer = connectFuture.channel().alloc().buffer(s.length());
                 buffer.writeBytes(s.getBytes());
-                ChannelFuture future = channelFuture.channel().writeAndFlush(buffer)
+                ChannelFuture future = connectFuture.channel().writeAndFlush(buffer)
                     .addListener(new GenericFutureListener<Future<? super Void>>() {
                         @Override
                         public void operationComplete(Future<? super Void> future) throws Exception {
                             System.out.println("写已完成");
                         }
                     });
-
-                channelFuture.sync();
-
+                connectFuture.sync();
             }
 
-            channelFuture.channel().closeFuture().sync();
+            connectFuture.channel().closeFuture().sync();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

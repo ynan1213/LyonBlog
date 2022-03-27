@@ -47,9 +47,8 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractNioChannel extends AbstractChannel {
 
-    private static final InternalLogger logger =
-            InternalLoggerFactory.getInstance(AbstractNioChannel.class);
-
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractNioChannel.class);
+    // jdk原生channel
     private final SelectableChannel ch;
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;
@@ -86,10 +85,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             try {
                 ch.close();
             } catch (IOException e2) {
-                logger.warn(
-                            "Failed to close a partially initialized socket.", e2);
+                logger.warn("Failed to close a partially initialized socket.", e2);
             }
-
             throw new ChannelException("Failed to enter non-blocking mode.", e);
         }
     }
@@ -232,8 +229,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         }
 
         @Override
-        public final void connect(
-                final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
+        public final void connect(final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
             if (!promise.setUncancellable() || !ensureOpen(promise)) {
                 return;
             }
@@ -251,22 +247,38 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                     connectPromise = promise;
                     requestedRemoteAddress = remoteAddress;
 
-                    // Schedule connect timeout.
+                    // Schedule connect timeout. 注册连接超时任务，30S后执行
                     int connectTimeoutMillis = config().getConnectTimeoutMillis();
                     if (connectTimeoutMillis > 0) {
                         connectTimeoutFuture = eventLoop().schedule(new Runnable() {
                             @Override
                             public void run() {
+                                /**
+                                 * 这个定时任务，默认在30s后执行，注意点是这个定时任务和finishConnect哪个先执行:
+                                 * 1、如果finishConnect先执行，并且连接成功，则会将全局变量 connectPromise.trySuccess；
+                                 * 2、如果finishConnect先执行，但是连接失败，远端refused，则执行的是 connectPromise.tryFailure，这样connectPromise
+                                 *    上面的两个listener（一个是main线程的sync方法，会抛出异常；另一个是CLOSE_ON_FAILURE，关闭channel）
+                                 * 3、如果finishConnect后执行，该定时任务就会 connectPromise.tryFailure，connection timed out，同样注册在上面的
+                                 *    两个listener也会被回调。
+                                 */
                                 ChannelPromise connectPromise = AbstractNioChannel.this.connectPromise;
                                 if (connectPromise != null && !connectPromise.isDone()
-                                        && connectPromise.tryFailure(new ConnectTimeoutException(
-                                                "connection timed out: " + remoteAddress))) {
+                                    && connectPromise.tryFailure(new ConnectTimeoutException("connection timed out: " + remoteAddress))) {
                                     close(voidPromise());
                                 }
                             }
                         }, connectTimeoutMillis, TimeUnit.MILLISECONDS);
                     }
 
+                    /**
+                     * 这个promise什么时候触发？
+                     *      在上面的doConnect方法中，注册了OP_CONNECT事件，在连接成功并且未超时（未触发上面超时任务）的情况下，
+                     *      会执行指定的方法，在那个指定方法内就会操作这个promise.trySuccess,这个promise是个全局变量
+                     * 后来发现，如果连接成功也就是promise.trySuccess后，并不会进入if，什么情况下会是cancel呢？
+                     *      目前未发现，可能是业务人员自己进行了 promise.cancel了吧
+                     * 如果promise.trySuccess不会进入if，那么定时任务如何取消呢？
+                     *      在finishConnect内会取消
+                     */
                     promise.addListener(new ChannelFutureListener() {
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
@@ -338,6 +350,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             } finally {
                 // Check for null as the connectTimeoutFuture is only created if a connectTimeoutMillis > 0 is used
                 // See https://github.com/netty/netty/issues/1770
+                // 如果上面doFinishConnect抛了异常进入了catch，这里是不一定会进入if的，connectTimeoutFuture也有可能在CLOSE_ON_FAILURE中被取消
                 if (connectTimeoutFuture != null) {
                     connectTimeoutFuture.cancel(false);
                 }
@@ -377,6 +390,12 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                /**
+                 *  把jdk原生的 Channel 注册进了 Selector 中，虽然注册上了,但是它不关心任何事件
+                 *  最后一个参数this是当前的channel, 意思是把当前的Channel当成是一个 attachment(附件) 绑定到selector上 作用???
+                 *      当selector轮询到有channel出现了自己的感兴趣的事件时, 需要从成百上千的channel精确的匹配出出现IO事件的channel,
+                 *      于是selector就在这里提前把channel存放入 attachment中,
+                 */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {

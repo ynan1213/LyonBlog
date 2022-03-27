@@ -52,8 +52,7 @@ public class InetSocketAddressResolver extends AbstractAddressResolver<InetSocke
             throws Exception {
         // Note that InetSocketAddress.getHostName() will never incur a reverse lookup here,
         // because an unresolved address always has a host name.
-        nameResolver.resolve(unresolvedAddress.getHostName())
-                .addListener(new FutureListener<InetAddress>() {
+        nameResolver.resolve(unresolvedAddress.getHostName()).addListener(new FutureListener<InetAddress>() {
                     @Override
                     public void operationComplete(Future<InetAddress> future) throws Exception {
                         if (future.isSuccess()) {

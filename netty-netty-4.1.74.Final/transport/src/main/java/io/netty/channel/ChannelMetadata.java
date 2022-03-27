@@ -24,6 +24,10 @@ import java.net.SocketAddress;
  */
 public final class ChannelMetadata {
 
+    /**
+     * 这个属性并不是代表该channel已经断开连接了，而是标记该channel是否有【断开连接】 操作的能力，到目前为止只有 UDP/IP 唯一具有这种行为。
+     * 如果具有该行为，则可以调用 channel的disconnect 方法
+     */
     private final boolean hasDisconnect;
     private final int defaultMaxMessagesPerRead;
 

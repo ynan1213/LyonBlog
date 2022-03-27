@@ -15,22 +15,24 @@
  */
 package com.epichust.main2.netty;
 
+import static io.netty.buffer.ByteBufUtil.appendPrettyHexDump;
+import static io.netty.util.internal.StringUtil.NEWLINE;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufHolder;
-import io.netty.channel.*;
+import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandler;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.logging.LogLevel;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
 import java.net.SocketAddress;
 
-import static io.netty.buffer.ByteBufUtil.appendPrettyHexDump;
-import static io.netty.util.internal.StringUtil.NEWLINE;
-
 @Sharable
-@SuppressWarnings({ "StringConcatenationInsideStringBufferAppend", "StringBufferReplaceableByString" })
+@SuppressWarnings({"StringConcatenationInsideStringBufferAppend", "StringBufferReplaceableByString"})
 public class MyLoggingHandler extends ChannelDuplexHandler {
 
     private static final LogLevel DEFAULT_LEVEL = LogLevel.DEBUG;
@@ -83,9 +85,12 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
         ctx.fireChannelUnregistered();
     }
 
+    /**
+     * 不是传播事件调用的，只要每个handler被添加到pipeline都会被调用
+     * 但是如果 pipeline 的 registered 状态为false，并不是马上调用
+     */
     @Override
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception
-    {
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         if (logger.isEnabled(internalLevel)) {
             logger.log(internalLevel, format(ctx, "Handler ADD-----------handler被添加到pipeline中后调用"));
         }
@@ -134,8 +139,8 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
 
     @Override
     public void connect(
-            ChannelHandlerContext ctx,
-            SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+        ChannelHandlerContext ctx,
+        SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
         if (logger.isEnabled(internalLevel)) {
             logger.log(internalLevel, format(ctx, "CONNECT-----------客户端进行connect时调用  ", remoteAddress, localAddress));
         }
@@ -183,8 +188,7 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void read(ChannelHandlerContext ctx) throws Exception
-    {
+    public void read(ChannelHandlerContext ctx) throws Exception {
         if (logger.isEnabled(internalLevel)) {
             logger.log(internalLevel, format(ctx, "READ--------这个事件什么时候发生？？？"));
         }
@@ -233,7 +237,7 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
      * Formats an event and returns the formatted message.
      *
      * @param eventName the name of the event
-     * @param arg       the argument of the event
+     * @param arg the argument of the event
      */
     protected String format(ChannelHandlerContext ctx, String eventName, Object arg) {
         if (arg instanceof ByteBuf) {
@@ -250,7 +254,7 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
      * {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, ChannelPromise)}.
      *
      * @param eventName the name of the event
-     * @param firstArg  the first argument of the event
+     * @param firstArg the first argument of the event
      * @param secondArg the second argument of the event
      */
     protected String format(ChannelHandlerContext ctx, String eventName, Object firstArg, Object secondArg) {
@@ -262,7 +266,7 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
         String arg1Str = String.valueOf(firstArg);
         String arg2Str = secondArg.toString();
         StringBuilder buf = new StringBuilder(
-                chStr.length() + 1 + eventName + 2 + arg1Str.length() + 2 + arg2Str.length());
+            chStr.length() + 1 + eventName + 2 + arg1Str.length() + 2 + arg2Str.length());
         buf.append(chStr).append(' ').append(eventName).append(": ").append(arg1Str).append(", ").append(arg2Str);
         return buf.toString();
     }
@@ -278,7 +282,7 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
             buf.append(chStr).append(' ').append(eventName).append(": 0B");
             return buf.toString();
         } else {
-            int rows = length / 16 + (length % 15 == 0? 0 : 1) + 4;
+            int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
             StringBuilder buf = new StringBuilder(chStr.length() + 1 + eventName.length() + 2 + 10 + 1 + 2 + rows * 80);
 
             buf.append(chStr).append(' ').append(eventName).append(": ").append(length).append('B').append(NEWLINE);
@@ -301,12 +305,12 @@ public class MyLoggingHandler extends ChannelDuplexHandler {
             buf.append(chStr).append(' ').append(eventName).append(", ").append(msgStr).append(", 0B");
             return buf.toString();
         } else {
-            int rows = length / 16 + (length % 15 == 0? 0 : 1) + 4;
+            int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
             StringBuilder buf = new StringBuilder(
-                    chStr.length() + 1 + eventName.length() + 2 + msgStr.length() + 2 + 10 + 1 + 2 + rows * 80);
+                chStr.length() + 1 + eventName.length() + 2 + msgStr.length() + 2 + 10 + 1 + 2 + rows * 80);
 
             buf.append(chStr).append(' ').append(eventName).append(": ")
-               .append(msgStr).append(", ").append(length).append('B').append(NEWLINE);
+                .append(msgStr).append(", ").append(length).append('B').append(NEWLINE);
             appendPrettyHexDump(buf, content);
 
             return buf.toString();

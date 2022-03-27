@@ -269,12 +269,20 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     private ChannelFuture doBind(final SocketAddress localAddress) {
+        /**
+         * 分为三步：
+         *  1. 创建Channel(NioServerSocketChannel或者NioSocketChannel)；
+         *  2. 初始化，也就是设置tcp参数等；
+         *  3. 将 Channel register 到 NioEventLoopGroup，内部就是将channel和NioEventLoop进行绑定
+         *      （一个channel只能register一次，一个NioEventLoop可以绑定多个channel）
+         */
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
         if (regFuture.cause() != null) {
             return regFuture;
         }
 
+        // 如果register任务已完成，就进入if，在当前线程进行doBind操作，否则进入else注册listener在回调中进行doBind
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
@@ -282,6 +290,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return promise;
         } else {
             // Registration future is almost always fulfilled already, but just in case it's not.
+            // if中是通过channel.newPromise()返回一个ChannelPromise，不知道这里为什么是自定义PendingRegistrationPromise
             final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
             regFuture.addListener(new ChannelFutureListener() {
                 @Override
@@ -307,6 +316,15 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            /**
+             * channelFactory是反射工厂ReflectiveChannelFactory,通过反射走的是无参的构造
+             *      服务端设置的是 NioServerSocketChannel
+             *      客户端设置的是 NioSocketChannel
+             * 实例化channel具体做了什么？
+             *      1.通过jdk原生方法provider.openServerSocketChannel()和provider.openSocketChannel()获取对应的channel
+             *      2.服务端设置OP_ACCEPT事件，客户端设置OP_READ事件、设置通道为非阻塞，ch.configureBlocking(false)
+             *      3.创建unsafe、pipeline、ServerSocketChannelConfig对象；
+             */
             channel = channelFactory.newChannel();
             init(channel);
         } catch (Throwable t) {
@@ -320,7 +338,16 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
-        ChannelFuture regFuture = config().group().register(channel);
+        /**
+         * config()--> ServerBootstrapConfig 或者 BootstrapConfig
+         * group()--> NioEventLoopGroup(bossGroup、workGroup)
+         * 也就是说register是交给 NioEventLoopGroup 操作的，NioEventLoopGroup 内部又是选择一个 NioEventLoop
+         * 然后将 NioEventLoop 与 channel内部类对象unsafe进行绑定
+         * 注册完成后，channel就永远绑定在一个 NioEventLoop 中了，可以通过channel.eventLoop()方法返回这个 NioEventLoop
+         */
+        AbstractBootstrapConfig<B, C> config = config();
+        EventLoopGroup group = config.group();
+        ChannelFuture regFuture = group.register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
                 channel.close();
@@ -343,16 +370,17 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
     abstract void init(Channel channel) throws Exception;
 
-    private static void doBind0(
-            final ChannelFuture regFuture, final Channel channel,
+    private static void doBind0(final ChannelFuture regFuture, final Channel channel,
             final SocketAddress localAddress, final ChannelPromise promise) {
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
+        // 能进入doBind0，说明 Channel 已经注册到 NioEventLoopGroup 中了，也就和一个 NioEventLoop 绑定上了，这里可以直接通过 channel.eventLoop() 获取
         channel.eventLoop().execute(new Runnable() {
             @Override
             public void run() {
                 if (regFuture.isSuccess()) {
+                    // bind是Outbound事件，由tail往前执行
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     promise.setFailure(regFuture.cause());
@@ -449,23 +477,20 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
     }
 
-    static void setChannelOptions(
-            Channel channel, Map.Entry<ChannelOption<?>, Object>[] options, InternalLogger logger) {
+    static void setChannelOptions(Channel channel, Map.Entry<ChannelOption<?>, Object>[] options, InternalLogger logger) {
         for (Map.Entry<ChannelOption<?>, Object> e: options) {
             setChannelOption(channel, e.getKey(), e.getValue(), logger);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static void setChannelOption(
-            Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
+    private static void setChannelOption(Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
         try {
             if (!channel.config().setOption((ChannelOption<Object>) option, value)) {
                 logger.warn("Unknown channel option '{}' for channel '{}'", option, channel);
             }
         } catch (Throwable t) {
-            logger.warn(
-                    "Failed to set channel option '{}' with value '{}' for channel '{}'", option, value, channel, t);
+            logger.warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option, value, channel, t);
         }
     }
 

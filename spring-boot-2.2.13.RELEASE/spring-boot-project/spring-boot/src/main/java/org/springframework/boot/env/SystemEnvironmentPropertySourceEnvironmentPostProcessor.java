@@ -36,6 +36,10 @@ import org.springframework.core.env.SystemEnvironmentPropertySource;
  *
  * @author Madhura Bhave
  * @since 2.0.0
+ *
+ * 用来替换Environment环境中的systemEnvironment，systemEnvironment中最初存储的是SystemEnvironmentPropertySource类，
+ * 现由实现类OriginAwareSystemEnvironmentPropertySource替换，OriginAwareSystemEnvironmentPropertySource提供了获取Origin的方法，
+ * 即返回SystemEnvironmentOrigin对象。
  */
 public class SystemEnvironmentPropertySourceEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -56,11 +60,9 @@ public class SystemEnvironmentPropertySourceEnvironmentPostProcessor implements 
 	}
 
 	@SuppressWarnings("unchecked")
-	private void replacePropertySource(ConfigurableEnvironment environment, String sourceName,
-			PropertySource<?> propertySource) {
+	private void replacePropertySource(ConfigurableEnvironment environment, String sourceName, PropertySource<?> propertySource) {
 		Map<String, Object> originalSource = (Map<String, Object>) propertySource.getSource();
-		SystemEnvironmentPropertySource source = new OriginAwareSystemEnvironmentPropertySource(sourceName,
-				originalSource);
+		SystemEnvironmentPropertySource source = new OriginAwareSystemEnvironmentPropertySource(sourceName, originalSource);
 		environment.getPropertySources().replace(sourceName, source);
 	}
 
@@ -76,8 +78,7 @@ public class SystemEnvironmentPropertySourceEnvironmentPostProcessor implements 
 	/**
 	 * {@link SystemEnvironmentPropertySource} that also tracks {@link Origin}.
 	 */
-	protected static class OriginAwareSystemEnvironmentPropertySource extends SystemEnvironmentPropertySource
-			implements OriginLookup<String> {
+	protected static class OriginAwareSystemEnvironmentPropertySource extends SystemEnvironmentPropertySource implements OriginLookup<String> {
 
 		OriginAwareSystemEnvironmentPropertySource(String name, Map<String, Object> source) {
 			super(name, source);

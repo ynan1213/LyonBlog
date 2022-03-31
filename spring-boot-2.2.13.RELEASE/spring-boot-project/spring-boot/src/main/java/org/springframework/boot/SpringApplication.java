@@ -375,7 +375,7 @@ public class SpringApplication
 		// 其中的 ConfigFileApplicationListener 非常核心，项目中的 properties 和yml文件都是被其所加载
 		// springcloud 的 BootstrapApplicationListener 也会在这里监听到该事件：创建一个父容器
 		listeners.environmentPrepared(environment);
-		// ？？？
+		// 绑定 spring.main.xxx=yyy 到SpringApplication中
 		bindToSpringApplication(environment);
 		if (!this.isCustomEnvironment)
 		{
@@ -408,7 +408,7 @@ public class SpringApplication
 		postProcessApplicationContext(context);
 
 		// 执行容器中的ApplicationContextInitializer（包括 spring.factories和自定义的实例）
-		// 1. springcloud环境下会给当前容器设置父容器
+		// 1. springCloud 环境下会给当前容器设置父容器
 		// 2. spring.application.name 会在这里进行设置
 		applyInitializers(context);
 
@@ -557,6 +557,7 @@ public class SpringApplication
 			ConversionService conversionService = ApplicationConversionService.getSharedInstance();
 			environment.setConversionService((ConfigurableConversionService) conversionService);
 		}
+		// 命令行参数添加到 environment 中的第一位
 		configurePropertySources(environment, args);
 		configureProfiles(environment, args);
 	}

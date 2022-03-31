@@ -333,8 +333,7 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 							if (isDefaultProfile(profile)) {
 								addProfileToEnvironment(profile.getName());
 							}
-							load(profile, this::getPositiveProfileFilter,
-									addToLoaded(MutablePropertySources::addLast, false));
+							load(profile, this::getPositiveProfileFilter, addToLoaded(MutablePropertySources::addLast, false));
 							this.processedProfiles.add(profile);
 						}
 						load(null, this::getNegativeProfileFilter, addToLoaded(MutablePropertySources::addFirst, true));

@@ -153,6 +153,7 @@ class BeanDefinitionLoader {
 			GroovyBeanDefinitionSource loader = BeanUtils.instantiateClass(source, GroovyBeanDefinitionSource.class);
 			load(loader);
 		}
+		// 这里没有 @Component 注解的类也会被注册，没明白这个判断的意思
 		if (isComponent(source)) {
 			this.annotatedReader.register(source);
 			return 1;

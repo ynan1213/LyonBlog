@@ -29,10 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.CachedIntrospectionResults;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -56,6 +54,7 @@ import org.springframework.context.annotation.AnnotatedBeanDefinitionReader;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigUtils;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.GenericTypeResolver;
@@ -74,6 +73,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.SpringFactoriesLoader;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -158,8 +158,7 @@ import org.springframework.web.context.support.StandardServletEnvironment;
  * @see #SpringApplication(Class...)
  * @since 1.0.0
  */
-public class SpringApplication
-{
+public class SpringApplication {
 
 	/**
 	 * The class name of application context that will be used by default for non-web
@@ -248,8 +247,7 @@ public class SpringApplication
 	 * @see #SpringApplication(ResourceLoader, Class...)
 	 * @see #setSources(Set)
 	 */
-	public SpringApplication(Class<?>... primarySources)
-	{
+	public SpringApplication(Class<?>... primarySources) {
 		this(null, primarySources);
 	}
 
@@ -265,8 +263,7 @@ public class SpringApplication
 	 * @see #setSources(Set)
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources)
-	{
+	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
@@ -284,20 +281,15 @@ public class SpringApplication
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
-	private Class<?> deduceMainApplicationClass()
-	{
-		try
-		{
+	private Class<?> deduceMainApplicationClass() {
+		try {
 			StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
-			for (StackTraceElement stackTraceElement : stackTrace)
-			{
-				if ("main".equals(stackTraceElement.getMethodName()))
-				{
+			for (StackTraceElement stackTraceElement : stackTrace) {
+				if ("main".equals(stackTraceElement.getMethodName())) {
 					return Class.forName(stackTraceElement.getClassName());
 				}
 			}
-		} catch (ClassNotFoundException ex)
-		{
+		} catch (ClassNotFoundException ex) {
 			// Swallow and continue
 		}
 		return null;
@@ -310,8 +302,7 @@ public class SpringApplication
 	 * @param args the application arguments (usually passed from a Java main method)
 	 * @return a running {@link ApplicationContext}
 	 */
-	public ConfigurableApplicationContext run(String... args)
-	{
+	public ConfigurableApplicationContext run(String... args) {
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 
@@ -328,45 +319,43 @@ public class SpringApplication
 		SpringApplicationRunListeners listeners = getRunListeners(args);
 		// 广播 ApplicationStartingEvent（启动开始）事件
 		listeners.starting();
-		try
-		{
+		try {
+			// 封装命令行参数为对象，该对象在后面会被注入到容器中，所以我们可以@Autowired注入
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
-			// 环境准备，读取配置文件
+			// 环境准备，读取配置文件，命令行参数也会被设置到environment中
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
+			// 打印 banner 图
 			Banner printedBanner = printBanner(environment);
+			// 创建容器
 			context = createApplicationContext();
 			// 该类作用是在项目启动失败之后打印log
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class, new Class[]{ConfigurableApplicationContext.class}, context);
+			// 准备容器
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();
-			if (this.logStartupInfo)
-			{
+			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
 			}
 			listeners.started(context);
 			callRunners(context, applicationArguments);
-		} catch (Throwable ex)
-		{
+		} catch (Throwable ex) {
 			handleRunFailure(context, ex, exceptionReporters, listeners);
 			throw new IllegalStateException(ex);
 		}
 
-		try
-		{
+		try {
 			listeners.running(context);
-		} catch (Throwable ex)
-		{
+		} catch (Throwable ex) {
 			handleRunFailure(context, ex, exceptionReporters, null);
 			throw new IllegalStateException(ex);
 		}
 		return context;
 	}
 
-	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments)
-	{
+	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments) {
 		// Create and configure the environment
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
@@ -377,18 +366,15 @@ public class SpringApplication
 		listeners.environmentPrepared(environment);
 		// 绑定 spring.main.xxx=yyy 到SpringApplication中
 		bindToSpringApplication(environment);
-		if (!this.isCustomEnvironment)
-		{
+		if (!this.isCustomEnvironment) {
 			environment = new EnvironmentConverter(getClassLoader()).convertEnvironmentIfNecessary(environment, deduceEnvironmentClass());
 		}
 		ConfigurationPropertySources.attach(environment);
 		return environment;
 	}
 
-	private Class<? extends StandardEnvironment> deduceEnvironmentClass()
-	{
-		switch (this.webApplicationType)
-		{
+	private Class<? extends StandardEnvironment> deduceEnvironmentClass() {
+		switch (this.webApplicationType) {
 			case SERVLET:
 				return StandardServletEnvironment.class;
 			case REACTIVE:
@@ -399,8 +385,7 @@ public class SpringApplication
 	}
 
 	private void prepareContext(ConfigurableApplicationContext context, ConfigurableEnvironment environment,
-								SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments, Banner printedBanner)
-	{
+			SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments, Banner printedBanner) {
 
 		context.setEnvironment(environment);
 
@@ -415,73 +400,63 @@ public class SpringApplication
 		// 广播 contextPrepared 事件
 		listeners.contextPrepared(context);
 
-		if (this.logStartupInfo)
-		{
+		if (this.logStartupInfo) {
 			logStartupInfo(context.getParent() == null);
 			logStartupProfileInfo(context);
 		}
 		// Add boot specific singleton beans
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 
-		//注册启动参数bean，这里将容器指定的参数封装成bean，注入容器
+		// 注册启动参数bean，这里将容器指定的参数封装成bean，注入容器
 		beanFactory.registerSingleton("springApplicationArguments", applicationArguments);
-		if (printedBanner != null)
-		{
+		if (printedBanner != null) {
 			beanFactory.registerSingleton("springBootBanner", printedBanner);
 		}
-		if (beanFactory instanceof DefaultListableBeanFactory)
-		{
+		if (beanFactory instanceof DefaultListableBeanFactory) {
 			((DefaultListableBeanFactory) beanFactory).setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
 		}
-		if (this.lazyInitialization)
-		{
+		if (this.lazyInitialization) {
 			context.addBeanFactoryPostProcessor(new LazyInitializationBeanFactoryPostProcessor());
 		}
-		// 获取启动类指定的参数
+		// 获取配置类，注册到容器中
+		// 从 getAllSources 方法可以看出，对于main方法所在的类，并不需要一定就要 @SpringBootApplication 注解
+		// 我们完全可以放在一个配置类上，然后在main方法内设置进去，也可以使用spring.main.sources=xxx.class指定配置类或者
+		// 但是这里有个问题，就是componentScan就扫描不到默认包了
 		Set<Object> sources = getAllSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
-		// 注册启动类到容器，只对 @Component 注解的类有效，@SpringBootApplication -> @SpringBootConfiguration -> @Configuration
-		// 从这里可以看出，对于main方法所在的类，并不需要一定就要@SpringBootApplication注解，我们完全可以放在一个配置类上，然后再main方法内设置进去
-		// 但是这里有个问题，就是componentScan就扫描不到默认包了
 		load(context, sources.toArray(new Object[0]));
 
 		// 广播 contextLoaded 事件
 		listeners.contextLoaded(context);
 	}
 
-	private void refreshContext(ConfigurableApplicationContext context)
-	{
-		if (this.registerShutdownHook)
-		{
-			try
-			{
+	private void refreshContext(ConfigurableApplicationContext context) {
+		if (this.registerShutdownHook) {
+			try {
 				context.registerShutdownHook();
-			} catch (AccessControlException ex)
-			{
+			} catch (AccessControlException ex) {
 				// Not allowed in some environments.
 			}
 		}
 		refresh(context);
 	}
 
-	private void configureHeadlessProperty()
-	{
-		System.setProperty(SYSTEM_PROPERTY_JAVA_AWT_HEADLESS, System.getProperty(SYSTEM_PROPERTY_JAVA_AWT_HEADLESS, Boolean.toString(this.headless)));
+	private void configureHeadlessProperty() {
+		System.setProperty(SYSTEM_PROPERTY_JAVA_AWT_HEADLESS,
+				System.getProperty(SYSTEM_PROPERTY_JAVA_AWT_HEADLESS, Boolean.toString(this.headless)));
 	}
 
-	private SpringApplicationRunListeners getRunListeners(String[] args)
-	{
+	private SpringApplicationRunListeners getRunListeners(String[] args) {
 		Class<?>[] types = new Class<?>[]{SpringApplication.class, String[].class};
-		return new SpringApplicationRunListeners(logger, getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args));
+		return new SpringApplicationRunListeners(logger,
+				getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args));
 	}
 
-	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type)
-	{
+	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type) {
 		return getSpringFactoriesInstances(type, new Class<?>[]{});
 	}
 
-	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args)
-	{
+	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
 		ClassLoader classLoader = getClassLoader();
 		// Use names and ensure unique to protect against duplicates
 		Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
@@ -492,20 +467,16 @@ public class SpringApplication
 
 	@SuppressWarnings("unchecked")
 	private <T> List<T> createSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes,
-													   ClassLoader classLoader, Object[] args, Set<String> names)
-	{
+			ClassLoader classLoader, Object[] args, Set<String> names) {
 		List<T> instances = new ArrayList<>(names.size());
-		for (String name : names)
-		{
-			try
-			{
+		for (String name : names) {
+			try {
 				Class<?> instanceClass = ClassUtils.forName(name, classLoader);
 				Assert.isAssignable(type, instanceClass);
 				Constructor<?> constructor = instanceClass.getDeclaredConstructor(parameterTypes);
 				T instance = (T) BeanUtils.instantiateClass(constructor, args);
 				instances.add(instance);
-			} catch (Throwable ex)
-			{
+			} catch (Throwable ex) {
 				throw new IllegalArgumentException("Cannot instantiate " + type + " : " + name, ex);
 			}
 		}
@@ -521,14 +492,11 @@ public class SpringApplication
 	 * 在Environment对象初始化的时候，会完成一系列初始化动作，主要就是将运行机器的系统变量和环境变量，
 	 * 加入到其父类AbstractEnvironment定义的对象MutablePropertySources中，MutablePropertySources对象中定义了一个属性集合
 	 */
-	private ConfigurableEnvironment getOrCreateEnvironment()
-	{
-		if (this.environment != null)
-		{
+	private ConfigurableEnvironment getOrCreateEnvironment() {
+		if (this.environment != null) {
 			return this.environment;
 		}
-		switch (this.webApplicationType)
-		{
+		switch (this.webApplicationType) {
 			case SERVLET:
 				return new StandardServletEnvironment();
 			case REACTIVE:
@@ -546,14 +514,12 @@ public class SpringApplication
 	 * the above for fine-grained control over property sources or profiles, respectively.
 	 *
 	 * @param environment this application's environment
-	 * @param args        arguments passed to the {@code run} method
+	 * @param args arguments passed to the {@code run} method
 	 * @see #configureProfiles(ConfigurableEnvironment, String[])
 	 * @see #configurePropertySources(ConfigurableEnvironment, String[])
 	 */
-	protected void configureEnvironment(ConfigurableEnvironment environment, String[] args)
-	{
-		if (this.addConversionService)
-		{
+	protected void configureEnvironment(ConfigurableEnvironment environment, String[] args) {
+		if (this.addConversionService) {
 			ConversionService conversionService = ApplicationConversionService.getSharedInstance();
 			environment.setConversionService((ConfigurableConversionService) conversionService);
 		}
@@ -567,29 +533,23 @@ public class SpringApplication
 	 * environment.
 	 *
 	 * @param environment this application's environment
-	 * @param args        arguments passed to the {@code run} method
+	 * @param args arguments passed to the {@code run} method
 	 * @see #configureEnvironment(ConfigurableEnvironment, String[])
 	 */
-	protected void configurePropertySources(ConfigurableEnvironment environment, String[] args)
-	{
+	protected void configurePropertySources(ConfigurableEnvironment environment, String[] args) {
 		MutablePropertySources sources = environment.getPropertySources();
-		if (this.defaultProperties != null && !this.defaultProperties.isEmpty())
-		{
+		if (this.defaultProperties != null && !this.defaultProperties.isEmpty()) {
 			sources.addLast(new MapPropertySource("defaultProperties", this.defaultProperties));
 		}
-		if (this.addCommandLineProperties && args.length > 0)
-		{
+		if (this.addCommandLineProperties && args.length > 0) {
 			String name = CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME;
-			if (sources.contains(name))
-			{
+			if (sources.contains(name)) {
 				PropertySource<?> source = sources.get(name);
 				CompositePropertySource composite = new CompositePropertySource(name);
-				composite.addPropertySource(
-						new SimpleCommandLinePropertySource("springApplicationCommandLineArgs", args));
+				composite.addPropertySource(new SimpleCommandLinePropertySource("springApplicationCommandLineArgs", args));
 				composite.addPropertySource(source);
 				sources.replace(name, composite);
-			} else
-			{
+			} else {
 				sources.addFirst(new SimpleCommandLinePropertySource(args));
 			}
 		}
@@ -601,21 +561,18 @@ public class SpringApplication
 	 * processing via the {@code spring.profiles.active} property.
 	 *
 	 * @param environment this application's environment
-	 * @param args        arguments passed to the {@code run} method
+	 * @param args arguments passed to the {@code run} method
 	 * @see #configureEnvironment(ConfigurableEnvironment, String[])
 	 * @see org.springframework.boot.context.config.ConfigFileApplicationListener
 	 */
-	protected void configureProfiles(ConfigurableEnvironment environment, String[] args)
-	{
+	protected void configureProfiles(ConfigurableEnvironment environment, String[] args) {
 		Set<String> profiles = new LinkedHashSet<>(this.additionalProfiles);
 		profiles.addAll(Arrays.asList(environment.getActiveProfiles()));
 		environment.setActiveProfiles(StringUtils.toStringArray(profiles));
 	}
 
-	private void configureIgnoreBeanInfo(ConfigurableEnvironment environment)
-	{
-		if (System.getProperty(CachedIntrospectionResults.IGNORE_BEANINFO_PROPERTY_NAME) == null)
-		{
+	private void configureIgnoreBeanInfo(ConfigurableEnvironment environment) {
+		if (System.getProperty(CachedIntrospectionResults.IGNORE_BEANINFO_PROPERTY_NAME) == null) {
 			Boolean ignore = environment.getProperty("spring.beaninfo.ignore", Boolean.class, Boolean.TRUE);
 			System.setProperty(CachedIntrospectionResults.IGNORE_BEANINFO_PROPERTY_NAME, ignore.toString());
 		}
@@ -626,27 +583,21 @@ public class SpringApplication
 	 *
 	 * @param environment the environment to bind
 	 */
-	protected void bindToSpringApplication(ConfigurableEnvironment environment)
-	{
-		try
-		{
+	protected void bindToSpringApplication(ConfigurableEnvironment environment) {
+		try {
 			Binder.get(environment).bind("spring.main", Bindable.ofInstance(this));
-		} catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw new IllegalStateException("Cannot bind to SpringApplication", ex);
 		}
 	}
 
-	private Banner printBanner(ConfigurableEnvironment environment)
-	{
-		if (this.bannerMode == Banner.Mode.OFF)
-		{
+	private Banner printBanner(ConfigurableEnvironment environment) {
+		if (this.bannerMode == Banner.Mode.OFF) {
 			return null;
 		}
 		ResourceLoader resourceLoader = (this.resourceLoader != null) ? this.resourceLoader : new DefaultResourceLoader(getClassLoader());
 		SpringApplicationBannerPrinter bannerPrinter = new SpringApplicationBannerPrinter(resourceLoader, this.banner);
-		if (this.bannerMode == Mode.LOG)
-		{
+		if (this.bannerMode == Mode.LOG) {
 			return bannerPrinter.print(environment, this.mainApplicationClass, logger);
 		}
 		return bannerPrinter.print(environment, this.mainApplicationClass, System.out);
@@ -660,15 +611,11 @@ public class SpringApplication
 	 * @return the application context (not yet refreshed)
 	 * @see #setApplicationContextClass(Class)
 	 */
-	protected ConfigurableApplicationContext createApplicationContext()
-	{
+	protected ConfigurableApplicationContext createApplicationContext() {
 		Class<?> contextClass = this.applicationContextClass;
-		if (contextClass == null)
-		{
-			try
-			{
-				switch (this.webApplicationType)
-				{
+		if (contextClass == null) {
+			try {
+				switch (this.webApplicationType) {
 					case SERVLET:
 						contextClass = Class.forName(DEFAULT_SERVLET_WEB_CONTEXT_CLASS);
 						break;
@@ -678,8 +625,7 @@ public class SpringApplication
 					default:
 						contextClass = Class.forName(DEFAULT_CONTEXT_CLASS);
 				}
-			} catch (ClassNotFoundException ex)
-			{
+			} catch (ClassNotFoundException ex) {
 				throw new IllegalStateException(
 						"Unable create a default ApplicationContext, please specify an ApplicationContextClass", ex);
 			}
@@ -693,25 +639,19 @@ public class SpringApplication
 	 *
 	 * @param context the application context
 	 */
-	protected void postProcessApplicationContext(ConfigurableApplicationContext context)
-	{
-		if (this.beanNameGenerator != null)
-		{
+	protected void postProcessApplicationContext(ConfigurableApplicationContext context) {
+		if (this.beanNameGenerator != null) {
 			context.getBeanFactory().registerSingleton(AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR, this.beanNameGenerator);
 		}
-		if (this.resourceLoader != null)
-		{
-			if (context instanceof GenericApplicationContext)
-			{
+		if (this.resourceLoader != null) {
+			if (context instanceof GenericApplicationContext) {
 				((GenericApplicationContext) context).setResourceLoader(this.resourceLoader);
 			}
-			if (context instanceof DefaultResourceLoader)
-			{
+			if (context instanceof DefaultResourceLoader) {
 				((DefaultResourceLoader) context).setClassLoader(this.resourceLoader.getClassLoader());
 			}
 		}
-		if (this.addConversionService)
-		{
+		if (this.addConversionService) {
 			context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance());
 		}
 	}
@@ -724,10 +664,8 @@ public class SpringApplication
 	 * @see ConfigurableApplicationContext#refresh()
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	protected void applyInitializers(ConfigurableApplicationContext context)
-	{
-		for (ApplicationContextInitializer initializer : getInitializers())
-		{
+	protected void applyInitializers(ConfigurableApplicationContext context) {
+		for (ApplicationContextInitializer initializer : getInitializers()) {
 			Class<?> requiredType = GenericTypeResolver.resolveTypeArgument(initializer.getClass(), ApplicationContextInitializer.class);
 			Assert.isInstanceOf(requiredType, context, "Unable to call initializer.");
 			initializer.initialize(context);
@@ -740,10 +678,8 @@ public class SpringApplication
 	 *
 	 * @param isRoot true if this application is the root of a context hierarchy
 	 */
-	protected void logStartupInfo(boolean isRoot)
-	{
-		if (isRoot)
-		{
+	protected void logStartupInfo(boolean isRoot) {
+		if (isRoot) {
 			new StartupInfoLogger(this.mainApplicationClass).logStarting(getApplicationLog());
 		}
 	}
@@ -753,19 +689,15 @@ public class SpringApplication
 	 *
 	 * @param context the application context
 	 */
-	protected void logStartupProfileInfo(ConfigurableApplicationContext context)
-	{
+	protected void logStartupProfileInfo(ConfigurableApplicationContext context) {
 		Log log = getApplicationLog();
-		if (log.isInfoEnabled())
-		{
+		if (log.isInfoEnabled()) {
 			String[] activeProfiles = context.getEnvironment().getActiveProfiles();
-			if (ObjectUtils.isEmpty(activeProfiles))
-			{
+			if (ObjectUtils.isEmpty(activeProfiles)) {
 				String[] defaultProfiles = context.getEnvironment().getDefaultProfiles();
 				log.info("No active profile set, falling back to default profiles: "
 						+ StringUtils.arrayToCommaDelimitedString(defaultProfiles));
-			} else
-			{
+			} else {
 				log.info("The following profiles are active: "
 						+ StringUtils.arrayToCommaDelimitedString(activeProfiles));
 			}
@@ -777,10 +709,8 @@ public class SpringApplication
 	 *
 	 * @return the application log
 	 */
-	protected Log getApplicationLog()
-	{
-		if (this.mainApplicationClass == null)
-		{
+	protected Log getApplicationLog() {
+		if (this.mainApplicationClass == null) {
 			return logger;
 		}
 		return LogFactory.getLog(this.mainApplicationClass);
@@ -792,23 +722,18 @@ public class SpringApplication
 	 * @param context the context to load beans into
 	 * @param sources the sources to load
 	 */
-	protected void load(ApplicationContext context, Object[] sources)
-	{
-		if (logger.isDebugEnabled())
-		{
+	protected void load(ApplicationContext context, Object[] sources) {
+		if (logger.isDebugEnabled()) {
 			logger.debug("Loading source " + StringUtils.arrayToCommaDelimitedString(sources));
 		}
 		BeanDefinitionLoader loader = createBeanDefinitionLoader(getBeanDefinitionRegistry(context), sources);
-		if (this.beanNameGenerator != null)
-		{
+		if (this.beanNameGenerator != null) {
 			loader.setBeanNameGenerator(this.beanNameGenerator);
 		}
-		if (this.resourceLoader != null)
-		{
+		if (this.resourceLoader != null) {
 			loader.setResourceLoader(this.resourceLoader);
 		}
-		if (this.environment != null)
-		{
+		if (this.environment != null) {
 			loader.setEnvironment(this.environment);
 		}
 		loader.load();
@@ -820,8 +745,7 @@ public class SpringApplication
 	 * @return the resourceLoader the resource loader that will be used in the
 	 * ApplicationContext (or null if the default)
 	 */
-	public ResourceLoader getResourceLoader()
-	{
+	public ResourceLoader getResourceLoader() {
 		return this.resourceLoader;
 	}
 
@@ -832,10 +756,8 @@ public class SpringApplication
 	 *
 	 * @return a ClassLoader (never null)
 	 */
-	public ClassLoader getClassLoader()
-	{
-		if (this.resourceLoader != null)
-		{
+	public ClassLoader getClassLoader() {
+		if (this.resourceLoader != null) {
 			return this.resourceLoader.getClassLoader();
 		}
 		return ClassUtils.getDefaultClassLoader();
@@ -847,14 +769,11 @@ public class SpringApplication
 	 * @param context the application context
 	 * @return the BeanDefinitionRegistry if it can be determined
 	 */
-	private BeanDefinitionRegistry getBeanDefinitionRegistry(ApplicationContext context)
-	{
-		if (context instanceof BeanDefinitionRegistry)
-		{
+	private BeanDefinitionRegistry getBeanDefinitionRegistry(ApplicationContext context) {
+		if (context instanceof BeanDefinitionRegistry) {
 			return (BeanDefinitionRegistry) context;
 		}
-		if (context instanceof AbstractApplicationContext)
-		{
+		if (context instanceof AbstractApplicationContext) {
 			return (BeanDefinitionRegistry) ((AbstractApplicationContext) context).getBeanFactory();
 		}
 		throw new IllegalStateException("Could not locate BeanDefinitionRegistry");
@@ -864,11 +783,10 @@ public class SpringApplication
 	 * Factory method used to create the {@link BeanDefinitionLoader}.
 	 *
 	 * @param registry the bean definition registry
-	 * @param sources  the sources to load
+	 * @param sources the sources to load
 	 * @return the {@link BeanDefinitionLoader} that will be used to load beans
 	 */
-	protected BeanDefinitionLoader createBeanDefinitionLoader(BeanDefinitionRegistry registry, Object[] sources)
-	{
+	protected BeanDefinitionLoader createBeanDefinitionLoader(BeanDefinitionRegistry registry, Object[] sources) {
 		return new BeanDefinitionLoader(registry, sources);
 	}
 
@@ -877,8 +795,7 @@ public class SpringApplication
 	 *
 	 * @param applicationContext the application context to refresh
 	 */
-	protected void refresh(ApplicationContext applicationContext)
-	{
+	protected void refresh(ApplicationContext applicationContext) {
 		Assert.isInstanceOf(AbstractApplicationContext.class, applicationContext);
 		((AbstractApplicationContext) applicationContext).refresh();
 	}
@@ -887,98 +804,74 @@ public class SpringApplication
 	 * Called after the context has been refreshed.
 	 *
 	 * @param context the application context
-	 * @param args    the application arguments
+	 * @param args the application arguments
 	 */
-	protected void afterRefresh(ConfigurableApplicationContext context, ApplicationArguments args)
-	{
+	protected void afterRefresh(ConfigurableApplicationContext context, ApplicationArguments args) {
 	}
 
-	private void callRunners(ApplicationContext context, ApplicationArguments args)
-	{
+	private void callRunners(ApplicationContext context, ApplicationArguments args) {
 		List<Object> runners = new ArrayList<>();
 		runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
 		runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
 		AnnotationAwareOrderComparator.sort(runners);
-		for (Object runner : new LinkedHashSet<>(runners))
-		{
-			if (runner instanceof ApplicationRunner)
-			{
+		for (Object runner : new LinkedHashSet<>(runners)) {
+			if (runner instanceof ApplicationRunner) {
 				callRunner((ApplicationRunner) runner, args);
 			}
-			if (runner instanceof CommandLineRunner)
-			{
+			if (runner instanceof CommandLineRunner) {
 				callRunner((CommandLineRunner) runner, args);
 			}
 		}
 	}
 
-	private void callRunner(ApplicationRunner runner, ApplicationArguments args)
-	{
-		try
-		{
+	private void callRunner(ApplicationRunner runner, ApplicationArguments args) {
+		try {
 			(runner).run(args);
-		} catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to execute ApplicationRunner", ex);
 		}
 	}
 
-	private void callRunner(CommandLineRunner runner, ApplicationArguments args)
-	{
-		try
-		{
+	private void callRunner(CommandLineRunner runner, ApplicationArguments args) {
+		try {
 			(runner).run(args.getSourceArgs());
-		} catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to execute CommandLineRunner", ex);
 		}
 	}
 
 	private void handleRunFailure(ConfigurableApplicationContext context, Throwable exception,
-								  Collection<SpringBootExceptionReporter> exceptionReporters, SpringApplicationRunListeners listeners)
-	{
-		try
-		{
-			try
-			{
+			Collection<SpringBootExceptionReporter> exceptionReporters, SpringApplicationRunListeners listeners) {
+		try {
+			try {
 				handleExitCode(context, exception);
-				if (listeners != null)
-				{
+				if (listeners != null) {
 					listeners.failed(context, exception);
 				}
-			} finally
-			{
+			} finally {
 				reportFailure(exceptionReporters, exception);
-				if (context != null)
-				{
+				if (context != null) {
 					context.close();
 				}
 			}
-		} catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			logger.warn("Unable to close ApplicationContext", ex);
 		}
 		ReflectionUtils.rethrowRuntimeException(exception);
 	}
 
-	private void reportFailure(Collection<SpringBootExceptionReporter> exceptionReporters, Throwable failure)
-	{
-		try
-		{
-			for (SpringBootExceptionReporter reporter : exceptionReporters)
-			{
-				if (reporter.reportException(failure))
-				{
+	private void reportFailure(Collection<SpringBootExceptionReporter> exceptionReporters, Throwable failure) {
+		try {
+			for (SpringBootExceptionReporter reporter : exceptionReporters) {
+				if (reporter.reportException(failure)) {
 					registerLoggedException(failure);
 					return;
 				}
 			}
-		} catch (Throwable ex)
-		{
+		} catch (Throwable ex) {
 			// Continue with normal handling of the original failure
 		}
-		if (logger.isErrorEnabled())
-		{
+		if (logger.isErrorEnabled()) {
 			logger.error("Application run failed", failure);
 			registerLoggedException(failure);
 		}
@@ -990,46 +883,36 @@ public class SpringApplication
 	 *
 	 * @param exception the exception that was logged
 	 */
-	protected void registerLoggedException(Throwable exception)
-	{
+	protected void registerLoggedException(Throwable exception) {
 		SpringBootExceptionHandler handler = getSpringBootExceptionHandler();
-		if (handler != null)
-		{
+		if (handler != null) {
 			handler.registerLoggedException(exception);
 		}
 	}
 
-	private void handleExitCode(ConfigurableApplicationContext context, Throwable exception)
-	{
+	private void handleExitCode(ConfigurableApplicationContext context, Throwable exception) {
 		int exitCode = getExitCodeFromException(context, exception);
-		if (exitCode != 0)
-		{
-			if (context != null)
-			{
+		if (exitCode != 0) {
+			if (context != null) {
 				context.publishEvent(new ExitCodeEvent(context, exitCode));
 			}
 			SpringBootExceptionHandler handler = getSpringBootExceptionHandler();
-			if (handler != null)
-			{
+			if (handler != null) {
 				handler.registerExitCode(exitCode);
 			}
 		}
 	}
 
-	private int getExitCodeFromException(ConfigurableApplicationContext context, Throwable exception)
-	{
+	private int getExitCodeFromException(ConfigurableApplicationContext context, Throwable exception) {
 		int exitCode = getExitCodeFromMappedException(context, exception);
-		if (exitCode == 0)
-		{
+		if (exitCode == 0) {
 			exitCode = getExitCodeFromExitCodeGeneratorException(exception);
 		}
 		return exitCode;
 	}
 
-	private int getExitCodeFromMappedException(ConfigurableApplicationContext context, Throwable exception)
-	{
-		if (context == null || !context.isActive())
-		{
+	private int getExitCodeFromMappedException(ConfigurableApplicationContext context, Throwable exception) {
+		if (context == null || !context.isActive()) {
 			return 0;
 		}
 		ExitCodeGenerators generators = new ExitCodeGenerators();
@@ -1038,30 +921,24 @@ public class SpringApplication
 		return generators.getExitCode();
 	}
 
-	private int getExitCodeFromExitCodeGeneratorException(Throwable exception)
-	{
-		if (exception == null)
-		{
+	private int getExitCodeFromExitCodeGeneratorException(Throwable exception) {
+		if (exception == null) {
 			return 0;
 		}
-		if (exception instanceof ExitCodeGenerator)
-		{
+		if (exception instanceof ExitCodeGenerator) {
 			return ((ExitCodeGenerator) exception).getExitCode();
 		}
 		return getExitCodeFromExitCodeGeneratorException(exception.getCause());
 	}
 
-	SpringBootExceptionHandler getSpringBootExceptionHandler()
-	{
-		if (isMainThread(Thread.currentThread()))
-		{
+	SpringBootExceptionHandler getSpringBootExceptionHandler() {
+		if (isMainThread(Thread.currentThread())) {
 			return SpringBootExceptionHandler.forCurrentThread();
 		}
 		return null;
 	}
 
-	private boolean isMainThread(Thread currentThread)
-	{
+	private boolean isMainThread(Thread currentThread) {
 		return ("main".equals(currentThread.getName()) || "restartedMain".equals(currentThread.getName()))
 				&& "main".equals(currentThread.getThreadGroup().getName());
 	}
@@ -1071,8 +948,7 @@ public class SpringApplication
 	 *
 	 * @return the main application class or {@code null}
 	 */
-	public Class<?> getMainApplicationClass()
-	{
+	public Class<?> getMainApplicationClass() {
 		return this.mainApplicationClass;
 	}
 
@@ -1083,8 +959,7 @@ public class SpringApplication
 	 *
 	 * @param mainApplicationClass the mainApplicationClass to set or {@code null}
 	 */
-	public void setMainApplicationClass(Class<?> mainApplicationClass)
-	{
+	public void setMainApplicationClass(Class<?> mainApplicationClass) {
 		this.mainApplicationClass = mainApplicationClass;
 	}
 
@@ -1094,8 +969,7 @@ public class SpringApplication
 	 * @return the type of web application
 	 * @since 2.0.0
 	 */
-	public WebApplicationType getWebApplicationType()
-	{
+	public WebApplicationType getWebApplicationType() {
 		return this.webApplicationType;
 	}
 
@@ -1106,8 +980,7 @@ public class SpringApplication
 	 * @param webApplicationType the web application type
 	 * @since 2.0.0
 	 */
-	public void setWebApplicationType(WebApplicationType webApplicationType)
-	{
+	public void setWebApplicationType(WebApplicationType webApplicationType) {
 		Assert.notNull(webApplicationType, "WebApplicationType must not be null");
 		this.webApplicationType = webApplicationType;
 	}
@@ -1120,8 +993,7 @@ public class SpringApplication
 	 * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding(boolean)
 	 * @since 2.1.0
 	 */
-	public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding)
-	{
+	public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding) {
 		this.allowBeanDefinitionOverriding = allowBeanDefinitionOverriding;
 	}
 
@@ -1132,8 +1004,7 @@ public class SpringApplication
 	 * @see BeanDefinition#setLazyInit(boolean)
 	 * @since 2.2
 	 */
-	public void setLazyInitialization(boolean lazyInitialization)
-	{
+	public void setLazyInitialization(boolean lazyInitialization) {
 		this.lazyInitialization = lazyInitialization;
 	}
 
@@ -1143,8 +1014,7 @@ public class SpringApplication
 	 *
 	 * @param headless if the application is headless
 	 */
-	public void setHeadless(boolean headless)
-	{
+	public void setHeadless(boolean headless) {
 		this.headless = headless;
 	}
 
@@ -1155,8 +1025,7 @@ public class SpringApplication
 	 *
 	 * @param registerShutdownHook if the shutdown hook should be registered
 	 */
-	public void setRegisterShutdownHook(boolean registerShutdownHook)
-	{
+	public void setRegisterShutdownHook(boolean registerShutdownHook) {
 		this.registerShutdownHook = registerShutdownHook;
 	}
 
@@ -1166,8 +1035,7 @@ public class SpringApplication
 	 *
 	 * @param banner the Banner instance to use
 	 */
-	public void setBanner(Banner banner)
-	{
+	public void setBanner(Banner banner) {
 		this.banner = banner;
 	}
 
@@ -1177,8 +1045,7 @@ public class SpringApplication
 	 *
 	 * @param bannerMode the mode used to display the banner
 	 */
-	public void setBannerMode(Banner.Mode bannerMode)
-	{
+	public void setBannerMode(Banner.Mode bannerMode) {
 		this.bannerMode = bannerMode;
 	}
 
@@ -1188,8 +1055,7 @@ public class SpringApplication
 	 *
 	 * @param logStartupInfo if startup info should be logged.
 	 */
-	public void setLogStartupInfo(boolean logStartupInfo)
-	{
+	public void setLogStartupInfo(boolean logStartupInfo) {
 		this.logStartupInfo = logStartupInfo;
 	}
 
@@ -1199,8 +1065,7 @@ public class SpringApplication
 	 *
 	 * @param addCommandLineProperties if command line arguments should be exposed
 	 */
-	public void setAddCommandLineProperties(boolean addCommandLineProperties)
-	{
+	public void setAddCommandLineProperties(boolean addCommandLineProperties) {
 		this.addCommandLineProperties = addCommandLineProperties;
 	}
 
@@ -1211,8 +1076,7 @@ public class SpringApplication
 	 * @param addConversionService if the application conversion service should be added
 	 * @since 2.1.0
 	 */
-	public void setAddConversionService(boolean addConversionService)
-	{
+	public void setAddConversionService(boolean addConversionService) {
 		this.addConversionService = addConversionService;
 	}
 
@@ -1222,8 +1086,7 @@ public class SpringApplication
 	 *
 	 * @param defaultProperties the additional properties to set
 	 */
-	public void setDefaultProperties(Map<String, Object> defaultProperties)
-	{
+	public void setDefaultProperties(Map<String, Object> defaultProperties) {
 		this.defaultProperties = defaultProperties;
 	}
 
@@ -1232,11 +1095,9 @@ public class SpringApplication
 	 *
 	 * @param defaultProperties some {@link Properties}
 	 */
-	public void setDefaultProperties(Properties defaultProperties)
-	{
+	public void setDefaultProperties(Properties defaultProperties) {
 		this.defaultProperties = new HashMap<>();
-		for (Object key : Collections.list(defaultProperties.propertyNames()))
-		{
+		for (Object key : Collections.list(defaultProperties.propertyNames())) {
 			this.defaultProperties.put((String) key, defaultProperties.get(key));
 		}
 	}
@@ -1247,8 +1108,7 @@ public class SpringApplication
 	 *
 	 * @param profiles the additional profiles to set
 	 */
-	public void setAdditionalProfiles(String... profiles)
-	{
+	public void setAdditionalProfiles(String... profiles) {
 		this.additionalProfiles = new LinkedHashSet<>(Arrays.asList(profiles));
 	}
 
@@ -1257,8 +1117,7 @@ public class SpringApplication
 	 *
 	 * @param beanNameGenerator the bean name generator
 	 */
-	public void setBeanNameGenerator(BeanNameGenerator beanNameGenerator)
-	{
+	public void setBeanNameGenerator(BeanNameGenerator beanNameGenerator) {
 		this.beanNameGenerator = beanNameGenerator;
 	}
 
@@ -1268,8 +1127,7 @@ public class SpringApplication
 	 *
 	 * @param environment the environment
 	 */
-	public void setEnvironment(ConfigurableEnvironment environment)
-	{
+	public void setEnvironment(ConfigurableEnvironment environment) {
 		this.isCustomEnvironment = true;
 		this.environment = environment;
 	}
@@ -1288,8 +1146,7 @@ public class SpringApplication
 	 * @see #setSources(Set)
 	 * @see #getAllSources()
 	 */
-	public void addPrimarySources(Collection<Class<?>> additionalPrimarySources)
-	{
+	public void addPrimarySources(Collection<Class<?>> additionalPrimarySources) {
 		this.primarySources.addAll(additionalPrimarySources);
 	}
 
@@ -1304,8 +1161,7 @@ public class SpringApplication
 	 * @see #SpringApplication(Class...)
 	 * @see #getAllSources()
 	 */
-	public Set<String> getSources()
-	{
+	public Set<String> getSources() {
 		return this.sources;
 	}
 
@@ -1320,8 +1176,7 @@ public class SpringApplication
 	 * @see #SpringApplication(Class...)
 	 * @see #getAllSources()
 	 */
-	public void setSources(Set<String> sources)
-	{
+	public void setSources(Set<String> sources) {
 		Assert.notNull(sources, "Sources must not be null");
 		this.sources = new LinkedHashSet<>(sources);
 	}
@@ -1334,15 +1189,12 @@ public class SpringApplication
 	 *
 	 * @return an immutable set of all sources
 	 */
-	public Set<Object> getAllSources()
-	{
+	public Set<Object> getAllSources() {
 		Set<Object> allSources = new LinkedHashSet<>();
-		if (!CollectionUtils.isEmpty(this.primarySources))
-		{
+		if (!CollectionUtils.isEmpty(this.primarySources)) {
 			allSources.addAll(this.primarySources);
 		}
-		if (!CollectionUtils.isEmpty(this.sources))
-		{
+		if (!CollectionUtils.isEmpty(this.sources)) {
 			allSources.addAll(this.sources);
 		}
 		return Collections.unmodifiableSet(allSources);
@@ -1353,8 +1205,7 @@ public class SpringApplication
 	 *
 	 * @param resourceLoader the resource loader
 	 */
-	public void setResourceLoader(ResourceLoader resourceLoader)
-	{
+	public void setResourceLoader(ResourceLoader resourceLoader) {
 		Assert.notNull(resourceLoader, "ResourceLoader must not be null");
 		this.resourceLoader = resourceLoader;
 	}
@@ -1367,8 +1218,7 @@ public class SpringApplication
 	 *
 	 * @param applicationContextClass the context class to set
 	 */
-	public void setApplicationContextClass(Class<? extends ConfigurableApplicationContext> applicationContextClass)
-	{
+	public void setApplicationContextClass(Class<? extends ConfigurableApplicationContext> applicationContextClass) {
 		this.applicationContextClass = applicationContextClass;
 		this.webApplicationType = WebApplicationType.deduceFromApplicationContext(applicationContextClass);
 	}
@@ -1379,8 +1229,7 @@ public class SpringApplication
 	 *
 	 * @param initializers the initializers to set
 	 */
-	public void setInitializers(Collection<? extends ApplicationContextInitializer<?>> initializers)
-	{
+	public void setInitializers(Collection<? extends ApplicationContextInitializer<?>> initializers) {
 		this.initializers = new ArrayList<>(initializers);
 	}
 
@@ -1390,8 +1239,7 @@ public class SpringApplication
 	 *
 	 * @param initializers the initializers to add
 	 */
-	public void addInitializers(ApplicationContextInitializer<?>... initializers)
-	{
+	public void addInitializers(ApplicationContextInitializer<?>... initializers) {
 		this.initializers.addAll(Arrays.asList(initializers));
 	}
 
@@ -1401,8 +1249,7 @@ public class SpringApplication
 	 *
 	 * @return the initializers
 	 */
-	public Set<ApplicationContextInitializer<?>> getInitializers()
-	{
+	public Set<ApplicationContextInitializer<?>> getInitializers() {
 		return asUnmodifiableOrderedSet(this.initializers);
 	}
 
@@ -1412,8 +1259,7 @@ public class SpringApplication
 	 *
 	 * @param listeners the listeners to set
 	 */
-	public void setListeners(Collection<? extends ApplicationListener<?>> listeners)
-	{
+	public void setListeners(Collection<? extends ApplicationListener<?>> listeners) {
 		this.listeners = new ArrayList<>(listeners);
 	}
 
@@ -1423,8 +1269,7 @@ public class SpringApplication
 	 *
 	 * @param listeners the listeners to add
 	 */
-	public void addListeners(ApplicationListener<?>... listeners)
-	{
+	public void addListeners(ApplicationListener<?>... listeners) {
 		this.listeners.addAll(Arrays.asList(listeners));
 	}
 
@@ -1435,8 +1280,7 @@ public class SpringApplication
 	 *
 	 * @return the listeners
 	 */
-	public Set<ApplicationListener<?>> getListeners()
-	{
+	public Set<ApplicationListener<?>> getListeners() {
 		return asUnmodifiableOrderedSet(this.listeners);
 	}
 
@@ -1445,11 +1289,10 @@ public class SpringApplication
 	 * specified source using default settings.
 	 *
 	 * @param primarySource the primary source to load
-	 * @param args          the application arguments (usually passed from a Java main method)
+	 * @param args the application arguments (usually passed from a Java main method)
 	 * @return the running {@link ApplicationContext}
 	 */
-	public static ConfigurableApplicationContext run(Class<?> primarySource, String... args)
-	{
+	public static ConfigurableApplicationContext run(Class<?> primarySource, String... args) {
 		return run(new Class<?>[]{primarySource}, args);
 	}
 
@@ -1458,11 +1301,10 @@ public class SpringApplication
 	 * specified sources using default settings and user supplied arguments.
 	 *
 	 * @param primarySources the primary sources to load
-	 * @param args           the application arguments (usually passed from a Java main method)
+	 * @param args the application arguments (usually passed from a Java main method)
 	 * @return the running {@link ApplicationContext}
 	 */
-	public static ConfigurableApplicationContext run(Class<?>[] primarySources, String[] args)
-	{
+	public static ConfigurableApplicationContext run(Class<?>[] primarySources, String[] args) {
 		return new SpringApplication(primarySources).run(args);
 	}
 
@@ -1479,8 +1321,7 @@ public class SpringApplication
 	 * @see SpringApplication#run(Class[], String[])
 	 * @see SpringApplication#run(Class, String...)
 	 */
-	public static void main(String[] args) throws Exception
-	{
+	public static void main(String[] args) throws Exception {
 		SpringApplication.run(new Class<?>[0], args);
 	}
 
@@ -1492,50 +1333,41 @@ public class SpringApplication
 	 * {@link ExitCodeGenerator}. In the case of multiple exit codes the highest value
 	 * will be used (or if all values are negative, the lowest value will be used)
 	 *
-	 * @param context            the context to close if possible
+	 * @param context the context to close if possible
 	 * @param exitCodeGenerators exist code generators
 	 * @return the outcome (0 if successful)
 	 */
-	public static int exit(ApplicationContext context, ExitCodeGenerator... exitCodeGenerators)
-	{
+	public static int exit(ApplicationContext context, ExitCodeGenerator... exitCodeGenerators) {
 		Assert.notNull(context, "Context must not be null");
 		int exitCode = 0;
-		try
-		{
-			try
-			{
+		try {
+			try {
 				ExitCodeGenerators generators = new ExitCodeGenerators();
 				Collection<ExitCodeGenerator> beans = context.getBeansOfType(ExitCodeGenerator.class).values();
 				generators.addAll(exitCodeGenerators);
 				generators.addAll(beans);
 				exitCode = generators.getExitCode();
-				if (exitCode != 0)
-				{
+				if (exitCode != 0) {
 					context.publishEvent(new ExitCodeEvent(context, exitCode));
 				}
-			} finally
-			{
+			} finally {
 				close(context);
 			}
-		} catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			ex.printStackTrace();
 			exitCode = (exitCode != 0) ? exitCode : 1;
 		}
 		return exitCode;
 	}
 
-	private static void close(ApplicationContext context)
-	{
-		if (context instanceof ConfigurableApplicationContext)
-		{
+	private static void close(ApplicationContext context) {
+		if (context instanceof ConfigurableApplicationContext) {
 			ConfigurableApplicationContext closable = (ConfigurableApplicationContext) context;
 			closable.close();
 		}
 	}
 
-	private static <E> Set<E> asUnmodifiableOrderedSet(Collection<E> elements)
-	{
+	private static <E> Set<E> asUnmodifiableOrderedSet(Collection<E> elements) {
 		List<E> list = new ArrayList<>(elements);
 		list.sort(AnnotationAwareOrderComparator.INSTANCE);
 		return new LinkedHashSet<>(list);

@@ -24,6 +24,13 @@ import io.netty.util.ReferenceCounted;
 
 /**
  * Common logic for {@link ReferenceCounted} implementations
+ *
+ * 具体引用计数怎么实现的，主要是这个类。但是他并不是用普通的那种引用一次计数器加1，释放一次减1，而是用了奇数和偶数，
+ * 如果还存在引用那么引用数是偶数，否则是奇数。同时引用一次会加2，释放一次也减2，获取真实的计数是引用计数无符号右移1位，
+ * 看起来好像很奇怪，不过基本都是位操作和直接比较操作性能应该会提高点。比如我们初始的时候真实引用计数=1，但是内部引用计数=2。
+ * 如果有一次释放就内部引用计数-2，两次就内部引用计数-4，当然引用的时候也一样，你会发现只要有引用，内部引用计数值就是偶数。
+ * 我们举个例子，我引用了3次，内部引用计数=6，获取真实引用计数刚好6>>>1=3,如果释放了3次，前2次会将内部引用计数=2，
+ * 但是最后一次如果发现内部引用计数=2的话，就会设置成1，这样内部引用计数刚好是奇数，真实引用计数刚好是1>>>1=0,就可以释放内存了。
  */
 public abstract class ReferenceCountUpdater<T extends ReferenceCounted> {
     /*
@@ -59,12 +66,19 @@ public abstract class ReferenceCountUpdater<T extends ReferenceCounted> {
         return 2;
     }
 
+    /**
+     * 获取真实的计数，是引用计数>>>1,同时前面会判断引用计数是否是偶数，偶数才有引用，奇数就直接返回0了，
+     * 这里开始并不是直接用&判断奇偶，而是直接用是否等于，这个比位操作更加快，可见netty在这提高性能方面真的做到了细节中的细节了，
+     * 因为大部分真实的计数可能就是1或者2，所以前面两个只要直接判断相等即可
+     */
     private static int realRefCnt(int rawCnt) {
         return rawCnt != 2 && rawCnt != 4 && (rawCnt & 1) != 0 ? 0 : rawCnt >>> 1;
     }
 
     /**
      * Like {@link #realRefCnt(int)} but throws if refCnt == 0
+     *
+     * 这个主要是在释放的时候内部用的，如果真实计数已经是0了，再释放就会报错，避免重复释放
      */
     private static int toLiveRealRefCnt(int rawCnt, int decrement) {
         if (rawCnt == 2 || rawCnt == 4 || (rawCnt & 1) == 0) {
@@ -80,6 +94,9 @@ public abstract class ReferenceCountUpdater<T extends ReferenceCounted> {
         return offset != -1 ? PlatformDependent.getInt(instance, offset) : updater().get(instance);
     }
 
+    /**
+     * 获取真实计数，但是不会抛异常。
+     */
     public final int refCnt(T instance) {
         return realRefCnt(updater().get(instance));
     }

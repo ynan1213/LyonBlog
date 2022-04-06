@@ -65,8 +65,8 @@ public abstract class AbstractByteBuf extends ByteBuf {
         }
     }
 
-    static final ResourceLeakDetector<ByteBuf> leakDetector =
-            ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
+    // 内存泄露检测器
+    static final ResourceLeakDetector<ByteBuf> leakDetector = ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
 
     int readerIndex;
     int writerIndex;
@@ -299,7 +299,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         // Normalize the target capacity to the power of 2.
         final int fastWritable = maxFastWritableBytes();
         int newCapacity = fastWritable >= minWritableBytes ? writerIndex + fastWritable
-                : alloc().calculateNewCapacity(targetCapacity, maxCapacity);
+            : alloc().calculateNewCapacity(targetCapacity, maxCapacity);
 
         // Adjust to the new capacity.
         capacity(newCapacity);

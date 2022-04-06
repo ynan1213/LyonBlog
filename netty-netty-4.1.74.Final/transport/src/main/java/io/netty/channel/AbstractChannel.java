@@ -863,8 +863,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     // need to fail the future right away. If it is not null the handling of the rest
                     // will be done in flush0()
                     // See https://github.com/netty/netty/issues/2362
-                    safeSetFailure(promise,
-                            newClosedChannelException(initialCloseCause, "write(Object, ChannelPromise)"));
+                    safeSetFailure(promise, newClosedChannelException(initialCloseCause, "write(Object, ChannelPromise)"));
                 }
                 return;
             }
@@ -884,7 +883,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 }
                 return;
             }
-
+            /**
+             *  addMessage方法主要就是将请求写出的数据封装为Entry对象，然后加入到tailEntry和unflushedEntry中。
+             *  然后调用『incrementPendingOutboundBytes(entry.pendingSize, false)对totalPendingSize属性以及 unwritable 字段做调整。
+             */
             outboundBuffer.addMessage(msg, size, promise);
         }
 
@@ -896,7 +898,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             if (outboundBuffer == null) {
                 return;
             }
-
+            // 内部就是将 unflushedEntry 链表的内容迁移到 flushedEntry 链表，并清空 flushedEntry
             outboundBuffer.addFlush();
             flush0();
         }

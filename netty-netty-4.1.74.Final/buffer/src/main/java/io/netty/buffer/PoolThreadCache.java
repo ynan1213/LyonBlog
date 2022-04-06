@@ -71,12 +71,8 @@ final class PoolThreadCache {
         this.heapArena = heapArena;
         this.directArena = directArena;
         if (directArena != null) {
-            smallSubPageDirectCaches = createSubPageCaches(
-                    smallCacheSize, directArena.numSmallSubpagePools);
-
-            normalDirectCaches = createNormalCaches(
-                    normalCacheSize, maxCachedBufferCapacity, directArena);
-
+            smallSubPageDirectCaches = createSubPageCaches(smallCacheSize, directArena.numSmallSubpagePools);
+            normalDirectCaches = createNormalCaches(normalCacheSize, maxCachedBufferCapacity, directArena);
             directArena.numThreadCaches.getAndIncrement();
         } else {
             // No directArea is configured so just null out all caches
@@ -85,12 +81,8 @@ final class PoolThreadCache {
         }
         if (heapArena != null) {
             // Create the caches for the heap allocations
-            smallSubPageHeapCaches = createSubPageCaches(
-                    smallCacheSize, heapArena.numSmallSubpagePools);
-
-            normalHeapCaches = createNormalCaches(
-                    normalCacheSize, maxCachedBufferCapacity, heapArena);
-
+            smallSubPageHeapCaches = createSubPageCaches(smallCacheSize, heapArena.numSmallSubpagePools);
+            normalHeapCaches = createNormalCaches(normalCacheSize, maxCachedBufferCapacity, heapArena);
             heapArena.numThreadCaches.getAndIncrement();
         } else {
             // No heapArea is configured so just null out all caches
@@ -99,11 +91,9 @@ final class PoolThreadCache {
         }
 
         // Only check if there are caches in use.
-        if ((smallSubPageDirectCaches != null || normalDirectCaches != null
-                || smallSubPageHeapCaches != null || normalHeapCaches != null)
+        if ((smallSubPageDirectCaches != null || normalDirectCaches != null || smallSubPageHeapCaches != null || normalHeapCaches != null)
                 && freeSweepAllocationThreshold < 1) {
-            throw new IllegalArgumentException("freeSweepAllocationThreshold: "
-                    + freeSweepAllocationThreshold + " (expected: > 0)");
+            throw new IllegalArgumentException("freeSweepAllocationThreshold: " + freeSweepAllocationThreshold + " (expected: > 0)");
         }
     }
 
@@ -333,10 +323,10 @@ final class PoolThreadCache {
     }
 
     private abstract static class MemoryRegionCache<T> {
-        private final int size;
-        private final Queue<Entry<T>> queue;
+        private final int size;// 缓存个数
+        private final Queue<Entry<T>> queue;// MpscArrayQueue多生产者单消费者的队列
         private final SizeClass sizeClass;
-        private int allocations;
+        private int allocations;// 已经释放了多少个
 
         MemoryRegionCache(int size, SizeClass sizeClass) {
             this.size = MathUtil.safeFindNextPositivePowerOfTwo(size);

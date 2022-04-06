@@ -463,6 +463,9 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      * Please note that the behavior of this method is different
      * from that of NIO buffer, which sets the {@code limit} to
      * the {@code capacity} of the buffer.
+     *
+     * 效果等同于setIndex(0, 0)
+     * 并不是清除数据，只是重置读写索引到0，可写区域又变大了
      */
     public abstract ByteBuf clear();
 
@@ -509,6 +512,8 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      * to {@code 0} and {@code oldWriterIndex - oldReaderIndex} respectively.
      * <p>
      * Please refer to the class documentation for more detailed explanation.
+     *
+     * 把已读的区域数据给丢弃掉，其实就是把这部分区域给回收了，把读写索引都往前移，可写区域就大了
      */
     public abstract ByteBuf discardReadBytes();
 

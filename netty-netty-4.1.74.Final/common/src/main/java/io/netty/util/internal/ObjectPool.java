@@ -62,6 +62,8 @@ public abstract class ObjectPool<T> {
     /**
      * Creates a new {@link ObjectPool} which will use the given {@link ObjectCreator} to create the {@link Object}
      * that should be pooled.
+     *
+     * 这个才是提供给我们使用的方法，只需要传入一个对象创建器即可。
      */
     public static <T> ObjectPool<T> newPool(final ObjectCreator<T> creator) {
         return new RecyclerObjectPool<T>(ObjectUtil.checkNotNull(creator, "creator"));

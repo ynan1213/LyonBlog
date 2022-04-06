@@ -176,8 +176,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
         }
     }
 
-    public static final PooledByteBufAllocator DEFAULT =
-            new PooledByteBufAllocator(PlatformDependent.directBufferPreferred());
+    public static final PooledByteBufAllocator DEFAULT = new PooledByteBufAllocator(PlatformDependent.directBufferPreferred());
 
     private final PoolArena<byte[]>[] heapArenas;
     private final PoolArena<ByteBuffer>[] directArenas;
@@ -210,7 +209,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
     @Deprecated
     public PooledByteBufAllocator(boolean preferDirect, int nHeapArena, int nDirectArena, int pageSize, int maxOrder) {
         this(preferDirect, nHeapArena, nDirectArena, pageSize, maxOrder,
-             0, DEFAULT_SMALL_CACHE_SIZE, DEFAULT_NORMAL_CACHE_SIZE);
+            0, DEFAULT_SMALL_CACHE_SIZE, DEFAULT_NORMAL_CACHE_SIZE);
     }
 
     /**
@@ -233,9 +232,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
                                   int nDirectArena, int pageSize, int maxOrder, int tinyCacheSize,
                                   int smallCacheSize, int normalCacheSize,
                                   boolean useCacheForAllThreads) {
-        this(preferDirect, nHeapArena, nDirectArena, pageSize, maxOrder,
-             smallCacheSize, normalCacheSize,
-             useCacheForAllThreads);
+        this(preferDirect, nHeapArena, nDirectArena, pageSize, maxOrder, smallCacheSize, normalCacheSize, useCacheForAllThreads);
     }
 
     public PooledByteBufAllocator(boolean preferDirect, int nHeapArena,
@@ -243,8 +240,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
                                   int smallCacheSize, int normalCacheSize,
                                   boolean useCacheForAllThreads) {
         this(preferDirect, nHeapArena, nDirectArena, pageSize, maxOrder,
-             smallCacheSize, normalCacheSize,
-             useCacheForAllThreads, DEFAULT_DIRECT_MEMORY_CACHE_ALIGNMENT);
+             smallCacheSize, normalCacheSize, useCacheForAllThreads, DEFAULT_DIRECT_MEMORY_CACHE_ALIGNMENT);
     }
 
     /**
@@ -256,14 +252,14 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
                                   int tinyCacheSize, int smallCacheSize, int normalCacheSize,
                                   boolean useCacheForAllThreads, int directMemoryCacheAlignment) {
         this(preferDirect, nHeapArena, nDirectArena, pageSize, maxOrder,
-             smallCacheSize, normalCacheSize,
-             useCacheForAllThreads, directMemoryCacheAlignment);
+             smallCacheSize, normalCacheSize, useCacheForAllThreads, directMemoryCacheAlignment);
     }
 
     public PooledByteBufAllocator(boolean preferDirect, int nHeapArena, int nDirectArena, int pageSize, int maxOrder,
                                   int smallCacheSize, int normalCacheSize,
                                   boolean useCacheForAllThreads, int directMemoryCacheAlignment) {
         super(preferDirect);
+        // FastThreadLocal 类型
         threadCache = new PoolThreadLocalCache(useCacheForAllThreads);
         this.smallCacheSize = smallCacheSize;
         this.normalCacheSize = normalCacheSize;
@@ -289,18 +285,17 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
         }
 
         if ((directMemoryCacheAlignment & -directMemoryCacheAlignment) != directMemoryCacheAlignment) {
-            throw new IllegalArgumentException("directMemoryCacheAlignment: "
-                    + directMemoryCacheAlignment + " (expected: power of two)");
+            throw new IllegalArgumentException("directMemoryCacheAlignment: " + directMemoryCacheAlignment + " (expected: power of two)");
         }
 
         int pageShifts = validateAndCalculatePageShifts(pageSize, directMemoryCacheAlignment);
 
         if (nHeapArena > 0) {
+            // nDirectArena 默认是cpu核心数的2倍
             heapArenas = newArenaArray(nHeapArena);
             List<PoolArenaMetric> metrics = new ArrayList<PoolArenaMetric>(heapArenas.length);
             for (int i = 0; i < heapArenas.length; i ++) {
-                PoolArena.HeapArena arena = new PoolArena.HeapArena(this,
-                        pageSize, pageShifts, chunkSize);
+                PoolArena.HeapArena arena = new PoolArena.HeapArena(this, pageSize, pageShifts, chunkSize);
                 heapArenas[i] = arena;
                 metrics.add(arena);
             }
@@ -499,6 +494,8 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
     }
 
     final class PoolThreadLocalCache extends FastThreadLocal<PoolThreadCache> {
+
+        // 是否是所有线程都可以用缓存，还是只能FastThreadLocalThread用缓存
         private final boolean useCacheForAllThreads;
 
         PoolThreadLocalCache(boolean useCacheForAllThreads) {
@@ -507,6 +504,8 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
 
         @Override
         protected synchronized PoolThreadCache initialValue() {
+            // 获取线程使用数量最少的PoolArena，这样才能实现线程对内存的负载均衡，否则一个内存被多个线程用，
+            // 其他的内存没有线程用，那使用效率就低了，还会引起严重的线程竞争问题
             final PoolArena<byte[]> heapArena = leastUsedArena(heapArenas);
             final PoolArena<ByteBuffer> directArena = leastUsedArena(directArenas);
 

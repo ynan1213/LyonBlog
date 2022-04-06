@@ -962,12 +962,6 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
-    public final ChannelPipeline flush() {
-        tail.flush();
-        return this;
-    }
-
-    @Override
     public final ChannelFuture bind(SocketAddress localAddress, ChannelPromise promise) {
         return tail.bind(localAddress, promise);
     }
@@ -1022,6 +1016,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     @Override
     public final ChannelFuture writeAndFlush(Object msg) {
         return tail.writeAndFlush(msg);
+    }
+
+    @Override
+    public final ChannelPipeline flush() {
+        tail.flush();
+        return this;
     }
 
     @Override
@@ -1410,8 +1410,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
+            // Inbound 事件
             ctx.fireChannelReadComplete();
-
+            // Outbound 事件
             readIfIsAutoRead();
         }
 

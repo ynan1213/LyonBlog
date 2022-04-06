@@ -74,8 +74,7 @@ public final class ByteBufUtil {
     static final ByteBufAllocator DEFAULT_ALLOCATOR;
 
     static {
-        String allocType = SystemPropertyUtil.get(
-                "io.netty.allocator.type", PlatformDependent.isAndroid() ? "unpooled" : "pooled");
+        String allocType = SystemPropertyUtil.get("io.netty.allocator.type", PlatformDependent.isAndroid() ? "unpooled" : "pooled");
         allocType = allocType.toLowerCase(Locale.US).trim();
 
         ByteBufAllocator alloc;
@@ -654,6 +653,7 @@ public final class ByteBufUtil {
      * Toggles the endianness of the specified 32-bit integer.
      */
     public static int swapInt(int value) {
+        // 二进制按byte反转
         return Integer.reverseBytes(value);
     }
 

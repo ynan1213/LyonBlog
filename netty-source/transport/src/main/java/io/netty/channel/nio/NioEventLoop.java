@@ -469,7 +469,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     case SelectStrategy.SELECT:
                         /**
                          * --------------------------------------------
-                         * AtomicBoolean.getAndSet(boolean):以原子方式设置为给定值，并返回以前的值
+                         * AtomicBoolean.getAndSet(boolean):以原子方式设置新值，并返回旧值
                          * AtomicBoolean.compareAndSet(boolean A, boolean B):内存值V，旧的预期值A，要修改的新值B,
                          * 当且仅当预期值A和内存值V相同时，将内存值V修改为B，并返回true，否则什么都不做，并返回false
                          * --------------------------------------------

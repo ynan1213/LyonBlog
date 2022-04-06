@@ -3,7 +3,6 @@ package com.epichust.main2.netty;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -30,7 +29,7 @@ public class NettyClient {
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         pipeline.addLast(new MyLoggingHandler("客户端", LogLevel.INFO));
-                        pipeline.addLast(new StringEncoder());
+//                        pipeline.addLast(new StringEncoder());
                     }
                 });
             ChannelFuture connectFuture = bootstrap.connect("127.0.0.1", 6666);
@@ -41,18 +40,18 @@ public class NettyClient {
              */
             connectFuture.sync();
             System.out.println("connectFuture sync 之后");
-            connectFuture.channel().writeAndFlush("你好，中国 ===============").addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    if (future.isSuccess()) {
-                        System.out.println("写出成功");
-                    } else {
-                        System.out.println("写出失败");
-                    }
-                }
-            });
+            //            connectFuture.channel().writeAndFlush("你好，中国 ===============").addListener(new ChannelFutureListener() {
+            //                @Override
+            //                public void operationComplete(ChannelFuture future) throws Exception {
+            //                    if (future.isSuccess()) {
+            //                        System.out.println("写出成功");
+            //                    } else {
+            //                        System.out.println("写出失败");
+            //                    }
+            //                }
+            //            });
 
-            connectFuture.channel().isWritable();
+            //            connectFuture.channel().isWritable();
 
             // await() 和 sync() 功能是一样的，不过如果任务失败，await()它不会抛出执行过程中的异常
             //channelFuture.await();
@@ -67,16 +66,18 @@ public class NettyClient {
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
                 String s = scanner.nextLine();
-                ByteBuf buffer = connectFuture.channel().alloc().buffer(s.length());
+                ByteBuf buffer = connectFuture.channel().alloc().buffer(5);
                 buffer.writeBytes(s.getBytes());
-                ChannelFuture future = connectFuture.channel().writeAndFlush(buffer)
-                    .addListener(new GenericFutureListener<Future<? super Void>>() {
-                        @Override
-                        public void operationComplete(Future<? super Void> future) throws Exception {
-                            System.out.println("写已完成");
-                        }
-                    });
-                connectFuture.sync();
+                connectFuture.channel().write(buffer);
+                connectFuture.channel().write(buffer);
+                connectFuture.channel().flush();
+//                ChannelFuture future = connectFuture.channel().writeAndFlush(buffer)
+//                    .addListener(new GenericFutureListener<Future<? super Void>>() {
+//                        @Override
+//                        public void operationComplete(Future<? super Void> future) throws Exception {
+//                            System.out.println("写已完成");
+//                        }
+//                    });
             }
 
             connectFuture.channel().closeFuture().sync();

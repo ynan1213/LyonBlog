@@ -19,6 +19,13 @@ import io.netty.util.internal.PlatformDependent;
 
 import java.nio.ByteBuffer;
 
+/**
+ * 看名字就知道是没有Cleaner，那么是如何释放内存的呢？
+ * 其实创建内存内部是反射调用 DirectByteBuffer 的私有构造DirectByteBuffer(long addr, int cap) ，这个构造内部不会创建cleaner
+ * 只会记住其地址，释放内存也是不通过cleaner。
+ *
+ * 要比他的父类都要简洁多了，直接申请和释放内存，不需要清除器帮助，性能能提高不少。不过如果你忘记是释放内存的话，那就很尴尬了，不会有清除器为你释放内存了。
+ */
 class UnpooledUnsafeNoCleanerDirectByteBuf extends UnpooledUnsafeDirectByteBuf {
 
     UnpooledUnsafeNoCleanerDirectByteBuf(ByteBufAllocator alloc, int initialCapacity, int maxCapacity) {

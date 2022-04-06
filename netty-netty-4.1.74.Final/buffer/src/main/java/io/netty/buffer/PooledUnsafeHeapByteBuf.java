@@ -42,6 +42,8 @@ final class PooledUnsafeHeapByteBuf extends PooledHeapByteBuf {
 
     @Override
     protected byte _getByte(int index) {
+        // memory 代表 bytebuffer 底层分配内存的首地址
+        // idx(index) 代表当前指针 index 距内存 memory 的偏移地址
         return UnsafeByteBufUtil.getByte(memory, idx(index));
     }
 

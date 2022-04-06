@@ -104,6 +104,9 @@ public abstract class Recycler<T> {
     private final int ratioMask;
     private final int maxDelayedQueuesPerThread;
 
+    /**
+     * 每个线程在 Recycler 内部都独占一个 Stack 对象
+     */
     private final FastThreadLocal<Stack<T>> threadLocal = new FastThreadLocal<Stack<T>>() {
         @Override
         protected Stack<T> initialValue() {
@@ -215,6 +218,9 @@ public abstract class Recycler<T> {
         }
     }
 
+    /**
+     * 如果某个线程回收的对象是其它线程创建的，会放入这里
+     */
     private static final FastThreadLocal<Map<Stack<?>, WeakOrderQueue>> DELAYED_RECYCLED = new FastThreadLocal<Map<Stack<?>, WeakOrderQueue>>() {
         @Override
         protected Map<Stack<?>, WeakOrderQueue> initialValue() {
@@ -264,6 +270,7 @@ public abstract class Recycler<T> {
             WeakOrderQueue queue = new WeakOrderQueue(stack, thread);
             // Done outside of the constructor to ensure WeakOrderQueue.this does not escape the constructor and so
             // may be accessed while its still constructed.
+            // 组成链表
             stack.setHead(queue);
             return queue;
         }
@@ -281,6 +288,10 @@ public abstract class Recycler<T> {
             return reserveSpace(stack.availableSharedCapacity, LINK_CAPACITY) ? WeakOrderQueue.newQueue(stack, thread) : null;
         }
 
+        /**
+         * 参数availableSharedCapacity表示线程1的stack允许外部线程给其缓存多少个对象，之前我们分析过是16384，space默认是16
+         * 方法中通过一个cas操作, 将16384减去16, 表示stack可以给其他线程缓存的对象数为16384-16，而这16个元素，将由线程2缓存
+         */
         private static boolean reserveSpace(AtomicInteger availableSharedCapacity, int space) {
             assert space >= 0;
             for (;;) {
@@ -420,12 +431,20 @@ public abstract class Recycler<T> {
         // still recycling all items.
         final Recycler<T> parent;
         final Thread thread;
+
+        // 表示在线程1中创建的对象, 在其他线程中缓存的最大个数
         final AtomicInteger availableSharedCapacity;
+
+        /**
+         * maxDelayedQueues属性的意思就是我这个线程能回收几个其他创建的对象的线程（注意是线程个数，不是对象）
+         * 假设当前线程是线程1, maxDelayedQueues为2, 那么我线程1回收了线程2创建的对象, 又回收了线程3创建的对象,
+         * 那么不可能回收线程4创建的对象了, 因为maxDelayedQueues = 2, 我只能回收两个线程创建的对象
+         */
         final int maxDelayedQueues;
 
         // maxCapacity表示当前stack的最大容量, 表示stack最多能盛放多少个元素
         private final int maxCapacity;
-        // 用来控制对象回收的频率的, 也就是说每次通过Reclycer回收对象的时候, 不是每次都会进行回收, 而是通过该参数控制回收频率
+        // 用来控制对象回收的频率的, 也就是说每次通过 Reclycer 回收对象的时候, 不是每次都会进行回收, 而是通过该参数控制回收频率
         private final int ratioMask;
         private DefaultHandle<?>[] elements;
         private int size; // 表示当前stack的对象数
@@ -439,7 +458,7 @@ public abstract class Recycler<T> {
             this.thread = thread;
             this.maxCapacity = maxCapacity; // 32768
             availableSharedCapacity = new AtomicInteger(max(maxCapacity / maxSharedCapacityFactor, LINK_CAPACITY));
-            elements = new DefaultHandle[min(INITIAL_CAPACITY, maxCapacity)];
+            elements = new DefaultHandle[min(INITIAL_CAPACITY, maxCapacity)]; // 默认256
             this.ratioMask = ratioMask;// 7
             this.maxDelayedQueues = maxDelayedQueues;// cpu个数 * 2
         }
@@ -467,15 +486,16 @@ public abstract class Recycler<T> {
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
         DefaultHandle<T> pop() {
+            // size表示当前stack的对象数
             int size = this.size;
             if (size == 0) {
-                //如果stack没有存储对象,那么就从WeakOrderQueue中回收对象
+                // 如果stack没有存储对象,那么就从WeakOrderQueue中回收对象
                 if (!scavenge()) {
                     return null;
                 }
                 size = this.size;
             }
-            //获取数组的最后一个元素,stack的结构就是先进后出,后进先出
+            // 获取数组的最后一个元素,stack的结构就是先进后出,后进先出
             size --;
             DefaultHandle ret = elements[size];
             elements[size] = null;
@@ -602,6 +622,7 @@ public abstract class Recycler<T> {
                     return;
                 }
                 // Check if we already reached the maximum number of delayed queues and if we can allocate at all.
+                // 创建一个WeakOrderQueue，该queue会添加到stack的head作为头指针组成的链表中
                 if ((queue = WeakOrderQueue.allocate(this, thread)) == null) {
                     // drop object
                     return;
@@ -616,7 +637,7 @@ public abstract class Recycler<T> {
         }
 
         boolean dropHandle(DefaultHandle<?> handle) {
-            // handle.hasBeenRecycled表示当前对象之前是否没有被回收过，如果是第一次回收, 会进入到if
+            // handle.hasBeenRecycled表示当前对象之前是否有被回收过，如果是第一次回收, 会进入到if
             if (!handle.hasBeenRecycled) {
                 if ((++handleRecycleCount & ratioMask) != 0) {
                     // Drop the object.

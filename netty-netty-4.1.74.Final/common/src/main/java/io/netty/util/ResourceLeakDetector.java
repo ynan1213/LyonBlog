@@ -342,18 +342,15 @@ public class ResourceLeakDetector<T> {
     }
 
     @SuppressWarnings("deprecation")
-    private static final class DefaultResourceLeak<T>
-            extends WeakReference<Object> implements ResourceLeakTracker<T>, ResourceLeak {
+    private static final class DefaultResourceLeak<T> extends WeakReference<Object> implements ResourceLeakTracker<T>, ResourceLeak {
 
         @SuppressWarnings("unchecked") // generics and updaters do not mix.
         private static final AtomicReferenceFieldUpdater<DefaultResourceLeak<?>, TraceRecord> headUpdater =
-                (AtomicReferenceFieldUpdater)
-                        AtomicReferenceFieldUpdater.newUpdater(DefaultResourceLeak.class, TraceRecord.class, "head");
+                (AtomicReferenceFieldUpdater) AtomicReferenceFieldUpdater.newUpdater(DefaultResourceLeak.class, TraceRecord.class, "head");
 
         @SuppressWarnings("unchecked") // generics and updaters do not mix.
         private static final AtomicIntegerFieldUpdater<DefaultResourceLeak<?>> droppedRecordsUpdater =
-                (AtomicIntegerFieldUpdater)
-                        AtomicIntegerFieldUpdater.newUpdater(DefaultResourceLeak.class, "droppedRecords");
+                (AtomicIntegerFieldUpdater) AtomicIntegerFieldUpdater.newUpdater(DefaultResourceLeak.class, "droppedRecords");
 
         @SuppressWarnings("unused")
         private volatile TraceRecord head;

@@ -135,15 +135,13 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
         } else if (sizeIdx < nSizes) {
             tcacheAllocateNormal(cache, buf, reqCapacity, sizeIdx);
         } else {
-            int normCapacity = directMemoryCacheAlignment > 0
-                    ? normalizeSize(reqCapacity) : reqCapacity;
+            int normCapacity = directMemoryCacheAlignment > 0 ? normalizeSize(reqCapacity) : reqCapacity;
             // Huge allocations are never served via the cache so just call allocateHuge
             allocateHuge(buf, normCapacity);
         }
     }
 
-    private void tcacheAllocateSmall(PoolThreadCache cache, PooledByteBuf<T> buf, final int reqCapacity,
-                                     final int sizeIdx) {
+    private void tcacheAllocateSmall(PoolThreadCache cache, PooledByteBuf<T> buf, final int reqCapacity, final int sizeIdx) {
 
         if (cache.allocateSmall(this, buf, reqCapacity, sizeIdx)) {
             // was able to allocate out of the cache so move on
@@ -589,8 +587,7 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
 
         @Override
         protected PooledByteBuf<byte[]> newByteBuf(int maxCapacity) {
-            return HAS_UNSAFE ? PooledUnsafeHeapByteBuf.newUnsafeInstance(maxCapacity)
-                    : PooledHeapByteBuf.newInstance(maxCapacity);
+            return HAS_UNSAFE ? PooledUnsafeHeapByteBuf.newUnsafeInstance(maxCapacity) : PooledHeapByteBuf.newInstance(maxCapacity);
         }
 
         @Override

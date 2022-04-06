@@ -416,7 +416,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                  *
                  *  1. 当channel在这里注册进 selector中返回一个selectionKey, 这个key告诉selector 这个channel是自己的
                  *  2. 当selector轮询到 有channel出现了自己的感兴趣的事件时, 需要从成百上千的channel精确的匹配出 出现Io事件的channel,
-                 *  于是seleor就在这里提前把channel存放入 attachment中, 后来使用
+                 *  于是seletor就在这里提前把channel存放入 attachment中, 后来使用
                  *  最后一个 this 参数, 如果是服务启动时, 他就是NioServerSocketChannel   如果是客户端他就是 NioSocketChannel
                  *  到目前为止, 虽然注册上了,但是它不关心任何事件
                  */

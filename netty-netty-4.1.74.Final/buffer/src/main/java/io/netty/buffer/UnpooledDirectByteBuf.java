@@ -56,10 +56,8 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         checkPositiveOrZero(initialCapacity, "initialCapacity");
         checkPositiveOrZero(maxCapacity, "maxCapacity");
         if (initialCapacity > maxCapacity) {
-            throw new IllegalArgumentException(String.format(
-                    "initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
+            throw new IllegalArgumentException(String.format("initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
         }
-
         this.alloc = alloc;
         setByteBuffer(allocateDirect(initialCapacity), false);
     }
@@ -73,8 +71,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         this(alloc, initialBuffer, maxCapacity, false, true);
     }
 
-    UnpooledDirectByteBuf(ByteBufAllocator alloc, ByteBuffer initialBuffer,
-            int maxCapacity, boolean doFree, boolean slice) {
+    UnpooledDirectByteBuf(ByteBufAllocator alloc, ByteBuffer initialBuffer, int maxCapacity, boolean doFree, boolean slice) {
         super(maxCapacity);
         ObjectUtil.checkNotNull(alloc, "alloc");
         ObjectUtil.checkNotNull(initialBuffer, "initialBuffer");
@@ -99,6 +96,8 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     /**
      * Allocate a new direct {@link ByteBuffer} with the given initialCapacity.
+     *
+     * 基于直接内存的ByteBuffer
      */
     protected ByteBuffer allocateDirect(int initialCapacity) {
         return ByteBuffer.allocateDirect(initialCapacity);
@@ -106,6 +105,8 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     /**
      * Free a direct {@link ByteBuffer}
+     *
+     * 内部是通过反射获取 DirectByteBuffer 对象的 cleaner 对象，然后执行 cleaner 对象的 clean 方法
      */
     protected void freeDirect(ByteBuffer buffer) {
         PlatformDependent.freeDirectBuffer(buffer);

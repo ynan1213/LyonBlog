@@ -93,9 +93,15 @@ public abstract class Recycler<T> {
     private final int maxCapacityPerThread;
     private final int interval;
     private final int chunkSize;
+
+    /**
+     * Recycler 成员变量 threadLocal，每个线程拥有一份 LocalPool
+     */
     private final FastThreadLocal<LocalPool<T>> threadLocal = new FastThreadLocal<LocalPool<T>>() {
         @Override
         protected LocalPool<T> initialValue() {
+            // maxCapacityPerThread：默认 4 * 1024
+            // chunkSize：默认32
             return new LocalPool<T>(maxCapacityPerThread, interval, chunkSize);
         }
 
@@ -262,6 +268,7 @@ public abstract class Recycler<T> {
         @SuppressWarnings("unchecked")
         LocalPool(int maxCapacity, int ratioInterval, int chunkSize) {
             this.ratioInterval = ratioInterval;
+            // 是否使用阻塞队列，默认false
             if (BLOCKING_POOL) {
                 pooledHandles = new BlockingMessageQueue<DefaultHandle<T>>(maxCapacity);
             } else {

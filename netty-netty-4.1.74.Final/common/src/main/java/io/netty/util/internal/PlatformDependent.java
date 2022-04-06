@@ -481,6 +481,7 @@ public final class PlatformDependent {
      * the current platform does not support this operation or the specified buffer is not a direct buffer.
      */
     public static void freeDirectBuffer(ByteBuffer buffer) {
+        // CleanerJava9使用的反射方法比CleanerJava6要少，最后调用的方法也是直接调用的，不是用反射，所以性能要好一点。
         CLEANER.freeDirectBuffer(buffer);
     }
 

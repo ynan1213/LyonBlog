@@ -220,10 +220,13 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
                 return 0;
             }
 
+            // 写到jdk的socket
             final int localFlushedAmount = doWriteBytes(buf);
             if (localFlushedAmount > 0) {
+                // 更新刷新进度
                 in.progress(localFlushedAmount);
                 if (!buf.isReadable()) {
+                    // 移除当前已刷写的节点
                     in.remove();
                 }
                 return 1;
@@ -252,11 +255,14 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
 
     @Override
     protected void doWrite(ChannelOutboundBuffer in) throws Exception {
+        // 默认16
         int writeSpinCount = config().getWriteSpinCount();
         do {
             Object msg = in.current();
             if (msg == null) {
                 // Wrote all messages.
+                // 如果已经写完了，并且发现NioSocketChannel还注册有SelectionKey.OP_WRITE事件，则将SelectionKey.OP_WRITE从感兴趣的事件中移除，
+                // 即，Selector不再监听该NioSocketChannel的可写事件了
                 clearOpWrite();
                 // Directly return here so incompleteWrite(...) is not called.
                 return;
@@ -274,7 +280,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
             if (buf.isDirect()) {
                 return msg;
             }
-
+            // 如果不是堆外内存，则转换成堆外内存，但不一定成功
             return newDirectBuffer(buf);
         }
 

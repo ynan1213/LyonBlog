@@ -76,6 +76,10 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        /**
+                         * NioServerSocketChannel服务端监听的是OP_ACCEPT事件，内部是调用jdk原生的 serverSocketChannel.accept()
+                         * 方法返回的是 jdk原生的SocketChannel，然后封装成netty的NioSocketChannel
+                         */
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -94,15 +98,19 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    // ServerBootstrapAcceptor 的 channelRead 方法中会将 NioSocketChannel 注册到 workGroup中
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();
                 allocHandle.readComplete();
+                /**
+                 * 从Head往后传播 ChannelReadComplete 方法，以及从tail往前传播 read 方法
+                 * 在head的unsafe的read方法内，会注册一次OP_ACCEPT事件并且会将 readPending 置为true
+                 */
                 pipeline.fireChannelReadComplete();
 
                 if (exception != null) {
                     closed = closeOnReadError(exception);
-
                     pipeline.fireExceptionCaught(exception);
                 }
 

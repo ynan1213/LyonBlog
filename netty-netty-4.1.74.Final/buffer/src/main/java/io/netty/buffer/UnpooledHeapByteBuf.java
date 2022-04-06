@@ -38,7 +38,9 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
 public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
     private final ByteBufAllocator alloc;
+    // 内部是字节数组
     byte[] array;
+    // 用ByteBuffer来包装array数组
     private ByteBuffer tmpNioBuf;
 
     /**
@@ -51,8 +53,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         super(maxCapacity);
 
         if (initialCapacity > maxCapacity) {
-            throw new IllegalArgumentException(String.format(
-                    "initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
+            throw new IllegalArgumentException(String.format("initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
         }
 
         this.alloc = checkNotNull(alloc, "alloc");
@@ -124,9 +125,9 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         }
 
         int bytesToCopy;
-        if (newCapacity > oldCapacity) {
+        if (newCapacity > oldCapacity) {// 增加容量
             bytesToCopy = oldCapacity;
-        } else {
+        } else {// 减少容量
             trimIndicesToCapacity(newCapacity);
             bytesToCopy = newCapacity;
         }
@@ -535,6 +536,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         return alloc().heapBuffer(length, maxCapacity()).writeBytes(array, index, length);
     }
 
+    // 简单包装了一下
     private ByteBuffer internalNioBuffer() {
         ByteBuffer tmpNioBuf = this.tmpNioBuf;
         if (tmpNioBuf == null) {

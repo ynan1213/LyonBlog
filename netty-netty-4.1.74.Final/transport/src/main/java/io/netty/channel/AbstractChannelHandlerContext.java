@@ -1051,6 +1051,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             task.promise = promise;
 
             if (ESTIMATE_TASK_SIZE_ON_SUBMIT) {
+                /**
+                 * 为什么要加上 WRITE_TASK_OVERHEAD ？
+                 *  因为要加上 WriteTask 本身的大小，详情见write数据时 Entry 也类似
+                 */
                 task.size = ctx.pipeline.estimatorHandle().size(msg) + WRITE_TASK_OVERHEAD;
                 ctx.pipeline.incrementPendingOutboundBytes(task.size);
             } else {

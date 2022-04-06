@@ -52,13 +52,14 @@ import static java.lang.Math.min;
  * </p>
  */
 public final class ChannelOutboundBuffer {
-    // Assuming a 64-bit JVM:
+    // Assuming a 64-bit JVM:  Entry对象的大小
     //  - 16 bytes object header
     //  - 6 reference fields
     //  - 2 long fields
     //  - 2 int fields
     //  - 1 boolean field
     //  - padding
+    // 由于HotSpot VM的自动内存管理系统要求对象起始地址必须是8字节的整数倍，也就是说对象的大小必须是8字节的整数倍，如果最终字节数不为8的倍数，则padding会补足至8的倍数。
     static final int CHANNEL_OUTBOUND_BUFFER_ENTRY_OVERHEAD =
             SystemPropertyUtil.getInt("io.netty.transport.outboundBufferEntrySizeOverhead", 96);
 
@@ -76,17 +77,24 @@ public final class ChannelOutboundBuffer {
     // Entry(flushedEntry) --> ... Entry(unflushedEntry) --> ... Entry(tailEntry)
     //
     // The Entry that is the first in the linked-list structure that was flushed
+    // 第一个要冲刷的实体
     private Entry flushedEntry;
     // The Entry which is the first unflushed in the linked-list structure
+    // 第一个未冲刷的实体
     private Entry unflushedEntry;
     // The Entry which represents the tail of the buffer
+    // 尾结点实体
     private Entry tailEntry;
     // The number of flushed entries that are not written yet
+    // 要冲刷的数量，但是还没真正冲刷出去，就是出站缓冲区大小
     private int flushed;
 
+    // 可以冲刷的缓冲区个数
     private int nioBufferCount;
+    // 可以写出的总的缓冲区数组数据大小
     private long nioBufferSize;
 
+    // 是否冲刷失败
     private boolean inFail;
 
     private static final AtomicLongFieldUpdater<ChannelOutboundBuffer> TOTAL_PENDING_SIZE_UPDATER =
@@ -146,6 +154,7 @@ public final class ChannelOutboundBuffer {
             }
             do {
                 flushed ++;
+                // 设置 future 无法 cancel
                 if (!entry.promise.setUncancellable()) {
                     // Was cancelled so make sure we free up memory and notify about the freed bytes
                     int pending = entry.cancel();
@@ -590,6 +599,7 @@ public final class ChannelOutboundBuffer {
             final int oldValue = unwritable;
             final int newValue = oldValue & ~1;
             if (UNWRITABLE_UPDATER.compareAndSet(this, oldValue, newValue)) {
+                // 可写的值由非0到0，能写了，则触发事件
                 if (oldValue != 0 && newValue == 0) {
                     fireChannelWritabilityChanged(invokeLater);
                 }
@@ -821,6 +831,23 @@ public final class ChannelOutboundBuffer {
             this.handle = handle;
         }
 
+        /**
+         *     private final Handle<Entry> handle;     // reference field ( 8 bytes)
+         *     Entry next;     // reference field ( 8 bytes)
+         *     Object msg;     // reference field ( 8 bytes)
+         *     ByteBuffer[] bufs;     // reference field ( 8 bytes)
+         *     ByteBuffer buf;     // reference field ( 8 bytes)
+         *     ChannelPromise promise;     // reference field ( 8 bytes)
+         *     long progress;     // long field ( 8 bytes)
+         *     long total;     // long field ( 8 bytes)
+         *     int pendingSize;     // int field ( 4 bytes)
+         *     int count = -1;     // int field ( 4 bytes)
+         *     boolean cancelled;     // boolean field ( 1 bytes)
+         *  我们根据上面的理论来计算下Entry对象占用内存的大小：
+         *  header （16 bytes） + 6 * reference fields（8 bytes）+ 2 * long fields（8 bytes）+ 2 * int fields（4 bytes）+ 1 * boolean field（1 byte）
+         *      =  89  ——> 加上7bytes的padding = 96 bytes
+         *  这就是CHANNEL_OUTBOUND_BUFFER_ENTRY_OVERHEAD默认值 96 的由来
+         */
         static Entry newInstance(Object msg, int size, long total, ChannelPromise promise) {
             Entry entry = RECYCLER.get();
             entry.msg = msg;

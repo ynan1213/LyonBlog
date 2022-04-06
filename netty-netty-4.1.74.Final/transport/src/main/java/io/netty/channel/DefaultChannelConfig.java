@@ -51,9 +51,9 @@ public class DefaultChannelConfig implements ChannelConfig {
 
     private static final AtomicIntegerFieldUpdater<DefaultChannelConfig> AUTOREAD_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(DefaultChannelConfig.class, "autoRead");
+
     private static final AtomicReferenceFieldUpdater<DefaultChannelConfig, WriteBufferWaterMark> WATERMARK_UPDATER =
-            AtomicReferenceFieldUpdater.newUpdater(
-                    DefaultChannelConfig.class, WriteBufferWaterMark.class, "writeBufferWaterMark");
+            AtomicReferenceFieldUpdater.newUpdater(DefaultChannelConfig.class, WriteBufferWaterMark.class, "writeBufferWaterMark");
 
     protected final Channel channel;
 
@@ -91,8 +91,7 @@ public class DefaultChannelConfig implements ChannelConfig {
                 SINGLE_EVENTEXECUTOR_PER_GROUP, MAX_MESSAGES_PER_WRITE);
     }
 
-    protected Map<ChannelOption<?>, Object> getOptions(
-            Map<ChannelOption<?>, Object> result, ChannelOption<?>... options) {
+    protected Map<ChannelOption<?>, Object> getOptions(Map<ChannelOption<?>, Object> result, ChannelOption<?>... options) {
         if (result == null) {
             result = new IdentityHashMap<ChannelOption<?>, Object>();
         }
@@ -231,8 +230,7 @@ public class DefaultChannelConfig implements ChannelConfig {
             MaxMessagesRecvByteBufAllocator allocator = getRecvByteBufAllocator();
             return allocator.maxMessagesPerRead();
         } catch (ClassCastException e) {
-            throw new IllegalStateException("getRecvByteBufAllocator() must return an object of type " +
-                    "MaxMessagesRecvByteBufAllocator", e);
+            throw new IllegalStateException("getRecvByteBufAllocator() must return an object of type MaxMessagesRecvByteBufAllocator", e);
         }
     }
 
@@ -250,8 +248,7 @@ public class DefaultChannelConfig implements ChannelConfig {
             allocator.maxMessagesPerRead(maxMessagesPerRead);
             return this;
         } catch (ClassCastException e) {
-            throw new IllegalStateException("getRecvByteBufAllocator() must return an object of type " +
-                    "MaxMessagesRecvByteBufAllocator", e);
+            throw new IllegalStateException("getRecvByteBufAllocator() must return an object of type MaxMessagesRecvByteBufAllocator", e);
         }
     }
 
@@ -373,10 +370,8 @@ public class DefaultChannelConfig implements ChannelConfig {
         for (;;) {
             WriteBufferWaterMark waterMark = writeBufferWaterMark;
             if (writeBufferHighWaterMark < waterMark.low()) {
-                throw new IllegalArgumentException(
-                        "writeBufferHighWaterMark cannot be less than " +
-                                "writeBufferLowWaterMark (" + waterMark.low() + "): " +
-                                writeBufferHighWaterMark);
+                throw new IllegalArgumentException("writeBufferHighWaterMark cannot be less than writeBufferLowWaterMark ("
+                    + waterMark.low() + "): " + writeBufferHighWaterMark);
             }
             if (WATERMARK_UPDATER.compareAndSet(this, waterMark,
                     new WriteBufferWaterMark(waterMark.low(), writeBufferHighWaterMark, false))) {
@@ -396,10 +391,8 @@ public class DefaultChannelConfig implements ChannelConfig {
         for (;;) {
             WriteBufferWaterMark waterMark = writeBufferWaterMark;
             if (writeBufferLowWaterMark > waterMark.high()) {
-                throw new IllegalArgumentException(
-                        "writeBufferLowWaterMark cannot be greater than " +
-                                "writeBufferHighWaterMark (" + waterMark.high() + "): " +
-                                writeBufferLowWaterMark);
+                throw new IllegalArgumentException("writeBufferLowWaterMark cannot be greater than writeBufferHighWaterMark ("
+                    + waterMark.high() + "): " + writeBufferLowWaterMark);
             }
             if (WATERMARK_UPDATER.compareAndSet(this, waterMark,
                     new WriteBufferWaterMark(writeBufferLowWaterMark, waterMark.high(), false))) {

@@ -340,7 +340,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             // neither cancelled nor timed out.
 
             assert eventLoop().inEventLoop();
-
+            /**
+             * connectPromise上注册了两个listener，其中一个就是 CLOSE_ON_FAILURE
+             */
             try {
                 boolean wasActive = isActive();
                 doFinishConnect();
@@ -363,6 +365,12 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             // Flush immediately only when there's no pending flush.
             // If there's a pending flush operation, event loop will call forceFlush() later,
             // and thus there's no need to call it now.
+            /**
+             * 首先会判断当前NioSocketChannel的SelectionKey.OP_WRITE事件是否有被注册到对应的Selector上，
+             * 1、如果有，则说明当前写缓冲区已经满了(这里指是socket的写缓冲区满了，并且socket并没有被关闭，那么write操作将返回0。
+             *    这时如果还有未写出的数据待被发送，那么就会注册SelectionKey.OP_WRITE事件) 等写缓冲区有空间时，
+             *    SelectionKey.OP_WRITE事件就会被触发，到时NioEventLoop的事件循环就会调用forceFlush()方法来继续将为写出的数据写出，所以这里直接返回就好。
+             */
             if (!isFlushPending()) {
                 super.flush0();
             }
@@ -463,7 +471,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             ReferenceCountUtil.safeRelease(buf);
             return directBuf;
         }
-
+        // 没有明白 ByteBufUtil.threadLocalDirectBuffer() 的原理
         final ByteBuf directBuf = ByteBufUtil.threadLocalDirectBuffer();
         if (directBuf != null) {
             directBuf.writeBytes(buf, buf.readerIndex(), readableBytes);

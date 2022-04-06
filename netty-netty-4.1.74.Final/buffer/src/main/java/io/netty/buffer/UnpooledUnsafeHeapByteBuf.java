@@ -34,6 +34,14 @@ public class UnpooledUnsafeHeapByteBuf extends UnpooledHeapByteBuf {
         super(alloc, initialCapacity, maxCapacity);
     }
 
+    /**
+     * 重写父类的方法，父类是直接 new byte[]，那么这个和父类有什么区别呢？
+     * 这里内部是通过反射拿到jdk原生的unsafe对象然后执行allocateUninitializedArray创建数组
+     * 为什么要这样操作？
+     *      网上看到的解释是：unsafe可以根据地址和偏移直接改数据，而堆内操作可能会有一些Java安全验证操作，肯定要耗点性能，
+     *      具体我还没深入研究，但是unsafe肯定是最快的，直接C/C++去操作了。
+     *      比如你一个对象去操作一个属性，他会有安全验证是否可操作，而unsafe可以不管，直接操作。
+     */
     @Override
     protected byte[] allocateArray(int initialCapacity) {
         return PlatformDependent.allocateUninitializedArray(initialCapacity);

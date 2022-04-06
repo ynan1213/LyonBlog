@@ -49,6 +49,9 @@ public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
         super(maxCapacity);
     }
 
+    /**
+     * 是否还能用，释放了就不能用了
+     */
     @Override
     boolean isAccessible() {
         // Try to do non-volatile read for performance as the ensureAccessible() is racy anyway and only provide
@@ -75,16 +78,25 @@ public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
         updater.resetRefCnt(this);
     }
 
+    /**
+     * 真实计数 +1
+     */
     @Override
     public ByteBuf retain() {
         return updater.retain(this);
     }
 
+    /**
+     * 真实计数 +increment1
+     */
     @Override
     public ByteBuf retain(int increment) {
         return updater.retain(this, increment);
     }
 
+    /**
+     * 获取当前对象
+     */
     @Override
     public ByteBuf touch() {
         return this;

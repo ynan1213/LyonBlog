@@ -9,8 +9,17 @@ package com.ynan._02.threadLocal;
 public class InheritableThreadLocalMain {
 
     public static void main(String[] args) {
+
+        Thread thread = Thread.currentThread();
+
         // 父线程的 InheritableThreadLocal
-        InheritableThreadLocal<String> inheritableThreadLocal = new InheritableThreadLocal();
+        ThreadLocal<String> inheritableThreadLocal = new InheritableThreadLocal();
+        ThreadLocal threadLocal = new ThreadLocal();
+
+        new Thread();
+        inheritableThreadLocal.get();
+        new Thread();
+        threadLocal.get();
 
         // 父线程set值
         inheritableThreadLocal.set("hello");

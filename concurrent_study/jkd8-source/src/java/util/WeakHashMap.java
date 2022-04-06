@@ -318,7 +318,7 @@ public class WeakHashMap<K,V>
         for (Object x; (x = queue.poll()) != null; ) {
             synchronized (queue) {
                 @SuppressWarnings("unchecked")
-                    Entry<K,V> e = (Entry<K,V>) x;
+                Entry<K,V> e = (Entry<K,V>) x;
                 int i = indexFor(e.hash, table.length);
 
                 Entry<K,V> prev = table[i];
@@ -707,9 +707,7 @@ public class WeakHashMap<K,V>
         /**
          * Creates new entry.
          */
-        Entry(Object key, V value,
-              ReferenceQueue<Object> queue,
-              int hash, Entry<K,V> next) {
+        Entry(Object key, V value, ReferenceQueue<Object> queue, int hash, Entry<K,V> next) {
             super(key, queue);
             this.value = value;
             this.hash  = hash;

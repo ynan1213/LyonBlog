@@ -15,20 +15,18 @@
  */
 package com.alibaba.csp.sentinel.slots.block.flow.controller;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.alibaba.csp.sentinel.slots.block.flow.TrafficShapingController;
-
-import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.csp.sentinel.node.Node;
+import com.alibaba.csp.sentinel.slots.block.flow.TrafficShapingController;
+import com.alibaba.csp.sentinel.util.TimeUtil;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author jialiang.linjl
  * <p>
  * 匀速排队策略实现类
  */
-public class RateLimiterController implements TrafficShapingController
-{
+public class RateLimiterController implements TrafficShapingController {
+
     // 排队等待的最大超时时间，如果等待超过该时间，将会抛出 FlowException。
     private final int maxQueueingTimeMs;
 
@@ -38,30 +36,25 @@ public class RateLimiterController implements TrafficShapingController
     // 上一次成功通过的时间戳
     private final AtomicLong latestPassedTime = new AtomicLong(-1);
 
-    public RateLimiterController(int timeOut, double count)
-    {
+    public RateLimiterController(int timeOut, double count) {
         this.maxQueueingTimeMs = timeOut;
         this.count = count;
     }
 
     @Override
-    public boolean canPass(Node node, int acquireCount)
-    {
+    public boolean canPass(Node node, int acquireCount) {
         return canPass(node, acquireCount, false);
     }
 
     @Override
-    public boolean canPass(Node node, int acquireCount, boolean prioritized)
-    {
+    public boolean canPass(Node node, int acquireCount, boolean prioritized) {
         // Pass when acquire count is less or equal than 0.
-        if (acquireCount <= 0)
-        {
+        if (acquireCount <= 0) {
             return true;
         }
         // Reject when count is less or equal than 0.
         // Otherwise,the costTime will be max of long and waitTime will overflow in some cases.
-        if (count <= 0)
-        {
+        if (count <= 0) {
             return false;
         }
 
@@ -77,41 +70,33 @@ public class RateLimiterController implements TrafficShapingController
 
         // 如果 expectedTime 小于等于当前时间，说明在期望的时间没有请求到达，
         // 说明没有按照期望消耗令牌，故本次请求直接通过，并更新上次通过的时间为当前时间
-        if (expectedTime <= currentTime)
-        {
+        if (expectedTime <= currentTime) {
             // Contention may exist here, but it's okay.
             latestPassedTime.set(currentTime);
             return true;
-        } else
-        {
+        } else {
             // 如果 expectedTime 大于当前时间，说明还没到令牌发放时间，当前请求需要等待。首先先计算需要等待是时间，用 waitTime 表示。
             long waitTime = costTime + latestPassedTime.get() - TimeUtil.currentTimeMillis();
 
-            if (waitTime > maxQueueingTimeMs)
-            {
+            if (waitTime > maxQueueingTimeMs) {
                 // 如果计算的需要等待的时间大于允许排队的时间，则返回 false，即本次请求将被限流，返回 FlowException
                 return false;
-            } else
-            {
+            } else {
                 // 进入排队，默认是本次请求通过，故先将上一次通过流量的时间戳增加 costTime
                 long oldTime = latestPassedTime.addAndGet(costTime);
-                try
-                {
+                try {
                     waitTime = oldTime - TimeUtil.currentTimeMillis();
-                    if (waitTime > maxQueueingTimeMs)
-                    {
+                    if (waitTime > maxQueueingTimeMs) {
                         latestPassedTime.addAndGet(-costTime);
                         return false;
                     }
                     // in race condition waitTime may <= 0
-                    if (waitTime > 0)
-                    {
+                    if (waitTime > 0) {
                         // 将当前请求先阻塞一会，waitTime后就可以通过了
                         Thread.sleep(waitTime);
                     }
                     return true;
-                } catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                 }
             }
         }

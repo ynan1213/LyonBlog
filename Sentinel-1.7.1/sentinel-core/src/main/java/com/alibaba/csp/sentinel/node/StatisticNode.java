@@ -21,7 +21,6 @@ import com.alibaba.csp.sentinel.slots.statistic.metric.ArrayMetric;
 import com.alibaba.csp.sentinel.slots.statistic.metric.Metric;
 import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.csp.sentinel.util.function.Predicate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,8 +86,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author qinan.qn
  * @author jialiang.linjl
  */
-public class StatisticNode implements Node
-{
+public class StatisticNode implements Node {
+
     /**
      * Holds statistics of the recent {@code INTERVAL} seconds. The {@code INTERVAL} is divided into time spans
      * by given {@code sampleCount}.
@@ -97,11 +96,13 @@ public class StatisticNode implements Node
      */
     private transient volatile Metric rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT, IntervalProperty.INTERVAL);
 
-    /**x
+    /**
+     * x
      * Holds statistics of the recent 60 seconds. The windowLengthInMs is deliberately set to 1000 milliseconds,
      * meaning each bucket per second, in this way we can get accurate statistics of each second.
      *
-     * 每分钟实时统计信息，同样使用 ArrayMetric 实现，即基于滑动窗口实现。每1分钟，抽样60次，即包含60个滑动窗口，每一个窗口的时间间隔为 1s 。
+     * 每分钟实时统计信息，同样使用 ArrayMetric 实现，每1分钟，抽样60次，即包含60个滑动窗口，每一个窗口的时间间隔为 1s
+     * 为什么弄两个呢？ 个人觉得这里的主要是做指标上报、日志统计
      */
     private transient Metric rollingCounterInMinute = new ArrayMetric(60, 60 * 1000, false);
 
@@ -120,27 +121,24 @@ public class StatisticNode implements Node
     private long lastFetchTime = -1;
 
     /**
-     * 由于 Sentienl 基于滑动窗口来实时收集统计信息，并存储在内存中，并随着时间的推移，旧的滑动窗口将失效，故需要提供一个方法，
+     * 由于 Sentinel 基于滑动窗口来实时收集统计信息，并存储在内存中，并随着时间的推移，旧的滑动窗口将失效，故需要提供一个方法，
      * 及时将所有的统计信息进行汇总输出，供监控客户端定时拉取，转储都其他客户端，例如数据库，方便监控数据的可视化，这也通常是
      * 中间件用于监控指标的监控与采集的通用设计方法。
      */
     @Override
-    public Map<Long, MetricNode> metrics()
-    {
+    public Map<Long, MetricNode> metrics() {
         // The fetch operation is thread-safe under a single-thread scheduler pool.
         long currentTime = TimeUtil.currentTimeMillis();
         currentTime = currentTime - currentTime % 1000;
         Map<Long, MetricNode> metrics = new ConcurrentHashMap<>();
 
-        // 获取一分钟内的所有滑动窗口中的统计数据，使用 MetricNode 表示
+        // 获取一分钟内的所有 还在有效期内 的滑动窗口的统计数据，使用 MetricNode 表示
         List<MetricNode> nodesOfEverySecond = rollingCounterInMinute.details();
         long newLastFetchTime = lastFetchTime;
 
         // 遍历所有节点，刷选出当前滑动窗口外的所有数据。这里的重点是方法：isNodeInTime
-        for (MetricNode node : nodesOfEverySecond)
-        {
-            if (isNodeInTime(node, currentTime) && isValidMetricNode(node))
-            {
+        for (MetricNode node : nodesOfEverySecond) {
+            if (isNodeInTime(node, currentTime) && isValidMetricNode(node)) {
                 metrics.put(node.getTimestamp(), node);
                 newLastFetchTime = Math.max(newLastFetchTime, node.getTimestamp());
             }
@@ -150,119 +148,104 @@ public class StatisticNode implements Node
     }
 
     @Override
-    public List<MetricNode> rawMetricsInMin(Predicate<Long> timePredicate)
-    {
+    public List<MetricNode> rawMetricsInMin(Predicate<Long> timePredicate) {
         return rollingCounterInMinute.detailsOnCondition(timePredicate);
     }
 
-    private boolean isNodeInTime(MetricNode node, long currentTime)
-    {
+    private boolean isNodeInTime(MetricNode node, long currentTime) {
         return node.getTimestamp() > lastFetchTime && node.getTimestamp() < currentTime;
     }
 
-    private boolean isValidMetricNode(MetricNode node)
-    {
-        return node.getPassQps() > 0 || node.getBlockQps() > 0 || node.getSuccessQps() > 0 || node.getExceptionQps() > 0 || node.getRt() > 0 || node.getOccupiedPassQps() > 0;
+    private boolean isValidMetricNode(MetricNode node) {
+        return node.getPassQps() > 0 || node.getBlockQps() > 0 || node.getSuccessQps() > 0 || node.getExceptionQps() > 0 || node.getRt() > 0
+            || node.getOccupiedPassQps() > 0;
     }
 
     @Override
-    public void reset()
-    {
+    public void reset() {
         rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT, IntervalProperty.INTERVAL);
     }
 
     // 获取当前时间戳的总请求数，获取分钟级时间窗口中的统计信息。
     @Override
-    public long totalRequest()
-    {
+    public long totalRequest() {
         return rollingCounterInMinute.pass() + rollingCounterInMinute.block();
     }
 
     @Override
-    public long blockRequest()
-    {
+    public long blockRequest() {
         return rollingCounterInMinute.block();
     }
 
     @Override
-    public double blockQps()
-    {
+    public double blockQps() {
         return rollingCounterInSecond.block() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
     @Override
-    public double previousBlockQps()
-    {
+    public double previousBlockQps() {
         return this.rollingCounterInMinute.previousWindowBlock();
     }
 
     @Override
-    public double previousPassQps()
-    {
+    public double previousPassQps() {
         return this.rollingCounterInMinute.previousWindowPass();
     }
 
     @Override
-    public double totalQps()
-    {
+    public double totalQps() {
         return passQps() + blockQps();
     }
 
     @Override
-    public long totalSuccess()
-    {
+    public long totalSuccess() {
         return rollingCounterInMinute.success();
     }
 
     @Override
-    public double exceptionQps()
-    {
+    public double exceptionQps() {
         return rollingCounterInSecond.exception() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
     @Override
-    public long totalException()
-    {
+    public long totalException() {
         return rollingCounterInMinute.exception();
     }
 
     @Override
-    public double passQps()
-    {
+    public double passQps() {
+        // rollingCounterInSecond.pass()：一个统计周期内的通过数
+        // rollingCounterInSecond.getWindowIntervalInSec()：一个统计周期是多少，已经转化成了s
+        // 除以代表的是每秒请求个数
         return rollingCounterInSecond.pass() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
     @Override
-    public long totalPass()
-    {
+    public long totalPass() {
         return rollingCounterInMinute.pass();
     }
 
     // 成功TPS，用秒级统计滑动窗口中统计的个数 除以 窗口的间隔得出其 tps，即抽样个数越大，其统计越精确
     @Override
-    public double successQps()
-    {
+    public double successQps() {
         return rollingCounterInSecond.success() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
     @Override
-    public double maxSuccessQps()
-    {
-        return (double) rollingCounterInSecond.maxSuccess() * rollingCounterInSecond.getSampleCount() / rollingCounterInSecond.getWindowIntervalInSec();
+    public double maxSuccessQps() {
+        return (double) rollingCounterInSecond.maxSuccess() * rollingCounterInSecond.getSampleCount() / rollingCounterInSecond
+            .getWindowIntervalInSec();
     }
 
     @Override
-    public double occupiedPassQps()
-    {
+    public double occupiedPassQps() {
         return rollingCounterInSecond.occupiedPass() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
     @Override
-    public double avgRt()
-    {
+    public double avgRt() {
         long successCount = rollingCounterInSecond.success();
-        if (successCount == 0)
-        {
+        if (successCount == 0) {
             return 0;
         }
 
@@ -270,14 +253,12 @@ public class StatisticNode implements Node
     }
 
     @Override
-    public double minRt()
-    {
+    public double minRt() {
         return rollingCounterInSecond.minRt();
     }
 
     @Override
-    public int curThreadNum()
-    {
+    public int curThreadNum() {
         return (int) curThreadNum.sum();
     }
 
@@ -286,15 +267,13 @@ public class StatisticNode implements Node
      * 就是分别调用 秒级、分钟即对应的滑动窗口中添加数量，然后限流规则、熔断规则将基于滑动窗口中的值进行计算
      */
     @Override
-    public void addPassRequest(int count)
-    {
+    public void addPassRequest(int count) {
         rollingCounterInSecond.addPass(count);
         rollingCounterInMinute.addPass(count);
     }
 
     @Override
-    public void addRtAndSuccess(long rt, int successCount)
-    {
+    public void addRtAndSuccess(long rt, int successCount) {
         rollingCounterInSecond.addSuccess(successCount);
         rollingCounterInSecond.addRT(rt);
 
@@ -303,44 +282,37 @@ public class StatisticNode implements Node
     }
 
     @Override
-    public void increaseBlockQps(int count)
-    {
+    public void increaseBlockQps(int count) {
         rollingCounterInSecond.addBlock(count);
         rollingCounterInMinute.addBlock(count);
     }
 
     @Override
-    public void increaseExceptionQps(int count)
-    {
+    public void increaseExceptionQps(int count) {
         rollingCounterInSecond.addException(count);
         rollingCounterInMinute.addException(count);
     }
 
     @Override
-    public void increaseThreadNum()
-    {
+    public void increaseThreadNum() {
         curThreadNum.increment();
     }
 
     @Override
-    public void decreaseThreadNum()
-    {
+    public void decreaseThreadNum() {
         curThreadNum.decrement();
     }
 
     @Override
-    public void debug()
-    {
+    public void debug() {
         rollingCounterInSecond.debug();
     }
 
     @Override
-    public long tryOccupyNext(long currentTime, int acquireCount, double threshold)
-    {
+    public long tryOccupyNext(long currentTime, int acquireCount, double threshold) {
         double maxCount = threshold * IntervalProperty.INTERVAL / 1000;
         long currentBorrow = rollingCounterInSecond.waiting();
-        if (currentBorrow >= maxCount)
-        {
+        if (currentBorrow >= maxCount) {
             return OccupyTimeoutProperty.getOccupyTimeout();
         }
 
@@ -354,16 +326,13 @@ public class StatisticNode implements Node
          * lead more tokens be borrowed.
          */
         long currentPass = rollingCounterInSecond.pass();
-        while (earliestTime < currentTime)
-        {
+        while (earliestTime < currentTime) {
             long waitInMs = idx * windowLength + windowLength - currentTime % windowLength;
-            if (waitInMs >= OccupyTimeoutProperty.getOccupyTimeout())
-            {
+            if (waitInMs >= OccupyTimeoutProperty.getOccupyTimeout()) {
                 break;
             }
             long windowPass = rollingCounterInSecond.getWindowPass(earliestTime);
-            if (currentPass + currentBorrow + acquireCount - windowPass <= maxCount)
-            {
+            if (currentPass + currentBorrow + acquireCount - windowPass <= maxCount) {
                 return waitInMs;
             }
             earliestTime += windowLength;
@@ -375,20 +344,17 @@ public class StatisticNode implements Node
     }
 
     @Override
-    public long waiting()
-    {
+    public long waiting() {
         return rollingCounterInSecond.waiting();
     }
 
     @Override
-    public void addWaitingRequest(long futureTime, int acquireCount)
-    {
+    public void addWaitingRequest(long futureTime, int acquireCount) {
         rollingCounterInSecond.addWaiting(futureTime, acquireCount);
     }
 
     @Override
-    public void addOccupiedPass(int acquireCount)
-    {
+    public void addOccupiedPass(int acquireCount) {
         rollingCounterInMinute.addOccupiedPass(acquireCount);
         rollingCounterInMinute.addPass(acquireCount);
     }

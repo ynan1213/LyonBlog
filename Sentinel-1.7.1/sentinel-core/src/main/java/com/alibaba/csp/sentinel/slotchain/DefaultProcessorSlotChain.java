@@ -21,19 +21,17 @@ import com.alibaba.csp.sentinel.context.Context;
  * @author qinan.qn
  * @author jialiang.linjl
  */
-public class DefaultProcessorSlotChain extends ProcessorSlotChain
-{
-    AbstractLinkedProcessorSlot<?> first = new AbstractLinkedProcessorSlot<Object>()
-    {
+public class DefaultProcessorSlotChain extends ProcessorSlotChain {
+
+    AbstractLinkedProcessorSlot<?> first = new AbstractLinkedProcessorSlot<Object>() {
         @Override
-        public void entry(Context context, ResourceWrapper resourceWrapper, Object t, int count, boolean prioritized, Object... args) throws Throwable
-        {
+        public void entry(Context context, ResourceWrapper resourceWrapper, Object t, int count, boolean prioritized, Object... args)
+            throws Throwable {
             super.fireEntry(context, resourceWrapper, t, count, prioritized, args);
         }
 
         @Override
-        public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-        {
+        public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
             super.fireExit(context, resourceWrapper, count, args);
         }
 
@@ -41,19 +39,16 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain
     AbstractLinkedProcessorSlot<?> end = first;
 
     @Override
-    public void addFirst(AbstractLinkedProcessorSlot<?> protocolProcessor)
-    {
+    public void addFirst(AbstractLinkedProcessorSlot<?> protocolProcessor) {
         protocolProcessor.setNext(first.getNext());
         first.setNext(protocolProcessor);
-        if (end == first)
-        {
+        if (end == first) {
             end = protocolProcessor;
         }
     }
 
     @Override
-    public void addLast(AbstractLinkedProcessorSlot<?> protocolProcessor)
-    {
+    public void addLast(AbstractLinkedProcessorSlot<?> protocolProcessor) {
         end.setNext(protocolProcessor);
         end = protocolProcessor;
     }
@@ -64,26 +59,23 @@ public class DefaultProcessorSlotChain extends ProcessorSlotChain
      * @param next processor to be added.
      */
     @Override
-    public void setNext(AbstractLinkedProcessorSlot<?> next)
-    {
+    public void setNext(AbstractLinkedProcessorSlot<?> next) {
         addLast(next);
     }
 
     @Override
-    public AbstractLinkedProcessorSlot<?> getNext()
-    {
+    public AbstractLinkedProcessorSlot<?> getNext() {
         return first.getNext();
     }
 
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, Object t, int count, boolean prioritized, Object... args) throws Throwable
-    {
+    public void entry(Context context, ResourceWrapper resourceWrapper, Object t, int count, boolean prioritized, Object... args)
+        throws Throwable {
         first.transformEntry(context, resourceWrapper, t, count, prioritized, args);
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         first.exit(context, resourceWrapper, count, args);
     }
 

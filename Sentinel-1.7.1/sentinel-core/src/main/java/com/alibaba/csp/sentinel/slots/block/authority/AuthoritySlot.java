@@ -15,14 +15,13 @@
  */
 package com.alibaba.csp.sentinel.slots.block.authority;
 
-import java.util.Map;
-import java.util.Set;
-
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.node.DefaultNode;
 import com.alibaba.csp.sentinel.slotchain.AbstractLinkedProcessorSlot;
 import com.alibaba.csp.sentinel.slotchain.ProcessorSlot;
 import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link ProcessorSlot} that dedicates to {@link AuthorityRule} checking.
@@ -30,44 +29,38 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
  * @author leyou
  * @author Eric Zhao
  */
-public class AuthoritySlot extends AbstractLinkedProcessorSlot<DefaultNode>
-{
+public class AuthoritySlot extends AbstractLinkedProcessorSlot<DefaultNode> {
+
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args) throws Throwable
-    {
+    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args)
+        throws Throwable {
         // 根据 origin 做黑白名单的控制，只要有一条规则校验不通过，就抛出异常
         checkBlackWhiteAuthority(resourceWrapper, context);
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         fireExit(context, resourceWrapper, count, args);
     }
 
-    void checkBlackWhiteAuthority(ResourceWrapper resource, Context context) throws AuthorityException
-    {
+    void checkBlackWhiteAuthority(ResourceWrapper resource, Context context) throws AuthorityException {
         // 通过监听来的规则集
         Map<String, Set<AuthorityRule>> authorityRules = AuthorityRuleManager.getAuthorityRules();
 
-        if (authorityRules == null)
-        {
+        if (authorityRules == null) {
             return;
         }
 
         // 根据资源名称获取相应的规则
         Set<AuthorityRule> rules = authorityRules.get(resource.getName());
-        if (rules == null)
-        {
+        if (rules == null) {
             return;
         }
 
         // 黑名单白名单验证，只要有一条规则校验不通过，就抛出AuthorityException
-        for (AuthorityRule rule : rules)
-        {
-            if (!AuthorityRuleChecker.passCheck(rule, context))
-            {
+        for (AuthorityRule rule : rules) {
+            if (!AuthorityRuleChecker.passCheck(rule, context)) {
                 throw new AuthorityException(context.getOrigin(), rule);
             }
         }

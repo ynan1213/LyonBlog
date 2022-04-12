@@ -15,21 +15,20 @@
  */
 package com.alibaba.csp.sentinel.slots.statistic;
 
-import java.util.Collection;
-
-import com.alibaba.csp.sentinel.config.SentinelConfig;
-import com.alibaba.csp.sentinel.slotchain.ProcessorSlotEntryCallback;
-import com.alibaba.csp.sentinel.slotchain.ProcessorSlotExitCallback;
-import com.alibaba.csp.sentinel.slots.block.flow.PriorityWaitException;
-import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.csp.sentinel.Constants;
 import com.alibaba.csp.sentinel.EntryType;
+import com.alibaba.csp.sentinel.config.SentinelConfig;
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.node.ClusterNode;
 import com.alibaba.csp.sentinel.node.DefaultNode;
 import com.alibaba.csp.sentinel.slotchain.AbstractLinkedProcessorSlot;
+import com.alibaba.csp.sentinel.slotchain.ProcessorSlotEntryCallback;
+import com.alibaba.csp.sentinel.slotchain.ProcessorSlotExitCallback;
 import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.flow.PriorityWaitException;
+import com.alibaba.csp.sentinel.util.TimeUtil;
+import java.util.Collection;
 
 /**
  * <p>
@@ -47,14 +46,12 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode>
-{
+public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args) throws Throwable
-    {
-        try
-        {
+    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args)
+        throws Throwable {
+        try {
             fireEntry(context, resourceWrapper, node, count, prioritized, args);
 
             // 将正在执行线程数统计指标加一
@@ -62,136 +59,120 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode>
             // 并将通过的请求数量指标增加对应的值
             node.addPassRequest(count);
 
-            // 如果上下文环境中保存了调用的源头（调用方）的节点信息不为空，则更新该节点的统计数据：线程数与通过数量。
-            if (context.getCurEntry().getOriginNode() != null)
-            {
+            // 如果上下文环境中保存了调用方的节点信息不为空，则更新该节点的统计数据：线程数与通过数量。
+            if (context.getCurEntry().getOriginNode() != null) {
                 // Add count for origin node.
                 context.getCurEntry().getOriginNode().increaseThreadNum();
                 context.getCurEntry().getOriginNode().addPassRequest(count);
             }
 
             // 如果资源的进入类型为 EntryType.IN，表示入站流量，更新入站全局统计数据(集群范围 ClusterNode)。
-            if (resourceWrapper.getEntryType() == EntryType.IN)
-            {
+            if (resourceWrapper.getEntryType() == EntryType.IN) {
                 // Add count for global inbound entry node for global statistics.
                 Constants.ENTRY_NODE.increaseThreadNum();
                 Constants.ENTRY_NODE.addPassRequest(count);
             }
 
-            // 执行注册的进入Handler，可以通过 StatisticSlotCallbackRegistry 的 addEntryCallback 注册相关监听器
-            for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks())
-            {
+            // 拓展点
+            for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks()) {
                 handler.onPass(context, resourceWrapper, node, count, args);
             }
-        } catch (PriorityWaitException ex)
-        {
+        } catch (PriorityWaitException ex) {
             node.increaseThreadNum();
-            if (context.getCurEntry().getOriginNode() != null)
-            {
+            if (context.getCurEntry().getOriginNode() != null) {
                 // Add count for origin node.
                 context.getCurEntry().getOriginNode().increaseThreadNum();
             }
 
-            if (resourceWrapper.getEntryType() == EntryType.IN)
-            {
+            if (resourceWrapper.getEntryType() == EntryType.IN) {
                 // Add count for global inbound entry node for global statistics.
                 Constants.ENTRY_NODE.increaseThreadNum();
             }
             // Handle pass event with registered entry callback handlers.
-            for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks())
-            {
+            for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks()) {
                 handler.onPass(context, resourceWrapper, node, count, args);
             }
-        } catch (BlockException e)
-        {
+        } catch (BlockException e) {
             // 如果捕获到 BlockException，则主要增加阻塞的数量
             context.getCurEntry().setError(e);
 
             // Add block count.
             node.increaseBlockQps(count);
-            if (context.getCurEntry().getOriginNode() != null)
-            {
+            if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().increaseBlockQps(count);
             }
 
-            if (resourceWrapper.getEntryType() == EntryType.IN)
-            {
+            if (resourceWrapper.getEntryType() == EntryType.IN) {
                 // Add count for global inbound entry node for global statistics.
                 Constants.ENTRY_NODE.increaseBlockQps(count);
             }
 
             // Handle block event with registered entry callback handlers.
-            for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks())
-            {
+            for (ProcessorSlotEntryCallback<DefaultNode> handler : StatisticSlotCallbackRegistry.getEntryCallbacks()) {
                 handler.onBlocked(e, context, resourceWrapper, node, count, args);
             }
 
             throw e;
-        } catch (Throwable e)
-        {
+        } catch (Throwable e) {
             // 如果是系统异常，则增加异常数量。
             context.getCurEntry().setError(e);
 
             // This should not happen.
             node.increaseExceptionQps(count);
-            if (context.getCurEntry().getOriginNode() != null)
-            {
+            if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().increaseExceptionQps(count);
             }
 
-            if (resourceWrapper.getEntryType() == EntryType.IN)
-            {
+            if (resourceWrapper.getEntryType() == EntryType.IN) {
                 Constants.ENTRY_NODE.increaseExceptionQps(count);
             }
             throw e;
         }
     }
 
+    /**
+     * 目前发现有两个地方会调用该方法：
+     *  1. 正常的业务入口处finally
+     *  2. 如果发生了BlockException（流控、降级、黑白名单等异常)，在CtSph处也会被捕捉然后调用exit，但是和1不一样的是不会进入if
+     */
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         DefaultNode node = (DefaultNode) context.getCurNode();
 
         // 成功执行
-        if (context.getCurEntry().getError() == null)
-        {
+        if (context.getCurEntry().getError() == null) {
             // 计算本次响应时间，将本次响应时间收集到 Node 中
             long rt = TimeUtil.currentTimeMillis() - context.getCurEntry().getCreateTime();
             int maxStatisticRt = SentinelConfig.statisticMaxRt();
-            if (rt > maxStatisticRt)
-            {
+            if (rt > maxStatisticRt) {
                 rt = maxStatisticRt;
             }
 
             // Record response time and success count.
             node.addRtAndSuccess(rt, count);
-            if (context.getCurEntry().getOriginNode() != null)
-            {
+            if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().addRtAndSuccess(rt, count);
             }
 
             // 将当前活跃线程数减一
             node.decreaseThreadNum();
 
-            if (context.getCurEntry().getOriginNode() != null)
-            {
+            if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().decreaseThreadNum();
             }
 
-            if (resourceWrapper.getEntryType() == EntryType.IN)
-            {
+            if (resourceWrapper.getEntryType() == EntryType.IN) {
                 Constants.ENTRY_NODE.addRtAndSuccess(rt, count);
                 Constants.ENTRY_NODE.decreaseThreadNum();
             }
-        } else
-        {
+        } else {
             // Error may happen.
         }
 
         // Handle exit event with registered exit callback handlers.
+        // 拓展点
         Collection<ProcessorSlotExitCallback> exitCallbacks = StatisticSlotCallbackRegistry.getExitCallbacks();
-        for (ProcessorSlotExitCallback handler : exitCallbacks)
-        {
+        for (ProcessorSlotExitCallback handler : exitCallbacks) {
             handler.onExit(context, resourceWrapper, count, args);
         }
 

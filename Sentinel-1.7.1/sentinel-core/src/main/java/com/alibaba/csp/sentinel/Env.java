@@ -27,12 +27,11 @@ import com.alibaba.csp.sentinel.init.InitExecutor;
  *
  * @author jialiang.linjl
  */
-public class Env
-{
+public class Env {
+
     public static final Sph sph = new CtSph();
 
-    static
-    {
+    static {
         // If init fails, the process will exit.
         InitExecutor.doInit();
     }

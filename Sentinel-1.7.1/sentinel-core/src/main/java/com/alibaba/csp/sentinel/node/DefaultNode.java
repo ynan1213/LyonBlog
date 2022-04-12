@@ -37,8 +37,8 @@ import java.util.Set;
  * @author qinan.qn
  * @see NodeSelectorSlot
  */
-public class DefaultNode extends StatisticNode
-{
+public class DefaultNode extends StatisticNode {
+
     /**
      * The resource associated with the node.
      */
@@ -54,24 +54,20 @@ public class DefaultNode extends StatisticNode
      */
     private ClusterNode clusterNode;
 
-    public DefaultNode(ResourceWrapper id, ClusterNode clusterNode)
-    {
+    public DefaultNode(ResourceWrapper id, ClusterNode clusterNode) {
         this.id = id;
         this.clusterNode = clusterNode;
     }
 
-    public ResourceWrapper getId()
-    {
+    public ResourceWrapper getId() {
         return id;
     }
 
-    public ClusterNode getClusterNode()
-    {
+    public ClusterNode getClusterNode() {
         return clusterNode;
     }
 
-    public void setClusterNode(ClusterNode clusterNode)
-    {
+    public void setClusterNode(ClusterNode clusterNode) {
         this.clusterNode = clusterNode;
     }
 
@@ -102,84 +98,70 @@ public class DefaultNode extends StatisticNode
     /**
      * Reset the child node list.
      */
-    public void removeChildList()
-    {
+    public void removeChildList() {
         this.childList = new HashSet<>();
     }
 
-    public Set<Node> getChildList()
-    {
+    public Set<Node> getChildList() {
         return childList;
     }
 
     @Override
-    public void increaseBlockQps(int count)
-    {
+    public void increaseBlockQps(int count) {
         super.increaseBlockQps(count);
         this.clusterNode.increaseBlockQps(count);
     }
 
     @Override
-    public void increaseExceptionQps(int count)
-    {
+    public void increaseExceptionQps(int count) {
         super.increaseExceptionQps(count);
         this.clusterNode.increaseExceptionQps(count);
     }
 
     @Override
-    public void addRtAndSuccess(long rt, int successCount)
-    {
+    public void addRtAndSuccess(long rt, int successCount) {
         super.addRtAndSuccess(rt, successCount);
         this.clusterNode.addRtAndSuccess(rt, successCount);
     }
 
     @Override
-    public void increaseThreadNum()
-    {
+    public void increaseThreadNum() {
         super.increaseThreadNum();
         this.clusterNode.increaseThreadNum();
     }
 
     @Override
-    public void decreaseThreadNum()
-    {
+    public void decreaseThreadNum() {
         super.decreaseThreadNum();
         this.clusterNode.decreaseThreadNum();
     }
 
     @Override
-    public void addPassRequest(int count)
-    {
+    public void addPassRequest(int count) {
         super.addPassRequest(count);
         this.clusterNode.addPassRequest(count);
     }
 
-    public void printDefaultNode()
-    {
+    public void printDefaultNode() {
         visitTree(0, this);
     }
 
-    private void visitTree(int level, DefaultNode node)
-    {
-        for (int i = 0; i < level; ++i)
-        {
+    private void visitTree(int level, DefaultNode node) {
+        for (int i = 0; i < level; ++i) {
             System.out.print("-");
         }
-        if (!(node instanceof EntranceNode))
-        {
+        if (!(node instanceof EntranceNode)) {
             System.out.println(
-                    String.format("%s(thread:%s pq:%s bq:%s tq:%s rt:%s 1mp:%s 1mb:%s 1mt:%s)", node.id.getShowName(),
-                            node.curThreadNum(), node.passQps(), node.blockQps(), node.totalQps(), node.avgRt(),
-                            node.totalRequest() - node.blockRequest(), node.blockRequest(), node.totalRequest()));
-        } else
-        {
+                String.format("%s(thread:%s pq:%s bq:%s tq:%s rt:%s 1mp:%s 1mb:%s 1mt:%s)", node.id.getShowName(),
+                    node.curThreadNum(), node.passQps(), node.blockQps(), node.totalQps(), node.avgRt(),
+                    node.totalRequest() - node.blockRequest(), node.blockRequest(), node.totalRequest()));
+        } else {
             System.out.println(
-                    String.format("Entry-%s(t:%s pq:%s bq:%s tq:%s rt:%s 1mp:%s 1mb:%s 1mt:%s)", node.id.getShowName(),
-                            node.curThreadNum(), node.passQps(), node.blockQps(), node.totalQps(), node.avgRt(),
-                            node.totalRequest() - node.blockRequest(), node.blockRequest(), node.totalRequest()));
+                String.format("Entry-%s(t:%s pq:%s bq:%s tq:%s rt:%s 1mp:%s 1mb:%s 1mt:%s)", node.id.getShowName(),
+                    node.curThreadNum(), node.passQps(), node.blockQps(), node.totalQps(), node.avgRt(),
+                    node.totalRequest() - node.blockRequest(), node.blockRequest(), node.totalRequest()));
         }
-        for (Node n : node.getChildList())
-        {
+        for (Node n : node.getChildList()) {
             DefaultNode dn = (DefaultNode) n;
             visitTree(level + 1, dn);
         }

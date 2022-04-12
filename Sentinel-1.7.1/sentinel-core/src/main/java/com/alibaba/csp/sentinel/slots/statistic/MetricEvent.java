@@ -22,18 +22,30 @@ public enum MetricEvent {
 
     /**
      * Normal pass.
+     * 通过指标
      */
     PASS,
     /**
      * Normal block.
+     * 阻塞指标
      */
     BLOCK,
+    /**
+     * 异常指标
+     */
     EXCEPTION,
+    /**
+     * 成功指标
+     */
     SUCCESS,
+    /**
+     * 平均响应时间指标
+     */
     RT,
 
     /**
      * Passed in future quota (pre-occupied, since 1.5.0).
+     * 没有明白
      */
     OCCUPIED_PASS
 }

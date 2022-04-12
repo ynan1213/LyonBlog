@@ -15,14 +15,13 @@
  */
 package com.alibaba.csp.sentinel.node;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.alibaba.csp.sentinel.ResourceTypeConstants;
 import com.alibaba.csp.sentinel.context.ContextUtil;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.util.AssertUtil;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * <p>
@@ -42,19 +41,16 @@ import com.alibaba.csp.sentinel.util.AssertUtil;
  * @author qinan.qn
  * @author jialiang.linjl
  */
-public class ClusterNode extends StatisticNode
-{
+public class ClusterNode extends StatisticNode {
 
     private final String name;
     private final int resourceType;
 
-    public ClusterNode(String name)
-    {
+    public ClusterNode(String name) {
         this(name, ResourceTypeConstants.COMMON);
     }
 
-    public ClusterNode(String name, int resourceType)
-    {
+    public ClusterNode(String name, int resourceType) {
         AssertUtil.notEmpty(name, "name cannot be empty");
         this.name = name;
         this.resourceType = resourceType;
@@ -78,8 +74,7 @@ public class ClusterNode extends StatisticNode
      * @return resource name
      * @since 1.7.0
      */
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
@@ -89,8 +84,7 @@ public class ClusterNode extends StatisticNode
      * @return resource type
      * @since 1.7.0
      */
-    public int getResourceType()
-    {
+    public int getResourceType() {
         return resourceType;
     }
 
@@ -100,20 +94,16 @@ public class ClusterNode extends StatisticNode
      * for the origin will be created and returned.</p>
      *
      * @param origin The caller's name, which is designated in the {@code parameter} parameter
-     *               {@link ContextUtil#enter(String name, String origin)}.
+     * {@link ContextUtil#enter(String name, String origin)}.
      * @return the {@link Node} of the specific origin
      */
-    public Node getOrCreateOriginNode(String origin)
-    {
+    public Node getOrCreateOriginNode(String origin) {
         StatisticNode statisticNode = originCountMap.get(origin);
-        if (statisticNode == null)
-        {
-            try
-            {
+        if (statisticNode == null) {
+            try {
                 lock.lock();
                 statisticNode = originCountMap.get(origin);
-                if (statisticNode == null)
-                {
+                if (statisticNode == null) {
                     // The node is absent, create a new node for the origin.
                     statisticNode = new StatisticNode();
                     HashMap<String, StatisticNode> newMap = new HashMap<>(originCountMap.size() + 1);
@@ -121,16 +111,14 @@ public class ClusterNode extends StatisticNode
                     newMap.put(origin, statisticNode);
                     originCountMap = newMap;
                 }
-            } finally
-            {
+            } finally {
                 lock.unlock();
             }
         }
         return statisticNode;
     }
 
-    public Map<String, StatisticNode> getOriginCountMap()
-    {
+    public Map<String, StatisticNode> getOriginCountMap() {
         return originCountMap;
     }
 
@@ -138,16 +126,13 @@ public class ClusterNode extends StatisticNode
      * Add exception count only when given {@code throwable} is not a {@link BlockException}.
      *
      * @param throwable target exception
-     * @param count     count to add
+     * @param count count to add
      */
-    public void trace(Throwable throwable, int count)
-    {
-        if (count <= 0)
-        {
+    public void trace(Throwable throwable, int count) {
+        if (count <= 0) {
             return;
         }
-        if (!BlockException.isBlockException(throwable))
-        {
+        if (!BlockException.isBlockException(throwable)) {
             this.increaseExceptionQps(count);
         }
     }

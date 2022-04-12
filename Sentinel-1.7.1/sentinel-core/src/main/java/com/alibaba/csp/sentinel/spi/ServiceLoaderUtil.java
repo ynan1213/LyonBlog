@@ -15,37 +15,31 @@
  */
 package com.alibaba.csp.sentinel.spi;
 
-import java.util.ServiceLoader;
-
 import com.alibaba.csp.sentinel.config.SentinelConfig;
+import java.util.ServiceLoader;
 
 /**
  * @author Eric Zhao
  * @since 1.7.0
  */
-public final class ServiceLoaderUtil
-{
+public final class ServiceLoaderUtil {
+
     private static final String CLASSLOADER_DEFAULT = "default";
     private static final String CLASSLOADER_CONTEXT = "context";
 
-    public static <S> ServiceLoader<S> getServiceLoader(Class<S> clazz)
-    {
-        if (shouldUseContextClassloader())
-        {
+    public static <S> ServiceLoader<S> getServiceLoader(Class<S> clazz) {
+        if (shouldUseContextClassloader()) {
             return ServiceLoader.load(clazz);
-        } else
-        {
+        } else {
             return ServiceLoader.load(clazz, clazz.getClassLoader());
         }
     }
 
-    public static boolean shouldUseContextClassloader()
-    {
+    public static boolean shouldUseContextClassloader() {
         String classloaderConf = SentinelConfig.getConfig(SentinelConfig.SPI_CLASSLOADER);
         return CLASSLOADER_CONTEXT.equalsIgnoreCase(classloaderConf);
     }
 
-    private ServiceLoaderUtil()
-    {
+    private ServiceLoaderUtil() {
     }
 }

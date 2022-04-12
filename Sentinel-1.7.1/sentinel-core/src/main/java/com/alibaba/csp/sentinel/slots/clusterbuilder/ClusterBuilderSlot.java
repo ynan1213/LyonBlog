@@ -15,9 +15,6 @@
  */
 package com.alibaba.csp.sentinel.slots.clusterbuilder;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.alibaba.csp.sentinel.EntryType;
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.context.ContextUtil;
@@ -30,6 +27,8 @@ import com.alibaba.csp.sentinel.slotchain.AbstractLinkedProcessorSlot;
 import com.alibaba.csp.sentinel.slotchain.ProcessorSlotChain;
 import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
 import com.alibaba.csp.sentinel.slotchain.StringResourceWrapper;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -44,8 +43,8 @@ import com.alibaba.csp.sentinel.slotchain.StringResourceWrapper;
  *
  * @author jialiang.linjl
  */
-public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
-{
+public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
+
     /**
      * <p>
      * Remember that same resource({@link ResourceWrapper#equals(Object)}) will share
@@ -71,19 +70,16 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
     private volatile ClusterNode clusterNode = null;
 
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args) throws Throwable
-    {
+    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args)
+        throws Throwable {
         /**
          * 相同的 resource name 全局共享一个 clusterNode，因为 ProcessorSlot 在全局层面是以 resource name 来区分的
          * 在 NodeSelectorSlot 中是以 context 和 resource 两个层面统计 node
          * 在 ClusterBuilderSlot 中是以 resource 层面统计node
          */
-        if (clusterNode == null)
-        {
-            synchronized (lock)
-            {
-                if (clusterNode == null)
-                {
+        if (clusterNode == null) {
+            synchronized (lock) {
+                if (clusterNode == null) {
                     // Create the cluster node.
                     clusterNode = new ClusterNode(resourceWrapper.getName(), resourceWrapper.getResourceType());
                     HashMap<ResourceWrapper, ClusterNode> newMap = new HashMap<>(Math.max(clusterNodeMap.size(), 16));
@@ -100,8 +96,7 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
          * if context origin is set, we should get or create a new {@link Node} of the specific origin.
          * 当设置了 origin 的时候，会额外生成一个 StatisticsNode 实例，挂在 ClusterNode 上。
          */
-        if (!"".equals(context.getOrigin()))
-        {
+        if (!"".equals(context.getOrigin())) {
             Node originNode = node.getClusterNode().getOrCreateOriginNode(context.getOrigin());
             context.getCurEntry().setOriginNode(originNode);
         }
@@ -110,20 +105,18 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         fireExit(context, resourceWrapper, count, args);
     }
 
     /**
      * Get {@link ClusterNode} of the resource of the specific type.
      *
-     * @param id   resource name.
+     * @param id resource name.
      * @param type invoke type.
      * @return the {@link ClusterNode}
      */
-    public static ClusterNode getClusterNode(String id, EntryType type)
-    {
+    public static ClusterNode getClusterNode(String id, EntryType type) {
         return clusterNodeMap.get(new StringResourceWrapper(id, type));
     }
 
@@ -133,19 +126,15 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
      * @param id resource name.
      * @return the {@link ClusterNode}.
      */
-    public static ClusterNode getClusterNode(String id)
-    {
-        if (id == null)
-        {
+    public static ClusterNode getClusterNode(String id) {
+        if (id == null) {
             return null;
         }
         ClusterNode clusterNode = null;
 
-        for (EntryType nodeType : EntryType.values())
-        {
+        for (EntryType nodeType : EntryType.values()) {
             clusterNode = clusterNodeMap.get(new StringResourceWrapper(id, nodeType));
-            if (clusterNode != null)
-            {
+            if (clusterNode != null) {
                 break;
             }
         }
@@ -160,8 +149,7 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
      *
      * @return all {@link ClusterNode}s
      */
-    public static Map<ResourceWrapper, ClusterNode> getClusterNodeMap()
-    {
+    public static Map<ResourceWrapper, ClusterNode> getClusterNodeMap() {
         return clusterNodeMap;
     }
 
@@ -169,10 +157,8 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
      * Reset all {@link ClusterNode}s. Reset is needed when {@link IntervalProperty#INTERVAL} or
      * {@link SampleCountProperty#SAMPLE_COUNT} is changed.
      */
-    public static void resetClusterNodes()
-    {
-        for (ClusterNode node : clusterNodeMap.values())
-        {
+    public static void resetClusterNodes() {
+        for (ClusterNode node : clusterNodeMap.values()) {
             node.reset();
         }
     }

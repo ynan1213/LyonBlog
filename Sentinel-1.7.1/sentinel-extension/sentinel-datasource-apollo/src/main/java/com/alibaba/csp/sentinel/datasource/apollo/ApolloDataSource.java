@@ -39,8 +39,7 @@ public class ApolloDataSource<T> extends AbstractDataSource<String, T> {
      *                             occurred
      * @param parser               the parser to transform string configuration to actual flow rules
      */
-    public ApolloDataSource(String namespaceName, String ruleKey, String defaultRuleValue,
-                            Converter<String, T> parser) {
+    public ApolloDataSource(String namespaceName, String ruleKey, String defaultRuleValue, Converter<String, T> parser) {
         super(parser);
 
         Preconditions.checkArgument(!Strings.isNullOrEmpty(namespaceName), "Namespace name could not be null or empty");

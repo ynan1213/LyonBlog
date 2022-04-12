@@ -15,14 +15,10 @@
  */
 package com.alibaba.csp.sentinel;
 
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.context.ContextUtil;
 import com.alibaba.csp.sentinel.context.NullContext;
+import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.slotchain.MethodResourceWrapper;
 import com.alibaba.csp.sentinel.slotchain.ProcessorSlot;
 import com.alibaba.csp.sentinel.slotchain.ProcessorSlotChain;
@@ -31,6 +27,9 @@ import com.alibaba.csp.sentinel.slotchain.SlotChainProvider;
 import com.alibaba.csp.sentinel.slotchain.StringResourceWrapper;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.Rule;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * {@inheritDoc}
@@ -40,8 +39,7 @@ import com.alibaba.csp.sentinel.slots.block.Rule;
  * @author Eric Zhao
  * @see Sph
  */
-public class CtSph implements Sph
-{
+public class CtSph implements Sph {
 
     private static final Object[] OBJECTS0 = new Object[0];
 
@@ -53,8 +51,7 @@ public class CtSph implements Sph
 
     private static final Object LOCK = new Object();
 
-    private AsyncEntry asyncEntryWithNoChain(ResourceWrapper resourceWrapper, Context context)
-    {
+    private AsyncEntry asyncEntryWithNoChain(ResourceWrapper resourceWrapper, Context context) {
         AsyncEntry entry = new AsyncEntry(resourceWrapper, null, context);
         entry.initAsyncContext();
         // The async entry will be removed from current context as soon as it has been created.
@@ -62,52 +59,45 @@ public class CtSph implements Sph
         return entry;
     }
 
-    private AsyncEntry asyncEntryWithPriorityInternal(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args) throws BlockException
-    {
+    private AsyncEntry asyncEntryWithPriorityInternal(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args)
+        throws BlockException {
         Context context = ContextUtil.getContext();
-        if (context instanceof NullContext)
-        {
+        if (context instanceof NullContext) {
             // The {@link NullContext} indicates that the amount of context has exceeded the threshold,
             // so here init the entry only. No rule checking will be done.
             return asyncEntryWithNoChain(resourceWrapper, context);
         }
-        if (context == null)
-        {
+        if (context == null) {
             // Using default context.
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
         // Global switch is turned off, so no rule checking will be done.
-        if (!Constants.ON)
-        {
+        if (!Constants.ON) {
             return asyncEntryWithNoChain(resourceWrapper, context);
         }
 
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         // Means processor cache size exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE}, so no rule checking will be done.
-        if (chain == null)
-        {
+        if (chain == null) {
             return asyncEntryWithNoChain(resourceWrapper, context);
         }
 
         AsyncEntry asyncEntry = new AsyncEntry(resourceWrapper, chain, context);
-        try
-        {
+        try {
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
             // Initiate the async context only when the entry successfully passed the slot chain.
             asyncEntry.initAsyncContext();
             // The asynchronous call may take time in background, and current context should not be hanged on it.
             // So we need to remove current async entry from current context.
             asyncEntry.cleanCurrentEntryInLocal();
-        } catch (BlockException e1)
-        {
+        } catch (BlockException e1) {
             // When blocked, the async entry will be exited on current context.
             // The async context will not be initialized.
             asyncEntry.exitForContext(context, count, args);
             throw e1;
-        } catch (Throwable e1)
-        {
+        } catch (Throwable e1) {
             // This should not happen, unless there are errors existing in Sentinel internal.
             // When this happens, async context is not initialized.
             RecordLog.warn("Sentinel unexpected exception in asyncEntryInternal", e1);
@@ -118,13 +108,11 @@ public class CtSph implements Sph
     }
 
     private AsyncEntry asyncEntryInternal(ResourceWrapper resourceWrapper, int count, Object... args)
-            throws BlockException
-    {
+        throws BlockException {
         return asyncEntryWithPriorityInternal(resourceWrapper, count, false, args);
     }
 
-    private Entry entryWithPriority(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args) throws BlockException
-    {
+    private Entry entryWithPriority(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args) throws BlockException {
         /**
          * 从 ThreadLocal 中获取 Context 实例，什么时候返回不为空呢？
          *    1. 前面显示的调用了 ContextUtil#enter;
@@ -134,27 +122,24 @@ public class CtSph implements Sph
 
         // 如果是 NullContext，那么说明 context name 超过了 2000 个，参见 ContextUtil#trueEnter
         // 这个时候，Sentinel 不再接受处理新的 context 配置，也就是不做这些新的接口的统计、限流熔断等操作
-        if (context instanceof NullContext)
-        {
+        if (context instanceof NullContext) {
             // The {@link NullContext} indicates that the amount of context has exceeded the threshold,
             // so here init the entry only. No rule checking will be done.
             return new CtEntry(resourceWrapper, null, context);
         }
 
-        if (context == null)
-        {
+        if (context == null) {
             /**
              * 创建一个context，内部是通过 ContextUtil#trueEnter方法创建，创建context需要指定 EntranceNode
-             * ContextUtil内部有个全局缓存，key为context name，value为 EntranceNode，创建前先从缓存查找，没有再new 一个
-             * 也就是说，只要name相同，不同线程创建的context拥有同一个 EntranceNode
-             * 也就是说，即使是不同线程创建的多个context，只要name相同，EntranceNode 就会相同
+             * ContextUtil内部有个static全局缓存，key为context name，value为 EntranceNode，创建前先从缓存查找，没有再new 一个
+             * 也就是说，只要name相同，不同线程创建的context拥有同一个EntranceNode
+             * 也就是说，即使是不同线程创建的多个context，只要name相同，EntranceNode就会相同
              */
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
         // Sentinel 的全局开关，Sentinel 提供了接口让用户可以在 dashboard 开启/关闭
-        if (!Constants.ON)
-        {
+        if (!Constants.ON) {
             return new CtEntry(resourceWrapper, null, context);
         }
 
@@ -163,15 +148,14 @@ public class CtSph implements Sph
          */
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
-        /*
+        /**
          * Means amount of resources (slot chain) exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE},
          * so no rule checking will be done.
          *
          * lookProcessChain 方法内，当 resource 超过 Constants.MAX_SLOT_CHAIN_SIZE也就是 6000 的时候，
          * Sentinel 开始不处理新的请求，这么做主要是为了 Sentinel 的性能考虑
          */
-        if (chain == null)
-        {
+        if (chain == null) {
             return new CtEntry(resourceWrapper, null, context);
         }
 
@@ -185,17 +169,15 @@ public class CtSph implements Sph
          */
         Entry e = new CtEntry(resourceWrapper, chain, context);
         // 创建完之后，context的 curEntry 就指向该 Entry
-        try
-        {
+        try {
             // 执行这个责任链。如果抛出 BlockException，说明链上的某一环拒绝了该请求，
             // 把这个异常往上层业务层抛，业务层处理 BlockException 应该进入到熔断降级逻辑中
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
-        } catch (BlockException e1)
-        {
+        } catch (BlockException e1) {
+            // 这里会调用一次exit，
             e.exit(count, args);
             throw e1;
-        } catch (Throwable e1)
-        {
+        } catch (Throwable e1) {
             // This should not happen, unless there are errors existing in Sentinel internal.
             RecordLog.info("Sentinel unexpected exception", e1);
         }
@@ -213,13 +195,12 @@ public class CtSph implements Sph
      * or exception.</p>
      *
      * @param resourceWrapper resource name
-     * @param count           tokens needed
-     * @param args            arguments of user method call
+     * @param count tokens needed
+     * @param args arguments of user method call
      * @return {@link Entry} represents this call
      * @throws BlockException if any rule's threshold is exceeded
      */
-    public Entry entry(ResourceWrapper resourceWrapper, int count, Object... args) throws BlockException
-    {
+    public Entry entry(ResourceWrapper resourceWrapper, int count, Object... args) throws BlockException {
         return entryWithPriority(resourceWrapper, count, false, args);
     }
 
@@ -238,19 +219,14 @@ public class CtSph implements Sph
      * @param resourceWrapper target resource
      * @return {@link ProcessorSlotChain} of the resource
      */
-    ProcessorSlot<Object> lookProcessChain(ResourceWrapper resourceWrapper)
-    {
+    ProcessorSlot<Object> lookProcessChain(ResourceWrapper resourceWrapper) {
         ProcessorSlotChain chain = chainMap.get(resourceWrapper);
-        if (chain == null)
-        {
-            synchronized (LOCK)
-            {
+        if (chain == null) {
+            synchronized (LOCK) {
                 chain = chainMap.get(resourceWrapper);
-                if (chain == null)
-                {
+                if (chain == null) {
                     // Entry size limit. 6000
-                    if (chainMap.size() >= Constants.MAX_SLOT_CHAIN_SIZE)
-                    {
+                    if (chainMap.size() >= Constants.MAX_SLOT_CHAIN_SIZE) {
                         return null;
                     }
 
@@ -271,8 +247,7 @@ public class CtSph implements Sph
      * @return size of created slot chains
      * @since 0.2.0
      */
-    public static int entrySize()
-    {
+    public static int entrySize() {
         return chainMap.size();
     }
 
@@ -281,8 +256,7 @@ public class CtSph implements Sph
      *
      * @since 0.2.0
      */
-    static void resetChainMap()
-    {
+    static void resetChainMap() {
         chainMap.clear();
     }
 
@@ -291,138 +265,119 @@ public class CtSph implements Sph
      *
      * @since 0.2.0
      */
-    static Map<ResourceWrapper, ProcessorSlotChain> getChainMap()
-    {
+    static Map<ResourceWrapper, ProcessorSlotChain> getChainMap() {
         return chainMap;
     }
 
     /**
      * This class is used for skip context name checking.
      */
-    private final static class InternalContextUtil extends ContextUtil
-    {
-        static Context internalEnter(String name)
-        {
+    private final static class InternalContextUtil extends ContextUtil {
+
+        static Context internalEnter(String name) {
             return trueEnter(name, "");
         }
 
-        static Context internalEnter(String name, String origin)
-        {
+        static Context internalEnter(String name, String origin) {
             return trueEnter(name, origin);
         }
     }
 
     @Override
-    public Entry entry(String name) throws BlockException
-    {
+    public Entry entry(String name) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, EntryType.OUT);
         return entry(resource, 1, OBJECTS0);
     }
 
     @Override
-    public Entry entry(Method method) throws BlockException
-    {
+    public Entry entry(Method method) throws BlockException {
         MethodResourceWrapper resource = new MethodResourceWrapper(method, EntryType.OUT);
         return entry(resource, 1, OBJECTS0);
     }
 
     @Override
-    public Entry entry(Method method, EntryType type) throws BlockException
-    {
+    public Entry entry(Method method, EntryType type) throws BlockException {
         MethodResourceWrapper resource = new MethodResourceWrapper(method, type);
         return entry(resource, 1, OBJECTS0);
     }
 
     @Override
-    public Entry entry(String name, EntryType type) throws BlockException
-    {
+    public Entry entry(String name, EntryType type) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return entry(resource, 1, OBJECTS0);
     }
 
     @Override
-    public Entry entry(Method method, EntryType type, int count) throws BlockException
-    {
+    public Entry entry(Method method, EntryType type, int count) throws BlockException {
         MethodResourceWrapper resource = new MethodResourceWrapper(method, type);
         return entry(resource, count, OBJECTS0);
     }
 
     @Override
-    public Entry entry(String name, EntryType type, int count) throws BlockException
-    {
+    public Entry entry(String name, EntryType type, int count) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return entry(resource, count, OBJECTS0);
     }
 
     @Override
-    public Entry entry(Method method, int count) throws BlockException
-    {
+    public Entry entry(Method method, int count) throws BlockException {
         MethodResourceWrapper resource = new MethodResourceWrapper(method, EntryType.OUT);
         return entry(resource, count, OBJECTS0);
     }
 
     @Override
-    public Entry entry(String name, int count) throws BlockException
-    {
+    public Entry entry(String name, int count) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, EntryType.OUT);
         return entry(resource, count, OBJECTS0);
     }
 
     @Override
-    public Entry entry(Method method, EntryType type, int count, Object... args) throws BlockException
-    {
+    public Entry entry(Method method, EntryType type, int count, Object... args) throws BlockException {
         MethodResourceWrapper resource = new MethodResourceWrapper(method, type);
         return entry(resource, count, args);
     }
 
     @Override
-    public Entry entry(String name, EntryType type, int count, Object... args) throws BlockException
-    {
+    public Entry entry(String name, EntryType type, int count, Object... args) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return entry(resource, count, args);
     }
 
     @Override
-    public AsyncEntry asyncEntry(String name, EntryType type, int count, Object... args) throws BlockException
-    {
+    public AsyncEntry asyncEntry(String name, EntryType type, int count, Object... args) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return asyncEntryInternal(resource, count, args);
     }
 
     @Override
-    public Entry entryWithPriority(String name, EntryType type, int count, boolean prioritized) throws BlockException
-    {
+    public Entry entryWithPriority(String name, EntryType type, int count, boolean prioritized) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return entryWithPriority(resource, count, prioritized);
     }
 
     @Override
     public Entry entryWithPriority(String name, EntryType type, int count, boolean prioritized, Object... args)
-            throws BlockException
-    {
+        throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return entryWithPriority(resource, count, prioritized, args);
     }
 
     @Override
     public Entry entryWithType(String name, int resourceType, EntryType entryType, int count, Object[] args)
-            throws BlockException
-    {
+        throws BlockException {
         return entryWithType(name, resourceType, entryType, count, false, args);
     }
 
     @Override
     public Entry entryWithType(String name, int resourceType, EntryType entryType, int count, boolean prioritized,
-                               Object[] args) throws BlockException
-    {
+        Object[] args) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, entryType, resourceType);
         return entryWithPriority(resource, count, prioritized, args);
     }
 
     @Override
     public AsyncEntry asyncEntryWithType(String name, int resourceType, EntryType entryType, int count,
-                                         boolean prioritized, Object[] args) throws BlockException
-    {
+        boolean prioritized, Object[] args) throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, entryType, resourceType);
         return asyncEntryWithPriorityInternal(resource, count, prioritized, args);
     }

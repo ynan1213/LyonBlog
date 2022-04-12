@@ -15,14 +15,6 @@
  */
 package com.alibaba.csp.sentinel.slots.block.degrade;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.alibaba.csp.sentinel.config.SentinelConfig;
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.log.RecordLog;
@@ -35,23 +27,27 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.csp.sentinel.util.StringUtil;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author youji.zj
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public final class DegradeRuleManager
-{
+public final class DegradeRuleManager {
 
     private static final Map<String, Set<DegradeRule>> degradeRules = new ConcurrentHashMap<>();
 
     private static final RulePropertyListener LISTENER = new RulePropertyListener();
-    private static SentinelProperty<List<DegradeRule>> currentProperty
-            = new DynamicSentinelProperty<>();
+    private static SentinelProperty<List<DegradeRule>> currentProperty = new DynamicSentinelProperty<>();
 
-    static
-    {
+    static {
         currentProperty.addListener(LISTENER);
     }
 
@@ -61,11 +57,9 @@ public final class DegradeRuleManager
      *
      * @param property the property to listen.
      */
-    public static void register2Property(SentinelProperty<List<DegradeRule>> property)
-    {
+    public static void register2Property(SentinelProperty<List<DegradeRule>> property) {
         AssertUtil.notNull(property, "property cannot be null");
-        synchronized (LISTENER)
-        {
+        synchronized (LISTENER) {
             RecordLog.info("[DegradeRuleManager] Registering new property to degrade rule manager");
             currentProperty.removeListener(LISTENER);
             property.addListener(LISTENER);
@@ -73,27 +67,21 @@ public final class DegradeRuleManager
         }
     }
 
-    public static void checkDegrade(ResourceWrapper resource, Context context, DefaultNode node, int count) throws BlockException
-    {
+    public static void checkDegrade(ResourceWrapper resource, Context context, DefaultNode node, int count) throws BlockException {
         Set<DegradeRule> rules = degradeRules.get(resource.getName());
-        if (rules == null)
-        {
+        if (rules == null) {
             return;
         }
-
-        for (DegradeRule rule : rules)
-        {
-            if (!rule.passCheck(context, node, count))
-            {
+        // 依次遍历所有的降级规则，所有的通过才算通过，有一条未通过立即抛出异常
+        for (DegradeRule rule : rules) {
+            if (!rule.passCheck(context, node, count)) {
                 throw new DegradeException(rule.getLimitApp(), rule);
             }
         }
     }
 
-    public static boolean hasConfig(String resource)
-    {
-        if (resource == null)
-        {
+    public static boolean hasConfig(String resource) {
+        if (resource == null) {
             return false;
         }
         return degradeRules.containsKey(resource);
@@ -104,11 +92,9 @@ public final class DegradeRuleManager
      *
      * @return a new copy of the rules.
      */
-    public static List<DegradeRule> getRules()
-    {
+    public static List<DegradeRule> getRules() {
         List<DegradeRule> rules = new ArrayList<>();
-        for (Map.Entry<String, Set<DegradeRule>> entry : degradeRules.entrySet())
-        {
+        for (Map.Entry<String, Set<DegradeRule>> entry : degradeRules.entrySet()) {
             rules.addAll(entry.getValue());
         }
         return rules;
@@ -119,13 +105,10 @@ public final class DegradeRuleManager
      *
      * @param rules new rules to load.
      */
-    public static void loadRules(List<DegradeRule> rules)
-    {
-        try
-        {
+    public static void loadRules(List<DegradeRule> rules) {
+        try {
             currentProperty.updateValue(rules);
-        } catch (Throwable e)
-        {
+        } catch (Throwable e) {
             RecordLog.warn("[DegradeRuleManager] Unexpected error when loading degrade rules", e);
         }
     }
@@ -134,54 +117,43 @@ public final class DegradeRuleManager
      * Set degrade rules for provided resource. Former rules of the resource will be replaced.
      *
      * @param resourceName valid resource name
-     * @param rules        new rule set to load
+     * @param rules new rule set to load
      * @return whether the rules has actually been updated
      * @since 1.5.0
      */
-    public static boolean setRulesForResource(String resourceName, Set<DegradeRule> rules)
-    {
+    public static boolean setRulesForResource(String resourceName, Set<DegradeRule> rules) {
         AssertUtil.notEmpty(resourceName, "resourceName cannot be empty");
-        try
-        {
+        try {
             Map<String, Set<DegradeRule>> newRuleMap = new HashMap<>(degradeRules);
-            if (rules == null)
-            {
+            if (rules == null) {
                 newRuleMap.remove(resourceName);
-            } else
-            {
+            } else {
                 Set<DegradeRule> newSet = new HashSet<>();
-                for (DegradeRule rule : rules)
-                {
-                    if (isValidRule(rule) && resourceName.equals(rule.getResource()))
-                    {
+                for (DegradeRule rule : rules) {
+                    if (isValidRule(rule) && resourceName.equals(rule.getResource())) {
                         newSet.add(rule);
                     }
                 }
                 newRuleMap.put(resourceName, newSet);
             }
             List<DegradeRule> allRules = new ArrayList<>();
-            for (Set<DegradeRule> set : newRuleMap.values())
-            {
+            for (Set<DegradeRule> set : newRuleMap.values()) {
                 allRules.addAll(set);
             }
             return currentProperty.updateValue(allRules);
-        } catch (Throwable e)
-        {
+        } catch (Throwable e) {
             RecordLog.warn(
-                    "[DegradeRuleManager] Unexpected error when setting degrade rules for resource: " + resourceName, e);
+                "[DegradeRuleManager] Unexpected error when setting degrade rules for resource: " + resourceName, e);
             return false;
         }
     }
 
-    private static class RulePropertyListener implements PropertyListener<List<DegradeRule>>
-    {
+    private static class RulePropertyListener implements PropertyListener<List<DegradeRule>> {
 
         @Override
-        public void configUpdate(List<DegradeRule> conf)
-        {
+        public void configUpdate(List<DegradeRule> conf) {
             Map<String, Set<DegradeRule>> rules = loadDegradeConf(conf);
-            if (rules != null)
-            {
+            if (rules != null) {
                 degradeRules.clear();
                 degradeRules.putAll(rules);
             }
@@ -189,44 +161,36 @@ public final class DegradeRuleManager
         }
 
         @Override
-        public void configLoad(List<DegradeRule> conf)
-        {
+        public void configLoad(List<DegradeRule> conf) {
             Map<String, Set<DegradeRule>> rules = loadDegradeConf(conf);
-            if (rules != null)
-            {
+            if (rules != null) {
                 degradeRules.clear();
                 degradeRules.putAll(rules);
             }
             RecordLog.info("[DegradeRuleManager] Degrade rules loaded: " + degradeRules);
         }
 
-        private Map<String, Set<DegradeRule>> loadDegradeConf(List<DegradeRule> list)
-        {
+        private Map<String, Set<DegradeRule>> loadDegradeConf(List<DegradeRule> list) {
             Map<String, Set<DegradeRule>> newRuleMap = new ConcurrentHashMap<>();
 
-            if (list == null || list.isEmpty())
-            {
+            if (list == null || list.isEmpty()) {
                 return newRuleMap;
             }
 
-            for (DegradeRule rule : list)
-            {
-                if (!isValidRule(rule))
-                {
+            for (DegradeRule rule : list) {
+                if (!isValidRule(rule)) {
                     RecordLog.warn(
-                            "[DegradeRuleManager] Ignoring invalid degrade rule when loading new rules: " + rule);
+                        "[DegradeRuleManager] Ignoring invalid degrade rule when loading new rules: " + rule);
                     continue;
                 }
 
-                if (StringUtil.isBlank(rule.getLimitApp()))
-                {
+                if (StringUtil.isBlank(rule.getLimitApp())) {
                     rule.setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
                 }
 
                 String identity = rule.getResource();
                 Set<DegradeRule> ruleSet = newRuleMap.get(identity);
-                if (ruleSet == null)
-                {
+                if (ruleSet == null) {
                     ruleSet = new HashSet<>();
                     newRuleMap.put(identity, ruleSet);
                 }
@@ -237,33 +201,27 @@ public final class DegradeRuleManager
         }
     }
 
-    public static boolean isValidRule(DegradeRule rule)
-    {
+    public static boolean isValidRule(DegradeRule rule) {
         boolean baseValid = rule != null && !StringUtil.isBlank(rule.getResource())
-                && rule.getCount() >= 0 && rule.getTimeWindow() > 0;
-        if (!baseValid)
-        {
+            && rule.getCount() >= 0 && rule.getTimeWindow() > 0;
+        if (!baseValid) {
             return false;
         }
         int maxAllowedRt = SentinelConfig.statisticMaxRt();
-        if (rule.getGrade() == RuleConstant.DEGRADE_GRADE_RT)
-        {
-            if (rule.getRtSlowRequestAmount() <= 0)
-            {
+        if (rule.getGrade() == RuleConstant.DEGRADE_GRADE_RT) {
+            if (rule.getRtSlowRequestAmount() <= 0) {
                 return false;
             }
             // Warn for RT mode that exceeds the {@code TIME_DROP_VALVE}.
-            if (rule.getCount() > maxAllowedRt)
-            {
+            if (rule.getCount() > maxAllowedRt) {
                 RecordLog.warn(String.format("[DegradeRuleManager] WARN: setting large RT threshold (%.1f ms)"
-                                + " in RT mode will not take effect since it exceeds the max allowed value (%d ms)",
-                        rule.getCount(), maxAllowedRt));
+                        + " in RT mode will not take effect since it exceeds the max allowed value (%d ms)",
+                    rule.getCount(), maxAllowedRt));
             }
         }
 
         // Check exception ratio mode.
-        if (rule.getGrade() == RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO)
-        {
+        if (rule.getGrade() == RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO) {
             return rule.getCount() <= 1 && rule.getMinRequestAmount() > 0;
         }
         return true;

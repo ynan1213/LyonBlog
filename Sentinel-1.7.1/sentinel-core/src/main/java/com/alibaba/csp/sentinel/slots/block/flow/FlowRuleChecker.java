@@ -15,14 +15,12 @@
  */
 package com.alibaba.csp.sentinel.slots.block.flow;
 
-import java.util.Collection;
-
 import com.alibaba.csp.sentinel.cluster.ClusterStateManager;
-import com.alibaba.csp.sentinel.cluster.server.EmbeddedClusterTokenServerProvider;
-import com.alibaba.csp.sentinel.cluster.client.TokenClientProvider;
-import com.alibaba.csp.sentinel.cluster.TokenResultStatus;
 import com.alibaba.csp.sentinel.cluster.TokenResult;
+import com.alibaba.csp.sentinel.cluster.TokenResultStatus;
 import com.alibaba.csp.sentinel.cluster.TokenService;
+import com.alibaba.csp.sentinel.cluster.client.TokenClientProvider;
+import com.alibaba.csp.sentinel.cluster.server.EmbeddedClusterTokenServerProvider;
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.log.RecordLog;
 import com.alibaba.csp.sentinel.node.DefaultNode;
@@ -33,57 +31,50 @@ import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.slots.clusterbuilder.ClusterBuilderSlot;
 import com.alibaba.csp.sentinel.util.StringUtil;
 import com.alibaba.csp.sentinel.util.function.Function;
+import java.util.Collection;
 
 /**
  * Rule checker for flow control rules.
  *
  * @author Eric Zhao
  */
-public class FlowRuleChecker
-{
+public class FlowRuleChecker {
 
-    public void checkFlow(Function<String, Collection<FlowRule>> ruleProvider, ResourceWrapper resource, Context context, DefaultNode node, int count, boolean prioritized) throws BlockException
-    {
-        if (ruleProvider == null || resource == null)
-        {
+    public void checkFlow(Function<String, Collection<FlowRule>> ruleProvider, ResourceWrapper resource, Context context, DefaultNode node,
+        int count, boolean prioritized) throws BlockException {
+        if (ruleProvider == null || resource == null) {
             return;
         }
 
+        // 根据资源名称获取流控规则，内部实际是 FlowRuleManager.getFlowRuleMap()
         // 同一个资源可以创建多条限流规则，对该资源的所有限流规则依次遍历，有一条不通过则抛异常
         Collection<FlowRule> rules = ruleProvider.apply(resource.getName());
-        if (rules != null)
-        {
-            for (FlowRule rule : rules)
-            {
-                if (!canPassCheck(rule, context, node, count, prioritized))
-                {
+        if (rules != null) {
+            for (FlowRule rule : rules) {
+                if (!canPassCheck(rule, context, node, count, prioritized)) {
                     throw new FlowException(rule.getLimitApp(), rule);
                 }
             }
         }
     }
 
-    public boolean canPassCheck(/*@NonNull*/ FlowRule rule, Context context, DefaultNode node, int acquireCount)
-    {
+    public boolean canPassCheck(/*@NonNull*/ FlowRule rule, Context context, DefaultNode node, int acquireCount) {
         return canPassCheck(rule, context, node, acquireCount, false);
     }
 
-    public boolean canPassCheck(/*@NonNull*/ FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized)
-    {
+    public boolean canPassCheck(/*@NonNull*/ FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized) {
         /**
          * limitApp是页面上的来源应用，默认是default，表示接收所有的应用，
          * 这里如果为空则默认通过，因为代码中约定了default是代表所有应用，所以空值为非法值，
          * 这里为什么不把default或者空值当做代表所有应用的限流，可能是因为空值还包括规则字段丢失的情况，应该算作异常情况
          */
         String limitApp = rule.getLimitApp();
-        if (limitApp == null)
-        {
+        if (limitApp == null) {
             return true;
         }
 
         // 集群模式
-        if (rule.isClusterMode())
-        {
+        if (rule.isClusterMode()) {
             return passClusterCheck(rule, context, node, acquireCount, prioritized);
         }
 
@@ -91,41 +82,34 @@ public class FlowRuleChecker
         return passLocalCheck(rule, context, node, acquireCount, prioritized);
     }
 
-    private static boolean passLocalCheck(FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized)
-    {
+    private static boolean passLocalCheck(FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized) {
         // 根据不同情况选择不同Node
         Node selectedNode = selectNodeByRequesterAndStrategy(rule, context, node);
-        if (selectedNode == null)
-        {
+        if (selectedNode == null) {
             // 没有匹配，表示不做限流
             return true;
         }
         return rule.getRater().canPass(selectedNode, acquireCount, prioritized);
     }
 
-    static Node selectReferenceNode(FlowRule rule, Context context, DefaultNode node)
-    {
+    static Node selectReferenceNode(FlowRule rule, Context context, DefaultNode node) {
         String refResource = rule.getRefResource();
         int strategy = rule.getStrategy();
 
-        if (StringUtil.isEmpty(refResource))
-        {
+        if (StringUtil.isEmpty(refResource)) {
             return null;
         }
 
         // 如果流控模式为 RuleConstant.STRATEGY_RELATE(关联)，则从集群环境中获取对应关联资源所代表的 Node，
         // ClusterBuilderSlot会收集每一个资源的实时统计信息
-        if (strategy == RuleConstant.STRATEGY_RELATE)
-        {
+        if (strategy == RuleConstant.STRATEGY_RELATE) {
             return ClusterBuilderSlot.getClusterNode(refResource);
         }
 
-        // 如果流控模式为 RuleConstant.STRATEGY_CHAIN(调用链)，则判断当前调用上下文的入口资源与规则配置的是否一样，
+        // 如果流控模式为 RuleConstant.STRATEGY_CHAIN(链路)，则判断当前调用上下文的入口资源与规则配置的是否一样，
         // 如果是，则返回入口资源对应的 Node，否则返回 null，注意：返回空则该条流控规则直接通过。
-        if (strategy == RuleConstant.STRATEGY_CHAIN)
-        {
-            if (!refResource.equals(context.getName()))
-            {
+        if (strategy == RuleConstant.STRATEGY_CHAIN) {
+            if (!refResource.equals(context.getName())) {
                 return null;
             }
             return node;
@@ -134,14 +118,12 @@ public class FlowRuleChecker
         return null;
     }
 
-    private static boolean filterOrigin(String origin)
-    {
+    private static boolean filterOrigin(String origin) {
         // Origin cannot be `default` or `other`.
         return !RuleConstant.LIMIT_APP_DEFAULT.equals(origin) && !RuleConstant.LIMIT_APP_OTHER.equals(origin);
     }
 
-    static Node selectNodeByRequesterAndStrategy(/*@NonNull*/ FlowRule rule, Context context, DefaultNode node)
-    {
+    static Node selectNodeByRequesterAndStrategy(/*@NonNull*/ FlowRule rule, Context context, DefaultNode node) {
         /**
          * limitApp到这里了，不会为空，它的作用：
          * 1. default：表示不区分调用者，来自任何调用者的请求都将进行限流统计。如果这个资源名的调用总和超过了这条规则定义的阈值，则触发限流。
@@ -157,25 +139,21 @@ public class FlowRuleChecker
         // 本次请求的调用方，从当前上下文环境中获取，例如 dubbo 服务提供者，原始调用方为 dubbo 服务提供者的 application。
         String origin = context.getOrigin();
 
-        // 情形①：limitApp 不为default和other，并且等于 origin，表示针对特定的调用者，进入if
-        if (limitApp.equals(origin) && filterOrigin(origin))
-        {
+        // 情形①：limitApp 等于 origin，并且不等于default和other，并且表示针对特定的调用者，进入if
+        if (limitApp.equals(origin) && filterOrigin(origin)) {
             /**
              * 如果策略是STRATEGY_DIRECT(调用方限流），则限流节点是originNode；
              * 如果限流策略是STRATEGY_RELATE(关联限流），则限流节点是refResource的clusterNode；
              * 如果限流策略是STRATEGY_CHAIN(链路限流），并且refResource等于contextName，则限流节点就是node。
              */
-            if (strategy == RuleConstant.STRATEGY_DIRECT)
-            {
+            if (strategy == RuleConstant.STRATEGY_DIRECT) {
                 return context.getOriginNode();
             }
             return selectReferenceNode(rule, context, node);
 
             // 情形②：limitApp 等于 default，表示不区分调用者，来自任何调用者的请求都将进行限流统计。进入if
-        } else if (RuleConstant.LIMIT_APP_DEFAULT.equals(limitApp))
-        {
-            if (strategy == RuleConstant.STRATEGY_DIRECT)
-            {
+        } else if (RuleConstant.LIMIT_APP_DEFAULT.equals(limitApp)) {
+            if (strategy == RuleConstant.STRATEGY_DIRECT) {
                 return node.getClusterNode();
             }
             return selectReferenceNode(rule, context, node);
@@ -184,10 +162,8 @@ public class FlowRuleChecker
             //        1. origin为空，不会进入else if；
             //        2. 如果origin和任一rule的limitApp的匹配，表示不在other范围，也不会进入else if；
             //        3. 除了1.2，剩下的情况会进入else if
-        } else if (RuleConstant.LIMIT_APP_OTHER.equals(limitApp) && FlowRuleManager.isOtherOrigin(origin, rule.getResource()))
-        {
-            if (strategy == RuleConstant.STRATEGY_DIRECT)
-            {
+        } else if (RuleConstant.LIMIT_APP_OTHER.equals(limitApp) && FlowRuleManager.isOtherOrigin(origin, rule.getResource())) {
+            if (strategy == RuleConstant.STRATEGY_DIRECT) {
                 return context.getOriginNode();
             }
             return selectReferenceNode(rule, context, node);
@@ -199,10 +175,8 @@ public class FlowRuleChecker
         return null;
     }
 
-    private static boolean passClusterCheck(FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized)
-    {
-        try
-        {
+    private static boolean passClusterCheck(FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized) {
+        try {
             // 获取一个 TokenService 服务类。这里实现关键点：
             //      如果当前节点的角色为 CLIENT，返回的 TokenService 为 DefaultClusterTokenClient。
             //      如果当前节点的角色为 SERVER，返回的 TokenService 为 ClusterTokenServer，这里使用了SPI机制，
@@ -210,8 +184,7 @@ public class FlowRuleChecker
             TokenService clusterService = pickClusterService();
 
             // 如果无法获取到集群限流Token服务，如果该限流规则配置了可以退化为单机限流模式，则退化为单机限流
-            if (clusterService == null)
-            {
+            if (clusterService == null) {
                 return fallbackToLocalOrPass(rule, context, node, acquireCount, prioritized);
             }
 
@@ -222,8 +195,7 @@ public class FlowRuleChecker
 
             return applyTokenResult(result, rule, context, node, acquireCount, prioritized);
             // If client is absent, then fallback to local mode.
-        } catch (Throwable ex)
-        {
+        } catch (Throwable ex) {
             RecordLog.warn("[FlowRuleChecker] Request cluster token unexpected failed", ex);
         }
         // Fallback to local flow control when token client or server for this rule is not available.
@@ -231,44 +203,35 @@ public class FlowRuleChecker
         return fallbackToLocalOrPass(rule, context, node, acquireCount, prioritized);
     }
 
-    private static boolean fallbackToLocalOrPass(FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized)
-    {
-        if (rule.getClusterConfig().isFallbackToLocalWhenFail())
-        {
+    private static boolean fallbackToLocalOrPass(FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized) {
+        if (rule.getClusterConfig().isFallbackToLocalWhenFail()) {
             return passLocalCheck(rule, context, node, acquireCount, prioritized);
-        } else
-        {
+        } else {
             // The rule won't be activated, just pass.
             return true;
         }
     }
 
-    private static TokenService pickClusterService()
-    {
-        if (ClusterStateManager.isClient())
-        {
+    private static TokenService pickClusterService() {
+        if (ClusterStateManager.isClient()) {
             return TokenClientProvider.getClient();
         }
-        if (ClusterStateManager.isServer())
-        {
+        if (ClusterStateManager.isServer()) {
             return EmbeddedClusterTokenServerProvider.getServer();
         }
         return null;
     }
 
-    private static boolean applyTokenResult(/*@NonNull*/ TokenResult result, FlowRule rule, Context context, DefaultNode node, int acquireCount, boolean prioritized)
-    {
-        switch (result.getStatus())
-        {
+    private static boolean applyTokenResult(/*@NonNull*/ TokenResult result, FlowRule rule, Context context, DefaultNode node,
+        int acquireCount, boolean prioritized) {
+        switch (result.getStatus()) {
             case TokenResultStatus.OK:
                 return true;
             case TokenResultStatus.SHOULD_WAIT:
                 // Wait for next tick.
-                try
-                {
+                try {
                     Thread.sleep(result.getWaitInMs());
-                } catch (InterruptedException e)
-                {
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 return true;

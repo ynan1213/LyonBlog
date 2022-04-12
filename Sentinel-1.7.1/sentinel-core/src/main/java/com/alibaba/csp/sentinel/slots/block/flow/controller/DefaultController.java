@@ -28,8 +28,7 @@ import com.alibaba.csp.sentinel.util.TimeUtil;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public class DefaultController implements TrafficShapingController
-{
+public class DefaultController implements TrafficShapingController {
 
     private static final int DEFAULT_AVG_USED_TOKENS = 0;
 
@@ -38,28 +37,23 @@ public class DefaultController implements TrafficShapingController
     // 就是 FlowRule 的 grade
     private int grade;
 
-    public DefaultController(double count, int grade)
-    {
+    public DefaultController(double count, int grade) {
         this.count = count;
         this.grade = grade;
     }
 
     @Override
-    public boolean canPass(Node node, int acquireCount)
-    {
+    public boolean canPass(Node node, int acquireCount) {
         return canPass(node, acquireCount, false);
     }
 
     @Override
-    public boolean canPass(Node node, int acquireCount, boolean prioritized)
-    {
+    public boolean canPass(Node node, int acquireCount, boolean prioritized) {
         // 当前时间窗口内已创建的线程数量(FLOW_GRADE_THREAD) 或 已通过的请求个数(FLOW_GRADE_QPS)
         int curCount = avgUsedTokens(node);
-        if (curCount + acquireCount > count)
-        {
+        if (curCount + acquireCount > count) {
             // 如果该请求存在优先级，即 prioritized 设置为 true，并且流控类型为基于QPS进行限流，则进入if，否则直接返回false
-            if (prioritized && grade == RuleConstant.FLOW_GRADE_QPS)
-            {
+            if (prioritized && grade == RuleConstant.FLOW_GRADE_QPS) {
                 long currentTime;
                 long waitInMs;
                 currentTime = TimeUtil.currentTimeMillis();
@@ -69,8 +63,7 @@ public class DefaultController implements TrafficShapingController
                 waitInMs = node.tryOccupyNext(currentTime, acquireCount, count);
 
                 // 如果 waitInMs 小于抢占的最大超时时间，则在下一个时间窗口中增加对应令牌数，并且线程将sleep
-                if (waitInMs < OccupyTimeoutProperty.getOccupyTimeout())
-                {
+                if (waitInMs < OccupyTimeoutProperty.getOccupyTimeout()) {
                     node.addWaitingRequest(currentTime + waitInMs, acquireCount);
                     node.addOccupiedPass(acquireCount);
                     sleep(waitInMs);
@@ -87,22 +80,17 @@ public class DefaultController implements TrafficShapingController
         return true;
     }
 
-    private int avgUsedTokens(Node node)
-    {
-        if (node == null)
-        {
+    private int avgUsedTokens(Node node) {
+        if (node == null) {
             return DEFAULT_AVG_USED_TOKENS;
         }
         return grade == RuleConstant.FLOW_GRADE_THREAD ? node.curThreadNum() : (int) (node.passQps());
     }
 
-    private void sleep(long timeMillis)
-    {
-        try
-        {
+    private void sleep(long timeMillis) {
+        try {
             Thread.sleep(timeMillis);
-        } catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             // Ignore.
         }
     }

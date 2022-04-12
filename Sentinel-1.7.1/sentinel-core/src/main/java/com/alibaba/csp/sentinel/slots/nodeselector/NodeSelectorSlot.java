@@ -22,7 +22,6 @@ import com.alibaba.csp.sentinel.node.DefaultNode;
 import com.alibaba.csp.sentinel.node.EntranceNode;
 import com.alibaba.csp.sentinel.slotchain.AbstractLinkedProcessorSlot;
 import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,16 +121,16 @@ import java.util.Map;
  * @see EntranceNode
  * @see ContextUtil
  */
-public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object>
-{
+public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
+
     /**
      * {@link DefaultNode}s of the same resource in different context.
      */
     private volatile Map<String, DefaultNode> map = new HashMap<String, DefaultNode>(10);
 
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, Object obj, int count, boolean prioritized, Object... args) throws Throwable
-    {
+    public void entry(Context context, ResourceWrapper resourceWrapper, Object obj, int count, boolean prioritized, Object... args)
+        throws Throwable {
         /*
          * It's interesting that we use context name rather resource name as the map key.
          *
@@ -162,13 +161,10 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object>
          *   4. 不同的context name，不同的 resource name，不会共享同一个 DefaultNode
          */
         DefaultNode node = map.get(context.getName());
-        if (node == null)
-        {
-            synchronized (this)
-            {
+        if (node == null) {
+            synchronized (this) {
                 node = map.get(context.getName());
-                if (node == null)
-                {
+                if (node == null) {
                     node = new DefaultNode(resourceWrapper, null);
                     HashMap<String, DefaultNode> cacheMap = new HashMap<String, DefaultNode>(map.size());
                     cacheMap.putAll(map);
@@ -184,12 +180,12 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object>
             }
         }
         context.setCurNode(node);
+        // DefaultNode 往后传
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         fireExit(context, resourceWrapper, count, args);
     }
 }

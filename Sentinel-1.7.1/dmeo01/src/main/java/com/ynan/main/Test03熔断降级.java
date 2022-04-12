@@ -7,9 +7,6 @@ import com.alibaba.csp.sentinel.slots.block.RuleConstant;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRuleManager;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
-import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
-import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -19,10 +16,9 @@ import java.util.concurrent.TimeUnit;
  * @create 2021/7/10 17:37
  * @description
  */
-public class Test03熔断降级
-{
-    public static void main(String[] args) throws Exception
-    {
+public class Test03熔断降级 {
+
+    public static void main(String[] args) throws Exception {
         List<DegradeRule> rules = new ArrayList<>();
 
         DegradeRule rule = new DegradeRule();
@@ -46,13 +42,10 @@ public class Test03熔断降级
 
         ContextUtil.enter("context-01", "appA");
 
-        while (true)
-        {
-            try (Entry entry = SphU.entry("HelloWorld"))
-            {
+        while (true) {
+            try (Entry entry = SphU.entry("HelloWorld")) {
                 System.out.println("hello world");
-            } catch (FlowException e)
-            {
+            } catch (FlowException e) {
                 System.out.println("发生了限流控制：" + e.getMessage());
             }
             TimeUnit.MILLISECONDS.sleep(100);

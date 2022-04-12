@@ -49,7 +49,9 @@ public final class RuleConstant {
      */
     public static final int DEGRADE_GRADE_EXCEPTION_COUNT = 2;
 
-    //
+    /**
+     * rt >= 设定的阈值，并不会立即进入降级，而是在接下来的 DEGRADE_DEFAULT_SLOW_REQUEST_AMOUNT 次内如果每次均 rt >= 设定的阈值，才会进入降级
+     */
     public static final int DEGRADE_DEFAULT_SLOW_REQUEST_AMOUNT = 5;
     public static final int DEGRADE_DEFAULT_MIN_REQUEST_AMOUNT = 5;
 

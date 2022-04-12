@@ -3,15 +3,18 @@ package com.ynan.main;
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.context.ContextUtil;
-import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.RuleConstant;
-import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
-
+import com.alibaba.csp.sentinel.slots.statistic.base.LongAdder;
+import com.alibaba.csp.sentinel.util.TimeUtil;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -19,10 +22,9 @@ import java.util.concurrent.TimeUnit;
  * @create 2021/7/10 17:37
  * @description
  */
-public class Test02流量控制
-{
-    public static void main(String[] args) throws Exception
-    {
+public class Test02流量控制 {
+
+    public static void main(String[] args) throws Exception {
         /**
          * 1. 同一个资源可以创建多条限流规则。FlowSlot 会对该资源的所有限流规则依次遍历，直到有规则触发限流或者所有规则遍历完毕。
          * 2. 限流的直接表现是在执行的时候抛出 FlowException 异常。FlowException 是 BlockException 的子类
@@ -51,16 +53,10 @@ public class Test02流量控制
 
         ContextUtil.enter("context-01", "appA");
 
-        while (true)
-        {
-            try (Entry entry = SphU.entry("HelloWorld"))
-            {
-                System.out.println("hello world");
-            } catch (FlowException e)
-            {
-                System.out.println("发生了限流控制：" + e.getMessage());
-            }
-            TimeUnit.MILLISECONDS.sleep(100);
+        try (Entry entry = SphU.entry("HelloWorld")) {
+            System.out.println("hello world");
+        } catch (FlowException e) {
+            System.out.println("发生了限流控制：" + e.getMessage());
         }
     }
 }

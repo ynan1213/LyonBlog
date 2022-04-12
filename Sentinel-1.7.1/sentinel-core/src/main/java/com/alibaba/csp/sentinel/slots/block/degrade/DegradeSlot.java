@@ -26,20 +26,17 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
  *
  * @author leyou
  */
-public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode>
-{
+public class DegradeSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args) throws Throwable
-    {
-        // 根据前面统计好的信息，与设置的降级规则进行匹配校验，如果规则校验不通过则进行降级
+    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args)
+        throws Throwable {
         DegradeRuleManager.checkDegrade(resourceWrapper, context, node, count);
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         fireExit(context, resourceWrapper, count, args);
     }
 }

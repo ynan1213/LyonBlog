@@ -88,12 +88,14 @@ public class MetricWriter {
         this(singleFileSize, 6);
     }
 
+    /**
+     * 构造器里面主要是创建文件夹，设置单个文件大小，总文件个数，设置时间
+     */
     public MetricWriter(long singleFileSize, int totalFileCount) {
         if (singleFileSize <= 0 || totalFileCount <= 0) {
             throw new IllegalArgumentException();
         }
-        RecordLog.info(
-            "[MetricWriter] Creating new MetricWriter, singleFileSize=" + singleFileSize + ", totalFileCount="
+        RecordLog.info("[MetricWriter] Creating new MetricWriter, singleFileSize=" + singleFileSize + ", totalFileCount="
                 + totalFileCount);
         this.baseDir = METRIC_BASE_DIR;
         File dir = new File(baseDir);

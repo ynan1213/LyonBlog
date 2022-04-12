@@ -28,16 +28,15 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-class CtEntry extends Entry
-{
+class CtEntry extends Entry {
+
     protected Entry parent = null;
     protected Entry child = null;
 
     protected ProcessorSlot<Object> chain;
     protected Context context;
 
-    CtEntry(ResourceWrapper resourceWrapper, ProcessorSlot<Object> chain, Context context)
-    {
+    CtEntry(ResourceWrapper resourceWrapper, ProcessorSlot<Object> chain, Context context) {
         super(resourceWrapper);
         this.chain = chain;
         this.context = context;
@@ -45,38 +44,30 @@ class CtEntry extends Entry
         setUpEntryFor(context);
     }
 
-    private void setUpEntryFor(Context context)
-    {
+    private void setUpEntryFor(Context context) {
         // The entry should not be associated to NullContext.
-        if (context instanceof NullContext)
-        {
+        if (context instanceof NullContext) {
             return;
         }
         this.parent = context.getCurEntry();
-        if (parent != null)
-        {
+        if (parent != null) {
             ((CtEntry) parent).child = this;
         }
         context.setCurEntry(this);
     }
 
     @Override
-    public void exit(int count, Object... args) throws ErrorEntryFreeException
-    {
+    public void exit(int count, Object... args) throws ErrorEntryFreeException {
         trueExit(count, args);
     }
 
-    protected void exitForContext(Context context, int count, Object... args) throws ErrorEntryFreeException
-    {
-        if (context != null)
-        {
+    protected void exitForContext(Context context, int count, Object... args) throws ErrorEntryFreeException {
+        if (context != null) {
             // Null context should exit without clean-up.
-            if (context instanceof NullContext)
-            {
+            if (context instanceof NullContext) {
                 return;
             }
-            if (context.getCurEntry() != this)
-            {
+            if (context.getCurEntry() != this) {
                 /**
                  * Entry a = SphU.entry("A");
                  * Entry b = SphU.entry("A");
@@ -87,30 +78,26 @@ class CtEntry extends Entry
                 String curEntryNameInContext = context.getCurEntry() == null ? null : context.getCurEntry().getResourceWrapper().getName();
                 // Clean previous call stack.
                 CtEntry e = (CtEntry) context.getCurEntry();
-                while (e != null)
-                {
+                while (e != null) {
                     e.exit(count, args);
                     e = (CtEntry) e.parent;
                 }
-                String errorMessage = String.format("The order of entry exit can't be paired with the order of entry , current entry in context: <%s>, but expected: <%s>", curEntryNameInContext, resourceWrapper.getName());
+                String errorMessage = String.format(
+                    "The order of entry exit can't be paired with the order of entry , current entry in context: <%s>, but expected: <%s>",
+                    curEntryNameInContext, resourceWrapper.getName());
                 throw new ErrorEntryFreeException(errorMessage);
-            } else
-            {
-                if (chain != null)
-                {
+            } else {
+                if (chain != null) {
                     chain.exit(context, resourceWrapper, count, args);
                 }
                 // Restore the call stack.
                 context.setCurEntry(parent);
-                if (parent != null)
-                {
+                if (parent != null) {
                     ((CtEntry) parent).child = null;
                 }
-                if (parent == null)
-                {
+                if (parent == null) {
                     // Default context (auto entered) will be exited automatically.
-                    if (ContextUtil.isDefaultContext(context))
-                    {
+                    if (ContextUtil.isDefaultContext(context)) {
                         ContextUtil.exit();
                     }
                 }
@@ -120,21 +107,18 @@ class CtEntry extends Entry
         }
     }
 
-    protected void clearEntryContext()
-    {
+    protected void clearEntryContext() {
         this.context = null;
     }
 
     @Override
-    protected Entry trueExit(int count, Object... args) throws ErrorEntryFreeException
-    {
+    protected Entry trueExit(int count, Object... args) throws ErrorEntryFreeException {
         exitForContext(context, count, args);
         return parent;
     }
 
     @Override
-    public Node getLastNode()
-    {
+    public Node getLastNode() {
         return parent == null ? null : parent.getCurNode();
     }
 }

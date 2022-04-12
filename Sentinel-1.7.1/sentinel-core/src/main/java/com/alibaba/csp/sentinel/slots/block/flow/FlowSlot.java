@@ -15,10 +15,6 @@
  */
 package com.alibaba.csp.sentinel.slots.block.flow;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import com.alibaba.csp.sentinel.context.Context;
 import com.alibaba.csp.sentinel.node.DefaultNode;
 import com.alibaba.csp.sentinel.slotchain.AbstractLinkedProcessorSlot;
@@ -26,6 +22,9 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.util.AssertUtil;
 import com.alibaba.csp.sentinel.util.function.Function;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -136,12 +135,11 @@ import com.alibaba.csp.sentinel.util.function.Function;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode>
-{
+public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
+
     private final FlowRuleChecker checker;
 
-    public FlowSlot()
-    {
+    public FlowSlot() {
         this(new FlowRuleChecker());
     }
 
@@ -151,37 +149,32 @@ public class FlowSlot extends AbstractLinkedProcessorSlot<DefaultNode>
      * @param checker flow rule checker
      * @since 1.6.1
      */
-    FlowSlot(FlowRuleChecker checker)
-    {
+    FlowSlot(FlowRuleChecker checker) {
         AssertUtil.notNull(checker, "flow checker should not be null");
         this.checker = checker;
     }
 
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args) throws Throwable
-    {
+    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args)
+        throws Throwable {
         // 根据前面统计好的信息，与设置的限流规则进行匹配校验，如果规则校验不通过则进行限流
         checkFlow(resourceWrapper, context, node, count, prioritized);
 
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 
-    void checkFlow(ResourceWrapper resource, Context context, DefaultNode node, int count, boolean prioritized) throws BlockException
-    {
+    void checkFlow(ResourceWrapper resource, Context context, DefaultNode node, int count, boolean prioritized) throws BlockException {
         checker.checkFlow(ruleProvider, resource, context, node, count, prioritized);
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         fireExit(context, resourceWrapper, count, args);
     }
 
-    private final Function<String, Collection<FlowRule>> ruleProvider = new Function<String, Collection<FlowRule>>()
-    {
+    private final Function<String, Collection<FlowRule>> ruleProvider = new Function<String, Collection<FlowRule>>() {
         @Override
-        public Collection<FlowRule> apply(String resource)
-        {
+        public Collection<FlowRule> apply(String resource) {
             // Flow rule map should not be null.
             Map<String, List<FlowRule>> flowRules = FlowRuleManager.getFlowRuleMap();
             return flowRules.get(resource);

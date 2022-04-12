@@ -15,11 +15,10 @@
  */
 package com.alibaba.csp.sentinel.slots.block.flow.controller;
 
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.alibaba.csp.sentinel.util.TimeUtil;
 import com.alibaba.csp.sentinel.node.Node;
 import com.alibaba.csp.sentinel.slots.block.flow.TrafficShapingController;
+import com.alibaba.csp.sentinel.util.TimeUtil;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * <p>
@@ -63,8 +62,7 @@ import com.alibaba.csp.sentinel.slots.block.flow.TrafficShapingController;
  *
  * 预热策略
  */
-public class WarmUpController implements TrafficShapingController
-{
+public class WarmUpController implements TrafficShapingController {
 
     protected double count;
     private int coldFactor;
@@ -75,21 +73,17 @@ public class WarmUpController implements TrafficShapingController
     protected AtomicLong storedTokens = new AtomicLong(0);
     protected AtomicLong lastFilledTime = new AtomicLong(0);
 
-    public WarmUpController(double count, int warmUpPeriodInSec, int coldFactor)
-    {
+    public WarmUpController(double count, int warmUpPeriodInSec, int coldFactor) {
         construct(count, warmUpPeriodInSec, coldFactor);
     }
 
-    public WarmUpController(double count, int warmUpPeriodInSec)
-    {
+    public WarmUpController(double count, int warmUpPeriodInSec) {
         construct(count, warmUpPeriodInSec, 3);
     }
 
-    private void construct(double count, int warmUpPeriodInSec, int coldFactor)
-    {
+    private void construct(double count, int warmUpPeriodInSec, int coldFactor) {
 
-        if (coldFactor <= 1)
-        {
+        if (coldFactor <= 1) {
             throw new IllegalArgumentException("Cold factor should be larger than 1");
         }
 
@@ -113,14 +107,12 @@ public class WarmUpController implements TrafficShapingController
     }
 
     @Override
-    public boolean canPass(Node node, int acquireCount)
-    {
+    public boolean canPass(Node node, int acquireCount) {
         return canPass(node, acquireCount, false);
     }
 
     @Override
-    public boolean canPass(Node node, int acquireCount, boolean prioritized)
-    {
+    public boolean canPass(Node node, int acquireCount, boolean prioritized) {
         long passQps = (long) node.passQps();
 
         long previousQps = (long) node.previousPassQps();
@@ -129,20 +121,16 @@ public class WarmUpController implements TrafficShapingController
         // 开始计算它的斜率
         // 如果进入了警戒线，开始调整他的qps
         long restToken = storedTokens.get();
-        if (restToken >= warningToken)
-        {
+        if (restToken >= warningToken) {
             long aboveToken = restToken - warningToken;
             // 消耗的速度要比warning快，但是要比慢
             // current interval = restToken*slope+1/count
             double warningQps = Math.nextUp(1.0 / (aboveToken * slope + 1.0 / count));
-            if (passQps + acquireCount <= warningQps)
-            {
+            if (passQps + acquireCount <= warningQps) {
                 return true;
             }
-        } else
-        {
-            if (passQps + acquireCount <= count)
-            {
+        } else {
+            if (passQps + acquireCount <= count) {
                 return true;
             }
         }
@@ -150,24 +138,20 @@ public class WarmUpController implements TrafficShapingController
         return false;
     }
 
-    protected void syncToken(long passQps)
-    {
+    protected void syncToken(long passQps) {
         long currentTime = TimeUtil.currentTimeMillis();
         currentTime = currentTime - currentTime % 1000;
         long oldLastFillTime = lastFilledTime.get();
-        if (currentTime <= oldLastFillTime)
-        {
+        if (currentTime <= oldLastFillTime) {
             return;
         }
 
         long oldValue = storedTokens.get();
         long newValue = coolDownTokens(currentTime, passQps);
 
-        if (storedTokens.compareAndSet(oldValue, newValue))
-        {
+        if (storedTokens.compareAndSet(oldValue, newValue)) {
             long currentValue = storedTokens.addAndGet(0 - passQps);
-            if (currentValue < 0)
-            {
+            if (currentValue < 0) {
                 storedTokens.set(0L);
             }
             lastFilledTime.set(currentTime);
@@ -175,20 +159,16 @@ public class WarmUpController implements TrafficShapingController
 
     }
 
-    private long coolDownTokens(long currentTime, long passQps)
-    {
+    private long coolDownTokens(long currentTime, long passQps) {
         long oldValue = storedTokens.get();
         long newValue = oldValue;
 
         // 添加令牌的判断前提条件:
         // 当令牌的消耗程度远远低于警戒线的时候
-        if (oldValue < warningToken)
-        {
+        if (oldValue < warningToken) {
             newValue = (long) (oldValue + (currentTime - lastFilledTime.get()) * count / 1000);
-        } else if (oldValue > warningToken)
-        {
-            if (passQps < (int) count / coldFactor)
-            {
+        } else if (oldValue > warningToken) {
+            if (passQps < (int) count / coldFactor) {
                 newValue = (long) (oldValue + (currentTime - lastFilledTime.get()) * count / 1000);
             }
         }

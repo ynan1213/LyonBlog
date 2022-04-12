@@ -15,10 +15,6 @@
  */
 package com.alibaba.csp.sentinel.context;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.alibaba.csp.sentinel.Constants;
 import com.alibaba.csp.sentinel.EntryType;
 import com.alibaba.csp.sentinel.SphO;
@@ -29,6 +25,9 @@ import com.alibaba.csp.sentinel.node.EntranceNode;
 import com.alibaba.csp.sentinel.node.Node;
 import com.alibaba.csp.sentinel.slotchain.StringResourceWrapper;
 import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Utility class to get or create {@link Context} in current thread.
@@ -42,8 +41,8 @@ import com.alibaba.csp.sentinel.slots.nodeselector.NodeSelectorSlot;
  * @author leyou(lihao)
  * @author Eric Zhao
  */
-public class ContextUtil
-{
+public class ContextUtil {
+
     /**
      * Store the context in ThreadLocal for easy access.
      */
@@ -57,14 +56,12 @@ public class ContextUtil
     private static final ReentrantLock LOCK = new ReentrantLock();
     private static final Context NULL_CONTEXT = new NullContext();
 
-    static
-    {
+    static {
         // Cache the entrance node for default context.
         initDefaultContext();
     }
 
-    private static void initDefaultContext()
-    {
+    private static void initDefaultContext() {
         // CONTEXT_DEFAULT_NAME：sentinel_default_context
         String defaultContextName = Constants.CONTEXT_DEFAULT_NAME;
         EntranceNode node = new EntranceNode(new StringResourceWrapper(defaultContextName, EntryType.IN), null);
@@ -76,10 +73,8 @@ public class ContextUtil
     /**
      * Not thread-safe, only for test.
      */
-    static void resetContextMap()
-    {
-        if (contextNameNodeMap != null)
-        {
+    static void resetContextMap() {
+        if (contextNameNodeMap != null) {
             RecordLog.warn("Context map cleared and reset to initial state");
             contextNameNodeMap.clear();
             initDefaultContext();
@@ -109,51 +104,40 @@ public class ContextUtil
      * Same resource in different context will count separately, see {@link NodeSelectorSlot}.
      * </p>
      *
-     * @param name   the context name
+     * @param name the context name
      * @param origin the origin of this invocation, usually the origin could be the Service
-     *               Consumer's app name. The origin is useful when we want to control different
-     *               invoker/consumer separately.
+     * Consumer's app name. The origin is useful when we want to control different
+     * invoker/consumer separately.
      * @return The invocation context of the current thread
      */
-    public static Context enter(String name, String origin)
-    {
+    public static Context enter(String name, String origin) {
         // 不能为 sentinel_default_context
-        if (Constants.CONTEXT_DEFAULT_NAME.equals(name))
-        {
+        if (Constants.CONTEXT_DEFAULT_NAME.equals(name)) {
             throw new ContextNameDefineException("The " + Constants.CONTEXT_DEFAULT_NAME + " can't be permit to defined!");
         }
         return trueEnter(name, origin);
     }
 
-    protected static Context trueEnter(String name, String origin)
-    {
+    protected static Context trueEnter(String name, String origin) {
         Context context = contextHolder.get();
-        if (context == null)
-        {
+        if (context == null) {
             Map<String, DefaultNode> localCacheNameMap = contextNameNodeMap;
             DefaultNode node = localCacheNameMap.get(name);
-            if (node == null)
-            {
+            if (node == null) {
                 // 大于 2000，代表什么意思呢？ 是线程数不能超过2000吗？
                 // localCacheNameMap的key为 context 的 name，不同线程创建Context但是name可以相同，所以2000不是线程数
-                if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE)
-                {
+                if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                     setNullContext();
                     return NULL_CONTEXT;
-                } else
-                {
-                    try
-                    {
+                } else {
+                    try {
                         LOCK.lock();
                         node = contextNameNodeMap.get(name);
-                        if (node == null)
-                        {
-                            if (contextNameNodeMap.size() > Constants.MAX_CONTEXT_NAME_SIZE)
-                            {
+                        if (node == null) {
+                            if (contextNameNodeMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                                 setNullContext();
                                 return NULL_CONTEXT;
-                            } else
-                            {
+                            } else {
                                 // 创建一个新的入口节点
                                 node = new EntranceNode(new StringResourceWrapper(name, EntryType.IN), null);
 
@@ -166,8 +150,7 @@ public class ContextUtil
                                 contextNameNodeMap = newMap;
                             }
                         }
-                    } finally
-                    {
+                    } finally {
                         LOCK.unlock();
                     }
                 }
@@ -183,13 +166,12 @@ public class ContextUtil
 
     private static boolean shouldWarn = true;
 
-    private static void setNullContext()
-    {
+    private static void setNullContext() {
         contextHolder.set(NULL_CONTEXT);
         // Don't need to be thread-safe.
-        if (shouldWarn)
-        {
-            RecordLog.warn("[SentinelStatusChecker] WARN: Amount of context exceeds the threshold " + Constants.MAX_CONTEXT_NAME_SIZE + ". Entries in new contexts will NOT take effect!");
+        if (shouldWarn) {
+            RecordLog.warn("[SentinelStatusChecker] WARN: Amount of context exceeds the threshold " + Constants.MAX_CONTEXT_NAME_SIZE
+                + ". Entries in new contexts will NOT take effect!");
             shouldWarn = false;
         }
     }
@@ -213,8 +195,7 @@ public class ContextUtil
      * @param name the context name
      * @return The invocation context of the current thread
      */
-    public static Context enter(String name)
-    {
+    public static Context enter(String name) {
         return enter(name, "");
     }
 
@@ -222,11 +203,9 @@ public class ContextUtil
      * Exit context of current thread, that is removing {@link Context} in the
      * ThreadLocal.
      */
-    public static void exit()
-    {
+    public static void exit() {
         Context context = contextHolder.get();
-        if (context != null && context.getCurEntry() == null)
-        {
+        if (context != null && context.getCurEntry() == null) {
             contextHolder.set(null);
         }
     }
@@ -237,8 +216,7 @@ public class ContextUtil
      * @return current size of context entrance node map
      * @since 0.2.0
      */
-    public static int contextSize()
-    {
+    public static int contextSize() {
         return contextNameNodeMap.size();
     }
 
@@ -249,10 +227,8 @@ public class ContextUtil
      * @return true if it is a default context, otherwise false
      * @since 0.2.0
      */
-    public static boolean isDefaultContext(Context context)
-    {
-        if (context == null)
-        {
+    public static boolean isDefaultContext(Context context) {
+        if (context == null) {
             return false;
         }
         return Constants.CONTEXT_DEFAULT_NAME.equals(context.getName());
@@ -264,8 +240,7 @@ public class ContextUtil
      * @return context of current thread. Null value will be return if current
      * thread does't have context.
      */
-    public static Context getContext()
-    {
+    public static Context getContext() {
         return contextHolder.get();
     }
 
@@ -283,14 +258,11 @@ public class ContextUtil
      * @return old context
      * @since 0.2.0
      */
-    static Context replaceContext(Context newContext)
-    {
+    static Context replaceContext(Context newContext) {
         Context backupContext = contextHolder.get();
-        if (newContext == null)
-        {
+        if (newContext == null) {
             contextHolder.remove();
-        } else
-        {
+        } else {
             contextHolder.set(newContext);
         }
         return backupContext;
@@ -301,17 +273,14 @@ public class ContextUtil
      * This is mainly designed for context switching (e.g. in asynchronous invocation).
      *
      * @param context the context
-     * @param f       lambda to run within the context
+     * @param f lambda to run within the context
      * @since 0.2.0
      */
-    public static void runOnContext(Context context, Runnable f)
-    {
+    public static void runOnContext(Context context, Runnable f) {
         Context curContext = replaceContext(context);
-        try
-        {
+        try {
             f.run();
-        } finally
-        {
+        } finally {
             replaceContext(curContext);
         }
     }

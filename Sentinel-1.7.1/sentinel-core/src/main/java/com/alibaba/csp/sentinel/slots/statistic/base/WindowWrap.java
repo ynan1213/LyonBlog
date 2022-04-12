@@ -22,8 +22,7 @@ package com.alibaba.csp.sentinel.slots.statistic.base;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public class WindowWrap<T>
-{
+public class WindowWrap<T> {
 
     /**
      * Time length of a single window bucket in milliseconds.
@@ -48,33 +47,28 @@ public class WindowWrap<T>
 
     /**
      * @param windowLengthInMs a single window bucket's time length in milliseconds.
-     * @param windowStart      the start timestamp of the window
-     * @param value            statistic data
+     * @param windowStart the start timestamp of the window
+     * @param value statistic data
      */
-    public WindowWrap(long windowLengthInMs, long windowStart, T value)
-    {
+    public WindowWrap(long windowLengthInMs, long windowStart, T value) {
         this.windowLengthInMs = windowLengthInMs;
         this.windowStart = windowStart;
         this.value = value;
     }
 
-    public long windowLength()
-    {
+    public long windowLength() {
         return windowLengthInMs;
     }
 
-    public long windowStart()
-    {
+    public long windowStart() {
         return windowStart;
     }
 
-    public T value()
-    {
+    public T value() {
         return value;
     }
 
-    public void setValue(T value)
-    {
+    public void setValue(T value) {
         this.value = value;
     }
 
@@ -84,8 +78,7 @@ public class WindowWrap<T>
      * @param startTime valid start timestamp
      * @return bucket after reset
      */
-    public WindowWrap<T> resetTo(long startTime)
-    {
+    public WindowWrap<T> resetTo(long startTime) {
         this.windowStart = startTime;
         return this;
     }
@@ -97,14 +90,12 @@ public class WindowWrap<T>
      * @return true if the given time is in current bucket, otherwise false
      * @since 1.5.0
      */
-    public boolean isTimeInWindow(long timeMillis)
-    {
+    public boolean isTimeInWindow(long timeMillis) {
         return windowStart <= timeMillis && timeMillis < windowStart + windowLengthInMs;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "WindowWrap{windowLengthInMs=" + windowLengthInMs + ", windowStart=" + windowStart + ", value=" + value + '}';
     }
 }

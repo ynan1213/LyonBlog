@@ -35,17 +35,14 @@ import com.alibaba.csp.sentinel.slots.block.RuleConstant;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
-public class FlowRule extends AbstractRule
-{
+public class FlowRule extends AbstractRule {
 
-    public FlowRule()
-    {
+    public FlowRule() {
         super();
         setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
     }
 
-    public FlowRule(String resourceName)
-    {
+    public FlowRule(String resourceName) {
         super();
         setResource(resourceName);
         setLimitApp(RuleConstant.LIMIT_APP_DEFAULT);
@@ -58,7 +55,8 @@ public class FlowRule extends AbstractRule
 
     /**
      * Flow control threshold count.
-     * 如果配置的是qps类型，字段则代表qps的值；如果配置的是线程数类型，字段则代表线程数
+     * 如果配置的是qps类型，字段则代表qps的值；
+     * 如果配置的是线程数类型，字段则代表线程数
      */
     private double count;
 
@@ -69,10 +67,10 @@ public class FlowRule extends AbstractRule
      * {@link RuleConstant#STRATEGY_RELATE} for relevant flow control (with relevant resource);
      * {@link RuleConstant#STRATEGY_CHAIN} for chain flow control (by entrance resource).
      *
-     * 直接（默认）：接口达到限流条件时，开启限流
-     * 关联：当关联的资源达到限流条件时，开启限流，适合做应用让步。例如为一个查询的接口添加关联流控，关联资源为一个更新的接口，
-     *       当更新的接口达到阈值时，开启查询接口的限流，为更新接口让步服务器资源。
-     * 链路：当从某个接口过来的资源达到限流条件时，开启限流
+     * 直接（默认）：接口达到限流条件时，开启限流;
+     * 关联：当关联的资源达到限流条件时，开启限流，适合做应用让步;
+     *      例如为一个查询的接口添加关联流控，关联资源为一个更新的接口，当更新的接口达到阈值时，开启查询接口的限流，为更新接口让步服务器资源。
+     * 链路：当从某个接口过来的资源达到限流条件时，开启限流;
      */
     private int strategy = RuleConstant.STRATEGY_DIRECT;
 
@@ -106,178 +104,144 @@ public class FlowRule extends AbstractRule
      */
     private TrafficShapingController controller;
 
-    public int getControlBehavior()
-    {
+    public int getControlBehavior() {
         return controlBehavior;
     }
 
-    public FlowRule setControlBehavior(int controlBehavior)
-    {
+    public FlowRule setControlBehavior(int controlBehavior) {
         this.controlBehavior = controlBehavior;
         return this;
     }
 
-    public int getMaxQueueingTimeMs()
-    {
+    public int getMaxQueueingTimeMs() {
         return maxQueueingTimeMs;
     }
 
-    public FlowRule setMaxQueueingTimeMs(int maxQueueingTimeMs)
-    {
+    public FlowRule setMaxQueueingTimeMs(int maxQueueingTimeMs) {
         this.maxQueueingTimeMs = maxQueueingTimeMs;
         return this;
     }
 
-    FlowRule setRater(TrafficShapingController rater)
-    {
+    FlowRule setRater(TrafficShapingController rater) {
         this.controller = rater;
         return this;
     }
 
-    TrafficShapingController getRater()
-    {
+    TrafficShapingController getRater() {
         return controller;
     }
 
-    public int getWarmUpPeriodSec()
-    {
+    public int getWarmUpPeriodSec() {
         return warmUpPeriodSec;
     }
 
-    public FlowRule setWarmUpPeriodSec(int warmUpPeriodSec)
-    {
+    public FlowRule setWarmUpPeriodSec(int warmUpPeriodSec) {
         this.warmUpPeriodSec = warmUpPeriodSec;
         return this;
     }
 
-    public int getGrade()
-    {
+    public int getGrade() {
         return grade;
     }
 
-    public FlowRule setGrade(int grade)
-    {
+    public FlowRule setGrade(int grade) {
         this.grade = grade;
         return this;
     }
 
-    public double getCount()
-    {
+    public double getCount() {
         return count;
     }
 
-    public FlowRule setCount(double count)
-    {
+    public FlowRule setCount(double count) {
         this.count = count;
         return this;
     }
 
-    public int getStrategy()
-    {
+    public int getStrategy() {
         return strategy;
     }
 
-    public FlowRule setStrategy(int strategy)
-    {
+    public FlowRule setStrategy(int strategy) {
         this.strategy = strategy;
         return this;
     }
 
-    public String getRefResource()
-    {
+    public String getRefResource() {
         return refResource;
     }
 
-    public FlowRule setRefResource(String refResource)
-    {
+    public FlowRule setRefResource(String refResource) {
         this.refResource = refResource;
         return this;
     }
 
-    public boolean isClusterMode()
-    {
+    public boolean isClusterMode() {
         return clusterMode;
     }
 
-    public FlowRule setClusterMode(boolean clusterMode)
-    {
+    public FlowRule setClusterMode(boolean clusterMode) {
         this.clusterMode = clusterMode;
         return this;
     }
 
-    public ClusterFlowConfig getClusterConfig()
-    {
+    public ClusterFlowConfig getClusterConfig() {
         return clusterConfig;
     }
 
-    public FlowRule setClusterConfig(ClusterFlowConfig clusterConfig)
-    {
+    public FlowRule setClusterConfig(ClusterFlowConfig clusterConfig) {
         this.clusterConfig = clusterConfig;
         return this;
     }
 
     @Override
-    public boolean passCheck(Context context, DefaultNode node, int acquireCount, Object... args)
-    {
+    public boolean passCheck(Context context, DefaultNode node, int acquireCount, Object... args) {
         return true;
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        if (!super.equals(o))
-        {
+        if (!super.equals(o)) {
             return false;
         }
 
         FlowRule rule = (FlowRule) o;
 
-        if (grade != rule.grade)
-        {
+        if (grade != rule.grade) {
             return false;
         }
-        if (Double.compare(rule.count, count) != 0)
-        {
+        if (Double.compare(rule.count, count) != 0) {
             return false;
         }
-        if (strategy != rule.strategy)
-        {
+        if (strategy != rule.strategy) {
             return false;
         }
-        if (controlBehavior != rule.controlBehavior)
-        {
+        if (controlBehavior != rule.controlBehavior) {
             return false;
         }
-        if (warmUpPeriodSec != rule.warmUpPeriodSec)
-        {
+        if (warmUpPeriodSec != rule.warmUpPeriodSec) {
             return false;
         }
-        if (maxQueueingTimeMs != rule.maxQueueingTimeMs)
-        {
+        if (maxQueueingTimeMs != rule.maxQueueingTimeMs) {
             return false;
         }
-        if (clusterMode != rule.clusterMode)
-        {
+        if (clusterMode != rule.clusterMode) {
             return false;
         }
-        if (refResource != null ? !refResource.equals(rule.refResource) : rule.refResource != null)
-        {
+        if (refResource != null ? !refResource.equals(rule.refResource) : rule.refResource != null) {
             return false;
         }
         return clusterConfig != null ? clusterConfig.equals(rule.clusterConfig) : rule.clusterConfig == null;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int result = super.hashCode();
         long temp;
         result = 31 * result + grade;
@@ -294,21 +258,20 @@ public class FlowRule extends AbstractRule
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "FlowRule{" +
-                "resource=" + getResource() +
-                ", limitApp=" + getLimitApp() +
-                ", grade=" + grade +
-                ", count=" + count +
-                ", strategy=" + strategy +
-                ", refResource=" + refResource +
-                ", controlBehavior=" + controlBehavior +
-                ", warmUpPeriodSec=" + warmUpPeriodSec +
-                ", maxQueueingTimeMs=" + maxQueueingTimeMs +
-                ", clusterMode=" + clusterMode +
-                ", clusterConfig=" + clusterConfig +
-                ", controller=" + controller +
-                '}';
+            "resource=" + getResource() +
+            ", limitApp=" + getLimitApp() +
+            ", grade=" + grade +
+            ", count=" + count +
+            ", strategy=" + strategy +
+            ", refResource=" + refResource +
+            ", controlBehavior=" + controlBehavior +
+            ", warmUpPeriodSec=" + warmUpPeriodSec +
+            ", maxQueueingTimeMs=" + maxQueueingTimeMs +
+            ", clusterMode=" + clusterMode +
+            ", clusterConfig=" + clusterConfig +
+            ", controller=" + controller +
+            '}';
     }
 }

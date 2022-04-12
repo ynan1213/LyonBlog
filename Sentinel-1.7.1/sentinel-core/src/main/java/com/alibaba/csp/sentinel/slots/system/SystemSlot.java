@@ -34,19 +34,18 @@ import com.alibaba.csp.sentinel.slotchain.ResourceWrapper;
  * 像这种情况，压力其实都在订单服务中，那么我们就指定它为出口流量。这个流量类型有什么用呢？
  * 答案在 SystemSlot 类中，它用于实现自适应限流，根据系统健康状态来判断是否要限流，如果是 OUT 类型，由于压力在外部系统中，所以就不需要执行这个规则
  */
-public class SystemSlot extends AbstractLinkedProcessorSlot<DefaultNode>
-{
+public class SystemSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
+
     @Override
-    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args) throws Throwable
-    {
+    public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count, boolean prioritized, Object... args)
+        throws Throwable {
         // 当前的统计值和系统配置的进行比较，各个维度超过范围抛BlockException
         SystemRuleManager.checkSystem(resourceWrapper);
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 
     @Override
-    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args)
-    {
+    public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         fireExit(context, resourceWrapper, count, args);
     }
 

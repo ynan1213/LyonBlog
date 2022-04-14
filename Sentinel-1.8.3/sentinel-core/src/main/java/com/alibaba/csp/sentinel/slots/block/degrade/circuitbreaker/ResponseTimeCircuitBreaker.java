@@ -85,7 +85,9 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
         if (currentState.get() == State.OPEN) {
             return;
         }
-        
+
+        // 经过熔断时长后熔断器会进入探测恢复状态（HALF-OPEN 状态）
+        // 若接下来的一个请求响应时间小于设置的慢调用 RT 则结束熔断，若大于设置的慢调用 RT 则会再次被熔断。
         if (currentState.get() == State.HALF_OPEN) {
             // In detecting request
             // TODO: improve logic for half-open recovery
@@ -97,6 +99,7 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
             return;
         }
 
+        // 单位统计时长，默认 1s 钟
         List<SlowRequestCounter> counters = slidingCounter.values();
         long slowCount = 0;
         long totalCount = 0;
@@ -104,15 +107,16 @@ public class ResponseTimeCircuitBreaker extends AbstractCircuitBreaker {
             slowCount += counter.slowCount.sum();
             totalCount += counter.totalCount.sum();
         }
+        // 未达到最小请求数，放行
         if (totalCount < minRequestAmount) {
             return;
         }
         double currentRatio = slowCount * 1.0d / totalCount;
         if (currentRatio > maxSlowRequestRatio) {
+            // 慢调用比例超过阈值，开启熔断
             transformToOpen(currentRatio);
         }
-        if (Double.compare(currentRatio, maxSlowRequestRatio) == 0 &&
-                Double.compare(maxSlowRequestRatio, SLOW_REQUEST_RATIO_MAX_VALUE) == 0) {
+        if (Double.compare(currentRatio, maxSlowRequestRatio) == 0 && Double.compare(maxSlowRequestRatio, SLOW_REQUEST_RATIO_MAX_VALUE) == 0) {
             transformToOpen(currentRatio);
         }
     }

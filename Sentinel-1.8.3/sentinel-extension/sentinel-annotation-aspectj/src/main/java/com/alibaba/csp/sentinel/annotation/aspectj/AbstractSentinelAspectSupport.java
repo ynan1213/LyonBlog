@@ -80,8 +80,7 @@ public abstract class AbstractSentinelAspectSupport {
         return MethodUtil.resolveMethodName(method);
     }
 
-    protected Object handleFallback(ProceedingJoinPoint pjp, SentinelResource annotation, Throwable ex)
-        throws Throwable {
+    protected Object handleFallback(ProceedingJoinPoint pjp, SentinelResource annotation, Throwable ex) throws Throwable {
         return handleFallback(pjp, annotation.fallback(), annotation.defaultFallback(), annotation.fallbackClass(), ex);
     }
 
@@ -126,8 +125,7 @@ public abstract class AbstractSentinelAspectSupport {
         throws Throwable {
 
         // Execute block handler if configured.
-        Method blockHandlerMethod = extractBlockHandlerMethod(pjp, annotation.blockHandler(),
-            annotation.blockHandlerClass());
+        Method blockHandlerMethod = extractBlockHandlerMethod(pjp, annotation.blockHandler(), annotation.blockHandlerClass());
         if (blockHandlerMethod != null) {
             Object[] originArgs = pjp.getArgs();
             // Construct args.

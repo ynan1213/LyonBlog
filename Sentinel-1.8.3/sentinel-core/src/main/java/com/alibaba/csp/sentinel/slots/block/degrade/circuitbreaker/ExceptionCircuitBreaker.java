@@ -67,6 +67,7 @@ public class ExceptionCircuitBreaker extends AbstractCircuitBreaker {
         if (entry == null) {
             return;
         }
+        // 这里的异常需要手动设置，Tracer.trace(ex)
         Throwable error = entry.getError();
         SimpleErrorCounter counter = stat.currentWindow().value();
         if (error != null) {

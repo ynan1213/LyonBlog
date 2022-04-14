@@ -81,6 +81,8 @@
         <module>sentinel-benchmark</module>
         <module>01-simple</module>
         <module>02-springboot</module>
+        <module>03-webServlet</module>
+        <module>04-webmvc</module>
 
     </modules>
 

@@ -34,15 +34,38 @@ public class HelloController {
 //        ruleList.add(rule);
 //        FlowRuleManager.loadRules(ruleList);
 
-        List<DegradeRule> ruleList = new ArrayList<>();
-        DegradeRule rule = new DegradeRule();
-        rule.setResource("local_rule_hello");
-        rule.setGrade(RuleConstant.DEGRADE_GRADE_RT);
-        rule.setCount(2000);
-        rule.setRtSlowRequestAmount(6);
-        rule.setTimeWindow(10);
-        ruleList.add(rule);
-        DegradeRuleManager.loadRules(ruleList);
+        // 慢调用比例
+//        List<DegradeRule> ruleList = new ArrayList<>();
+//        DegradeRule rule = new DegradeRule();
+//        rule.setResource("local_rule_hello");
+//        rule.setGrade(RuleConstant.DEGRADE_GRADE_RT);
+//        rule.setCount(2000);
+//        rule.setMinRequestAmount(6);
+//        rule.setSlowRatioThreshold(0.8d);
+//        rule.setTimeWindow(10);
+//        rule.setStatIntervalMs(1000);
+//        ruleList.add(rule);
+//        DegradeRuleManager.loadRules(ruleList);
+
+        // 异常比例
+//        List<DegradeRule> ruleList = new ArrayList<>();
+//        DegradeRule rule = new DegradeRule();
+//        rule.setResource("local_rule_hello");
+//        rule.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_RATIO);
+//        rule.setCount(0.8); // 在当前策略下，count必须 <= 1
+//        rule.setTimeWindow(10);
+//        ruleList.add(rule);
+//        DegradeRuleManager.loadRules(ruleList);
+
+        // 异常数
+//        List<DegradeRule> ruleList = new ArrayList<>();
+//        DegradeRule rule = new DegradeRule();
+//        rule.setResource("local_rule_hello");
+//        rule.setGrade(RuleConstant.DEGRADE_GRADE_EXCEPTION_COUNT);
+//        rule.setCount(3);
+//        rule.setTimeWindow(10);
+//        ruleList.add(rule);
+//        DegradeRuleManager.loadRules(ruleList);
     }
 
     @RequestMapping("/hello")
@@ -61,17 +84,5 @@ public class HelloController {
                 entry.exit();
             }
         }
-    }
-
-
-    @RequestMapping("/world")
-    @SentinelResource(value = "World_anno", blockHandler = "worldBlockHandler")
-    public String world() {
-        //if(1 == 1) throw new RuntimeException("xxxxx");
-        return "hello world 222";
-    }
-
-    public String worldBlockHandler(BlockException e) {
-        return "注解方式限流：world ！！！: " + e.getMessage();
     }
 }

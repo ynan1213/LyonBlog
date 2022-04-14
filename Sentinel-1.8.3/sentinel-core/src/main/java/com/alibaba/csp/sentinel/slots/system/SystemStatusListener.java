@@ -67,8 +67,7 @@ public class SystemStatusListener implements Runnable {
             long newProcessCpuTime = osBean.getProcessCpuTime();
             long newProcessUpTime = runtimeBean.getUptime();
             int cpuCores = osBean.getAvailableProcessors();
-            long processCpuTimeDiffInMs = TimeUnit.NANOSECONDS
-                    .toMillis(newProcessCpuTime - processCpuTime);
+            long processCpuTimeDiffInMs = TimeUnit.NANOSECONDS.toMillis(newProcessCpuTime - processCpuTime);
             long processUpTimeDiffInMs = newProcessUpTime - processUpTime;
             double processCpuUsage = (double) processCpuTimeDiffInMs / processUpTimeDiffInMs / cpuCores;
             processCpuTime = newProcessCpuTime;

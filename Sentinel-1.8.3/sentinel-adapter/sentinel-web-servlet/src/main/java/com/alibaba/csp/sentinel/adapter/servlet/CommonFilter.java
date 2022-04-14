@@ -76,8 +76,7 @@ public class CommonFilter implements Filter {
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest sRequest = (HttpServletRequest) request;
         Entry urlEntry = null;
 
@@ -88,6 +87,10 @@ public class CommonFilter implements Filter {
             // the amount of context and resources will exceed the threshold.
             UrlCleaner urlCleaner = WebCallbackManager.getUrlCleaner();
             if (urlCleaner != null) {
+                /**
+                 * 对于REST风格的url，比如/hello/{id}，id可能会是任意数，这样会有无数个resourceName，而资源数量阈值（目前是 6000）多出的资源的规则将不会生效。
+                 * 这种情况下需要自行实现 `UrlCleaner` 接口清洗一下资源，比如将/hello/{id}统一为/hello/*
+                 */
                 target = urlCleaner.clean(target);
             }
 
@@ -95,12 +98,18 @@ public class CommonFilter implements Filter {
             // in the UrlCleaner implementation.
             if (!StringUtil.isEmpty(target)) {
                 // Parse the request origin using registered origin parser.
+                // origin 解析
                 String origin = parseOrigin(sRequest);
+                // 解析 contextName
                 String contextName = webContextUnify ? WebServletConfig.WEB_SERVLET_CONTEXT_NAME : target;
                 ContextUtil.enter(contextName, origin);
 
                 if (httpMethodSpecify) {
-                    // Add HTTP method prefix if necessary.
+                    /**
+                     * 默认情况下，CommonFilter 是以url为resourceName
+                     * 将这个参数指定为true之后，会以Http请求 Method:url 作为resourceName
+                     * 比如 GET:/hello、POST:/hello，如果没开启，这两个请求是一个resourceName，如果开启了，是两个resourceName
+                     */
                     String pathWithHttpMethod = sRequest.getMethod().toUpperCase() + COLON + target;
                     urlEntry = SphU.entry(pathWithHttpMethod, ResourceTypeConstants.COMMON_WEB, EntryType.IN);
                 } else {

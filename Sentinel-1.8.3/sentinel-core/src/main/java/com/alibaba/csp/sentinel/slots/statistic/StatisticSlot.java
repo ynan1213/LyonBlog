@@ -61,7 +61,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             // Request passed, add thread count and pass count.
             // 将正在执行线程数统计指标加一
             node.increaseThreadNum();
-            // 并将通过的请求数量指标增加对应的值
+            // 将通过的请求数量增加对应的值，passQps / intervalInSecond 用于 FlowRule 限流统计用
             node.addPassRequest(count);
 
             // 如果上下文环境中保存了调用方的节点信息不为空，则更新该节点的统计数据：线程数与通过数量。
@@ -99,9 +99,10 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             }
         } catch (BlockException e) {
             // Blocked, set block exception to current entry.
+            // 把异常设置给给当前 curEntry，有什么用呢？做个标记，在后面的exit中会用到
             context.getCurEntry().setBlockError(e);
 
-            // Add block count.
+            // 如果没有抛异常，上面是 increasePassQps，这里是抛了异常后增加 block 相应次数
             node.increaseBlockQps(count);
             if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().increaseBlockQps(count);
@@ -121,7 +122,6 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
         } catch (Throwable e) {
             // Unexpected internal error, set error to current entry.
             context.getCurEntry().setError(e);
-
             throw e;
         }
     }
@@ -130,13 +130,14 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
      * 目前发现有两个地方会调用该方法：
      *  1. 正常的业务入口处finally
      *  2. 如果发生了BlockException（流控、降级、黑白名单等异常)，在CtSph处也会被捕捉然后调用exit，但是和1不一样的是不会进入if
+     *     不会进入if，就不会统计本次请求rt以及success，而 DegradeRule 就是依赖rt的，也就是说 BlockException 不会计入 熔断降级
      */
     @Override
     public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         Node node = context.getCurNode();
-
+        // 如果发生了BlockException进入这里的CurEntry.getBlockError()是不会为null的
         if (context.getCurEntry().getBlockError() == null) {
-            // Calculate response time (use completeStatTime as the time of completion).
+            // 能进入这里，说明没有发生BlockException，下面就是增加相应的 rt 以及 Success 次数
             long completeStatTime = TimeUtil.currentTimeMillis();
             context.getCurEntry().setCompleteTimestamp(completeStatTime);
             long rt = completeStatTime - context.getCurEntry().getCreateTimestamp();

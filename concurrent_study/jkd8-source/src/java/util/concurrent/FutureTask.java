@@ -100,8 +100,8 @@ public class FutureTask<V> implements RunnableFuture<V> {
     private static final int NORMAL       = 2;// 终止状态：任务正常执行完毕
     private static final int EXCEPTIONAL  = 3;// 终止状态：任务执行过程中发生异常
     private static final int CANCELLED    = 4;// 终止状态：任务被取消
-    private static final int INTERRUPTING = 5;// 终止状态：任务被中断
-    private static final int INTERRUPTED  = 6;// 中间状态：正在中断运行任务的线程
+    private static final int INTERRUPTING = 5;// 中间状态：正在中断运行任务的线
+    private static final int INTERRUPTED  = 6;// 终止状态：任务被中断程
 
     private Callable<V> callable;      // 代表了要执行的任务本身
     private Object outcome;            // outcome属性代表了任务的执行结果或者抛出的异常
@@ -263,8 +263,13 @@ public class FutureTask<V> implements RunnableFuture<V> {
         // 检查当前状态是不是New, 并且使用CAS操作将runner属性设置位当前线程，即记录执行任务的线程，因为执行run方法的线程就是当前线程
         if (state != NEW || !UNSAFE.compareAndSwapObject(this, runnerOffset, null, Thread.currentThread()))
             return;
+
+        // 走到这里，说明当前task状态为NEW，并且当前线程一定抢占成功
+
         try {
             Callable<V> c = callable;
+            // 条件1：callable != null，话说这里有必要判断吗，构造传入的值不是做了非空判断吗？
+            // 条件2：state == NEW 也有必要判断吗，上面不是做了判断吗？有可能被其他线程cancel掉呢
             if (c != null && state == NEW) {
                 V result;
                 boolean ran;

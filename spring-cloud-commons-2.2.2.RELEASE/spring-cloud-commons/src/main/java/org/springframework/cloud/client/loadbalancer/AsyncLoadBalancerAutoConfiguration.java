@@ -47,8 +47,7 @@ public class AsyncLoadBalancerAutoConfiguration {
 		private List<AsyncRestTemplate> restTemplates = Collections.emptyList();
 
 		@Bean
-		public SmartInitializingSingleton loadBalancedAsyncRestTemplateInitializer(
-				final List<AsyncRestTemplateCustomizer> customizers) {
+		public SmartInitializingSingleton loadBalancedAsyncRestTemplateInitializer(final List<AsyncRestTemplateCustomizer> customizers) {
 			return new SmartInitializingSingleton() {
 				@Override
 				public void afterSingletonsInstantiated() {
@@ -67,19 +66,16 @@ public class AsyncLoadBalancerAutoConfiguration {
 	static class LoadBalancerInterceptorConfig {
 
 		@Bean
-		public AsyncLoadBalancerInterceptor asyncLoadBalancerInterceptor(
-				LoadBalancerClient loadBalancerClient) {
+		public AsyncLoadBalancerInterceptor asyncLoadBalancerInterceptor(LoadBalancerClient loadBalancerClient) {
 			return new AsyncLoadBalancerInterceptor(loadBalancerClient);
 		}
 
 		@Bean
-		public AsyncRestTemplateCustomizer asyncRestTemplateCustomizer(
-				final AsyncLoadBalancerInterceptor loadBalancerInterceptor) {
+		public AsyncRestTemplateCustomizer asyncRestTemplateCustomizer(final AsyncLoadBalancerInterceptor loadBalancerInterceptor) {
 			return new AsyncRestTemplateCustomizer() {
 				@Override
 				public void customize(AsyncRestTemplate restTemplate) {
-					List<AsyncClientHttpRequestInterceptor> list = new ArrayList<>(
-							restTemplate.getInterceptors());
+					List<AsyncClientHttpRequestInterceptor> list = new ArrayList<>(restTemplate.getInterceptors());
 					list.add(loadBalancerInterceptor);
 					restTemplate.setInterceptors(list);
 				}

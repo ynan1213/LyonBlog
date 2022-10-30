@@ -52,24 +52,23 @@ import org.springframework.web.client.RestTemplate;
 public class BlockingLoadBalancerClientAutoConfiguration {
 
 	@Bean
-	@ConditionalOnClass(
-			name = "org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient")
-	@ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled",
-			matchIfMissing = true)
+	@ConditionalOnClass(name = "org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient")
+	@ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled", matchIfMissing = true)
 	public BlockingLoadBalancerClientRibbonWarnLogger blockingLoadBalancerClientRibbonWarnLogger() {
+		// 打印warn日志
 		return new BlockingLoadBalancerClientRibbonWarnLogger();
 	}
 
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnClass(RestTemplate.class)
+	// 有了ribbon后这里就不会生效了
 	@Conditional(OnNoRibbonDefaultCondition.class)
 	protected static class BlockingLoadbalancerClientConfig {
 
 		@Bean
 		@ConditionalOnBean(LoadBalancerClientFactory.class)
 		@Primary
-		public BlockingLoadBalancerClient blockingLoadBalancerClient(
-				LoadBalancerClientFactory loadBalancerClientFactory) {
+		public BlockingLoadBalancerClient blockingLoadBalancerClient(LoadBalancerClientFactory loadBalancerClientFactory) {
 			return new BlockingLoadBalancerClient(loadBalancerClientFactory);
 		}
 
@@ -77,8 +76,7 @@ public class BlockingLoadBalancerClientAutoConfiguration {
 
 	static class BlockingLoadBalancerClientRibbonWarnLogger {
 
-		private static final Log LOG = LogFactory
-				.getLog(BlockingLoadBalancerClientRibbonWarnLogger.class);
+		private static final Log LOG = LogFactory.getLog(BlockingLoadBalancerClientRibbonWarnLogger.class);
 
 		@PostConstruct
 		void logWarning() {

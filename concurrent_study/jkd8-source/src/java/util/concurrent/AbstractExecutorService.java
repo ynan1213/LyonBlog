@@ -138,6 +138,10 @@ public abstract class AbstractExecutorService implements ExecutorService {
     /**
      * the main mechanics of invokeAny.
      * 将 tasks 集合中的任务提交到线程池执行，任意一个线程执行完后就可以结束了
+     * 上面的说法是错的：
+     *  只有当一个线程成功执行完成并获取到结果，才返回。
+     *  如果有任务抛出了异常，则当前任务异常结束，使用ee记录异常。invokeAny()不会退出，而是继续查看其它任务
+     *  如果全部失败，则抛出最后一个异常
      */
     private <T> T doInvokeAny(Collection<? extends Callable<T>> tasks, boolean timed, long nanos)
         throws InterruptedException, ExecutionException, TimeoutException {
@@ -147,6 +151,9 @@ public abstract class AbstractExecutorService implements ExecutorService {
         if (ntasks == 0)
             throw new IllegalArgumentException();
         ArrayList<Future<T>> futures = new ArrayList<Future<T>>(ntasks);
+
+        // ExecutorCompletionService 不是一个真正的执行器，参数 this 才是真正的执行器
+        // 它对执行器进行了包装，每个任务结束后，将结果保存到内部的一个 completionQueue 队列中
         ExecutorCompletionService<T> ecs = new ExecutorCompletionService<T>(this);
 
         // For efficiency, especially in executors with limited
@@ -156,8 +163,8 @@ public abstract class AbstractExecutorService implements ExecutorService {
         // loop.
 
         try {
-            // Record exceptions so that if we fail to obtain any
-            // result, we can throw the last exception we got.
+            // Record exceptions so that if we fail to obtain any result, we can throw the last exception we got.
+            // 用于保存异常信息，此方法如果没有得到任何有效的结果，那么我们可以抛出最后得到的一个异常
             ExecutionException ee = null;
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
             Iterator<? extends Callable<T>> it = tasks.iterator();
@@ -173,10 +180,13 @@ public abstract class AbstractExecutorService implements ExecutorService {
                 // ExecutorCompletionService 内部有一个 completionQueue 用于保存执行完成的结果
                 // BlockingQueue 的 poll 方法不阻塞，返回 null 代表队列为空
                 Future<T> f = ecs.poll();
-                // 为 null，说明提交的任务还没有执行完成
+                // 为 null，说明提交的任务没有一个执行完成
                 if (f == null) {
+
+                    // ntasks 代表的是剩余待执行任务的数量
                     if (ntasks > 0) {
                         --ntasks;
+                        // 与invokeAll将任务一口气执行不同的是，invakeAny是每扔进一个获取一次结果，这样的做法是节省资源
                         futures.add(ecs.submit(it.next()));
                         ++active;
                     }
@@ -203,12 +213,9 @@ public abstract class AbstractExecutorService implements ExecutorService {
                 }
                 /*
                  * 我感觉上面这一段并不是很好理解，这里简单说下。
-                 * 1. 首先，这在一个 for 循环中，我们设想每一个任务都没那么快结束，
-                 *     那么，每一次都会进到第一个分支，进行提交任务，直到将所有的任务都提交了
-                 * 2. 任务都提交完成后，如果设置了超时，那么 for 循环其实进入了“一直检测是否超时”
-                       这件事情上
-                 * 3. 如果没有设置超时机制，那么不必要检测超时，那就会阻塞在 ecs.take() 方法上，
-                       等待获取第一个执行结果
+                 * 1. 首先，这在一个 for 循环中，我们设想每一个任务都没那么快结束，那么，每一次都会进到第一个分支，进行提交任务，直到将所有的任务都提交了
+                 * 2. 任务都提交完成后，如果设置了超时，那么 for 循环其实进入了“一直检测是否超时”这件事情上
+                 * 3. 如果没有设置超时机制，那么不必要检测超时，那就会阻塞在 ecs.take() 方法上，等待获取第一个执行结果
                  * 4. 如果所有的任务都执行失败，也就是说 future 都返回了，
                        但是 f.get() 抛出异常，那么从 active == 0 分支出去(感谢 newmicro 提出)
                          // 当然，这个需要看下面的 if 分支。
@@ -218,7 +225,8 @@ public abstract class AbstractExecutorService implements ExecutorService {
                 if (f != null) {
                     --active;
                     try {
-                        // 返回执行结果，如果有异常，都包装成 ExecutionException
+                        // 返回执行结果，如果没有异常，这里就直接返回了
+                        // 如果有异常，都包装成 ExecutionException，并没有返回，而是进入了下一次循环
                         return f.get();
                     } catch (ExecutionException eex) {
                         ee = eex;
@@ -227,6 +235,8 @@ public abstract class AbstractExecutorService implements ExecutorService {
                     }
                 }
             }
+
+            // 什么情况会走到这里呢？前面的任务全都执行完成但都抛出了异常或者超时
 
             if (ee == null)
                 ee = new ExecutionException();

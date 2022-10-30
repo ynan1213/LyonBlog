@@ -44,11 +44,9 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Roman Matiushchenko
  * @since 2.2.0
  */
-public class HealthCheckServiceInstanceListSupplier
-		implements ServiceInstanceListSupplier, InitializingBean, DisposableBean {
+public class HealthCheckServiceInstanceListSupplier implements ServiceInstanceListSupplier, InitializingBean, DisposableBean {
 
-	private static final Log LOG = LogFactory
-			.getLog(HealthCheckServiceInstanceListSupplier.class);
+	private static final Log LOG = LogFactory.getLog(HealthCheckServiceInstanceListSupplier.class);
 
 	private final ServiceInstanceListSupplier delegate;
 
@@ -62,18 +60,16 @@ public class HealthCheckServiceInstanceListSupplier
 
 	private Disposable healthCheckDisposable;
 
-	public HealthCheckServiceInstanceListSupplier(ServiceInstanceListSupplier delegate,
-			LoadBalancerProperties.HealthCheck healthCheck, WebClient webClient) {
+	public HealthCheckServiceInstanceListSupplier(ServiceInstanceListSupplier delegate, LoadBalancerProperties.HealthCheck healthCheck, WebClient webClient) {
 		this.delegate = delegate;
 		this.healthCheck = healthCheck;
-		this.defaultHealthCheckPath = healthCheck.getPath().getOrDefault("default",
-				"/actuator/health");
+		this.defaultHealthCheckPath = healthCheck.getPath().getOrDefault("default", "/actuator/health");
 		this.webClient = webClient;
 		this.aliveInstancesReplay = Flux.defer(delegate)
 				.delaySubscription(Duration.ofMillis(this.healthCheck.getInitialDelay()))
-				.switchMap(serviceInstances -> healthCheckFlux(serviceInstances).map(
-						alive -> Collections.unmodifiableList(new ArrayList<>(alive))))
-				.replay(1).refCount(1);
+				.switchMap(serviceInstances -> healthCheckFlux(serviceInstances).map(alive -> Collections.unmodifiableList(new ArrayList<>(alive))))
+				.replay(1)
+				.refCount(1);
 	}
 
 	@Override
@@ -85,8 +81,7 @@ public class HealthCheckServiceInstanceListSupplier
 		this.healthCheckDisposable = aliveInstancesReplay.subscribe();
 	}
 
-	protected Flux<List<ServiceInstance>> healthCheckFlux(
-			List<ServiceInstance> instances) {
+	protected Flux<List<ServiceInstance>> healthCheckFlux(List<ServiceInstance> instances) {
 		return Flux.defer(() -> {
 			List<Mono<ServiceInstance>> checks = new ArrayList<>(instances.size());
 			for (ServiceInstance instance : instances) {
@@ -132,16 +127,12 @@ public class HealthCheckServiceInstanceListSupplier
 	}
 
 	protected Mono<Boolean> isAlive(ServiceInstance serviceInstance) {
-		String healthCheckPropertyValue = healthCheck.getPath()
-				.get(serviceInstance.getServiceId());
-		String healthCheckPath = healthCheckPropertyValue != null
-				? healthCheckPropertyValue : defaultHealthCheckPath;
+		String healthCheckPropertyValue = healthCheck.getPath().get(serviceInstance.getServiceId());
+		String healthCheckPath = healthCheckPropertyValue != null ? healthCheckPropertyValue : defaultHealthCheckPath;
 		return webClient.get()
-				.uri(UriComponentsBuilder.fromUri(serviceInstance.getUri())
-						.path(healthCheckPath).build().toUri())
+				.uri(UriComponentsBuilder.fromUri(serviceInstance.getUri()).path(healthCheckPath).build().toUri())
 				.exchange()
-				.flatMap(clientResponse -> clientResponse.releaseBody().thenReturn(
-						HttpStatus.OK.value() == clientResponse.rawStatusCode()));
+				.flatMap(clientResponse -> clientResponse.releaseBody().thenReturn(HttpStatus.OK.value() == clientResponse.rawStatusCode()));
 	}
 
 	@Override

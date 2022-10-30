@@ -67,8 +67,11 @@ import static org.springframework.cloud.netflix.ribbon.RibbonUtils.updateToSecur
 // Order is important here, last should be the default, first should be optional
 // see
 // https://github.com/spring-cloud/spring-cloud-netflix/issues/2086#issuecomment-316281653
-@Import({ HttpClientConfiguration.class, OkHttpRibbonConfiguration.class,
-		RestClientRibbonConfiguration.class, HttpClientRibbonConfiguration.class })
+@Import({
+		HttpClientConfiguration.class,
+		OkHttpRibbonConfiguration.class,
+		RestClientRibbonConfiguration.class,
+		HttpClientRibbonConfiguration.class })
 public class RibbonClientConfiguration {
 
 	/**
@@ -92,6 +95,7 @@ public class RibbonClientConfiguration {
 	// TODO: maybe re-instate autowired load balancers: identified by name they could be
 	// associated with ribbon clients
 
+	// 在RibbonAutoConfiguration中被注入
 	@Autowired
 	private PropertiesFactory propertiesFactory;
 
@@ -103,6 +107,9 @@ public class RibbonClientConfiguration {
 		config.set(CommonClientConfigKey.ConnectTimeout, DEFAULT_CONNECT_TIMEOUT);
 		config.set(CommonClientConfigKey.ReadTimeout, DEFAULT_READ_TIMEOUT);
 		config.set(CommonClientConfigKey.GZipPayload, DEFAULT_GZIP_PAYLOAD);
+
+		Integer integer = config.get(CommonClientConfigKey.ServerListRefreshInterval, 1234);
+
 		return config;
 	}
 
@@ -146,14 +153,17 @@ public class RibbonClientConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public ILoadBalancer ribbonLoadBalancer(IClientConfig config,
-			ServerList<Server> serverList, ServerListFilter<Server> serverListFilter,
-			IRule rule, IPing ping, ServerListUpdater serverListUpdater) {
+	public ILoadBalancer ribbonLoadBalancer(
+			IClientConfig config,
+			ServerList<Server> serverList,
+			ServerListFilter<Server> serverListFilter,
+			IRule rule,
+			IPing ping,
+			ServerListUpdater serverListUpdater) {
 		if (this.propertiesFactory.isSet(ILoadBalancer.class, name)) {
 			return this.propertiesFactory.get(ILoadBalancer.class, config, name);
 		}
-		return new ZoneAwareLoadBalancer<>(config, rule, ping, serverList,
-				serverListFilter, serverListUpdater);
+		return new ZoneAwareLoadBalancer<>(config, rule, ping, serverList, serverListFilter, serverListUpdater);
 	}
 
 	@Bean
@@ -170,8 +180,7 @@ public class RibbonClientConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public RibbonLoadBalancerContext ribbonLoadBalancerContext(ILoadBalancer loadBalancer,
-			IClientConfig config, RetryHandler retryHandler) {
+	public RibbonLoadBalancerContext ribbonLoadBalancerContext(ILoadBalancer loadBalancer, IClientConfig config, RetryHandler retryHandler) {
 		return new RibbonLoadBalancerContext(loadBalancer, config, retryHandler);
 	}
 
@@ -198,8 +207,7 @@ public class RibbonClientConfiguration {
 
 		private ServerIntrospector serverIntrospector;
 
-		protected OverrideRestClient(IClientConfig config,
-				ServerIntrospector serverIntrospector) {
+		protected OverrideRestClient(IClientConfig config, ServerIntrospector serverIntrospector) {
 			super();
 			this.config = config;
 			this.serverIntrospector = serverIntrospector;
@@ -208,16 +216,14 @@ public class RibbonClientConfiguration {
 
 		@Override
 		public URI reconstructURIWithServer(Server server, URI original) {
-			URI uri = updateToSecureConnectionIfNeeded(original, this.config,
-					this.serverIntrospector, server);
+			URI uri = updateToSecureConnectionIfNeeded(original, this.config, this.serverIntrospector, server);
 			return super.reconstructURIWithServer(server, uri);
 		}
 
 		@Override
 		protected Client apacheHttpClientSpecificInitialization() {
 			ApacheHttpClient4 apache = (ApacheHttpClient4) super.apacheHttpClientSpecificInitialization();
-			apache.getClientHandler().getHttpClient().getParams().setParameter(
-					ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
+			apache.getClientHandler().getHttpClient().getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
 			return apache;
 		}
 

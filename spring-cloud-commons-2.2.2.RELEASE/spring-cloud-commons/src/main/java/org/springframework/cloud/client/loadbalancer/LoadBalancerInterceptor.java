@@ -57,7 +57,7 @@ public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor {
 		String serviceName = originalUri.getHost();
 		Assert.state(serviceName != null, "Request URI does not contain a valid hostname: " + originalUri);
 
-		// 查看 RibbonLoadBalancerClient 实现类
+		// spring cloud原生实现是BlockingLoadBalancerClient，ribbon默认实现是RibbonLoadBalancerClient 实现类
 		return this.loadBalancer.execute(serviceName, this.requestFactory.createRequest(request, body, execution));
 	}
 

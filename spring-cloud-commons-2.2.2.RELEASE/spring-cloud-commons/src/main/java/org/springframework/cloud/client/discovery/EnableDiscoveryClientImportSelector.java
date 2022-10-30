@@ -40,6 +40,7 @@ public class EnableDiscoveryClientImportSelector extends SpringFactoryImportSele
 	@Override
 	public String[] selectImports(AnnotationMetadata metadata)
 	{
+		// 检索spring.factories中以EnableDiscoveryClient开头的配置
 		String[] imports = super.selectImports(metadata);
 
 		AnnotationAttributes attributes = AnnotationAttributes.fromMap(metadata.getAnnotationAttributes(getAnnotationClass().getName(), true));

@@ -40,15 +40,14 @@ import org.springframework.web.reactive.function.client.WebClient;
  * @since 2.2.0
  */
 @Configuration(proxyBeanMethods = false)
+// 需要 WebClient 依赖
 @ConditionalOnClass(WebClient.class)
 @ConditionalOnBean(ReactiveLoadBalancer.Factory.class)
 public class ReactorLoadBalancerClientAutoConfiguration {
 
 	@Bean
-	@ConditionalOnClass(
-			name = "org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient")
-	@ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled",
-			matchIfMissing = true)
+	@ConditionalOnClass(name = "org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient")
+	@ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled", matchIfMissing = true)
 	public ReactorLoadBalancerClientRibbonWarnLogger reactorLoadBalancerClientRibbonWarnLogger() {
 		return new ReactorLoadBalancerClientRibbonWarnLogger();
 	}
@@ -59,8 +58,7 @@ public class ReactorLoadBalancerClientAutoConfiguration {
 
 		@ConditionalOnMissingBean
 		@Bean
-		public ReactorLoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction(
-				ReactiveLoadBalancer.Factory loadBalancerFactory) {
+		public ReactorLoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction(ReactiveLoadBalancer.Factory loadBalancerFactory) {
 			return new ReactorLoadBalancerExchangeFilterFunction(loadBalancerFactory);
 		}
 
@@ -68,8 +66,7 @@ public class ReactorLoadBalancerClientAutoConfiguration {
 
 	private static class ReactorLoadBalancerClientRibbonWarnLogger {
 
-		private static final Log LOG = LogFactory
-				.getLog(ReactorLoadBalancerClientRibbonWarnLogger.class);
+		private static final Log LOG = LogFactory.getLog(ReactorLoadBalancerClientRibbonWarnLogger.class);
 
 		@PostConstruct
 		void logWarning() {

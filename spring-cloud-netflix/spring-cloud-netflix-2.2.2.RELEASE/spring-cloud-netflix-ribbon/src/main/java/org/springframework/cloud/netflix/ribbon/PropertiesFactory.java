@@ -57,8 +57,7 @@ public class PropertiesFactory {
 	public String getClassName(Class clazz, String name) {
 		if (this.classToProperty.containsKey(clazz)) {
 			String classNameProperty = this.classToProperty.get(clazz);
-			String className = environment
-					.getProperty(name + "." + NAMESPACE + "." + classNameProperty);
+			String className = environment.getProperty(name + "." + NAMESPACE + "." + classNameProperty);
 			return className;
 		}
 		return null;
@@ -70,12 +69,10 @@ public class PropertiesFactory {
 		if (StringUtils.hasText(className)) {
 			try {
 				Class<?> toInstantiate = Class.forName(className);
-				return (C) SpringClientFactory.instantiateWithConfig(toInstantiate,
-						config);
+				return (C) SpringClientFactory.instantiateWithConfig(toInstantiate, config);
 			}
 			catch (ClassNotFoundException e) {
-				throw new IllegalArgumentException("Unknown class to load " + className
-						+ " for class " + clazz + " named " + name);
+				throw new IllegalArgumentException("Unknown class to load " + className + " for class " + clazz + " named " + name);
 			}
 		}
 		return null;

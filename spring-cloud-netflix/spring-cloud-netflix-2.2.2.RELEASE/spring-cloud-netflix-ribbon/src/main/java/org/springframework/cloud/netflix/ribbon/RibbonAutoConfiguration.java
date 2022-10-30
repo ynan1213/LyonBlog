@@ -59,12 +59,9 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 @Conditional(RibbonAutoConfiguration.RibbonClassesConditions.class)
 @RibbonClients
-@AutoConfigureAfter(
-		name = "org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration")
-@AutoConfigureBefore({ LoadBalancerAutoConfiguration.class,
-		AsyncLoadBalancerAutoConfiguration.class })
-@EnableConfigurationProperties({ RibbonEagerLoadProperties.class,
-		ServerIntrospectorProperties.class })
+@AutoConfigureAfter(name = "org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration")
+@AutoConfigureBefore({ LoadBalancerAutoConfiguration.class, AsyncLoadBalancerAutoConfiguration.class })
+@EnableConfigurationProperties({ RibbonEagerLoadProperties.class, ServerIntrospectorProperties.class })
 public class RibbonAutoConfiguration {
 
 	@Autowired(required = false)
@@ -94,8 +91,7 @@ public class RibbonAutoConfiguration {
 	@Bean
 	@ConditionalOnClass(name = "org.springframework.retry.support.RetryTemplate")
 	@ConditionalOnMissingBean
-	public LoadBalancedRetryFactory loadBalancedRetryPolicyFactory(
-			final SpringClientFactory clientFactory) {
+	public LoadBalancedRetryFactory loadBalancedRetryPolicyFactory(final SpringClientFactory clientFactory) {
 		return new RibbonLoadBalancedRetryFactory(clientFactory);
 	}
 
@@ -108,8 +104,7 @@ public class RibbonAutoConfiguration {
 	@Bean
 	@ConditionalOnProperty("ribbon.eager-load.enabled")
 	public RibbonApplicationContextInitializer ribbonApplicationContextInitializer() {
-		return new RibbonApplicationContextInitializer(springClientFactory(),
-				ribbonEagerLoadProperties.getClients());
+		return new RibbonApplicationContextInitializer(springClientFactory(), ribbonEagerLoadProperties.getClients());
 	}
 
 	@Configuration(proxyBeanMethods = false)
@@ -121,10 +116,8 @@ public class RibbonAutoConfiguration {
 		private SpringClientFactory springClientFactory;
 
 		@Bean
-		public RestTemplateCustomizer restTemplateCustomizer(
-				final RibbonClientHttpRequestFactory ribbonClientHttpRequestFactory) {
-			return restTemplate -> restTemplate
-					.setRequestFactory(ribbonClientHttpRequestFactory);
+		public RestTemplateCustomizer restTemplateCustomizer(final RibbonClientHttpRequestFactory ribbonClientHttpRequestFactory) {
+			return restTemplate -> restTemplate.setRequestFactory(ribbonClientHttpRequestFactory);
 		}
 
 		@Bean

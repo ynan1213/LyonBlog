@@ -54,12 +54,11 @@ public class LoadBalancerClientConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public ReactorLoadBalancer<ServiceInstance> reactorServiceInstanceLoadBalancer(
-			Environment environment,
-			LoadBalancerClientFactory loadBalancerClientFactory) {
+	public ReactorLoadBalancer<ServiceInstance> reactorServiceInstanceLoadBalancer(Environment environment, LoadBalancerClientFactory loadBalancerClientFactory) {
+		// 获取当前子容器的名称
 		String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
-		return new RoundRobinLoadBalancer(loadBalancerClientFactory.getLazyProvider(name,
-				ServiceInstanceListSupplier.class), name);
+		// 注意这里注入的是 LazyProvider，主要因为相关 Bean 可能还没有被加载注册，利用 LazyProvider 防止报找不到
+		return new RoundRobinLoadBalancer(loadBalancerClientFactory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
 	}
 
 	@Configuration(proxyBeanMethods = false)
@@ -70,16 +69,11 @@ public class LoadBalancerClientConfiguration {
 		@Bean
 		@ConditionalOnBean(ReactiveDiscoveryClient.class)
 		@ConditionalOnMissingBean
-		public ServiceInstanceListSupplier discoveryClientServiceInstanceListSupplier(
-				ReactiveDiscoveryClient discoveryClient, Environment env,
-				ApplicationContext context) {
-			DiscoveryClientServiceInstanceListSupplier delegate = new DiscoveryClientServiceInstanceListSupplier(
-					discoveryClient, env);
-			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context
-					.getBeanProvider(LoadBalancerCacheManager.class);
+		public ServiceInstanceListSupplier discoveryClientServiceInstanceListSupplier(ReactiveDiscoveryClient discoveryClient, Environment env, ApplicationContext context) {
+			DiscoveryClientServiceInstanceListSupplier delegate = new DiscoveryClientServiceInstanceListSupplier(discoveryClient, env);
+			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context.getBeanProvider(LoadBalancerCacheManager.class);
 			if (cacheManagerProvider.getIfAvailable() != null) {
-				return new CachingServiceInstanceListSupplier(delegate,
-						cacheManagerProvider.getIfAvailable());
+				return new CachingServiceInstanceListSupplier(delegate, cacheManagerProvider.getIfAvailable());
 			}
 			return delegate;
 		}
@@ -87,16 +81,11 @@ public class LoadBalancerClientConfiguration {
 		@Bean
 		@ConditionalOnBean(ReactiveDiscoveryClient.class)
 		@ConditionalOnMissingBean
-		public ServiceInstanceSupplier discoveryClientServiceInstanceSupplier(
-				ReactiveDiscoveryClient discoveryClient, Environment env,
-				ApplicationContext context) {
-			DiscoveryClientServiceInstanceSupplier delegate = new DiscoveryClientServiceInstanceSupplier(
-					discoveryClient, env);
-			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context
-					.getBeanProvider(LoadBalancerCacheManager.class);
+		public ServiceInstanceSupplier discoveryClientServiceInstanceSupplier(ReactiveDiscoveryClient discoveryClient, Environment env, ApplicationContext context) {
+			DiscoveryClientServiceInstanceSupplier delegate = new DiscoveryClientServiceInstanceSupplier(discoveryClient, env);
+			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context.getBeanProvider(LoadBalancerCacheManager.class);
 			if (cacheManagerProvider.getIfAvailable() != null) {
-				return new CachingServiceInstanceSupplier(delegate,
-						cacheManagerProvider.getIfAvailable());
+				return new CachingServiceInstanceSupplier(delegate, cacheManagerProvider.getIfAvailable());
 			}
 			return delegate;
 		}
@@ -111,16 +100,11 @@ public class LoadBalancerClientConfiguration {
 		@Bean
 		@ConditionalOnBean(DiscoveryClient.class)
 		@ConditionalOnMissingBean
-		public ServiceInstanceListSupplier discoveryClientServiceInstanceListSupplier(
-				DiscoveryClient discoveryClient, Environment env,
-				ApplicationContext context) {
-			DiscoveryClientServiceInstanceListSupplier delegate = new DiscoveryClientServiceInstanceListSupplier(
-					discoveryClient, env);
-			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context
-					.getBeanProvider(LoadBalancerCacheManager.class);
+		public ServiceInstanceListSupplier discoveryClientServiceInstanceListSupplier(DiscoveryClient discoveryClient, Environment env, ApplicationContext context) {
+			DiscoveryClientServiceInstanceListSupplier delegate = new DiscoveryClientServiceInstanceListSupplier(discoveryClient, env);
+			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context.getBeanProvider(LoadBalancerCacheManager.class);
 			if (cacheManagerProvider.getIfAvailable() != null) {
-				return new CachingServiceInstanceListSupplier(delegate,
-						cacheManagerProvider.getIfAvailable());
+				return new CachingServiceInstanceListSupplier(delegate, cacheManagerProvider.getIfAvailable());
 			}
 			return delegate;
 		}
@@ -128,16 +112,11 @@ public class LoadBalancerClientConfiguration {
 		@Bean
 		@ConditionalOnBean(DiscoveryClient.class)
 		@ConditionalOnMissingBean
-		public ServiceInstanceSupplier discoveryClientServiceInstanceSupplier(
-				DiscoveryClient discoveryClient, Environment env,
-				ApplicationContext context) {
-			DiscoveryClientServiceInstanceSupplier delegate = new DiscoveryClientServiceInstanceSupplier(
-					discoveryClient, env);
-			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context
-					.getBeanProvider(LoadBalancerCacheManager.class);
+		public ServiceInstanceSupplier discoveryClientServiceInstanceSupplier(DiscoveryClient discoveryClient, Environment env, ApplicationContext context) {
+			DiscoveryClientServiceInstanceSupplier delegate = new DiscoveryClientServiceInstanceSupplier(discoveryClient, env);
+			ObjectProvider<LoadBalancerCacheManager> cacheManagerProvider = context.getBeanProvider(LoadBalancerCacheManager.class);
 			if (cacheManagerProvider.getIfAvailable() != null) {
-				return new CachingServiceInstanceSupplier(delegate,
-						cacheManagerProvider.getIfAvailable());
+				return new CachingServiceInstanceSupplier(delegate, cacheManagerProvider.getIfAvailable());
 			}
 			return delegate;
 		}

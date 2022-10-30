@@ -89,8 +89,7 @@ public class SpringClientFactory extends NamedContextFactory<RibbonClientSpecifi
 		return instantiateWithConfig(null, clazz, config);
 	}
 
-	static <C> C instantiateWithConfig(AnnotationConfigApplicationContext context,
-			Class<C> clazz, IClientConfig config) {
+	static <C> C instantiateWithConfig(AnnotationConfigApplicationContext context, Class<C> clazz, IClientConfig config) {
 		C result = null;
 
 		try {

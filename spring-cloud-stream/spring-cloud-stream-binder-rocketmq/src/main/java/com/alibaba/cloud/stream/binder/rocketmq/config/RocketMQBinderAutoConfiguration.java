@@ -17,6 +17,7 @@
 package com.alibaba.cloud.stream.binder.rocketmq.config;
 
 import com.alibaba.cloud.stream.binder.rocketmq.RocketMQMessageChannelBinder;
+import com.alibaba.cloud.stream.binder.rocketmq.XxxService;
 import com.alibaba.cloud.stream.binder.rocketmq.metrics.InstrumentationManager;
 import com.alibaba.cloud.stream.binder.rocketmq.properties.RocketMQBinderConfigurationProperties;
 import com.alibaba.cloud.stream.binder.rocketmq.properties.RocketMQExtendedBindingProperties;
@@ -59,10 +60,7 @@ public class RocketMQBinderAutoConfiguration {
     }
 
     @Bean
-    public RocketMQMessageChannelBinder rocketMessageChannelBinder(
-        RocketMQTopicProvisioner provisioningProvider,
-        InstrumentationManager instrumentationManager) {
-
+    public RocketMQMessageChannelBinder rocketMessageChannelBinder(RocketMQTopicProvisioner provisioningProvider, InstrumentationManager instrumentationManager) {
         RocketMQMessageChannelBinder binder = new RocketMQMessageChannelBinder(
             provisioningProvider,
             extendedBindingProperties,

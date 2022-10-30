@@ -61,8 +61,7 @@ public class OkHttpRibbonConfiguration {
 			ILoadBalancer loadBalancer, RetryHandler retryHandler,
 			LoadBalancedRetryFactory loadBalancedRetryFactory, OkHttpClient delegate,
 			RibbonLoadBalancerContext ribbonLoadBalancerContext) {
-		RetryableOkHttpLoadBalancingClient client = new RetryableOkHttpLoadBalancingClient(
-				delegate, config, serverIntrospector, loadBalancedRetryFactory);
+		RetryableOkHttpLoadBalancingClient client = new RetryableOkHttpLoadBalancingClient(delegate, config, serverIntrospector, loadBalancedRetryFactory);
 		client.setLoadBalancer(loadBalancer);
 		client.setRetryHandler(retryHandler);
 		client.setRibbonLoadBalancerContext(ribbonLoadBalancerContext);
@@ -76,8 +75,7 @@ public class OkHttpRibbonConfiguration {
 	public OkHttpLoadBalancingClient okHttpLoadBalancingClient(IClientConfig config,
 			ServerIntrospector serverIntrospector, ILoadBalancer loadBalancer,
 			RetryHandler retryHandler, OkHttpClient delegate) {
-		OkHttpLoadBalancingClient client = new OkHttpLoadBalancingClient(delegate, config,
-				serverIntrospector);
+		OkHttpLoadBalancingClient client = new OkHttpLoadBalancingClient(delegate, config, serverIntrospector);
 		client.setLoadBalancer(loadBalancer);
 		client.setRetryHandler(retryHandler);
 		Monitors.registerObject("Client_" + this.name, client);
@@ -91,8 +89,7 @@ public class OkHttpRibbonConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean(ConnectionPool.class)
-		public ConnectionPool httpClientConnectionPool(IClientConfig config,
-				OkHttpClientConnectionPoolFactory connectionPoolFactory) {
+		public ConnectionPool httpClientConnectionPool(IClientConfig config, OkHttpClientConnectionPoolFactory connectionPoolFactory) {
 			RibbonProperties ribbon = RibbonProperties.from(config);
 			int maxTotalConnections = ribbon.maxTotalConnections();
 			long timeToLive = ribbon.poolKeepAliveTime();
@@ -102,8 +99,7 @@ public class OkHttpRibbonConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean(OkHttpClient.class)
-		public OkHttpClient client(OkHttpClientFactory httpClientFactory,
-				ConnectionPool connectionPool, IClientConfig config) {
+		public OkHttpClient client(OkHttpClientFactory httpClientFactory, ConnectionPool connectionPool, IClientConfig config) {
 			RibbonProperties ribbon = RibbonProperties.from(config);
 			this.httpClient = httpClientFactory.createBuilder(false)
 					.connectTimeout(ribbon.connectTimeout(), TimeUnit.MILLISECONDS)

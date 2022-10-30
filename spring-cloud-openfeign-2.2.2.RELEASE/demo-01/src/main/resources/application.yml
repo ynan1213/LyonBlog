@@ -1,0 +1,13 @@
+feign:
+  client:
+    default-to-properties: true
+    default-config: default
+    config:
+      default:
+        decode404: true
+        # retryer: 123 必须指定一个类名
+      remote-demo:
+        decode404: false
+        connect-timeout: 5000
+        read-timeout: 5000
+

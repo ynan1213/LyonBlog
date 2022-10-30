@@ -488,6 +488,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     /**
      * Counter for completed tasks. Updated only on termination of
      * worker threads. Accessed only under mainLock.
+     *
+     * 记录线程池所完成的任务总数，当worker 退出的时候会将 worker 完成的任务累计到completedTaskCount
      */
     private long completedTaskCount;
 
@@ -1094,8 +1096,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             // Are workers subject to culling?
             boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
 
-            if ((wc > maximumPoolSize || (timed && timedOut))
-                && (wc > 1 || workQueue.isEmpty())) {
+            if ((wc > maximumPoolSize || (timed && timedOut)) && (wc > 1 || workQueue.isEmpty())) {
                 if (compareAndDecrementWorkerCount(c))
                     return null;
                 continue;
@@ -1336,9 +1337,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException if {@code workQueue}
      *         or {@code threadFactory} or {@code handler} is null
      */
-    public ThreadPoolExecutor(int corePoolSize, // 核心线程数量
-                              int maximumPoolSize, // 最大线程数
-                              long keepAliveTime,// 超时时间,超出核心线程数量以外的线程空余存活时间
+    public ThreadPoolExecutor(int corePoolSize,     // 核心线程数量
+                              int maximumPoolSize,  // 最大线程数
+                              long keepAliveTime,   // 超时时间,超出核心线程数量以外的线程空余存活时间
                               TimeUnit unit,
                               BlockingQueue<Runnable> workQueue,
                               ThreadFactory threadFactory,
@@ -1398,12 +1399,21 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         // 如果当前工作线程数比核心数少，新建一个线程执行任务
         if (workerCountOf(c) < corePoolSize) {
             // 提交任务，至于执行的结果，到时候会包装到 FutureTask 中。
-            // 返回 false 代表线程池不允许提交任务
             if (addWorker(command, true))
                 return;
+
+            // 执行到这条语句，说明 addWorker 失败了，有几种可能？
+            //  1.存在并发现象，execute 方法是有可能有多个线程同时调用的，当workerCountOf(c)<corePoolSize成立后
+            //  其他线程可能也成立了，并且向线程池中创建了worker，这个时候线程池中线程数量已经达到了核心线程数，所以当前线程失败了
+            //  2.当前线程池状态发生改变了，RUNNING SHUTDOWN STOP TIDYING TERMINATION
+            //  当线程池状态是非 RUNNING 状态的时候，addWorker(firstWorker != null,true | false) 一定会失败
+            //  SHUTDOWN 状态下，也有可能创建成功，前提 firstTask == null 而且当前queue不为空，特殊情况，在addWorker方法中有说明
             c = ctl.get();
         }
-        // 到这里说明，要么当前线程数大于等于核心线程数，要么刚刚 addWorker 失败了
+
+        // 执行到这里有几种情况？
+        //  1.当前线程数量已经达到了 corePoolSize
+        //  2.addWorker 失败，并发导致了
 
         // isRunning：当前状态是否正在运行
         // offer：如果队列已满无法添加会直接返回false   add：如果队列已满无法添加会抛出异常

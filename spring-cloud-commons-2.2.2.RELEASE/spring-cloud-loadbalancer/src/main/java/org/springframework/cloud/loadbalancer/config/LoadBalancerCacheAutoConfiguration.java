@@ -56,8 +56,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass({ CacheManager.class, CacheAutoConfiguration.class })
 @AutoConfigureAfter(CacheAutoConfiguration.class)
-@ConditionalOnProperty(value = "spring.cloud.loadbalancer.cache.enabled",
-		matchIfMissing = true)
+@ConditionalOnProperty(value = "spring.cloud.loadbalancer.cache.enabled", matchIfMissing = true)
 @EnableConfigurationProperties(LoadBalancerCacheProperties.class)
 @Conditional(OnNoRibbonDefaultCondition.class)
 public class LoadBalancerCacheAutoConfiguration {
@@ -65,7 +64,6 @@ public class LoadBalancerCacheAutoConfiguration {
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingClass("com.github.benmanes.caffeine.cache.Caffeine")
 	protected static class LoadBalancerCacheManagerWarnConfiguration {
-
 		@Bean
 		LoadBalancerCaffeineWarnLogger caffeineWarnLogger() {
 			return new LoadBalancerCaffeineWarnLogger();
@@ -75,8 +73,7 @@ public class LoadBalancerCacheAutoConfiguration {
 
 	static class LoadBalancerCaffeineWarnLogger {
 
-		private static final Log LOG = LogFactory
-				.getLog(LoadBalancerCaffeineWarnLogger.class);
+		private static final Log LOG = LogFactory.getLog(LoadBalancerCaffeineWarnLogger.class);
 
 		@PostConstruct
 		void logWarning() {
@@ -95,8 +92,7 @@ public class LoadBalancerCacheAutoConfiguration {
 
 		@Bean(autowireCandidate = false)
 		@ConditionalOnMissingBean
-		LoadBalancerCacheManager caffeineLoadBalancerCacheManager(
-				LoadBalancerCacheProperties cacheProperties) {
+		LoadBalancerCacheManager caffeineLoadBalancerCacheManager(LoadBalancerCacheProperties cacheProperties) {
 			return new CaffeineBasedLoadBalancerCacheManager(cacheProperties);
 		}
 
@@ -109,8 +105,7 @@ public class LoadBalancerCacheAutoConfiguration {
 
 		@Bean(autowireCandidate = false)
 		@ConditionalOnMissingBean
-		LoadBalancerCacheManager defaultLoadBalancerCacheManager(
-				LoadBalancerCacheProperties cacheProperties) {
+		LoadBalancerCacheManager defaultLoadBalancerCacheManager(LoadBalancerCacheProperties cacheProperties) {
 			return new DefaultLoadBalancerCacheManager(cacheProperties);
 		}
 

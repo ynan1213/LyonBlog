@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: xxx
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+server:
+  port: 9001
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://47.100.24.106:8761/eureka
+
+logging:
+  level:
+    com.netflix.loadbalancer.BaseLoadBalancer: debug

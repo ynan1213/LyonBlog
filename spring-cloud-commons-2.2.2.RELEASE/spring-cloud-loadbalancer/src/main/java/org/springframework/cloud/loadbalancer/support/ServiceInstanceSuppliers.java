@@ -35,8 +35,7 @@ public final class ServiceInstanceSuppliers {
 		throw new IllegalStateException("Can't instantiate a utility class");
 	}
 
-	public static ServiceInstanceSupplier from(String serviceId,
-			ServiceInstance... instances) {
+	public static ServiceInstanceSupplier from(String serviceId, ServiceInstance... instances) {
 		return new ServiceInstanceSupplier() {
 			@Override
 			public Flux<ServiceInstance> get() {
@@ -50,8 +49,7 @@ public final class ServiceInstanceSuppliers {
 		};
 	}
 
-	public static ObjectProvider<ServiceInstanceSupplier> toProvider(String serviceId,
-			ServiceInstance... instances) {
+	public static ObjectProvider<ServiceInstanceSupplier> toProvider(String serviceId, ServiceInstance... instances) {
 		return new SimpleObjectProvider<>(from(serviceId, instances));
 	}
 

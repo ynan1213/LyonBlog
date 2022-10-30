@@ -39,8 +39,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class ReactiveLoadBalancerAutoConfiguration {
 
 	@Bean
-	public LoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction(
-			LoadBalancerClient client) {
+	public LoadBalancerExchangeFilterFunction loadBalancerExchangeFilterFunction(LoadBalancerClient client) {
 		return new LoadBalancerExchangeFilterFunction(client);
 	}
 

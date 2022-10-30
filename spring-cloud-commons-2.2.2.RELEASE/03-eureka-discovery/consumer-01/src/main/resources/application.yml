@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: consumer-01
+
+server:
+  port: 9001
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://47.100.24.106:8761/eureka

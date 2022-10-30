@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: ribbon-xxx
+
+server:
+  port: 9001
+
+#test-server:
+#  ribbon:
+#    eureka:
+#      enabled: false
+#    listOfServers: localhost:8001,localhost:8002
+#    ServerListRefreshInterval: 5000
+
+ribbon:
+  MaxHttpConnectionsPerHost: 1111
+  ServerListRefreshInterval: 5555
+
+PROVIDER-00:
+  ribbon:
+    ServerListRefreshInterval: 6666
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://47.100.24.106:8761/eureka
+
+logging:
+  level:
+    com.netflix.loadbalancer.BaseLoadBalancer: debug

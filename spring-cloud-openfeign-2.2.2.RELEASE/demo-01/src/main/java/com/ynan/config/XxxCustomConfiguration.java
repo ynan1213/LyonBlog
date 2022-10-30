@@ -22,11 +22,4 @@ public class XxxCustomConfiguration  {
 		System.out.println("指定client配置 XxxDefaultConfiguration 初始化中 ..... 会被每一个client子容器初始化，当前容器：" + context.getDisplayName());
 	}
 
-	@Bean("xx")
-	@Scope("prototype")
-//	@ConditionalOnMissingBean
-	public Feign.Builder feignBuilder(Retryer retryer) {
-		return Feign.builder().retryer(retryer);
-	}
-
 }

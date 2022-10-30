@@ -23,13 +23,13 @@ public class RocketStartMain {
         XxxMessageBinding bind = context.getBean(XxxMessageBinding.class);
 
         SubscribableChannel input = bind.xxxInput();
-        MessageChannel output = bind.xxxOutput();
+//        MessageChannel output = bind.xxxOutput();
 
         // 延迟级别
         // MessageBuilder.withPayload("aaa").setHeader(MessageConst.PROPERTY_DELAY_TIME_LEVEL, 3)
         // 消息 tag
         // MessageBuilder.withPayload("aaa").setHeader(RocketMQHeaders.TAGS, "hello")
-        output.send(MessageBuilder.withPayload("xxx-yyyy").setHeader(RocketMQHeaders.TAGS, "hello").build());
+        //output.send(MessageBuilder.withPayload("xxx-yyyy").setHeader(RocketMQHeaders.TAGS, "hello").build());
 
         System.out.println("发送消息成功");
     }

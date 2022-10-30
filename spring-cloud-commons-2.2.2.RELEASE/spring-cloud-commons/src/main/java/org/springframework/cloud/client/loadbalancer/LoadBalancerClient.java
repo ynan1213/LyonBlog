@@ -53,8 +53,7 @@ public interface LoadBalancerClient extends ServiceInstanceChooser {
 	 * @return The result of the LoadBalancerRequest callback on the selected
 	 * ServiceInstance.
 	 */
-	<T> T execute(String serviceId, ServiceInstance serviceInstance,
-			LoadBalancerRequest<T> request) throws IOException;
+	<T> T execute(String serviceId, ServiceInstance serviceInstance, LoadBalancerRequest<T> request) throws IOException;
 
 	/**
 	 * Creates a proper URI with a real host and port for systems to utilize. Some systems
@@ -64,6 +63,8 @@ public interface LoadBalancerClient extends ServiceInstanceChooser {
 	 * @param instance service instance to reconstruct the URI
 	 * @param original A URI with the host as a logical service name.
 	 * @return A reconstructed URI.
+	 *
+	 * 根据负载得到的ServiceInstance，重新构造新的真实的带有host和port的URI
 	 */
 	URI reconstructURI(ServiceInstance instance, URI original);
 

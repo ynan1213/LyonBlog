@@ -79,7 +79,7 @@ final class SynchronousMethodHandler implements MethodHandler {
 		// 对于没有注解或者是被 @RequestBody 注解的参数，被写入到 RequestTemplate 的请求体body中
 		RequestTemplate template = buildTemplateFromArgs.create(argv);
 
-		// 如果方法参数中传递了 Options 对象，这种用法没见过，可能是兼容老版本
+		// 如果方法参数中传递了 Options 对象，这种用法没见过，可能是兼容老版本（可以在参数中对单个接口设置超时）
 		// 如果方法参数中没有传递，则返回全局的 Options
 		Options options = findOptions(argv);
 
@@ -88,7 +88,7 @@ final class SynchronousMethodHandler implements MethodHandler {
 		while (true) {
 			try {
 				return executeAndDecode(template, options);
-			} catch (RetryableException e) {
+			} catch (RetryableException e) { // 只 catch RetryableException类型的异常
 				try {
 					// 解析是否重试，或者是否还有重试次数，如果否的话会将 RetryableException 异常原封抛出
 					retryer.continueOrPropagate(e);
@@ -124,23 +124,30 @@ final class SynchronousMethodHandler implements MethodHandler {
 			response = client.execute(request, options);
 			// ensure the request is set. TODO: remove in Feign 12
 			response = response.toBuilder().request(request).requestTemplate(template).build();
+
+		// 这里只catch IOException类型的异常，什么样的情况会抛出IOException？需要研究ribbon和okhttp原理才行
+		// 		不知道是不是 读取超时，或者connect不通等情况下只会抛出 IOException 异常
+		// 而对于 com.netflix.client.ClientException: Load balancer does not have available server 等RuntimeException类型
+		// 的异常，这里不会被catch，会直接往外抛出
 		} catch (IOException e) {
-			// 不知道是不是 读取超时，或者connect不通等情况下只会抛出 IOException 异常
+			long seconds = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
 			if (logLevel != Logger.Level.NONE) {
 				logger.logIOException(metadata.configKey(), logLevel, e, elapsedTime(start));
 			}
 			// 将 IOException 封装成 RetryableException 异常并抛出
 			throw errorExecuting(request, e);
 		}
+
+		// 对于正常返回包括、404、500 都会走下面
+
 		long elapsedTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 		boolean shouldClose = true;
 
-		// 对于正常返回包括 404、500 等都会走下面
 		try {
 			if (logLevel != Logger.Level.NONE) {
 				response = logger.logAndRebufferResponse(metadata.configKey(), logLevel, response, elapsedTime);
 			}
-			// 方法返回值是response
+			// 处理方法返回值是 Response 类型的情况
 			if (Response.class == metadata.returnType()) {
 				if (response.body() == null) {
 					return response;
@@ -164,7 +171,6 @@ final class SynchronousMethodHandler implements MethodHandler {
 					shouldClose = closeAfterDecode;
 					return result;
 				}
-
 			} else if (decode404 && response.status() == 404 && void.class != metadata.returnType()) {
 				// 单独处理返回码 404 的情况
 				Object result = decode(response);

@@ -40,14 +40,12 @@ public class BlockingLoadBalancerClient implements LoadBalancerClient {
 
 	private final LoadBalancerClientFactory loadBalancerClientFactory;
 
-	public BlockingLoadBalancerClient(
-			LoadBalancerClientFactory loadBalancerClientFactory) {
+	public BlockingLoadBalancerClient(LoadBalancerClientFactory loadBalancerClientFactory) {
 		this.loadBalancerClientFactory = loadBalancerClientFactory;
 	}
 
 	@Override
-	public <T> T execute(String serviceId, LoadBalancerRequest<T> request)
-			throws IOException {
+	public <T> T execute(String serviceId, LoadBalancerRequest<T> request) throws IOException {
 		ServiceInstance serviceInstance = choose(serviceId);
 		if (serviceInstance == null) {
 			throw new IllegalStateException("No instances available for " + serviceId);
@@ -56,8 +54,7 @@ public class BlockingLoadBalancerClient implements LoadBalancerClient {
 	}
 
 	@Override
-	public <T> T execute(String serviceId, ServiceInstance serviceInstance,
-			LoadBalancerRequest<T> request) throws IOException {
+	public <T> T execute(String serviceId, ServiceInstance serviceInstance, LoadBalancerRequest<T> request) throws IOException {
 		try {
 			return request.apply(serviceInstance);
 		}
@@ -77,13 +74,11 @@ public class BlockingLoadBalancerClient implements LoadBalancerClient {
 
 	@Override
 	public ServiceInstance choose(String serviceId) {
-		ReactiveLoadBalancer<ServiceInstance> loadBalancer = loadBalancerClientFactory
-				.getInstance(serviceId);
+		ReactiveLoadBalancer<ServiceInstance> loadBalancer = loadBalancerClientFactory.getInstance(serviceId);
 		if (loadBalancer == null) {
 			return null;
 		}
-		Response<ServiceInstance> loadBalancerResponse = Mono.from(loadBalancer.choose())
-				.block();
+		Response<ServiceInstance> loadBalancerResponse = Mono.from(loadBalancer.choose()).block();
 		if (loadBalancerResponse == null) {
 			return null;
 		}

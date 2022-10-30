@@ -24,6 +24,8 @@ public class LoadBalancerZoneConfig {
 	/**
 	 * A {@link String} representation of the <code>zone</code> used for filtering
 	 * instances by zoned load-balancing implementations.
+	 *
+	 * 标识当前负载均衡器处于哪一个 zone
 	 */
 	private String zone;
 

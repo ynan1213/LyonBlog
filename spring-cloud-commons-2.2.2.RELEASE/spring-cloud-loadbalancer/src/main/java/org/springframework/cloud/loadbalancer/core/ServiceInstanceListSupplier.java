@@ -34,8 +34,7 @@ import static org.springframework.cloud.loadbalancer.support.LoadBalancerClientF
  * @author Olga Maciaszek-Sharma
  * @since 2.2.0
  */
-public interface ServiceInstanceListSupplier
-		extends Supplier<Flux<List<ServiceInstance>>> {
+public interface ServiceInstanceListSupplier extends Supplier<Flux<List<ServiceInstance>>> {
 
 	String getServiceId();
 
@@ -53,8 +52,7 @@ public interface ServiceInstanceListSupplier
 			return new Builder(env);
 		}
 
-		private FixedServiceInstanceListSupplier(Environment env,
-				List<ServiceInstance> instances) {
+		private FixedServiceInstanceListSupplier(Environment env, List<ServiceInstance> instances) {
 			this.serviceId = env.getProperty(PROPERTY_NAME);
 			this.instances = instances;
 		}
@@ -89,8 +87,7 @@ public interface ServiceInstanceListSupplier
 			}
 
 			public Builder instance(String host, int port, String serviceId) {
-				DefaultServiceInstance instance = new DefaultServiceInstance(
-						instanceId(serviceId, host, port), serviceId, host, port, false);
+				DefaultServiceInstance instance = new DefaultServiceInstance(instanceId(serviceId, host, port), serviceId, host, port, false);
 				return instance(instance);
 			}
 

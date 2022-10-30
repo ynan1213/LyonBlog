@@ -26,8 +26,7 @@ import org.springframework.util.Assert;
 /**
  * @author Dave Syer
  */
-public class LoadBalancerClientSpecification
-		implements NamedContextFactory.Specification {
+public class LoadBalancerClientSpecification implements NamedContextFactory.Specification {
 
 	private String name;
 

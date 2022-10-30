@@ -43,8 +43,7 @@ public class BlockingLoadBalancerClientAutoConfigurationTests {
 	public void beansCreatedNormally() {
 		applicationContextRunner.run(ctxt -> {
 			assertThat(ctxt).hasSingleBean(BlockingLoadBalancerClient.class);
-			assertThat(ctxt)
-					.doesNotHaveBean(BlockingLoadBalancerClientRibbonWarnLogger.class);
+			assertThat(ctxt).doesNotHaveBean(BlockingLoadBalancerClientRibbonWarnLogger.class);
 		});
 	}
 

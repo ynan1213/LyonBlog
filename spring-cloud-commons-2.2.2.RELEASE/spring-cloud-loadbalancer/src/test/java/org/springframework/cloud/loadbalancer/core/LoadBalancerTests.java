@@ -66,8 +66,7 @@ public class LoadBalancerTests {
 	@Test
 	public void roundRobbinLoadbalancerWorks() {
 		ReactiveLoadBalancer<ServiceInstance> reactiveLoadBalancer = this.clientFactory
-				.getInstance("myservice", ReactiveLoadBalancer.class,
-						ServiceInstance.class);
+				.getInstance("myservice", ReactiveLoadBalancer.class, ServiceInstance.class);
 
 		then(reactiveLoadBalancer).isInstanceOf(RoundRobinLoadBalancer.class);
 		then(reactiveLoadBalancer).isInstanceOf(ReactorLoadBalancer.class);
@@ -79,8 +78,7 @@ public class LoadBalancerTests {
 		assertLoadBalancer(loadBalancer, hosts);
 	}
 
-	private void assertLoadBalancer(ReactorLoadBalancer<ServiceInstance> loadBalancer,
-			List<String> hosts) {
+	private void assertLoadBalancer(ReactorLoadBalancer<ServiceInstance> loadBalancer, List<String> hosts) {
 		for (String host : hosts) {
 			Mono<Response<ServiceInstance>> source = loadBalancer.choose();
 			StepVerifier.create(source).consumeNextWith(response -> {
@@ -89,16 +87,13 @@ public class LoadBalancerTests {
 
 				ServiceInstance instance = response.getServer();
 				then(instance).isNotNull();
-				then(instance.getHost()).as("instance host is incorrent %s", host)
-						.isEqualTo(host);
+				then(instance.getHost()).as("instance host is incorrent %s", host).isEqualTo(host);
 
 				if (host.contains("secure")) {
 					then(instance.isSecure()).isTrue();
-				}
-				else {
+				} else {
 					then(instance.isSecure()).isFalse();
 				}
-
 				response.onComplete(new CompletionContext(Status.SUCCESSS));
 			}).verifyComplete();
 		}
@@ -106,10 +101,8 @@ public class LoadBalancerTests {
 
 	@Test
 	public void emptyHosts() {
-		ResolvableType type = ResolvableType
-				.forClassWithGenerics(ReactorLoadBalancer.class, ServiceInstance.class);
-		ReactorLoadBalancer<ServiceInstance> loadBalancer = this.clientFactory
-				.getInstance("unknownservice", type);
+		ResolvableType type = ResolvableType.forClassWithGenerics(ReactorLoadBalancer.class, ServiceInstance.class);
+		ReactorLoadBalancer<ServiceInstance> loadBalancer = this.clientFactory.getInstance("unknownservice", type);
 
 		then(loadBalancer).isInstanceOf(RoundRobinLoadBalancer.class);
 
@@ -131,8 +124,7 @@ public class LoadBalancerTests {
 		assertLoadBalancer(loadBalancer, Arrays.asList("1host", "2host-secure"));
 	}
 
-	private static DefaultServiceInstance instance(String serviceId, String host,
-			boolean secure) {
+	private static DefaultServiceInstance instance(String serviceId, String host, boolean secure) {
 		return new DefaultServiceInstance(serviceId, serviceId, host, 80, secure);
 	}
 
@@ -190,10 +182,8 @@ public class LoadBalancerTests {
 	@EnableAutoConfiguration
 	@SpringBootConfiguration
 	@LoadBalancerClients({
-			@LoadBalancerClient(name = "myservice",
-					configuration = MyServiceConfig.class),
-			@LoadBalancerClient(name = "unknownservice",
-					configuration = MyServiceConfig.class) })
+			@LoadBalancerClient(name = "myservice", configuration = MyServiceConfig.class),
+			@LoadBalancerClient(name = "unknownservice", configuration = MyServiceConfig.class) })
 	@EnableCaching
 	protected static class Config {
 
@@ -202,11 +192,9 @@ public class LoadBalancerTests {
 	protected static class MyServiceConfig {
 
 		@Bean
-		public RoundRobinLoadBalancer roundRobinContextLoadBalancer(
-				LoadBalancerClientFactory clientFactory, Environment env) {
+		public RoundRobinLoadBalancer roundRobinContextLoadBalancer(LoadBalancerClientFactory clientFactory, Environment env) {
 			String serviceId = clientFactory.getName(env);
-			return new RoundRobinLoadBalancer(clientFactory.getLazyProvider(serviceId,
-					ServiceInstanceListSupplier.class), serviceId, -1);
+			return new RoundRobinLoadBalancer(clientFactory.getLazyProvider(serviceId, ServiceInstanceListSupplier.class), serviceId, -1);
 		}
 
 	}

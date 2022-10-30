@@ -57,8 +57,7 @@ public class RoundRobinLoadBalancer implements ReactorServiceInstanceLoadBalance
 	 * @deprecated Use {@link #RoundRobinLoadBalancer(ObjectProvider, String)}} instead.
 	 */
 	@Deprecated
-	public RoundRobinLoadBalancer(String serviceId,
-			ObjectProvider<ServiceInstanceSupplier> serviceInstanceSupplier) {
+	public RoundRobinLoadBalancer(String serviceId, ObjectProvider<ServiceInstanceSupplier> serviceInstanceSupplier) {
 		this(serviceId, serviceInstanceSupplier, new Random().nextInt(1000));
 	}
 
@@ -67,9 +66,7 @@ public class RoundRobinLoadBalancer implements ReactorServiceInstanceLoadBalance
 	 * {@link ServiceInstanceListSupplier} that will be used to get available instances
 	 * @param serviceId id of the service for which to choose an instance
 	 */
-	public RoundRobinLoadBalancer(
-			ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider,
-			String serviceId) {
+	public RoundRobinLoadBalancer(ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider, String serviceId) {
 		this(serviceInstanceListSupplierProvider, serviceId, new Random().nextInt(1000));
 	}
 
@@ -79,9 +76,7 @@ public class RoundRobinLoadBalancer implements ReactorServiceInstanceLoadBalance
 	 * @param serviceId id of the service for which to choose an instance
 	 * @param seedPosition Round Robin element position marker
 	 */
-	public RoundRobinLoadBalancer(
-			ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider,
-			String serviceId, int seedPosition) {
+	public RoundRobinLoadBalancer(ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider, String serviceId, int seedPosition) {
 		this.serviceId = serviceId;
 		this.serviceInstanceListSupplierProvider = serviceInstanceListSupplierProvider;
 		this.position = new AtomicInteger(seedPosition);
@@ -96,9 +91,7 @@ public class RoundRobinLoadBalancer implements ReactorServiceInstanceLoadBalance
 	 * instead.
 	 */
 	@Deprecated
-	public RoundRobinLoadBalancer(String serviceId,
-			ObjectProvider<ServiceInstanceSupplier> serviceInstanceSupplier,
-			int seedPosition) {
+	public RoundRobinLoadBalancer(String serviceId, ObjectProvider<ServiceInstanceSupplier> serviceInstanceSupplier, int seedPosition) {
 		this.serviceId = serviceId;
 		this.serviceInstanceSupplier = serviceInstanceSupplier;
 		this.position = new AtomicInteger(seedPosition);
@@ -113,17 +106,16 @@ public class RoundRobinLoadBalancer implements ReactorServiceInstanceLoadBalance
 		// TODO: move supplier to Request?
 		// Temporary conditional logic till deprecated members are removed.
 		if (serviceInstanceListSupplierProvider != null) {
-			ServiceInstanceListSupplier supplier = serviceInstanceListSupplierProvider
-					.getIfAvailable(NoopServiceInstanceListSupplier::new);
+			// 注入的时候注入的是 Lazy Provider，这里取出真正的 Bean，也就是 ServiceInstanceListSupplier
+			ServiceInstanceListSupplier supplier = serviceInstanceListSupplierProvider.getIfAvailable(NoopServiceInstanceListSupplier::new);
 			return supplier.get().next().map(this::getInstanceResponse);
 		}
-		ServiceInstanceSupplier supplier = this.serviceInstanceSupplier
-				.getIfAvailable(NoopServiceInstanceSupplier::new);
+		ServiceInstanceSupplier supplier = this.serviceInstanceSupplier.getIfAvailable(NoopServiceInstanceSupplier::new);
 		return supplier.get().collectList().map(this::getInstanceResponse);
 	}
 
-	private Response<ServiceInstance> getInstanceResponse(
-			List<ServiceInstance> instances) {
+	// 从列表中选择一个实例
+	private Response<ServiceInstance> getInstanceResponse(List<ServiceInstance> instances) {
 		if (instances.isEmpty()) {
 			log.warn("No servers available for service: " + this.serviceId);
 			return new EmptyResponse();

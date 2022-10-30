@@ -52,8 +52,7 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 	public URI reconstructURI(ServiceInstance instance, URI original) {
 		Assert.notNull(instance, "instance can not be null");
 		String serviceId = instance.getServiceId();
-		RibbonLoadBalancerContext context = this.clientFactory
-				.getLoadBalancerContext(serviceId);
+		RibbonLoadBalancerContext context = this.clientFactory.getLoadBalancerContext(serviceId);
 
 		URI uri;
 		Server server;
@@ -63,12 +62,10 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 			uri = updateToSecureConnectionIfNeeded(original, ribbonServer);
 		}
 		else {
-			server = new Server(instance.getScheme(), instance.getHost(),
-					instance.getPort());
+			server = new Server(instance.getScheme(), instance.getHost(), instance.getPort());
 			IClientConfig clientConfig = clientFactory.getClientConfig(serviceId);
 			ServerIntrospector serverIntrospector = serverIntrospector(serviceId);
-			uri = updateToSecureConnectionIfNeeded(original, clientConfig,
-					serverIntrospector, server);
+			uri = updateToSecureConnectionIfNeeded(original, clientConfig, serverIntrospector, server);
 		}
 		return context.reconstructURIWithServer(server, uri);
 	}
@@ -89,13 +86,11 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 		if (server == null) {
 			return null;
 		}
-		return new RibbonServer(serviceId, server, isSecure(server, serviceId),
-				serverIntrospector(serviceId).getMetadata(server));
+		return new RibbonServer(serviceId, server, isSecure(server, serviceId), serverIntrospector(serviceId).getMetadata(server));
 	}
 
 	@Override
-	public <T> T execute(String serviceId, LoadBalancerRequest<T> request)
-			throws IOException {
+	public <T> T execute(String serviceId, LoadBalancerRequest<T> request) throws IOException {
 		return execute(serviceId, request, null);
 	}
 
@@ -111,23 +106,19 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 	 * @return request execution result
 	 * @throws IOException executing the request may result in an {@link IOException}
 	 */
-	public <T> T execute(String serviceId, LoadBalancerRequest<T> request, Object hint)
-			throws IOException {
+	public <T> T execute(String serviceId, LoadBalancerRequest<T> request, Object hint) throws IOException {
 		ILoadBalancer loadBalancer = getLoadBalancer(serviceId);
 		Server server = getServer(loadBalancer, hint);
 		if (server == null) {
 			throw new IllegalStateException("No instances available for " + serviceId);
 		}
-		RibbonServer ribbonServer = new RibbonServer(serviceId, server,
-				isSecure(server, serviceId),
-				serverIntrospector(serviceId).getMetadata(server));
+		RibbonServer ribbonServer = new RibbonServer(serviceId, server, isSecure(server, serviceId), serverIntrospector(serviceId).getMetadata(server));
 
 		return execute(serviceId, ribbonServer, request);
 	}
 
 	@Override
-	public <T> T execute(String serviceId, ServiceInstance serviceInstance,
-			LoadBalancerRequest<T> request) throws IOException {
+	public <T> T execute(String serviceId, ServiceInstance serviceInstance, LoadBalancerRequest<T> request) throws IOException {
 		Server server = null;
 		if (serviceInstance instanceof RibbonServer) {
 			server = ((RibbonServer) serviceInstance).getServer();
@@ -136,8 +127,7 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 			throw new IllegalStateException("No instances available for " + serviceId);
 		}
 
-		RibbonLoadBalancerContext context = this.clientFactory
-				.getLoadBalancerContext(serviceId);
+		RibbonLoadBalancerContext context = this.clientFactory.getLoadBalancerContext(serviceId);
 		RibbonStatsRecorder statsRecorder = new RibbonStatsRecorder(context, server);
 
 		try {
@@ -158,8 +148,7 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 	}
 
 	private ServerIntrospector serverIntrospector(String serviceId) {
-		ServerIntrospector serverIntrospector = this.clientFactory.getInstance(serviceId,
-				ServerIntrospector.class);
+		ServerIntrospector serverIntrospector = this.clientFactory.getInstance(serviceId, ServerIntrospector.class);
 		if (serverIntrospector == null) {
 			serverIntrospector = new DefaultServerIntrospector();
 		}

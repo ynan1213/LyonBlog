@@ -25,6 +25,7 @@ import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryProperties.SimpleServiceInstance;
 import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,10 +67,8 @@ class BlockingLoadBalancerClientTests {
 
 	@BeforeEach
 	void setUp() {
-		properties.getInstances().put("myservice",
-				Collections.singletonList(
-						new SimpleDiscoveryProperties.SimpleServiceInstance(
-								URI.create("https://test.example:9999"))));
+		SimpleServiceInstance instance = new SimpleServiceInstance(URI.create("https://test.example:9999"));
+		properties.getInstances().put("myservice", Collections.singletonList(instance));
 	}
 
 	@Test
@@ -99,8 +98,7 @@ class BlockingLoadBalancerClientTests {
 	void exceptionThrownIfInstanceNotAvailableForRequestExecution() {
 		try {
 			final String result = "result";
-			Object actualResult = loadBalancerClient.execute("unknownservice",
-					(LoadBalancerRequest<Object>) instance -> result);
+			Object actualResult = loadBalancerClient.execute("unknownservice", (LoadBalancerRequest<Object>) instance -> result);
 			assertThat(actualResult).isEqualTo(result);
 			fail("Should have thrown exception.");
 		}
@@ -178,8 +176,7 @@ class BlockingLoadBalancerClientTests {
 
 }
 
-class DiscoveryClientBasedReactiveLoadBalancer
-		implements ReactorServiceInstanceLoadBalancer {
+class DiscoveryClientBasedReactiveLoadBalancer implements ReactorServiceInstanceLoadBalancer {
 
 	private final Random random = new Random();
 
@@ -187,8 +184,7 @@ class DiscoveryClientBasedReactiveLoadBalancer
 
 	private final DiscoveryClient discoveryClient;
 
-	DiscoveryClientBasedReactiveLoadBalancer(String serviceId,
-			DiscoveryClient discoveryClient) {
+	DiscoveryClientBasedReactiveLoadBalancer(String serviceId, DiscoveryClient discoveryClient) {
 		this.serviceId = serviceId;
 		this.discoveryClient = discoveryClient;
 	}

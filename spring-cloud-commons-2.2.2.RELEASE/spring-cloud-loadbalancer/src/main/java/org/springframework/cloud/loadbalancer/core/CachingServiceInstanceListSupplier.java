@@ -39,22 +39,19 @@ import org.springframework.cloud.client.ServiceInstance;
  */
 public class CachingServiceInstanceListSupplier implements ServiceInstanceListSupplier {
 
-	private static final Log log = LogFactory
-			.getLog(CachingServiceInstanceListSupplier.class);
+	private static final Log log = LogFactory.getLog(CachingServiceInstanceListSupplier.class);
 
 	/**
 	 * Name of the service cache instance.
 	 */
-	public static final String SERVICE_INSTANCE_CACHE_NAME = CachingServiceInstanceListSupplier.class
-			.getSimpleName() + "Cache";
+	public static final String SERVICE_INSTANCE_CACHE_NAME = CachingServiceInstanceListSupplier.class.getSimpleName() + "Cache";
 
 	private final ServiceInstanceListSupplier delegate;
 
 	private final Flux<List<ServiceInstance>> serviceInstances;
 
 	@SuppressWarnings("unchecked")
-	public CachingServiceInstanceListSupplier(ServiceInstanceListSupplier delegate,
-			CacheManager cacheManager) {
+	public CachingServiceInstanceListSupplier(ServiceInstanceListSupplier delegate, CacheManager cacheManager) {
 		this.delegate = delegate;
 		this.serviceInstances = CacheFlux.lookup(key -> {
 			// TODO: configurable cache name
@@ -73,12 +70,10 @@ public class CachingServiceInstanceListSupplier implements ServiceInstanceListSu
 		}, delegate.getServiceId()).onCacheMissResume(this.delegate)
 				.andWriteWith((key, signals) -> Flux.fromIterable(signals).dematerialize()
 						.doOnNext(instances -> {
-							Cache cache = cacheManager
-									.getCache(SERVICE_INSTANCE_CACHE_NAME);
+							Cache cache = cacheManager.getCache(SERVICE_INSTANCE_CACHE_NAME);
 							if (cache == null) {
 								if (log.isErrorEnabled()) {
-									log.error("Unable to find cache for writing: "
-											+ SERVICE_INSTANCE_CACHE_NAME);
+									log.error("Unable to find cache for writing: " + SERVICE_INSTANCE_CACHE_NAME);
 								}
 							}
 							else {

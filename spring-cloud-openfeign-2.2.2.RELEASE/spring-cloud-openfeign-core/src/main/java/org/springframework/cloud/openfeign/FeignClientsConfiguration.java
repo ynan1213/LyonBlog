@@ -55,7 +55,7 @@ import org.springframework.format.support.FormattingConversionService;
  * @author Dave Syer
  * @author Venil Noronha
  *
- * 这个类会被设置到每一个子client的容器中分别初始化
+ * 这个类会被设置到每一个子client的容器中，分别初始化
  */
 @Configuration(proxyBeanMethods = false)
 public class FeignClientsConfiguration {
@@ -69,7 +69,7 @@ public class FeignClientsConfiguration {
 	@Autowired(required = false)
 	private List<FeignFormatterRegistrar> feignFormatterRegistrars = new ArrayList<>();
 
-	// 默认情况下父容器和子容器都不会有该Logger对象
+	// 默认情况下父容器和子容器都不会有该Logger对象，除非自定义
 	@Autowired(required = false)
 	private Logger logger;
 
@@ -158,6 +158,7 @@ public class FeignClientsConfiguration {
 		@ConditionalOnMissingBean
 		@ConditionalOnProperty(name = "feign.hystrix.enabled")
 		public Feign.Builder feignHystrixBuilder() {
+			// 注意，这里并没有注入 Retryer 对象，后面配置 Builder 的地方会进行注入
 			return HystrixFeign.builder();
 		}
 

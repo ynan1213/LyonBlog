@@ -36,7 +36,7 @@ class HystrixTargeter implements Targeter {
 		if (!(feignBuilder instanceof feign.hystrix.HystrixFeign.Builder)) {
 			return feignBuilder.target(target);
 		}
-		// 想要走到这里，必须配置 feign.hystrix.enabled=true（或者自定义Builder的类型)
+		// 想要走到这里，必须配置 feign.hystrix.enabled=true
 		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feignBuilder;
 		String name = StringUtils.isEmpty(factory.getContextId()) ? factory.getName() : factory.getContextId();
 

@@ -3,6 +3,7 @@ package com.ynan._03.stream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -25,6 +26,15 @@ public class IntStreamDemo {
         stream = Arrays.asList(1, 2, 4, 5, 6, 7).stream();
         int sum = stream.mapToInt(i -> i.intValue()).filter(i -> i > 3).sum();
         System.out.println(sum);
+
+
+        // 找出a在下面字符串中所有的索引位置
+        String s = "aadbadfiadosfdlsfjsdiouafdoiasfd";
+        List<Integer> integerList = IntStream.range(0, s.length())
+            .filter(index -> s.charAt(index) == 'a')
+            .boxed()
+            .collect(Collectors.toList());
+        System.out.println(integerList);
 
     }
 

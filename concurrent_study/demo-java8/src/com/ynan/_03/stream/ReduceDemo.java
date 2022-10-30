@@ -1,8 +1,7 @@
 package com.ynan._03.stream;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * @Author yuannan
@@ -11,19 +10,10 @@ import java.util.Optional;
 public class ReduceDemo {
 
     public static void main(String[] args) {
-        List<Integer> list = Arrays.asList(1, 2, 4, 5, 6, 7);
+        Stream<Integer> stream = Arrays.stream(new Integer[]{1, 2, 3, 4, 5, 6, 7, 8});
 
-        Optional<Integer> reduce = list.stream().reduce((x, y) -> {
-            System.out.println(x);
-            return x + y;
-        });
-        System.out.println(reduce.get());
-        System.out.println("-----------");
+        stream = Arrays.stream(new Integer[]{1, 2, 3, 4, 5, 6, 7});
 
-        Integer integer = list.stream().reduce(2, (x, y) -> {
-            System.out.println(x);
-            return x + y;
-        });
-        System.out.println(integer);
+        stream.reduce(Integer::max).ifPresent(System.out::println);
     }
 }

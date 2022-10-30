@@ -121,6 +121,8 @@ public abstract class NamedContextFactory<C extends NamedContextFactory.Specific
 		context.register(PropertyPlaceholderAutoConfiguration.class, this.defaultConfigType);
 
 		// 这个有什么用 ？？？
+		// 这样每个子容器都可以通过 propertyName 作为 key 获取当前子容器的名称
+		// 例如: environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
 		context.getEnvironment().getPropertySources().addFirst(new MapPropertySource(this.propertySourceName, Collections.<String, Object>singletonMap(this.propertyName, name)));
 		if (this.parent != null) {
 			// Uses Environment from parent as well as beans

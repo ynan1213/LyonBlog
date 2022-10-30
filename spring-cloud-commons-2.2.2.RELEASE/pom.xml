@@ -162,8 +162,13 @@
 		<module>spring-cloud-loadbalancer</module>
 		<module>spring-cloud-starter</module>
 		<module>spring-cloud-starter-loadbalancer</module>
-		<module>demo01</module>
 		<module>01-NamedContextFactory</module>
-		<module>02-ribbon-no-register-center</module>
-	</modules>
+		<module>02-LoadBalancer</module>
+        <module>03-eureka-discovery</module>
+		<module>03-eureka-discovery/provider-01</module>
+		<module>03-eureka-discovery/provider-02</module>
+		<module>03-eureka-discovery/consumer-01</module>
+		<module>04-nacos-discovery</module>
+        <module>05-ribbon</module>
+    </modules>
 </project>

@@ -35,8 +35,7 @@ import org.springframework.cloud.loadbalancer.config.LoadBalancerZoneConfig;
  * @author Olga Maciaszek-Sharma
  * @since 2.2.1
  */
-public class ZonePreferenceServiceInstanceListSupplier
-		implements ServiceInstanceListSupplier {
+public class ZonePreferenceServiceInstanceListSupplier implements ServiceInstanceListSupplier {
 
 	private final String ZONE = "zone";
 
@@ -46,8 +45,7 @@ public class ZonePreferenceServiceInstanceListSupplier
 
 	private String zone;
 
-	public ZonePreferenceServiceInstanceListSupplier(ServiceInstanceListSupplier delegate,
-			LoadBalancerZoneConfig zoneConfig) {
+	public ZonePreferenceServiceInstanceListSupplier(ServiceInstanceListSupplier delegate, LoadBalancerZoneConfig zoneConfig) {
 		this.delegate = delegate;
 		this.zoneConfig = zoneConfig;
 	}

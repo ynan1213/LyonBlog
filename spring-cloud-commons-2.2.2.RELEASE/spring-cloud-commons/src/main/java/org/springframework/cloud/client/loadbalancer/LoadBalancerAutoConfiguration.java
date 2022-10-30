@@ -47,6 +47,9 @@ import org.springframework.web.client.RestTemplate;
 @EnableConfigurationProperties(LoadBalancerRetryProperties.class)
 public class LoadBalancerAutoConfiguration {
 
+	/**
+	 * 这里指明了只收集带有@LoadBalanced注解的RestTemplate对象
+	 */
 	@LoadBalanced
 	@Autowired(required = false)
 	private List<RestTemplate> restTemplates = Collections.emptyList();

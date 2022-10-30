@@ -91,8 +91,7 @@ class HealthCheckServiceInstanceListSupplierTests {
 	void shouldCheckInstanceWithProvidedHealthCheckPath() {
 		healthCheck.getPath().put("ignored-service", "/health");
 		listSupplier = new HealthCheckServiceInstanceListSupplier(
-				ServiceInstanceListSupplier.FixedServiceInstanceListSupplier
-						.with(new MockEnvironment()).build(),
+				ServiceInstanceListSupplier.FixedServiceInstanceListSupplier.with(new MockEnvironment()).build(),
 				healthCheck, webClient);
 		ServiceInstance serviceInstance = new DefaultServiceInstance("ignored-service-1",
 				"ignored-service", "127.0.0.1", port, false);
@@ -106,8 +105,7 @@ class HealthCheckServiceInstanceListSupplierTests {
 	@Test
 	void shouldCheckInstanceWithDefaultHealthCheckPath() {
 		listSupplier = new HealthCheckServiceInstanceListSupplier(
-				ServiceInstanceListSupplier.FixedServiceInstanceListSupplier
-						.with(new MockEnvironment()).build(),
+				ServiceInstanceListSupplier.FixedServiceInstanceListSupplier.with(new MockEnvironment()).build(),
 				healthCheck, webClient);
 		ServiceInstance serviceInstance = new DefaultServiceInstance("ignored-service-1",
 				"ignored-service", "127.0.0.1", port, false);
@@ -122,8 +120,7 @@ class HealthCheckServiceInstanceListSupplierTests {
 	void shouldReturnFalseIfEndpointNotFound() {
 		healthCheck.getPath().put("ignored-service", "/test");
 		listSupplier = new HealthCheckServiceInstanceListSupplier(
-				ServiceInstanceListSupplier.FixedServiceInstanceListSupplier
-						.with(new MockEnvironment()).build(),
+				ServiceInstanceListSupplier.FixedServiceInstanceListSupplier.with(new MockEnvironment()).build(),
 				healthCheck, webClient);
 		ServiceInstance serviceInstance = new DefaultServiceInstance("ignored-service-1",
 				"ignored-service", "127.0.0.1", port, false);

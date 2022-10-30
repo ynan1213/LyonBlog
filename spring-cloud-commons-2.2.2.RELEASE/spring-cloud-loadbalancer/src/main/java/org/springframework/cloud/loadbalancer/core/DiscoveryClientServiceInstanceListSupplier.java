@@ -36,23 +36,19 @@ import static org.springframework.cloud.loadbalancer.support.LoadBalancerClientF
  * @author Tim Ysewyn
  * @since 2.2.0
  */
-public class DiscoveryClientServiceInstanceListSupplier
-		implements ServiceInstanceListSupplier {
+public class DiscoveryClientServiceInstanceListSupplier implements ServiceInstanceListSupplier {
 
 	private final String serviceId;
 
 	private final Flux<ServiceInstance> serviceInstances;
 
-	public DiscoveryClientServiceInstanceListSupplier(DiscoveryClient delegate,
-			Environment environment) {
+	public DiscoveryClientServiceInstanceListSupplier(DiscoveryClient delegate, Environment environment) {
 		this.serviceId = environment.getProperty(PROPERTY_NAME);
-		this.serviceInstances = Flux
-				.defer(() -> Flux.fromIterable(delegate.getInstances(serviceId)))
+		this.serviceInstances = Flux.defer(() -> Flux.fromIterable(delegate.getInstances(serviceId)))
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 
-	public DiscoveryClientServiceInstanceListSupplier(ReactiveDiscoveryClient delegate,
-			Environment environment) {
+	public DiscoveryClientServiceInstanceListSupplier(ReactiveDiscoveryClient delegate, Environment environment) {
 		this.serviceId = environment.getProperty(PROPERTY_NAME);
 		this.serviceInstances = delegate.getInstances(serviceId);
 	}

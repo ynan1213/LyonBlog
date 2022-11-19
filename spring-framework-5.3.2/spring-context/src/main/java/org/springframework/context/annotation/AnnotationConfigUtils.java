@@ -229,9 +229,16 @@ public abstract class AnnotationConfigUtils {
 			return (DefaultListableBeanFactory) registry;
 		}
 		else if (registry instanceof GenericApplicationContext) {
+			/**
+			 * GenericApplicationContext的构造器内就会初始化 BeanFactory，所以这里直接返回
+			 */
 			return ((GenericApplicationContext) registry).getDefaultListableBeanFactory();
 		}
 		else {
+			/**
+			 * 非GenericApplicationContext类型比如AbstractRefreshableApplicationContext内部也有可能初始化好了BeanFactory
+			 * 不知道为什么这里不考虑其他类型的，而是直接返回null
+			 */
 			return null;
 		}
 	}

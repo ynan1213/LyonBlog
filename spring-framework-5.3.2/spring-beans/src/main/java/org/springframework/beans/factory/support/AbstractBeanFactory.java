@@ -309,7 +309,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		// Eagerly check singleton cache for manually registered singletons.
 		// 这里先尝试从一、二、三级单例缓存中获取，若获取不到，就走下面的创建，getSingleton()方法的实现，在父类 DefaultSingletonBeanRegistry 中
-		// 注意，这里是从单例缓存中获取
+		// getSingleton(String beanName, ObjectFactory<?> singletonFactory)是只从一级缓存中获取，获取不到再创建，然后塞到一级缓存中
 		Object sharedInstance = getSingleton(beanName);
 
 		if (sharedInstance != null && args == null)
@@ -2469,7 +2469,6 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	static class BeanPostProcessorCache
 	{
-
 		final List<InstantiationAwareBeanPostProcessor> instantiationAware = new ArrayList<>();
 
 		final List<SmartInstantiationAwareBeanPostProcessor> smartInstantiationAware = new ArrayList<>();

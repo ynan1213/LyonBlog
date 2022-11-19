@@ -11,18 +11,16 @@ public class TestMain {
 
 	public static void main(String[] args) {
 
-		Class<Son> clazz = Son.class;
-
-		Annotation[] annotations = clazz.getAnnotations();
+		Annotation[] annotations = Son.class.getAnnotations();
 		System.out.println("getAnnotations: " + Arrays.asList(annotations));
 
-		Annotation[] declaredAnnotations = clazz.getDeclaredAnnotations();
+		Annotation[] declaredAnnotations = Son.class.getDeclaredAnnotations();
 		System.out.println("getDeclaredAnnotations: " + Arrays.asList(declaredAnnotations));
 
 		// ------------
-		YeAnnotation annotation = clazz.getAnnotation(YeAnnotation.class);
+		YeAnnotation annotation = Son.class.getAnnotation(YeAnnotation.class);
 		System.out.println("getAnnotation: " + annotation);
-		YeAnnotation[] annotationsByType = clazz.getAnnotationsByType(YeAnnotation.class);
+		YeAnnotation[] annotationsByType = Son.class.getAnnotationsByType(YeAnnotation.class);
 		System.out.println(annotationsByType.length == 0);
 
 	}

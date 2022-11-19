@@ -6,9 +6,8 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 // @Configuration注解可不需要
-@Configuration("RootConfigXxx")
+@Configuration
 @ComponentScan("com.epichust")
-//@Conditional(RootConfig.ConditionTest.class)
 public class RootConfig
 {
 

@@ -272,6 +272,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @return the registered singleton object
 	 *
 	 * 从一级缓存获取，获取不到用 singletonFactory 创建
+	 * 有个疑问：会不会存在一级缓存不存在，但是二级、三级缓存存在的情况呢？
+	 * 1. 从调用链来看，这个方法只在一个地方被调用，并且在调用该方法之前已经调用过了getSingleton(String beanName)，这里会从二级、三级中获取，
+	 *    也就是说，调用这个方法的时候二级、三级缓存中必定是没有的。
+	 * 2. 如果不考虑1的情况，从另一个角度来说，这个方法在调用singletonFactory.getObject()创建对象后，会把对象存入一级缓存，并且从二级、三级
+	 *    缓存中删除掉，也就是说，即使二级和三级存在，这里也会以singletonFactory.getObject()为准。
 	 */
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory)
 	{

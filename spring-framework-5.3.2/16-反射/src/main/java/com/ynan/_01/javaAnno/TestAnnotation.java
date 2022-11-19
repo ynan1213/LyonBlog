@@ -15,4 +15,5 @@ public @interface TestAnnotation {
 
 	String[] value() default {};
 
+	String params() default "";
 }

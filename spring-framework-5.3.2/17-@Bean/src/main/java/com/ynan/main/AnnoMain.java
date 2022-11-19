@@ -1,6 +1,7 @@
 package com.ynan.main;
 
-import com.ynan.config.RootConfig3;
+import com.ynan.config.RootConfig;
+import com.ynan.config.Service;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
@@ -10,7 +11,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 public class AnnoMain {
 
 	public static void main(String[] args) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(RootConfig3.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(RootConfig.class);
+		Service service = context.getBean(Service.class);
 		System.out.println("hello");
 	}
 }

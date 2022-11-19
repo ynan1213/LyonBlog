@@ -371,8 +371,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		{
 			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
 
-			// 解析配置类，在此处会解析配置类上的注解(@PropertySource、@ComponentScan、@Import、@ImportResource、@Bean)
-			// 注意：这一步只会将通过@ComponentScan注解扫描的类才会加入到BeanDefinitionMap中
+			// 解析配置类上的注解(@PropertySource、@ComponentScan、@Import、@ImportResource、@Bean)
+			// 注意：这一步只会将通过@ComponentScan注解扫描的类才会加入到BeanDefinitionMap缓存中
 			// 其它的@Import、@Bean、@ImportResource注解加入的类，都封装在 parser的ConfigurationClass 缓存中
 			parser.parse(candidates);
 
@@ -401,8 +401,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			// reader.loadBeanDefinitions(configClasses)这一步有没有向BeanDefinitionMap中添加新的BeanDefinition
 			// 如果有，registry.getBeanDefinitionCount()就会大于candidateNames.length
 			// 这样就需要再次遍历新加入的BeanDefinition，并判断这些bean是否已经被解析过了，如果未解析，需要重新进行解析
-			// 这里的AppConfig类向容器中添加的bean，实际上在parser.parse()这一步已经全部被解析了
-			// 所以为什么还需要做这个判断，目前没看懂，似乎没有任何意义。
+			// ConfigurationClassParser#parse应该是解析了所有的配置类，目前还有哪些情况会出现新注入未解析的呢？
+			// 1. @Import的类型是ImportBeanDefinitionRegistrar；
+			// 2. @ImportResource注入了xml文件，有新的配置类
+			// 3. @Bean方法对应的类如果是配置类
 			if (registry.getBeanDefinitionCount() > candidateNames.length)
 			{
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
@@ -419,8 +421,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					if (!oldCandidateNames.contains(candidateName))
 					{
 						BeanDefinition bd = registry.getBeanDefinition(candidateName);
-						if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) &&
-								!alreadyParsedClasses.contains(bd.getBeanClassName()))
+						if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) && !alreadyParsedClasses.contains(bd.getBeanClassName()))
 						{
 							candidates.add(new BeanDefinitionHolder(bd, candidateName));
 						}

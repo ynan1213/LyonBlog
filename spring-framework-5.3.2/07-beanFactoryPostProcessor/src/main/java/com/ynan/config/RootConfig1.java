@@ -10,9 +10,9 @@ import org.springframework.context.annotation.Configuration;
  * @create: 2021-06-22 17:23
  */
 
-// @Configuration注解可不需要
-//@Configuration("RootConfigxxxx")
+// @Configuration注解可不需要（因为由@ComponentScan）
+@Configuration("RootConfigxxxx")
 @ComponentScan("com.ynan")
-public class RootConfig
+public class RootConfig1
 {
 }

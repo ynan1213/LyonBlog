@@ -142,6 +142,7 @@ class ConfigurationClassParser
 
 	private final List<String> propertySourceNames = new ArrayList<>();
 
+	// 处理循环@Import的问题
 	private final ImportStack importStack = new ImportStack();
 
 	private final DeferredImportSelectorHandler deferredImportSelectorHandler = new DeferredImportSelectorHandler();
@@ -239,6 +240,7 @@ class ConfigurationClassParser
 			return;
 		}
 
+		// 什么情况下缓存中会存在？ 存在多种方式注入吗？比如register、@Bean、@Import等
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
 		if (existingClass != null)
 		{
@@ -271,7 +273,7 @@ class ConfigurationClassParser
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
-		// 每个被解析的类都会被加入到该集合
+		// 每个被解析的类都会被加入到该集合，这里为什么不用Collection而是用Map？
 		this.configurationClasses.put(configClass, configClass);
 	}
 
@@ -295,7 +297,7 @@ class ConfigurationClassParser
 			processMemberClasses(configClass, sourceClass, filter);
 		}
 
-		// 解析 @PropertySourc
+		// 解析 @PropertySource
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class, org.springframework.context.annotation.PropertySource.class))
 		{
@@ -324,8 +326,7 @@ class ConfigurationClassParser
 					{
 						bdCand = holder.getBeanDefinition();
 					}
-					// 通过上一步扫描包，有可能扫描出来的bean中可能也添加了ComponentScan或者ComponentScans注解
-					// 所以这里需要循环遍历一次，进行递归(parse)，继续解析，直到解析出的类上没有ComponentScan和ComponentScans
+					// 通过上一步扫描包，有可能扫描出来的bean中可能也是配置类，带了@Import等注解，所以这里需要循环遍历一次，进行递归(parse)
 					// 扫描出来的类递归parse的时候也会被加入到 configurationClasses 缓存中
 					if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory))
 					{
@@ -629,7 +630,7 @@ class ConfigurationClassParser
 		{
 			return;
 		}
-
+		// 检测循环import
 		if (checkForCircularImports && isChainedImportOnStack(configClass))
 		{
 			this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
@@ -886,6 +887,7 @@ class ConfigurationClassParser
 				{
 					DeferredImportSelectorGroupingHandler handler = new DeferredImportSelectorGroupingHandler();
 					deferredImports.sort(DEFERRED_IMPORT_COMPARATOR);
+					// 将不同的 DeferredImportSelectorHolder 按照分组进行划分
 					deferredImports.forEach(handler::register);
 					handler.processGroupImports();
 				}
@@ -906,13 +908,13 @@ class ConfigurationClassParser
 
 		public void register(DeferredImportSelectorHolder deferredImport)
 		{
+			// 获取当前 DeferredImportSelector  的Group
 			Class<? extends Group> group = deferredImport.getImportSelector().getImportGroup();
 			DeferredImportSelectorGrouping grouping = this.groupings.computeIfAbsent(
 					(group != null ? group : deferredImport),
 					key -> new DeferredImportSelectorGrouping(createGroup(group)));
 			grouping.add(deferredImport);
-			this.configurationClasses.put(deferredImport.getConfigurationClass().getMetadata(),
-					deferredImport.getConfigurationClass());
+			this.configurationClasses.put(deferredImport.getConfigurationClass().getMetadata(), deferredImport.getConfigurationClass());
 		}
 
 		public void processGroupImports()

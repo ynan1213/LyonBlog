@@ -106,7 +106,7 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 
 	private boolean configValueEditorsActive = false;
 
-	// 默认的编辑器
+	// 默认的编辑器，
 	@Nullable
 	private Map<Class<?>, PropertyEditor> defaultEditors;
 
@@ -114,10 +114,11 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	@Nullable
 	private Map<Class<?>, PropertyEditor> overriddenDefaultEditors;
 
-	// 自定义的编辑器
+	// 自定义的编辑器（若没指定propertyPath）
 	@Nullable
 	private Map<Class<?>, PropertyEditor> customEditors;
-	// 粒度细精确到属性（字段）级别
+
+	// 粒度细精确到属性（字段）级别（若指定了propertyPath）
 	@Nullable
 	private Map<String, CustomEditorHolder> customEditorsForPath;
 
@@ -589,13 +590,9 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 			// then return PropertyEditor if not registered for Collection or array type.
 			// (If not registered for Collection or array, it is assumed to be intended
 			// for elements.)
-			if (this.registeredType == null ||
-					(requiredType != null &&
-							(ClassUtils.isAssignable(this.registeredType, requiredType) ||
-									ClassUtils.isAssignable(requiredType, this.registeredType))) ||
-					(requiredType == null &&
-							(!Collection.class.isAssignableFrom(this.registeredType) && !this.registeredType
-									.isArray()))) {
+			if (this.registeredType == null
+					|| (requiredType != null && (ClassUtils.isAssignable(this.registeredType, requiredType) || ClassUtils.isAssignable(requiredType, this.registeredType)))
+					|| (requiredType == null && (!Collection.class.isAssignableFrom(this.registeredType) && !this.registeredType.isArray()))) {
 				return this.propertyEditor;
 			} else {
 				return null;

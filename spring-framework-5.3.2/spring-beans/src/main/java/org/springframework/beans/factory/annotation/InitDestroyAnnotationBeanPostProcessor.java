@@ -323,8 +323,7 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 		public void invokeInitMethods(Object target, String beanName) throws Throwable {
 			Collection<LifecycleElement> checkedInitMethods = this.checkedInitMethods;
-			Collection<LifecycleElement> initMethodsToIterate =
-					(checkedInitMethods != null ? checkedInitMethods : this.initMethods);
+			Collection<LifecycleElement> initMethodsToIterate = (checkedInitMethods != null ? checkedInitMethods : this.initMethods);
 			if (!initMethodsToIterate.isEmpty()) {
 				for (LifecycleElement element : initMethodsToIterate) {
 					if (logger.isTraceEnabled()) {

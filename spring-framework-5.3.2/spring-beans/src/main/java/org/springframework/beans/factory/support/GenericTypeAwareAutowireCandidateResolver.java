@@ -128,8 +128,7 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 		if (cacheType) {
 			rbd.targetType = targetType;
 		}
-		if (descriptor.fallbackMatchAllowed() &&
-				(targetType.hasUnresolvableGenerics() || targetType.resolve() == Properties.class)) {
+		if (descriptor.fallbackMatchAllowed() && (targetType.hasUnresolvableGenerics() || targetType.resolve() == Properties.class)) {
 			// Fallback matches allow unresolvable generics, e.g. plain HashMap to Map<String,String>;
 			// and pragmatically also java.util.Properties to any Map (since despite formally being a
 			// Map<Object,Object>, java.util.Properties is usually perceived as a Map<String,String>).

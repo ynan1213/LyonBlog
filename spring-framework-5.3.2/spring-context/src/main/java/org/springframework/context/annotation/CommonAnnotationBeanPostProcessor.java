@@ -516,6 +516,9 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		if (factory instanceof AutowireCapableBeanFactory) {
 			AutowireCapableBeanFactory beanFactory = (AutowireCapableBeanFactory) factory;
 			DependencyDescriptor descriptor = element.getDependencyDescriptor();
+
+			// 如果 @Resource 没有指定 name 属性，isDefaultName = true，element.name 默认等于字段名或者方法名
+			// 进入if说明没有配置name属性，并且容器中不存在[字段名或者方法名]的bean，进入if以byType类型进行查找
 			if (this.fallbackToDefaultTypeMatch && element.isDefaultName && !factory.containsBean(name)) {
 				autowiredBeanNames = new LinkedHashSet<>();
 				resource = beanFactory.resolveDependency(descriptor, requestingBeanName, autowiredBeanNames, null);
@@ -523,6 +526,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 					throw new NoSuchBeanDefinitionException(element.getLookupType(), "No resolvable resource object");
 				}
 			}
+			// 进入else，要么是配置了name属性，要么是没有配置name属性但是默认的name作为beanName在容器中不存在
+			// 可以看出：
+			//  1. @Resource默认是byName，没有指定name就默认以字段名或者方法名作为beanName，容器中不存在则以type类型进行查找
+			//  2. 如果指定了name但是容器中不存在会抛异常；
 			else {
 				resource = beanFactory.resolveBeanByName(name, descriptor);
 				autowiredBeanNames = Collections.singleton(name);
@@ -621,15 +628,19 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			Class<?> resourceType = resource.type();
 			this.isDefaultName = !StringUtils.hasLength(resourceName);
 			if (this.isDefaultName) {
+				// 如果 @Resource 没有指定 name 属性，resourceName 就取字段名或者方法名
 				resourceName = this.member.getName();
 				if (this.member instanceof Method && resourceName.startsWith("set") && resourceName.length() > 3) {
+					// 如果是set方法，则去掉set，然后首字母小写
 					resourceName = Introspector.decapitalize(resourceName.substring(3));
 				}
 			}
 			else if (embeddedValueResolver != null) {
+				// 如果 @Resource 指定了 name 属性，进行占位符解析
 				resourceName = embeddedValueResolver.resolveStringValue(resourceName);
 			}
 			if (Object.class != resourceType) {
+				// 如果 @Resource 指定了 type 属性，校验type属性和field和方法参数是否匹配
 				checkResourceType(resourceType);
 			}
 			else {

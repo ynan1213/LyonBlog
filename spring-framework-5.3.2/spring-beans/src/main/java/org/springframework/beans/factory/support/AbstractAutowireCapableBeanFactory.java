@@ -1235,10 +1235,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
-		// Candidate constructors for autowiring?
-		// 确定一个构造函数：使用的是@Autowired、@Lookup、@Inject
+		/**
+		 * Candidate constructors for autowiring? 上面如果发现一个bean不是通过 factoryMethod 方式创建的，就会走到这里
+		 * AutowiredAnnotationBeanPostProcessor主要的逻辑是找出带有@Autowired注解的构造。
+		 *  1. 如果有@Autowired的构造函数，那么不需要将无参构造加入候选列表，并返回；
+		 *  2. 如果@Autowired的required属性都为false，需将无参构造加入候选列表，并返回；
+		 *  3. 如果有多个均注解了@Autowired且required = true，会抛异常；
+		 *  4. 如果没有带有@Autowired注解的构造，就会返回null；
+ 		 */
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR || mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
+			// 这里进去处理有@Auwowired注解的构造情况
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
@@ -1248,7 +1255,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return autowireConstructor(beanName, mbd, ctors, null);
 		}
 
-		// No special handling: simply use no-arg constructor. 没有指定，使用默认的无构造函数
+		// No special handling: simply use no-arg constructor.
+		// 走到这里，说明没有@Autowired的构造，默认使用无参构造。如果没有无参构造，会抛异常
 		return instantiateBean(beanName, mbd);
 	}
 
@@ -1475,8 +1483,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param bw the BeanWrapper from which we can obtain information about the bean
 	 * @param pvs the PropertyValues to register wired objects with
 	 */
-	protected void autowireByName(
-			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
+	protected void autowireByName(String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
 
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
@@ -1851,9 +1858,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @throws Throwable if thrown by init methods or by the invocation process
 	 * @see #invokeCustomInitMethod
 	 */
-	protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBeanDefinition mbd)
-			throws Throwable {
-
+	protected void invokeInitMethods(String beanName, Object bean, @Nullable RootBeanDefinition mbd) throws Throwable {
 		boolean isInitializingBean = (bean instanceof InitializingBean);
 		if (isInitializingBean && (mbd == null || !mbd.isExternallyManagedInitMethod("afterPropertiesSet"))) {
 			if (logger.isTraceEnabled()) {
@@ -1892,8 +1897,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * methods with arguments.
 	 * @see #invokeInitMethods
 	 */
-	protected void invokeCustomInitMethod(String beanName, Object bean, RootBeanDefinition mbd)
-			throws Throwable {
+	protected void invokeCustomInitMethod(String beanName, Object bean, RootBeanDefinition mbd) throws Throwable {
 
 		String initMethodName = mbd.getInitMethodName();
 		Assert.state(initMethodName != null, "No init method set");

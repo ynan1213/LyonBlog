@@ -1,6 +1,10 @@
 package com.ynan.config;
 
-import org.springframework.context.annotation.Bean;
+import con.ynan.service.UserService;
+import con.ynan.service.UserServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Lookup;
+import org.springframework.context.annotation.Import;
 
 /**
  * @Author yuannan
@@ -8,11 +12,19 @@ import org.springframework.context.annotation.Bean;
  */
 // @Configuration注解可以不要，因为内部有了@Bean
 //@Configuration
+@Import(UserServiceImpl.class)
 public class RootConfig {
 
-	@Bean
-	public Service getService() {
-		return new Service();
-	}
+	public RootConfig(){}
+
+	@Autowired
+	public RootConfig(UserService userService){}
+
+	@Autowired
+	private UserService userService;
+
+	@Lookup
+	public void test() {}
+
 
 }

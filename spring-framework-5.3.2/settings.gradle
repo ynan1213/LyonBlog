@@ -88,4 +88,5 @@ include '19-mvc对异常的处理'
 include '20-@Pointcut用法'
 include '21-@Conditional'
 include '22-@Import'
+include '23-构造器注入'
 

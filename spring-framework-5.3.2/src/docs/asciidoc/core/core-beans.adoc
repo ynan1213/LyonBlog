@@ -11274,7 +11274,7 @@ you need to programmatically call `addBeanPostProcessor`, as the following examp
 
 	// now register any needed BeanPostProcessor instances
 	factory.addBeanPostProcessor(new AutowiredAnnotationBeanPostProcessor());
-	factory.addBeanPostProcessor(new MyBeanPostProcessor());
+	factory.addBeanPostProcessor(new com.ynan.MyBeanPostProcessor());
 
 	// now start using the factory
 ----
@@ -11286,7 +11286,7 @@ you need to programmatically call `addBeanPostProcessor`, as the following examp
 
 	// now register any needed BeanPostProcessor instances
 	factory.addBeanPostProcessor(AutowiredAnnotationBeanPostProcessor())
-	factory.addBeanPostProcessor(MyBeanPostProcessor())
+	factory.addBeanPostProcessor(com.ynan.MyBeanPostProcessor())
 
 	// now start using the factory
 ----

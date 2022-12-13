@@ -112,8 +112,7 @@ public class InjectionMetadata {
 
 	public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 		Collection<InjectedElement> checkedElements = this.checkedElements;
-		Collection<InjectedElement> elementsToIterate =
-				(checkedElements != null ? checkedElements : this.injectedElements);
+		Collection<InjectedElement> elementsToIterate = (checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
 			for (InjectedElement element : elementsToIterate) {
 				element.inject(target, beanName, pvs);
@@ -207,8 +206,7 @@ public class InjectionMetadata {
 				}
 			}
 			else {
-				Class<?> paramType =
-						(this.pd != null ? this.pd.getPropertyType() : ((Method) this.member).getParameterTypes()[0]);
+				Class<?> paramType = (this.pd != null ? this.pd.getPropertyType() : ((Method) this.member).getParameterTypes()[0]);
 				if (!(resourceType.isAssignableFrom(paramType) || paramType.isAssignableFrom(resourceType))) {
 					throw new IllegalStateException("Specified parameter type [" + paramType +
 							"] is incompatible with resource type [" + resourceType.getName() + "]");
@@ -219,8 +217,7 @@ public class InjectionMetadata {
 		/**
 		 * Either this or {@link #getResourceToInject} needs to be overridden.
 		 */
-		protected void inject(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs)
-				throws Throwable {
+		protected void inject(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs) throws Throwable {
 
 			if (this.isField) {
 				Field field = (Field) this.member;

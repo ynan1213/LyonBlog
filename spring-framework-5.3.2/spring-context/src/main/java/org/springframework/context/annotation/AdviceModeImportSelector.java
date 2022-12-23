@@ -61,9 +61,14 @@ public abstract class AdviceModeImportSelector<A extends Annotation> implements 
 	 * @throws IllegalArgumentException if expected annotation {@code A} is not present
 	 * on the importing {@code @Configuration} class or if {@link #selectImports(AdviceMode)}
 	 * returns {@code null}
+	 *
+	 * 参数 importingClassMetadata 为 @EnableTransactionManagement 注解所在类的元数据，一般是 XxxConfig
 	 */
 	@Override
 	public final String[] selectImports(AnnotationMetadata importingClassMetadata) {
+		// getClass() 是 TransactionManagementConfigurationSelector
+		// GenericTypeResolver.resolveTypeArgument 是快速返回 TransactionManagementConfigurationSelector 的父类
+		// AdviceModeImportSelector上的泛型，该方法只能限定有一个泛型，如果有多个会抛异常
 		Class<?> annType = GenericTypeResolver.resolveTypeArgument(getClass(), AdviceModeImportSelector.class);
 		Assert.state(annType != null, "Unresolvable type argument for AdviceModeImportSelector");
 

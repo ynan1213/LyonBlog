@@ -255,12 +255,13 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 				return null;
 			}
 			/**
-			 * isInfrastructureClass：beanClass是否是基础组件类型，是的话加入advisedBeans缓存并置为false表示不做代理，哪些是基础组件类型？
-			 * 1、本类的逻辑：Advice、Advisor、Pointcut、AopInfrastructureBean类型
-			 * 2、子类继承的逻辑：@Aspect注解的类（aop）；
+			 * isInfrastructureClass：beanClass是否是基础组件类型，是的话加入advisedBeans缓存并置为false表示不做代理
+			 * 哪些是基础组件类型？
+			 * 	1、Advice、Advisor、Pointcut、AopInfrastructureBean类型
+			 * 	2、@Aspect注解的类（aop）
 			 *
-			 * shouldSkip：
-			 * 	AnnotationAwareAspectJAutoProxyCreator的逻辑是搜集容器中Advisor类型的bean，如果有@Aspect注解的类，也会将里面的切面类解析成Advisor类型，并进行配对
+			 * shouldSkip：AnnotationAwareAspectJAutoProxyCreator的逻辑是搜集容器中Advisor类型的bean，如果有@Aspect注解的类，
+			 * 			  会将里面的切面类解析成Advisor类型，并进行配对
 			 */
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
@@ -271,6 +272,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport imp
 		// Create proxy here if we have a custom TargetSource.
 		// Suppresses unnecessary default instantiation of the target bean:
 		// The TargetSource will handle target instances in a custom fashion.
+		// 详情 https://blog.csdn.net/qq_35971258/article/details/126533025
 		TargetSource targetSource = getCustomTargetSource(beanClass, beanName);
 		if (targetSource != null) {
 			if (StringUtils.hasLength(beanName)) {

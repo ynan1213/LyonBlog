@@ -1,6 +1,9 @@
 package com.ynan;
 
 import com.ynan.service.DeferredImport;
+import com.ynan.service.RegistrarImport;
+import com.ynan.service.SelectorImport;
+import com.ynan.service.SimpleImport;
 import org.springframework.context.annotation.Import;
 
 /**

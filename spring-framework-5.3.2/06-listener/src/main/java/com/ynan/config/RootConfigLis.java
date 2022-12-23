@@ -15,6 +15,6 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @Configuration
 @ComponentScan("com.ynan.event")
 @EnableAsync
-public class RootConfig
+public class RootConfigLis
 {
 }

@@ -60,7 +60,7 @@ public class AutoProxyRegistrar implements ImportBeanDefinitionRegistrar {
 
 		boolean candidateFound = false;
 
-		// 获取@EnableTransactionManagement上的所有注解属性类型
+		// 获取@EnableTransactionManagement注解所在类的所有注解
 		Set<String> annTypes = importingClassMetadata.getAnnotationTypes();
 
 		for (String annType : annTypes) {

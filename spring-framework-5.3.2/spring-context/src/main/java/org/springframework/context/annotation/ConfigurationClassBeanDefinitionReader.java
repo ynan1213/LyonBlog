@@ -146,7 +146,7 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 
 		// 如果一个bean是通过@Import方式添加到容器中的，那么此时configClass.isImported()返回的是true
-		// 而且configClass的importedBy属性里面存储的是ConfigurationClass就是将bean导入的类
+		// 而且configClass的importedBy属性里面存储的是导入自己的类
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}

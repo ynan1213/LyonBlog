@@ -450,10 +450,16 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	/**
 	 * Start a new transaction.
 	 */
-	private TransactionStatus startTransaction(TransactionDefinition definition, Object transaction, boolean debugEnabled, @Nullable SuspendedResourcesHolder suspendedResources) {
+	private TransactionStatus startTransaction(
+			TransactionDefinition definition,
+			Object transaction,
+			boolean debugEnabled,
+			@Nullable SuspendedResourcesHolder suspendedResources) {
+
 		// 只要不等于 SYNCHRONIZATION_NEVER 就是true，因为这里是开启新事物，SYNCHRONIZATION_ALWAYS和SYNCHRONIZATION_ON_ACTUAL_TRANSACTION必定为true
 		boolean newSynchronization = (getTransactionSynchronization() != SYNCHRONIZATION_NEVER);
-		DefaultTransactionStatus status = newTransactionStatus(definition, transaction, true, newSynchronization, debugEnabled, suspendedResources);
+		DefaultTransactionStatus status = newTransactionStatus(definition, transaction, true,
+				newSynchronization, debugEnabled, suspendedResources);
 		doBegin(transaction, definition);
 		// 调用TransactionSynchronizationManager来保存一些事务上下文信息。
 		prepareSynchronization(status, definition);
@@ -558,9 +564,15 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 * @see #newTransactionStatus
 	 * @see #prepareTransactionStatus
 	 */
-	protected final DefaultTransactionStatus prepareTransactionStatus(TransactionDefinition definition, @Nullable Object transaction, boolean newTransaction,
-																		boolean newSynchronization, boolean debug, @Nullable Object suspendedResources) {
-		DefaultTransactionStatus status = newTransactionStatus(definition, transaction, newTransaction, newSynchronization, debug, suspendedResources);
+	protected final DefaultTransactionStatus prepareTransactionStatus(
+			TransactionDefinition definition,
+			@Nullable Object transaction,
+			boolean newTransaction,
+			boolean newSynchronization,
+			boolean debug,
+			@Nullable Object suspendedResources) {
+		DefaultTransactionStatus status = newTransactionStatus(definition, transaction, newTransaction,
+				newSynchronization, debug, suspendedResources);
 		prepareSynchronization(status, definition);
 		return status;
 	}
@@ -568,15 +580,21 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	/**
 	 * Create a TransactionStatus instance for the given arguments.
 	 */
-	protected DefaultTransactionStatus newTransactionStatus(TransactionDefinition definition, @Nullable Object transaction, boolean newTransaction,
-															boolean newSynchronization, boolean debug, @Nullable Object suspendedResources) {
+	protected DefaultTransactionStatus newTransactionStatus(
+			TransactionDefinition definition,
+			@Nullable Object transaction,
+			boolean newTransaction,
+			boolean newSynchronization,
+			boolean debug,
+			@Nullable Object suspendedResources) {
 		/**
 		 * startTransaction新建事物方法传过来的 newTransaction 为true
 		 * TransactionSynchronizationManager.isSynchronizationActive()判断的是事物同步器是否为空，
 		 * 也就是说 newSynchronization 为true并且事物同步器是空的，actualNewSynchronization就为true
 		 */
 		boolean actualNewSynchronization = newSynchronization && !TransactionSynchronizationManager.isSynchronizationActive();
-		return new DefaultTransactionStatus(transaction, newTransaction, actualNewSynchronization, definition.isReadOnly(), debug, suspendedResources);
+		return new DefaultTransactionStatus(transaction, newTransaction, actualNewSynchronization,
+				definition.isReadOnly(), debug, suspendedResources);
 	}
 
 	/**

@@ -90,7 +90,13 @@ public class DefaultTransactionStatus extends AbstractTransactionStatus {
 	 * @param suspendedResources a holder for resources that have been suspended
 	 * for this transaction, if any
 	 */
-	public DefaultTransactionStatus(@Nullable Object transaction, boolean newTransaction, boolean newSynchronization, boolean readOnly, boolean debug, @Nullable Object suspendedResources) {
+	public DefaultTransactionStatus(
+			@Nullable Object transaction,
+			boolean newTransaction,
+			boolean newSynchronization,
+			boolean readOnly,
+			boolean debug,
+			@Nullable Object suspendedResources) {
 		this.transaction = transaction;
 		this.newTransaction = newTransaction;
 		this.newSynchronization = newSynchronization;

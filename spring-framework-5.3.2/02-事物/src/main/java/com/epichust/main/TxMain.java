@@ -1,15 +1,13 @@
 package com.epichust.main;
 
-import com.epichust.entity.Book;
 import com.epichust.config.AppConfig;
+import com.epichust.entity.Book;
 import com.epichust.service.BookService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 
-public class TxMain
-{
+public class TxMain {
 
-	@SuppressWarnings("unused")
 	public static void main(String[] args)
 	{
 		System.getProperties().setProperty("aaaa", "spring-application");
@@ -29,11 +27,9 @@ public class TxMain
 
 		Book book = new Book("1111", 222222);
 
-		try
-		{
+		try {
 			bs.insert(book);
-		} catch (Exception e)
-		{
+		} catch (Exception e) {
 			System.out.println("主方法抛出异常:" + e.getMessage());
 		}
 

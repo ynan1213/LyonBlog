@@ -377,7 +377,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			// ①：执行自己的业务逻辑之前，先获取事物信息，具体步骤：
 			// 	  1、由 PlatformTransactionManager 根据txAttr获取 TransactionStatus
 			// 	  2、封装 TransactionStatus 为 TransactionInfo 对象
-			// 	  3、绑定 TransactionInfo 到线程私有域，将原先的 TransactionInfo 返回
+			// 	  3、绑定 TransactionInfo 到 ThreadLocal，为什么要绑定？ 这样在业务代码内就可以操作TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			TransactionInfo txInfo = createTransactionIfNecessary(ptm, txAttr, joinpointIdentification);
 			Object retVal;
 			try {

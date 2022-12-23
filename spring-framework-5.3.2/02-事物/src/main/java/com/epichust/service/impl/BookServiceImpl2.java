@@ -1,41 +1,37 @@
 package com.epichust.service.impl;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import com.epichust.dao.BookDao;
 import com.epichust.entity.Book;
 import com.epichust.service.BookService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.epichust.dao.BookDao;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 @Service
-public class BookServiceImpl2 implements BookService
-{
+public class BookServiceImpl2 implements BookService {
+
 	@Autowired
 	private BookDao dao;
 
-	@Transactional(timeout = 1)
-	public int insert(Book book) throws InterruptedException
-	{
+	@Transactional
+	public int insert(Book book) throws InterruptedException {
 		System.out.println("内层事务开始执行");
-		// TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 		// TimeUnit.SECONDS.sleep(2);
-		return dao.insert(book);
+		//dao.insert(book);
+//		if (1 == 1) throw new RuntimeException("xxx");
+		return 1;
 	}
 
 	@Transactional
-	public Book select(int id)
-	{
+	public Book select(int id) {
 		return dao.select(id);
 	}
 
 	@Override
-	public List<Book> selectAll()
-	{
+	public List<Book> selectAll() {
 		return null;
 	}
 

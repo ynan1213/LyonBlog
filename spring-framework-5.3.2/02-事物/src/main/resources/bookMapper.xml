@@ -8,15 +8,15 @@
 	</resultMap>
 
 	<insert id="insert" parameterType="book">
-  		insert into book(name,price) values(#{name},#{price})
-  	</insert>
+		insert into book(name,price) values(#{name}, #{price})
+	</insert>
 
 	<select id="select" parameterType="int" resultMap="BaseResultMap">
 		select * from book where id = #{xxx}
-	 </select>
+	</select>
 
 	<select id="selectAll" resultMap="BaseResultMap">
 		select * from book
-	 </select>
+	</select>
 
 </mapper>

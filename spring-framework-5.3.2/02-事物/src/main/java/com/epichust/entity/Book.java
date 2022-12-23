@@ -5,62 +5,53 @@ package com.epichust.entity;
  * @Description
  * @date: 2019年3月29日
  */
-public class Book
-{
+public class Book {
+
 	private int id;
 
 	private String name;
 
 	private int price;
 
-	public Book()
-	{
-		super();
-		// TODO Auto-generated constructor stub
+	public Book() {
 	}
 
-	public Book(String name, int price)
-	{
+	public Book(String name, int price) {
 		super();
 		this.name = name;
 		this.price = price;
 	}
 
-	public int getId()
-	{
+	public int getId() {
 		return id;
 	}
 
-	public void setId(int id)
-	{
+	public void setId(int id) {
 		this.id = id;
 	}
 
-	public String getName()
-	{
+	public String getName() {
 		return name;
 	}
 
-	public void setName(String name)
-	{
+	public void setName(String name) {
 		this.name = name;
 	}
 
-	public int getPrice()
-	{
+	public int getPrice() {
 		return price;
 	}
 
-	public void setPrice(int price)
-	{
+	public void setPrice(int price) {
 		this.price = price;
 	}
 
 	@Override
-	public String toString()
-	{
-		return "Book [id=" + id + ", name=" + name + ", price=" + price + "]";
+	public String toString() {
+		return "Book{" +
+				"id=" + id +
+				", name='" + name + '\'' +
+				", price=" + price +
+				'}';
 	}
-
-
 }

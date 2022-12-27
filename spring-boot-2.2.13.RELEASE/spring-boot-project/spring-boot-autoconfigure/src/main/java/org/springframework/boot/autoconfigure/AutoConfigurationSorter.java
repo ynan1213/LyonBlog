@@ -53,8 +53,7 @@ class AutoConfigurationSorter {
 	}
 
 	List<String> getInPriorityOrder(Collection<String> classNames) {
-		AutoConfigurationClasses classes = new AutoConfigurationClasses(this.metadataReaderFactory,
-				this.autoConfigurationMetadata, classNames);
+		AutoConfigurationClasses classes = new AutoConfigurationClasses(this.metadataReaderFactory, this.autoConfigurationMetadata, classNames);
 		List<String> orderedClassNames = new ArrayList<>(classNames);
 		// Initially sort alphabetically
 		Collections.sort(orderedClassNames);
@@ -81,15 +80,13 @@ class AutoConfigurationSorter {
 		return new ArrayList<>(sorted);
 	}
 
-	private void doSortByAfterAnnotation(AutoConfigurationClasses classes, List<String> toSort, Set<String> sorted,
-			Set<String> processing, String current) {
+	private void doSortByAfterAnnotation(AutoConfigurationClasses classes, List<String> toSort, Set<String> sorted, Set<String> processing, String current) {
 		if (current == null) {
 			current = toSort.remove(0);
 		}
 		processing.add(current);
 		for (String after : classes.getClassesRequestedAfter(current)) {
-			Assert.state(!processing.contains(after),
-					"AutoConfigure cycle detected between " + current + " and " + after);
+			Assert.state(!processing.contains(after), "AutoConfigure cycle detected between " + current + " and " + after);
 			if (!sorted.contains(after) && toSort.contains(after)) {
 				doSortByAfterAnnotation(classes, toSort, sorted, processing, after);
 			}
@@ -102,8 +99,7 @@ class AutoConfigurationSorter {
 
 		private final Map<String, AutoConfigurationClass> classes = new HashMap<>();
 
-		AutoConfigurationClasses(MetadataReaderFactory metadataReaderFactory,
-				AutoConfigurationMetadata autoConfigurationMetadata, Collection<String> classNames) {
+		AutoConfigurationClasses(MetadataReaderFactory metadataReaderFactory, AutoConfigurationMetadata autoConfigurationMetadata, Collection<String> classNames) {
 			addToClasses(metadataReaderFactory, autoConfigurationMetadata, classNames, true);
 		}
 
@@ -111,21 +107,17 @@ class AutoConfigurationSorter {
 			return this.classes.keySet();
 		}
 
-		private void addToClasses(MetadataReaderFactory metadataReaderFactory,
-				AutoConfigurationMetadata autoConfigurationMetadata, Collection<String> classNames, boolean required) {
+		private void addToClasses(MetadataReaderFactory metadataReaderFactory, AutoConfigurationMetadata autoConfigurationMetadata, Collection<String> classNames, boolean required) {
 			for (String className : classNames) {
 				if (!this.classes.containsKey(className)) {
-					AutoConfigurationClass autoConfigurationClass = new AutoConfigurationClass(className,
-							metadataReaderFactory, autoConfigurationMetadata);
+					AutoConfigurationClass autoConfigurationClass = new AutoConfigurationClass(className, metadataReaderFactory, autoConfigurationMetadata);
 					boolean available = autoConfigurationClass.isAvailable();
 					if (required || available) {
 						this.classes.put(className, autoConfigurationClass);
 					}
 					if (available) {
-						addToClasses(metadataReaderFactory, autoConfigurationMetadata,
-								autoConfigurationClass.getBefore(), false);
-						addToClasses(metadataReaderFactory, autoConfigurationMetadata,
-								autoConfigurationClass.getAfter(), false);
+						addToClasses(metadataReaderFactory, autoConfigurationMetadata, autoConfigurationClass.getBefore(), false);
+						addToClasses(metadataReaderFactory, autoConfigurationMetadata, autoConfigurationClass.getAfter(), false);
 					}
 				}
 			}
@@ -207,8 +199,7 @@ class AutoConfigurationSorter {
 		}
 
 		private boolean wasProcessed() {
-			return (this.autoConfigurationMetadata != null
-					&& this.autoConfigurationMetadata.wasProcessed(this.className));
+			return (this.autoConfigurationMetadata != null && this.autoConfigurationMetadata.wasProcessed(this.className));
 		}
 
 		private Set<String> getAnnotationValue(Class<?> annotation) {

@@ -120,7 +120,6 @@ public abstract class AutoConfigurationPackages {
 
 		@Override
 		public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
-			// getPackageName 获取到主启动类的包名，这就是为什么springboot的项目启动后，只能扫描到主启动类所在包或者是其子包的类。
 			register(registry, new PackageImport(metadata).getPackageName());
 		}
 

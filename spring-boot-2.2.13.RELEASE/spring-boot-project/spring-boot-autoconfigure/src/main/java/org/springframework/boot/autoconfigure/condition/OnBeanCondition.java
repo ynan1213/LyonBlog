@@ -82,8 +82,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 	}
 
 	@Override
-	protected final ConditionOutcome[] getOutcomes(String[] autoConfigurationClasses,
-			AutoConfigurationMetadata autoConfigurationMetadata) {
+	protected final ConditionOutcome[] getOutcomes(String[] autoConfigurationClasses, AutoConfigurationMetadata autoConfigurationMetadata) {
 		ConditionOutcome[] outcomes = new ConditionOutcome[autoConfigurationClasses.length];
 		for (int i = 0; i < outcomes.length; i++) {
 			String autoConfigurationClass = autoConfigurationClasses[i];
@@ -91,8 +90,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 				Set<String> onBeanTypes = autoConfigurationMetadata.getSet(autoConfigurationClass, "ConditionalOnBean");
 				outcomes[i] = getOutcome(onBeanTypes, ConditionalOnBean.class);
 				if (outcomes[i] == null) {
-					Set<String> onSingleCandidateTypes = autoConfigurationMetadata.getSet(autoConfigurationClass,
-							"ConditionalOnSingleCandidate");
+					Set<String> onSingleCandidateTypes = autoConfigurationMetadata.getSet(autoConfigurationClass, "ConditionalOnSingleCandidate");
 					outcomes[i] = getOutcome(onSingleCandidateTypes, ConditionalOnSingleCandidate.class);
 				}
 			}
@@ -121,8 +119,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 				String reason = createOnBeanNoMatchReason(matchResult);
 				return ConditionOutcome.noMatch(spec.message().because(reason));
 			}
-			matchMessage = spec.message(matchMessage).found("bean", "beans").items(Style.QUOTE,
-					matchResult.getNamesOfAllMatches());
+			matchMessage = spec.message(matchMessage).found("bean", "beans").items(Style.QUOTE, matchResult.getNamesOfAllMatches());
 		}
 		if (metadata.isAnnotated(ConditionalOnSingleCandidate.class.getName())) {
 			Spec<ConditionalOnSingleCandidate> spec = new SingleCandidateSpec(context, metadata, annotations);
@@ -139,8 +136,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 					matchResult.getNamesOfAllMatches());
 		}
 		if (metadata.isAnnotated(ConditionalOnMissingBean.class.getName())) {
-			Spec<ConditionalOnMissingBean> spec = new Spec<>(context, metadata, annotations,
-					ConditionalOnMissingBean.class);
+			Spec<ConditionalOnMissingBean> spec = new Spec<>(context, metadata, annotations, ConditionalOnMissingBean.class);
 			MatchResult matchResult = getMatchingBeans(context, spec);
 			if (matchResult.isAnyMatched()) {
 				String reason = createOnMissingBeanNoMatchReason(matchResult);
@@ -158,16 +154,13 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 		Set<Class<?>> parameterizedContainers = spec.getParameterizedContainers();
 		if (spec.getStrategy() == SearchStrategy.ANCESTORS) {
 			BeanFactory parent = beanFactory.getParentBeanFactory();
-			Assert.isInstanceOf(ConfigurableListableBeanFactory.class, parent,
-					"Unable to use SearchStrategy.ANCESTORS");
+			Assert.isInstanceOf(ConfigurableListableBeanFactory.class, parent, "Unable to use SearchStrategy.ANCESTORS");
 			beanFactory = (ConfigurableListableBeanFactory) parent;
 		}
 		MatchResult result = new MatchResult();
-		Set<String> beansIgnoredByType = getNamesOfBeansIgnoredByType(classLoader, beanFactory, considerHierarchy,
-				spec.getIgnoredTypes(), parameterizedContainers);
+		Set<String> beansIgnoredByType = getNamesOfBeansIgnoredByType(classLoader, beanFactory, considerHierarchy, spec.getIgnoredTypes(), parameterizedContainers);
 		for (String type : spec.getTypes()) {
-			Collection<String> typeMatches = getBeanNamesForType(classLoader, considerHierarchy, beanFactory, type,
-					parameterizedContainers);
+			Collection<String> typeMatches = getBeanNamesForType(classLoader, considerHierarchy, beanFactory, type, parameterizedContainers);
 			Iterator<String> iterator = typeMatches.iterator();
 			while (iterator.hasNext()) {
 				String match = iterator.next();
@@ -183,8 +176,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 			}
 		}
 		for (String annotation : spec.getAnnotations()) {
-			Set<String> annotationMatches = getBeanNamesForAnnotation(classLoader, beanFactory, annotation,
-					considerHierarchy);
+			Set<String> annotationMatches = getBeanNamesForAnnotation(classLoader, beanFactory, annotation, considerHierarchy);
 			annotationMatches.removeAll(beansIgnoredByType);
 			if (annotationMatches.isEmpty()) {
 				result.recordUnmatchedAnnotation(annotation);
@@ -208,8 +200,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 			boolean considerHierarchy, Set<String> ignoredTypes, Set<Class<?>> parameterizedContainers) {
 		Set<String> result = null;
 		for (String ignoredType : ignoredTypes) {
-			Collection<String> ignoredNames = getBeanNamesForType(classLoader, considerHierarchy, beanFactory,
-					ignoredType, parameterizedContainers);
+			Collection<String> ignoredNames = getBeanNamesForType(classLoader, considerHierarchy, beanFactory, ignoredType, parameterizedContainers);
 			result = addAll(result, ignoredNames);
 		}
 		return (result != null) ? result : Collections.emptySet();
@@ -218,8 +209,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 	private Set<String> getBeanNamesForType(ClassLoader classLoader, boolean considerHierarchy,
 			ListableBeanFactory beanFactory, String type, Set<Class<?>> parameterizedContainers) throws LinkageError {
 		try {
-			return getBeanNamesForType(beanFactory, considerHierarchy, resolve(type, classLoader),
-					parameterizedContainers);
+			return getBeanNamesForType(beanFactory, considerHierarchy, resolve(type, classLoader), parameterizedContainers);
 		}
 		catch (ClassNotFoundException | NoClassDefFoundError ex) {
 			return Collections.emptySet();
@@ -409,8 +399,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 
 		private final SearchStrategy strategy;
 
-		Spec(ConditionContext context, AnnotatedTypeMetadata metadata, MergedAnnotations annotations,
-				Class<A> annotationType) {
+		Spec(ConditionContext context, AnnotatedTypeMetadata metadata, MergedAnnotations annotations, Class<A> annotationType) {
 			MultiValueMap<String, Object> attributes = annotations.stream(annotationType)
 					.filter(MergedAnnotationPredicates.unique(MergedAnnotation::getMetaTypes))
 					.collect(MergedAnnotationCollectors.toMultiValueMap(Adapt.CLASS_TO_STRING));

@@ -109,10 +109,17 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		if (!isEnabled(annotationMetadata)) {
 			return EMPTY_ENTRY;
 		}
+		// 获取@EnableAutoConfiguration注解的属性
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		// 从spring.factories文件中获取配置类的全限定名数组
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
+		// 去重
 		configurations = removeDuplicates(configurations);
+		// 获取要排除的自定义配置类，有两种方式可以配置：
+		// 1. @SpringBootApplication(exclude = Xxx.class)
+		// 2. spring.autoconfigure.exclude
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+		// 如果要排除的配置类不在读取的结果中，是会抛异常的
 		checkExcludedClasses(configurations, exclusions);
 		configurations.removeAll(exclusions);
 		configurations = filter(configurations, autoConfigurationMetadata);
@@ -408,8 +415,9 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 					.map(AutoConfigurationEntry::getConfigurations).flatMap(Collection::stream)
 					.collect(Collectors.toCollection(LinkedHashSet::new));
 			processedConfigurations.removeAll(allExclusions);
-
-			return sortAutoConfigurations(processedConfigurations, getAutoConfigurationMetadata()).stream()
+			// 排序
+			return sortAutoConfigurations(processedConfigurations, getAutoConfigurationMetadata())
+					.stream()
 					.map((importClassName) -> new Entry(this.entries.get(importClassName), importClassName))
 					.collect(Collectors.toList());
 		}
@@ -421,10 +429,8 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 			return this.autoConfigurationMetadata;
 		}
 
-		private List<String> sortAutoConfigurations(Set<String> configurations,
-				AutoConfigurationMetadata autoConfigurationMetadata) {
-			return new AutoConfigurationSorter(getMetadataReaderFactory(), autoConfigurationMetadata)
-					.getInPriorityOrder(configurations);
+		private List<String> sortAutoConfigurations(Set<String> configurations, AutoConfigurationMetadata autoConfigurationMetadata) {
+			return new AutoConfigurationSorter(getMetadataReaderFactory(), autoConfigurationMetadata).getInPriorityOrder(configurations);
 		}
 
 		private MetadataReaderFactory getMetadataReaderFactory() {

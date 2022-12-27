@@ -198,6 +198,8 @@ class OnClassCondition extends FilteringSpringBootCondition {
 				if (autoConfigurationClass != null) {
 					String candidates = autoConfigurationMetadata.get(autoConfigurationClass, "ConditionalOnClass");
 					if (candidates != null) {
+						// 如果不符合，返回ConditionOutcome对象match为false及日志信息
+						// 如果符合，即类实例存在，则返回null
 						outcomes[i - start] = getOutcome(candidates);
 					}
 				}

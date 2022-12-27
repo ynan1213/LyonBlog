@@ -43,8 +43,7 @@ public final class LazyInitializationBeanFactoryPostProcessor implements BeanFac
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 		// Take care not to force the eager init of factory beans when getting filters
-		Collection<LazyInitializationExcludeFilter> filters = beanFactory
-				.getBeansOfType(LazyInitializationExcludeFilter.class, false, false).values();
+		Collection<LazyInitializationExcludeFilter> filters = beanFactory.getBeansOfType(LazyInitializationExcludeFilter.class, false, false).values();
 		for (String beanName : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition beanDefinition = beanFactory.getBeanDefinition(beanName);
 			if (beanDefinition instanceof AbstractBeanDefinition) {

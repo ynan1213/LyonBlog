@@ -40,13 +40,11 @@ class OnResourceCondition extends SpringBootCondition {
 
 	@Override
 	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
-		MultiValueMap<String, Object> attributes = metadata
-				.getAllAnnotationAttributes(ConditionalOnResource.class.getName(), true);
+		MultiValueMap<String, Object> attributes = metadata.getAllAnnotationAttributes(ConditionalOnResource.class.getName(), true);
 		ResourceLoader loader = context.getResourceLoader();
 		List<String> locations = new ArrayList<>();
 		collectValues(locations, attributes.get("resources"));
-		Assert.isTrue(!locations.isEmpty(),
-				"@ConditionalOnResource annotations must specify at least one resource location");
+		Assert.isTrue(!locations.isEmpty(), "@ConditionalOnResource annotations must specify at least one resource location");
 		List<String> missing = new ArrayList<>();
 		for (String location : locations) {
 			String resource = context.getEnvironment().resolvePlaceholders(location);

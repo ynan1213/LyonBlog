@@ -176,7 +176,6 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 	protected <T> void writeWithMessageConverters(@Nullable T value, MethodParameter returnType, ServletServerHttpRequest inputMessage,
 												  ServletServerHttpResponse outputMessage) throws IOException, HttpMediaTypeNotAcceptableException, HttpMessageNotWritableException
 	{
-
 		Object body;
 		Class<?> valueType;
 		Type targetType;
@@ -233,7 +232,7 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 			HttpServletRequest request = inputMessage.getServletRequest();
 			// 浏览器发送的Accept的类型
 			List<MediaType> acceptableTypes = getAcceptableMediaTypes(request);
-			// @RequestMapping的producer属性的值
+			// @RequestMapping的producer属性的值，如果没有配置，则取支持的messageConverte的SupportedMediaTypes，会有多个
 			List<MediaType> producibleTypes = getProducibleMediaTypes(request, valueType, targetType);
 
 			if (body != null && producibleTypes.isEmpty())
@@ -395,7 +394,7 @@ public abstract class AbstractMessageConverterMethodProcessor extends AbstractMe
 	protected List<MediaType> getProducibleMediaTypes(
 			HttpServletRequest request, Class<?> valueClass, @Nullable Type targetType)
 	{
-
+		//
 		Set<MediaType> mediaTypes = (Set<MediaType>) request.getAttribute(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
 		if (!CollectionUtils.isEmpty(mediaTypes))
 		{

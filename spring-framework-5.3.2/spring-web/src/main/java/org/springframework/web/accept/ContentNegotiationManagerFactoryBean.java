@@ -329,6 +329,7 @@ public class ContentNegotiationManagerFactoryBean
 			strategies.addAll(this.strategies);
 		}
 		else {
+			// 是否从拓展名中取 mediaType
 			if (this.favorPathExtension) {
 				PathExtensionContentNegotiationStrategy strategy;
 				if (this.servletContext != null && !useRegisteredExtensionsOnly()) {
@@ -343,6 +344,8 @@ public class ContentNegotiationManagerFactoryBean
 				}
 				strategies.add(strategy);
 			}
+
+			// 是否从请求参数中获取 medisType
 			if (this.favorParameter) {
 				ParameterContentNegotiationStrategy strategy = new ParameterContentNegotiationStrategy(this.mediaTypes);
 				strategy.setParameterName(this.parameterName);
@@ -354,6 +357,8 @@ public class ContentNegotiationManagerFactoryBean
 				}
 				strategies.add(strategy);
 			}
+
+			// 是否忽略请求头中的 Accept
 			if (!this.ignoreAcceptHeader) {
 				strategies.add(new HeaderContentNegotiationStrategy());
 			}

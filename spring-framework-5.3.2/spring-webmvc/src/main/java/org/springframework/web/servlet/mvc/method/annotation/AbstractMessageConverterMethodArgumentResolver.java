@@ -189,7 +189,7 @@ public abstract class AbstractMessageConverterMethodArgumentResolver implements 
 			contentType = MediaType.APPLICATION_OCTET_STREAM;
 		}
 
-		// 获取方法类
+		// 获取方法所在的类
 		Class<?> contextClass = parameter.getContainingClass();
 		Class<T> targetClass = (targetType instanceof Class ? (Class<T>) targetType : null);
 		if (targetClass == null)
@@ -224,7 +224,8 @@ public abstract class AbstractMessageConverterMethodArgumentResolver implements 
 						// 循环调用 ControllerAdvice 切面 RequestBodyAdvice 接口所有实现的 beforeBodyRead 方法(会先判断是否切当前调用的类)
 						HttpInputMessage msgToUse = getAdvice().beforeBodyRead(message, parameter, targetType, converterType);
 						// 调用转换器的read方法，反序列化入参(具体由转换器类实现)
-						body = (genericConverter != null ? genericConverter.read(targetType, contextClass, msgToUse) :
+						body = (genericConverter != null ?
+								genericConverter.read(targetType, contextClass, msgToUse) :
 								((HttpMessageConverter<T>) converter).read(targetClass, msgToUse));
 						// 循环调用ControllerAdvice切面所有RequestBodyAdvice接口所有实现的afterBodyRead方法(会先判断是否切当前调用的类)
 						body = getAdvice().afterBodyRead(body, msgToUse, parameter, targetType, converterType);

@@ -85,6 +85,7 @@ public class ExceptionHandlerMethodResolver {
 				}
 			}
 		}
+		// 如果都为空，抛异常
 		if (result.isEmpty()) {
 			throw new IllegalStateException("No exception types mapped to " + method);
 		}

@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 public class BeanValidController {
 
-	@RequestMapping("/hello")
-	public String hello(@Validated @RequestBody User user) {
-		return user == null ? "null" : user.toString();
-	}
+//	@RequestMapping("/hello")
+//	public String hello(@Validated @RequestBody User user) {
+//		return user == null ? "null" : user.toString();
+//	}
 
 	@RequestMapping("/world")
 	public String world(@NotNull(message = "str 不能为空") String str){

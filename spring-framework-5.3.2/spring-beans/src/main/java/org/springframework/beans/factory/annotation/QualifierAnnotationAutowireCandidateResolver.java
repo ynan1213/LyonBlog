@@ -362,8 +362,10 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	@Override
 	@Nullable
 	public Object getSuggestedValue(DependencyDescriptor descriptor) {
+		// 先获取 field或者方法参数上@Value注解的值
 		Object value = findValue(descriptor.getAnnotations());
 		if (value == null) {
+			// 上面没有，再获取方法上的@Value注解的值
 			MethodParameter methodParam = descriptor.getMethodParameter();
 			if (methodParam != null) {
 				value = findValue(methodParam.getMethodAnnotations());

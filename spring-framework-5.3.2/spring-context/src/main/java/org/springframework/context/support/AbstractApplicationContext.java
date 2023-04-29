@@ -900,6 +900,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
 		// Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
+		// 如果容器中有PropertySourcesPlaceholderConfigurer，就不会进入if
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}

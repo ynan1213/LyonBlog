@@ -315,7 +315,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 						else if (primaryConstructor != null) {
 							continue;
 						}
-						// 获取构造方法上 @Autowired 注解
+						// 获取构造方法上 @Autowired和@Value 注解
 						MergedAnnotation<?> ann = findAutowiredAnnotation(candidate);
 						if (ann == null) {
 							// 如果构造方法上没有 @Autowired 注解，看看类是否有被cglib代理

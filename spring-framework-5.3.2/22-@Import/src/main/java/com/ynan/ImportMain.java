@@ -1,5 +1,6 @@
 package com.ynan;
 
+import com.ynan.service.SelectorImport;
 import com.ynan.service.SimpleImport;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -13,6 +14,7 @@ public class ImportMain {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ImportRootConfig.class);
 
 		SimpleImport bean = context.getBean(SimpleImport.class);
+		SelectorImport bean1 = context.getBean(SelectorImport.class);
 		System.out.println("--------- end ---------");
 
 	}

@@ -359,6 +359,7 @@ public class SpringApplication {
 		// Create and configure the environment
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
+		// 封装一下加到第一位，不明白做法的意义
 		ConfigurationPropertySources.attach(environment);
 		// 广播 environmentPrepared 事件
 		// 其中的 ConfigFileApplicationListener 非常核心，项目中的 properties 和yml文件都是被其所加载
@@ -525,6 +526,9 @@ public class SpringApplication {
 		}
 		// 命令行参数添加到 environment 中的第一位
 		configurePropertySources(environment, args);
+		// environment默认的profile为default，该方法会从环境中读取spring.profiles.active配置（可以配置多个，用逗号分隔）的值设置到
+		// activeProfiles变量中。
+		// 注意，到这一步还未读取application.properties等spring的配置文件，仅仅是读取了系统变量和命令行参数
 		configureProfiles(environment, args);
 	}
 

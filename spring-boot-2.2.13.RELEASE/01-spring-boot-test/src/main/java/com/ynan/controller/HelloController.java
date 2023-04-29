@@ -17,6 +17,8 @@ public class HelloController {
 
 	@RequestMapping("/hello")
 	public String hello() {
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		ClassLoader classLoader1 = this.getClass().getClassLoader();
 		return helloService.say();
 	}
 

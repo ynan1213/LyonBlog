@@ -113,7 +113,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
 		// 从spring.factories文件中获取配置类的全限定名数组
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
-		// 去重
+		// 去重，就是转set再转list
 		configurations = removeDuplicates(configurations);
 		// 获取要排除的自定义配置类，有两种方式可以配置：
 		// 1. @SpringBootApplication(exclude = Xxx.class)
@@ -122,7 +122,10 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		// 如果要排除的配置类不在读取的结果中，是会抛异常的
 		checkExcludedClasses(configurations, exclusions);
 		configurations.removeAll(exclusions);
+		// 从spring.factories文件中获取AutoConfigurationImportFilter类型的filter，进行过滤
+		// 默认有：OnBeanCondition、OnClassCondition、OnWebApplicationCondition
 		configurations = filter(configurations, autoConfigurationMetadata);
+		// 从spring.factories文件中获取AutoConfigurationImportListener类型的listener，进行回调
 		fireAutoConfigurationImportEvents(configurations, exclusions);
 		return new AutoConfigurationEntry(configurations, exclusions);
 	}

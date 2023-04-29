@@ -49,6 +49,7 @@ class TomcatEmbeddedContext extends StandardContext {
 	@Override
 	public boolean loadOnStartup(Container[] children) {
 		// deferred until later (see deferredLoadOnStartup)
+		// 这里为什么要延迟运行？
 		return true;
 	}
 

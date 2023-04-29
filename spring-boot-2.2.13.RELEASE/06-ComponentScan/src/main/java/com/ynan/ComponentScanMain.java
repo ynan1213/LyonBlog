@@ -4,9 +4,7 @@ import com.ynan.config01.Demo1;
 import com.ynan.config02.Demo2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.TypeExcludeFilter;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 
 /**
  * @Author yuannan
@@ -21,10 +19,10 @@ public class ComponentScanMain {
 		context.getBean(Demo2.class);
 	}
 
-	@Bean
-	public TypeExcludeFilter get(){
-		return new MyTypeExcludeFilter();
-	}
+	//	@Bean
+	//	public TypeExcludeFilter get(){
+	//		return new MyTypeExcludeFilter();
+	//	}
 
 
 }

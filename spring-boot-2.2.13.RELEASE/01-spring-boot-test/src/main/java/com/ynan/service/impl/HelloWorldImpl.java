@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
  * @Date 2021/11/17 20:16
  */
 @Service
-@ConditionalOnBean
+//@ConditionalOnBean
 public class HelloWorldImpl implements HelloService {
 
 	@Override

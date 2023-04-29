@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * @Author yuannan
  * @Date 2022/4/1 18:13
  */
-@Component // 无效
+@Component // 有可能无效，因为这个时候可能还未被扫描到
 public class MyTypeExcludeFilter extends TypeExcludeFilter {
 
 	@Override

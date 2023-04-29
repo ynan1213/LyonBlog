@@ -1,8 +1,6 @@
 package com.epichust;
 
 import com.epichust.bean.Bean1;
-import com.epichust.listener.MyApplicationEvent;
-import com.epichust.listener.MyApplicationListener;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -26,12 +24,6 @@ public class HelloWorldApplication
 //		SpringApplication.run(HelloWorldApplication.class, new String[] {"--spring.config.location=E:/"});
 //		SpringApplication.run(HelloWorldApplication.class, new String[] {});
 
-//		SpringApplication springApplication = new SpringApplication(HelloWorldApplication.class);
-//		springApplication.addListeners(new MyApplicationListener());
-//		ConfigurableApplicationContext context = springApplication.run(args);
-
-//		//手动发布事件
-//		context.publishEvent(new MyApplicationEvent(new Object()));
 	}
 
 }

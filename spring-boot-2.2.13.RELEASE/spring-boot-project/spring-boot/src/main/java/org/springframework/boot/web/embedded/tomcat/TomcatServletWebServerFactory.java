@@ -223,7 +223,10 @@ public class TomcatServletWebServerFactory extends AbstractServletWebServerFacto
 		}
 		configureTldPatterns(context);
 		WebappLoader loader = new WebappLoader();
+		// 使用 TomcatEmbeddedWebappClassLoader 代替tomcat原生的 ParallelWebappClassLoader
 		loader.setLoaderClass(TomcatEmbeddedWebappClassLoader.class.getName());
+		// delegate设置为true，最终传递到了WebappClassLoader，也就是TomcatEmbeddedWebappClassLoader的 delegate 为true
+		//
 		loader.setDelegate(true);
 		context.setLoader(loader);
 		if (isRegisterDefaultServlet()) {

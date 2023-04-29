@@ -247,9 +247,11 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 
 	private void selfInitialize(ServletContext servletContext) throws ServletException
 	{
+		// 将 servletContext 传递给 ApplicationContext，也将ApplicationContext保存到servletContext的attribute种，这样二者就关联起来了
 		prepareWebApplicationContext(servletContext);
 		registerApplicationScope(servletContext);
 		WebApplicationContextUtils.registerEnvironmentBeans(getBeanFactory(), servletContext);
+		// 我们自定义的Servlet、Filter、Listener都会被封装成ServletContextInitializer类型，在这里被注入到 servletContext
 		for (ServletContextInitializer beans : getServletContextInitializerBeans())
 		{
 			beans.onStartup(servletContext);

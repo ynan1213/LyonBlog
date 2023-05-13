@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.ynan.dao.UserDao">
+<mapper namespace="com.ynan.dao.UserADao">
 
     <resultMap type="User" id="xxxUserResultMap" autoMapping="true">
         <result column="id" property="id"/>
@@ -14,11 +14,14 @@
         insert into user(name, age) values( #{name}, #{age})
     </insert>
 
-    <select id="getById" resultMap="xxxUserResultMap">
+    <select id="getById" resultMap="xxxUserResultMap" statementType="PREPARED">
         select * from user where id = #{xxxx}
+        <if test="xxx != null and xxx != ''">
+            and age = 10
+        </if>
     </select>
 
-    <select id="returnMap" resultMap="xxxUserResultMap">
-        select id, name from user
-    </select>
+<!--    <select id="returnMap" resultMap="xxxUserResultMap">-->
+<!--        select id, name from user-->
+<!--    </select>-->
 </mapper>

@@ -76,6 +76,7 @@ public class ParamNameResolver {
             if (name == null) {
                 // @Param was not specified.
                 if (useActualParamName) {
+                    // 接口的参数名称通常会被擦除，这里只能获取到 arg0 arg1 ...
                     name = getActualParamName(method, paramIndex);
                 }
                 if (name == null) {

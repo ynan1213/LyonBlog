@@ -13,15 +13,15 @@ import org.apache.ibatis.annotations.Param;
  * @author: yn
  * @create: 2021-06-25 18:40
  */
-public interface UserDao {
+public interface UserADao {
 
     int insert(User user);
 
-    User getById(int id);
+    User getById(@Param("id") int id, @Param("xxx") String xxx);
 
-    @Flush
-    void flush();
+//    @Flush
+//    void flush();
 
-    @MapKey("name")
-    Map returnMap();
+//    @MapKey("name")
+//    Map returnMap();
 }

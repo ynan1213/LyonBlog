@@ -1,6 +1,9 @@
 package com.ynan.dao;
 
 import com.ynan.entity.User;
+import com.ynan.entity.UserCondition;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * @Author yuannan
@@ -10,5 +13,9 @@ public interface UserDao {
 
     int insert(User user);
 
-    User getById(int id);
+    User getById(@Param("id") int id, @Param("xxx") String xxx);
+
+    List<User> get(@Param("condition") UserCondition userCondition, @Param("xxx") String xxx);
+
+    User getById(String xxx, String yyy);
 }

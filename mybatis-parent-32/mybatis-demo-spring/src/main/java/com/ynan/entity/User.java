@@ -16,10 +16,10 @@ public class User {
 
     private Integer id;
     private String name;
-    private Integer age;
+    private Integer gender;
 
-    public User(String name, Integer age) {
+    public User(String name, Integer gender) {
         this.name = name;
-        this.age = age;
+        this.gender = gender;
     }
 }

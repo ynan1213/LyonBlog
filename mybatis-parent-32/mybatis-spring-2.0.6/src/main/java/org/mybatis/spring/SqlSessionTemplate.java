@@ -421,6 +421,8 @@ public class SqlSessionTemplate implements SqlSession, DisposableBean {
             try {
                 // 这里同一个 Method对象被不同的 sqlSession对象调用
                 Object result = method.invoke(sqlSession, args);
+
+                // 如果 sqlSession 没有和spring事务绑定，就commit
                 if (!isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
                     // force commit even on non-dirty sessions because some databases require a commit/rollback before calling close()
                     sqlSession.commit(true);

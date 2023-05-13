@@ -2,10 +2,8 @@ package com.ynan.main;
 
 import com.ynan.config.RootAnnoConfig;
 import com.ynan.config.RootConfig;
-import com.ynan.dao.UserDao;
+import com.ynan.dao.UserADao;
 import com.ynan.entity.User;
-import java.util.List;
-import java.util.Map;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -24,9 +22,9 @@ public class MybatisMain {
     @Test
     public void test() {
         AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootAnnoConfig.class);
-        UserDao userDao = ac.getBean(UserDao.class);
+        UserADao userDao = ac.getBean(UserADao.class);
 
-        User user = userDao.getById(1);
+        User user = userDao.getById(Integer.valueOf(1), "xxx");
         System.out.println(user);
     }
 
@@ -34,12 +32,12 @@ public class MybatisMain {
     public void test1() {
         AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootConfig.class);
         TransactionTemplate transactionTemplate = ac.getBean(TransactionTemplate.class);
-        UserDao userDao = ac.getBean(UserDao.class);
+        UserADao userDao = ac.getBean(UserADao.class);
 
         transactionTemplate.execute(status -> {
             Integer integer = new Integer(1);
-            User user1 = userDao.getById(integer);
-            User user2 = userDao.getById(integer);
+            User user1 = userDao.getById(integer, "xxx");
+            User user2 = userDao.getById(integer, "xxx");
             System.out.println(user1);
             System.out.println(user2);
             return user1;
@@ -49,7 +47,7 @@ public class MybatisMain {
     @Test
     public void test2() {
         AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootConfig.class);
-        UserDao userDao = ac.getBean(UserDao.class);
+        UserADao userDao = ac.getBean(UserADao.class);
         for (int i = 0; i < 10; i++) {
             userDao.insert(new User(i + "", i));
         }
@@ -60,7 +58,7 @@ public class MybatisMain {
         AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootConfig.class);
         SqlSessionFactory sqlSessionFactory = ac.getBean(SqlSessionFactory.class);
         SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH);
-        UserDao userDao = sqlSession.getMapper(UserDao.class);
+        UserADao userDao = sqlSession.getMapper(UserADao.class);
         for (int i = 0; i < 10; i++) {
             userDao.insert(new User(i + "", i));
         }
@@ -71,9 +69,9 @@ public class MybatisMain {
     @Test
     public void test4map() {
         AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootConfig.class);
-        UserDao userDao = ac.getBean(UserDao.class);
-        Map map = userDao.returnMap();
-        System.out.println(map);
+        UserADao userDao = ac.getBean(UserADao.class);
+////        Map map = userDao.returnMap();
+//        System.out.println(map);
     }
 
 }

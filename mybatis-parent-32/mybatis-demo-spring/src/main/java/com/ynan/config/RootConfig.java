@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 /**
@@ -27,22 +29,23 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 public class RootConfig {
 
     /**
-     * 不知道为什么 @Value读取不到@PropertySource注入的配置
-     * 
+     * 不知道为什么 @Value读取不到@PropertySource注入的配置，但是 Environment 可以
      * 后面试试加入PropertySourcesPlaceholderConfigurer
-     * 
-     * 但是 Environment 可以
+     *
+     * 原因：因为@Bean的getMapperScannerConfigurer方法返回的MapperScannerConfigurer是个BeanFactoryPostProcessor类型，
+     * 被提前初始化，导致RootConfig也会被提前初始化，此时的BeanPostProcessor还未初始化
+     *
      */
-//    @Value("${jdbc.driver}")
+    @Value("${jdbc.driver}")
     private String driverClassName;
 
-//    @Value("${jdbc.url}")
+    @Value("${jdbc.url}")
     private String url;
 
-//    @Value("${jdbc.username}")
+    @Value("${jdbc.username}")
     private String username;
 
-//    @Value("${jdbc.password}")
+    @Value("${jdbc.password}")
     private String password;
 
     @Bean
@@ -52,11 +55,15 @@ public class RootConfig {
         dataSource.setUrl(environment.getProperty("jdbc.url"));
         dataSource.setUsername(environment.getProperty("jdbc.username"));
         dataSource.setPassword(environment.getProperty("jdbc.password"));
+//        dataSource.setDriverClassName(driverClassName);
+//        dataSource.setUrl(url);
+//        dataSource.setUsername(username);
+//        dataSource.setPassword(password);
         return dataSource;
     }
 
     @Bean("sqlSessionFactory")
-    public SqlSessionFactoryBean getSqlSessionFactoryBean(DataSource dataSource) {
+    public SqlSessionFactoryBean getSqlSessionFactoryBean(DataSource dataSource) throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         // dataSource 是必须设置的
         sqlSessionFactoryBean.setDataSource(dataSource);
@@ -79,6 +86,10 @@ public class RootConfig {
         // 还可以设置 mapperLocations，注意：这里不能使用通配符
         //sqlSessionFactoryBean.setMapperLocations(new ClassPathResource("mapper/*.xml"));
         sqlSessionFactoryBean.setMapperLocations(new ClassPathResource("mapper/UserMapper.xml"));
+
+        // 这样就能使用通配符了
+        sqlSessionFactoryBean.setMapperLocations(
+            new PathMatchingResourcePatternResolver().getResources("classpath*:mapper/*.xml"));
         return sqlSessionFactoryBean;
     }
 

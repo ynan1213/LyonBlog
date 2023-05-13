@@ -166,6 +166,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
         boolean acceptAllInterfaces = true;
 
         // if specified, use the given annotation and / or marker interface
+        // 如果未指定注解类型，默认所有的类都会扫描（isCandidateComponent方法会过滤接口类型）
+        // 如果指定了注解类型，就只会扫描@Mapper注解的接口类型
         if (this.annotationClass != null) {
             addIncludeFilter(new AnnotationTypeFilter(this.annotationClass));
             acceptAllInterfaces = false;
@@ -262,6 +264,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
                 explicitFactoryUsed = true;
             }
 
+            // 如果没有设置 sqlSessionFactoryBeanName 或者 sqlSessionTemplateBeanName，就会进入if
             if (!explicitFactoryUsed) {
                 LOGGER.debug(() -> "Enabling autowire by type for MapperFactoryBean with name '" + holder.getBeanName() + "'.");
                 definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);

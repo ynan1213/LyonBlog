@@ -1,6 +1,10 @@
 mybatis:
     mapper-locations: classpath*:mapper/*.xml
+
+    # 实体类别名
     type-aliases-package: com.ynan.entity
+
+
     type-handlers-package: com.ynan.typeHandler
     # executor-type: REUSE
     configuration:
@@ -11,6 +15,6 @@ mybatis:
 
 jdbc:
     driver: com.mysql.jdbc.Driver
-    url: jdbc:mysql://47.100.24.106:3306/test?serverTimezone=UTC&useSSL=false&characterEncoding=UTF-8
+    url: jdbc:mysql://121.36.200.116:3306/test?serverTimezone=UTC&useSSL=false&characterEncoding=UTF-8
     username: root
     password: 123456

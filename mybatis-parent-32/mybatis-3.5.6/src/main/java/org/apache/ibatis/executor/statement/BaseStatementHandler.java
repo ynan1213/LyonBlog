@@ -66,6 +66,7 @@ public abstract class BaseStatementHandler implements StatementHandler {
 
         this.boundSql = boundSql;
 
+        // PreparedStatementHandler才使用parameterHandler，SimpleStatementHandler用不到
         this.parameterHandler = configuration.newParameterHandler(mappedStatement, parameterObject, boundSql);
         this.resultSetHandler = configuration
             .newResultSetHandler(executor, mappedStatement, rowBounds, parameterHandler, resultHandler, boundSql);

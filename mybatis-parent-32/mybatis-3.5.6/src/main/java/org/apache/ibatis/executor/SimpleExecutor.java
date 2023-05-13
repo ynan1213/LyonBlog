@@ -45,9 +45,11 @@ public class SimpleExecutor extends BaseExecutor {
         try {
             Configuration configuration = ms.getConfiguration();
             StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
+            // 返回的是jdk原生的Statement
             stmt = prepareStatement(handler, ms.getStatementLog());
             return handler.update(stmt);
         } finally {
+            // 每次执行完都会执行jdk原生Statement#close方法
             closeStatement(stmt);
         }
     }
@@ -85,7 +87,10 @@ public class SimpleExecutor extends BaseExecutor {
     private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
         Statement stmt;
         Connection connection = getConnection(statementLog);
+        // 返回的是jdk原生的Statement
         stmt = handler.prepare(connection, transaction.getTimeout());
+        // PreparedStatement就是设置值给?
+        // Statement未做任何处理
         handler.parameterize(stmt);
         return stmt;
     }

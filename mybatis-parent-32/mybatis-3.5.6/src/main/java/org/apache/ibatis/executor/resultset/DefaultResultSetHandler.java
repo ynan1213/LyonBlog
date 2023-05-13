@@ -188,6 +188,9 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         int resultSetCount = 0;
         ResultSetWrapper rsw = getFirstResultSet(stmt);
 
+        // 这里返回的是<select>配置的 resultMap，
+        // 如果没有配置resultMap但是配置了resultType,这里也会返回resultMap，是mybatis根据resultType解析的
+        // resultMap和resultType必须配置一个
         List<ResultMap> resultMaps = mappedStatement.getResultMaps();
         int resultMapCount = resultMaps.size();
         validateResultMapsCount(rsw, resultMapCount);
@@ -300,6 +303,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
                 handleRowValues(rsw, resultMap, null, RowBounds.DEFAULT, parentMapping);
             } else {
                 if (resultHandler == null) {
+                    // list的实际类型是ArrayList
                     DefaultResultHandler defaultResultHandler = new DefaultResultHandler(objectFactory);
                     handleRowValues(rsw, resultMap, defaultResultHandler, rowBounds, null);
                     multipleResults.add(defaultResultHandler.getResultList());
@@ -354,8 +358,10 @@ public class DefaultResultSetHandler implements ResultSetHandler {
         throws SQLException {
         DefaultResultContext<Object> resultContext = new DefaultResultContext<>();
         ResultSet resultSet = rsw.getResultSet();
+        // RowBounds用来做内存分页，通常都不会用rowBounds
         skipRows(resultSet, rowBounds);
         while (shouldProcessMoreRows(resultContext, rowBounds) && !resultSet.isClosed() && resultSet.next()) {
+            // 尚不清楚Discriminator的用法
             ResultMap discriminatedResultMap = resolveDiscriminatedResultMap(resultSet, resultMap, null);
             Object rowValue = getRowValue(rsw, discriminatedResultMap, null);
             storeObject(resultHandler, resultContext, rowValue, parentMapping, resultSet);
@@ -401,6 +407,7 @@ public class DefaultResultSetHandler implements ResultSetHandler {
 
     private Object getRowValue(ResultSetWrapper rsw, ResultMap resultMap, String columnPrefix) throws SQLException {
         final ResultLoaderMap lazyLoader = new ResultLoaderMap();
+        // 实例化返回值对象
         Object rowValue = createResultObject(rsw, resultMap, lazyLoader, columnPrefix);
         if (rowValue != null && !hasTypeHandlerForResultObject(rsw, resultMap.getType())) {
             final MetaObject metaObject = configuration.newMetaObject(rowValue);

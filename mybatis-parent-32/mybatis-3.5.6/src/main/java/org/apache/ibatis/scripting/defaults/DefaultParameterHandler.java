@@ -66,18 +66,24 @@ public class DefaultParameterHandler implements ParameterHandler {
                 ParameterMapping parameterMapping = parameterMappings.get(i);
                 if (parameterMapping.getMode() != ParameterMode.OUT) {
                     Object value;
+                    // 对应 #{} 内部的值
                     String propertyName = parameterMapping.getProperty();
                     if (boundSql.hasAdditionalParameter(propertyName)) { // issue #448 ask first for additional params
                         value = boundSql.getAdditionalParameter(propertyName);
                     } else if (parameterObject == null) {
                         value = null;
                     } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
+                        // 什么情况会进入该if? 当参数的类型是基本类型的时候，因为typeHandlerRegistry默认只会注册一些基本类型的typeHandler
+                        // 什么情况参数类型是基本类型？ 只有一个参数并且参数没有@Param注解，也就是参数没有被封装的情况，但是不能为JavaBean类型
                         value = parameterObject;
                     } else {
                         MetaObject metaObject = configuration.newMetaObject(parameterObject);
                         value = metaObject.getValue(propertyName);
                     }
+                    // 这里获取的是 #{xxx, typeHandler = XxxTypeHandler} 中的typeHandler值，未配置就是默认的 UnknownTypeHandler
                     TypeHandler typeHandler = parameterMapping.getTypeHandler();
+
+                    // 这里获取的是 #{xxx, jdbcType = VARCHAR} 中的jdbcType值，如果未配置就为null
                     JdbcType jdbcType = parameterMapping.getJdbcType();
                     if (value == null && jdbcType == null) {
                         jdbcType = configuration.getJdbcTypeForNull();

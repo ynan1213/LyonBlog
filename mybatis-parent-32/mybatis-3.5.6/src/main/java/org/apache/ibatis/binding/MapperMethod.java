@@ -88,6 +88,7 @@ public class MapperMethod {
                 } else {
                     // 常用类型，比如String、int、User等自定义类型
                     Object param = method.convertArgsToSqlCommandParam(args);
+                    // selectOne内部是调用selectList，然后get(0)，如果size() > 1会抛异常
                     result = sqlSession.selectOne(command.getName(), param);
                     // 支持 Optional
                     if (method.returnsOptional() && (result == null || !method.getReturnType().equals(result.getClass()))) {

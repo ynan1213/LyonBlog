@@ -1,6 +1,7 @@
 package com.ynan.entity;
 
-import com.ynan.enum1.AgeEnum;
+import com.ynan.enum1.GenderEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,15 +10,16 @@ import lombok.NoArgsConstructor;
  * @Date 2021/11/30 22:24
  */
 @Data
-@NoArgsConstructor
+//@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     private Integer id;
     private String name;
-    private AgeEnum age;
+    private GenderEnum gender;
 
-    public User(String name, Integer age) {
-        this.name = name;
-        this.age = AgeEnum.fromInt(age);
-    }
+//    public User(String name, Integer age) {
+//        this.name = name;
+//        this.age = AgeEnum.fromInt(age);
+//    }
 }

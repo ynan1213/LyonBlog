@@ -96,6 +96,10 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
         ConnectionHandler<S> cHandler = new ConnectionHandler<>(this);
         setHandler(cHandler);
         getEndpoint().setHandler(cHandler);
+        // 默认值为-1，表示禁用，这个选项可以影响close 方法的行为。在默认情况下，当调用close 方法后，将立即返回；
+        // 如果这时仍然有未被送出的数据包，那么这些数据包将被丢弃。如果将linger 参数设为一个正整数n
+        // 时(n 的值最大是65,535) ，在调用close 方法后，将最多被阻塞n 秒。在这n 秒内，系统将尽量将未送出的数据包发送出去；如果超过了n 秒，
+        // 如果还有未发送的数据包，这些数据包将全部被丢弃；
         setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);
         setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
     }
@@ -830,6 +834,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     // OpenSSL typically returns null whereas JSSE typically
                     // returns "" when no protocol is negotiated
                     if (negotiatedProtocol != null && negotiatedProtocol.length() > 0) {
+                        // 主要用于HTTP2.0的支持
                         UpgradeProtocol upgradeProtocol = getProtocol().getNegotiatedProtocol(negotiatedProtocol);
                         if (upgradeProtocol != null) {
                             processor = upgradeProtocol.getProcessor(wrapper, getProtocol().getAdapter());
@@ -871,16 +876,21 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 }
                 if (processor == null) {
                     processor = getProtocol().createProcessor();
+                    // 注册到JMX中
                     register(processor);
                     if (getLog().isDebugEnabled()) {
                         getLog().debug(sm.getString("abstractConnectionHandler.processorCreate", processor));
                     }
                 }
 
+                // 设置是否支持SSL套接字，通常都是false
                 processor.setSslSupport(
                         wrapper.getSslSupport(getProtocol().getClientCertProvider()));
 
+                // 默认会返回CLOSED，外层的SocketProcessor接收到CLOSED返回值时，就会关闭SOCKET
+                // 如果是其它返回值，就不处理，因为可能是长连接
                 SocketState state = SocketState.CLOSED;
+                // 循环直到状态不为 UPGRADING，即协议升级成功，详情见HTTP2.0部分，这里忽略
                 do {
                     state = processor.process(wrapper, status);
 
@@ -939,25 +949,32 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 } while ( state == SocketState.UPGRADING);
 
                 if (state == SocketState.LONG) {
+                    // LONG代表处理中
                     // In the middle of processing a request/response. Keep the
                     // socket associated with the processor. Exact requirements
                     // depend on type of long poll
+                    // 如果processor不支持异步，将socket注册到selector中，事件为READ事件，表明需要读取信息，因为处理器正在处理套接字
                     longPoll(wrapper, processor);
                     if (processor.isAsync()) {
                         getProtocol().addWaitingProcessor(processor);
                     }
                 } else if (state == SocketState.OPEN) {
+                    // 如果为OPEN，此时的处理状态为HTTP重的keep-alive长连接状态，这时不需要再使用套接字，将其回收
                     // In keep-alive but between requests. OK to recycle
                     // processor. Continue to poll for the next request.
                     release(processor);
                     processor = null;
+                    // 对长连接的实现原理就是将socket包装成PollerEvent事件，注册到Poller的任务队列中，监听OP_READ事件
+                    // 这里肯定有对超时的处理，是主动触发超时还是等有事件来了再判断是否超时呢？具体有待研究
                     wrapper.registerReadInterest();
                 } else if (state == SocketState.SENDFILE) {
+                    // 使用SENDFILE操作，不需要应用层处理
                     // Sendfile in progress. If it fails, the socket will be
                     // closed. If it works, the socket either be added to the
                     // poller (or equivalent) to await more data or processed
                     // if there are any pipe-lined requests remaining.
                 } else if (state == SocketState.UPGRADED) {
+                    // 升级成功
                     // Don't add sockets back to the poller if this was a
                     // non-blocking write otherwise the poller may trigger
                     // multiple read events which may lead to thread starvation
@@ -968,10 +985,12 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         getProtocol().addWaitingProcessor(processor);
                     }
                 } else if (state == SocketState.SUSPENDED) {
+                    // 套接字被挂起，也不需要操作
                     // Don't add sockets back to the poller.
                     // The resumeProcessing() method will add this socket
                     // to the poller.
                 } else {
+                    // 执行到这里，表明状态为关闭，此时连接已经被关闭，回收处理器
                     // Connection closed. OK to recycle the processor.
                     // Processors handling upgrades require additional clean-up
                     // before release.

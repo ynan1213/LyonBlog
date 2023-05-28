@@ -92,6 +92,7 @@ public class ErrorReportValve extends ValveBase {
         getNext().invoke(request, response);
 
         if (response.isCommitted()) {
+            //
             if (response.setErrorReported()) {
                 // Error wasn't previously reported but we can't write an error
                 // page because the response has already been committed.
@@ -117,6 +118,7 @@ public class ErrorReportValve extends ValveBase {
             return;
         }
 
+        // 是否出现异常
         Throwable throwable = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
 
         // If an async request is in progress and is not going to end once this
@@ -326,6 +328,7 @@ public class ErrorReportValve extends ValveBase {
                 // If writer is null, it's an indication that the response has
                 // been hard committed already, which should never happen
                 writer.write(sb.toString());
+                // 写到输出流中
                 response.finishResponse();
             }
         } catch (IOException | IllegalStateException e) {

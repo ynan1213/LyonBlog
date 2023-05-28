@@ -68,10 +68,12 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
     private Context context;
     private boolean allowLinking = false;
+    // Context.xml PreResource标签下的资源
     private final List<WebResourceSet> preResources = new ArrayList<>();
     private WebResourceSet main;
     private final List<WebResourceSet> classResources = new ArrayList<>();
     private final List<WebResourceSet> jarResources = new ArrayList<>();
+    // Context.xml POST标签下的资源
     private final List<WebResourceSet> postResources = new ArrayList<>();
 
     private final Cache cache = new Cache(this);
@@ -717,8 +719,11 @@ public class StandardRoot extends LifecycleMBeanBase implements WebResourceRoot 
 
         // This has to be called after the other resources have been started
         // else it won't find all the matching resources
+        // 搜索 /WEB-INF/lib 下的所有jar资源，每个jar包包装为JarResourceSet类型，添加到 classResources 集合中，后面再依次start
         processWebInfLib();
         // Need to start the newly found resources
+        // 实际类型是JarResourceSet，JarResourceSet的initInternal方法中，会读取Jar包内META-INF/MANIFEST.MF文件
+        // MANIFEST.MF文件其实就是个key-value类型的配置文件
         for (WebResourceSet classResource : classResources) {
             classResource.start();
         }

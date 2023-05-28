@@ -153,9 +153,7 @@ public final class ClassLoaderFactory {
      *
      * @exception Exception if an error occurs constructing the class loader
      */
-    public static ClassLoader createClassLoader(List<Repository> repositories,
-                                                final ClassLoader parent)
-        throws Exception {
+    public static ClassLoader createClassLoader(List<Repository> repositories, final ClassLoader parent) throws Exception {
 
         if (log.isDebugEnabled()) {
             log.debug("Creating new class loader");
@@ -242,6 +240,7 @@ public final class ClassLoaderFactory {
                     @Override
                     public URLClassLoader run() {
                         if (parent == null) {
+                            //parent 为null，里面默认就会把 AppClassLoader 作为 parent
                             return new URLClassLoader(array);
                         } else {
                             return new URLClassLoader(array, parent);

@@ -322,12 +322,14 @@ public class CoyoteAdapter implements Adapter {
     @Override
     public void service(org.apache.coyote.Request req, org.apache.coyote.Response res)
             throws Exception {
-
+        // req和res是Http11Processor成员属性，随着Http11Processor的创建而创建，Http11Processor是可以被复用的，当复用前进行清除初始化，
+        // 同时内部的req和res也会被初始化，从而可以被复用
+        // 但是 request和response对象什么时候被初始化回收呢？ 见该方法最底部的finally
         Request request = (Request) req.getNote(ADAPTER_NOTES);
         Response response = (Response) res.getNote(ADAPTER_NOTES);
-
+        // 第一次请求才会为空
         if (request == null) {
-            // Create objects
+            // HttpServletRequest
             request = connector.createRequest();
             request.setCoyoteRequest(req);
             response = connector.createResponse();
@@ -337,7 +339,7 @@ public class CoyoteAdapter implements Adapter {
             request.setResponse(response);
             response.setRequest(request);
 
-            // Set as notes
+            // Set as notes   放在下标1的地方
             req.setNote(ADAPTER_NOTES, request);
             res.setNote(ADAPTER_NOTES, response);
 
@@ -345,19 +347,25 @@ public class CoyoteAdapter implements Adapter {
             req.getParameters().setQueryStringCharset(connector.getURICharset());
         }
 
+        // 通常不打开，因为显示服务器的服务信息容易被黑客攻击
         if (connector.getXpoweredBy()) {
             response.addHeader("X-Powered-By", POWERED_BY);
         }
 
         boolean async = false;
         boolean postParseSuccess = false;
-
+        // 设置当前处理的线程名
         req.getRequestProcessor().setWorkerThreadName(THREAD_NAME.get());
         req.setRequestThread();
 
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
+            /**
+             * 解析参数：
+             * 1.如果没有设置端口号，https就为443，http就为80，原来是写死了；
+             *
+             */
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
@@ -412,7 +420,7 @@ public class CoyoteAdapter implements Adapter {
                 async = false;
             }
 
-            // Access log
+            // Access log 如果发生了异常但转换参数成功，则记录访问日志
             if (!async && postParseSuccess) {
                 // Log only if processing was invoked.
                 // If postParseRequest() failed, it has already logged it.
@@ -602,6 +610,7 @@ public class CoyoteAdapter implements Adapter {
             request.setSecure(connector.getSecure());
         } else {
             // Use processor specified scheme to determine secure state
+            // 如果开启了SSL，则为https
             request.setSecure(req.scheme().equals("https"));
         }
 
@@ -613,6 +622,7 @@ public class CoyoteAdapter implements Adapter {
             req.setServerPort(proxyPort);
         } else if (req.getServerPort() == -1) {
             // Not explicitly set. Use default ports based on the scheme
+            // 如果没有设置端口号，https就为443，http就为80，原来是写死了
             if (req.scheme().equals("https")) {
                 req.setServerPort(443);
             } else {
@@ -622,10 +632,10 @@ public class CoyoteAdapter implements Adapter {
         if (proxyName != null) {
             req.serverName().setString(proxyName);
         }
-
+        // 未编码的URI
         MessageBytes undecodedURI = req.requestURI();
 
-        // Check for ping OPTIONS * request
+        // 当请求uri=*时，METHOD必须为OPTIONS
         if (undecodedURI.equals("*")) {
             if (req.method().equalsIgnoreCase("OPTIONS")) {
                 StringBuilder allow = new StringBuilder();
@@ -637,29 +647,38 @@ public class CoyoteAdapter implements Adapter {
                 res.setHeader("Allow", allow.toString());
                 // Access log entry as processing won't reach AccessLogValve
                 connector.getService().getContainer().logAccess(request, response, 0, true);
+                // 返回false，表明不需要调用pipeline处理信息
                 return false;
             } else {
+                // 否则返回400，说明请求URI不能为*并且不为OPTIONS
                 response.sendError(400, "Invalid URI");
             }
         }
 
+        // 获取已编码的URI信息，一般为空
         MessageBytes decodedURI = req.decodedURI();
 
+        // 如果未编码的URI为字节数组类型
         if (undecodedURI.getType() == MessageBytes.T_BYTES) {
             // Copy the raw URI to the decodedURI
             decodedURI.duplicate(undecodedURI);
 
             // Parse (and strip out) the path parameters
+            // 提取name1=value;name2=value2 路径参数信息，路径参数和URL参数不是同一个？？？
+            // 路径参数：/path;name=value;name2=value2/
+            // 设置到 pathParameters 集合中
             parsePathParameters(req, request);
 
             // URI decoding
             // %xx decoding of the URL
             try {
+                // 解析URL编码
                 req.getURLDecoder().convert(decodedURI.getByteChunk(), connector.getEncodedSolidusHandlingInternal());
             } catch (IOException ioe) {
                 response.sendError(400, "Invalid URI: " + ioe.getMessage());
             }
             // Normalization
+            // 规范化路径，比如请求的uri为 /yuan//name\\nan;name=value;name2=value2/\xxx，会被解析为 /yuan/name/nan/xxx
             if (normalize(req.decodedURI())) {
                 // Character decoding
                 convertURI(decodedURI, request);
@@ -681,6 +700,7 @@ public class CoyoteAdapter implements Adapter {
             decodedURI.toChars();
             // Remove all path parameters; any needed path parameter should be set
             // using the request object rather than passing it in the URL
+            // 如果路径参数存在‘;’，则删除所有的路径参数，任何需要的路径参数都应使用请求对象设置，不能在URL中传递
             CharChunk uriCC = decodedURI.getCharChunk();
             int semicolon = uriCC.indexOf(';');
             if (semicolon > 0) {
@@ -690,6 +710,7 @@ public class CoyoteAdapter implements Adapter {
 
         // Request mapping.
         MessageBytes serverName;
+        // 获取虚拟主机名
         if (connector.getUseIPVHosts()) {
             serverName = req.localName();
             if (serverName.isNull()) {
@@ -706,6 +727,7 @@ public class CoyoteAdapter implements Adapter {
         Context versionContext = null;
         boolean mapRequired = true;
 
+        // response发生异常，回收编码URI信息
         if (response.isError()) {
             // An error this early means the URI is invalid. Ensure invalid data
             // is not passed to the mapper. Note we still want the mapper to
@@ -729,6 +751,7 @@ public class CoyoteAdapter implements Adapter {
                 // Host and the StandardHostValve the case of a missing Context.
                 // If present, the error reporting valve will provide a response
                 // body.
+                // 允许继续响应，因为可以使用pipeline中value定义的响应信息
                 return true;
             }
 
@@ -740,6 +763,7 @@ public class CoyoteAdapter implements Adapter {
                     .contains(SessionTrackingMode.URL)) {
 
                 // Get the session ID if there was one
+                // 获取name=jsessionid的路径参数
                 sessionID = request.getPathParameter(
                         SessionConfig.getSessionUriParamName(
                                 request.getContext()));
@@ -750,6 +774,7 @@ public class CoyoteAdapter implements Adapter {
             }
 
             // Look for session ID in cookies and SSL session
+            // 从Cookies或者SSL session中获取sessionid
             try {
                 parseSessionCookiesId(request);
             } catch (IllegalArgumentException e) {
@@ -817,8 +842,10 @@ public class CoyoteAdapter implements Adapter {
         }
 
         // Possible redirect
+        // 获取重定向信息
         MessageBytes redirectPathMB = request.getMappingData().redirectPath;
         if (!redirectPathMB.isNull()) {
+            // 进入if，说明需要重定向，使用UTF8编码重定向路径
             String redirectPath = URLEncoder.DEFAULT.encode(
                     redirectPathMB.toString(), StandardCharsets.UTF_8);
             String query = request.getQueryString();

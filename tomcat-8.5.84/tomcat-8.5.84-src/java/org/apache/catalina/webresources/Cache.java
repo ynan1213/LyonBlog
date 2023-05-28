@@ -57,13 +57,16 @@ public class Cache {
     }
 
     protected WebResource getResource(String path, boolean useClassLoaderResources) {
-
+        // 下面的path是不会被缓存的：
+        //      1. /WEB-INF/classes/ 和 /WEB-INF/lib/下的 .class 文件
+        //      2. /WEB-INF/lib/ 下的 .jar 文件
         if (noCache(path)) {
             return root.getResourceInternal(path, useClassLoaderResources);
         }
 
         lookupCount.incrementAndGet();
 
+        // 从缓存中获取
         CachedResource cacheEntry = resourceCache.get(path);
 
         if (cacheEntry != null && !cacheEntry.validateResource(useClassLoaderResources)) {
@@ -71,6 +74,7 @@ public class Cache {
             cacheEntry = null;
         }
 
+        // 如果缓存中的为空，则进入if进行创建
         if (cacheEntry == null) {
             // Local copy to ensure consistency
             int objectMaxSizeBytes = getObjectMaxSizeBytes();

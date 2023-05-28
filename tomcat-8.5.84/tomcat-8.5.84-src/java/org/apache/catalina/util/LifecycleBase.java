@@ -155,10 +155,7 @@ public abstract class LifecycleBase implements Lifecycle {
      */
     @Override
     public final synchronized void start() throws LifecycleException {
-
-        if (LifecycleState.STARTING_PREP.equals(state) || LifecycleState.STARTING.equals(state) ||
-                LifecycleState.STARTED.equals(state)) {
-
+        if (LifecycleState.STARTING_PREP.equals(state) || LifecycleState.STARTING.equals(state) || LifecycleState.STARTED.equals(state)) {
             if (log.isDebugEnabled()) {
                 Exception e = new LifecycleException();
                 log.debug(sm.getString("lifecycleBase.alreadyStarted", toString()), e);
@@ -169,12 +166,15 @@ public abstract class LifecycleBase implements Lifecycle {
             return;
         }
 
+        /**
+         * StandardEngine的startInternal方法内会依次调用子Container的start方法，其中就有StandardHost
+         * 因为StandardHost没有地方触发init，所以到这里时的state=NEW，会先调用init方法
+         */
         if (state.equals(LifecycleState.NEW)) {
             init();
         } else if (state.equals(LifecycleState.FAILED)) {
             stop();
-        } else if (!state.equals(LifecycleState.INITIALIZED) &&
-                !state.equals(LifecycleState.STOPPED)) {
+        } else if (!state.equals(LifecycleState.INITIALIZED) && !state.equals(LifecycleState.STOPPED)) {
             invalidTransition(Lifecycle.BEFORE_START_EVENT);
         }
 
@@ -383,9 +383,7 @@ public abstract class LifecycleBase implements Lifecycle {
     }
 
 
-    private synchronized void setStateInternal(LifecycleState state, Object data, boolean check)
-            throws LifecycleException {
-
+    private synchronized void setStateInternal(LifecycleState state, Object data, boolean check) throws LifecycleException {
         if (log.isDebugEnabled()) {
             log.debug(sm.getString("lifecycleBase.setState", this, state));
         }
@@ -406,12 +404,9 @@ public abstract class LifecycleBase implements Lifecycle {
             // stopInternal() permits STOPPING_PREP to STOPPING and FAILED to
             // STOPPING
             if (!(state == LifecycleState.FAILED ||
-                    (this.state == LifecycleState.STARTING_PREP &&
-                            state == LifecycleState.STARTING) ||
-                    (this.state == LifecycleState.STOPPING_PREP &&
-                            state == LifecycleState.STOPPING) ||
-                    (this.state == LifecycleState.FAILED &&
-                            state == LifecycleState.STOPPING))) {
+                    (this.state == LifecycleState.STARTING_PREP && state == LifecycleState.STARTING) ||
+                    (this.state == LifecycleState.STOPPING_PREP && state == LifecycleState.STOPPING) ||
+                    (this.state == LifecycleState.FAILED && state == LifecycleState.STOPPING))) {
                 // No other transition permitted
                 invalidTransition(state.name());
             }

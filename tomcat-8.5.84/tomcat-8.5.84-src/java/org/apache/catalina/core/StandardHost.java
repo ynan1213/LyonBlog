@@ -101,6 +101,9 @@ public class StandardHost extends ContainerBase implements Host {
 
     /**
      * The auto deploy flag for this Host.
+     *
+     * 是否支持热部署
+     * 如果为true，虚拟主机Host会定期检查appBase和xmlBase目录下新Web应用程序或静态资源，如果发生更新则会触发对应context组件的重新加载
      */
     private boolean autoDeploy = true;
 
@@ -129,6 +132,8 @@ public class StandardHost extends ContainerBase implements Host {
 
     /**
      * deploy Context XML config files property.
+     *
+     * 是否要禁止应用程序中定义/META-INF/context.xml
      */
     private boolean deployXML = !Globals.IS_SECURITY_ENABLED;
 
@@ -137,6 +142,8 @@ public class StandardHost extends ContainerBase implements Host {
      * Should XML files be copied to
      * $CATALINA_BASE/conf/&lt;engine&gt;/&lt;host&gt; by default when
      * a web application is deployed?
+     *
+     * 如果在应用程序中定义了/META-INF/context.xml，是否要拷贝到$catalinaBase/xmlBase目录下
      */
     private boolean copyXML = false;
 
@@ -144,6 +151,8 @@ public class StandardHost extends ContainerBase implements Host {
     /**
      * The Java class name of the default error reporter implementation class
      * for deployed web applications.
+     *
+     * Host组件子组件Pilpline组件内处理异常Valve实现类
      */
     private String errorReportValveClass =
         "org.apache.catalina.valves.ErrorReportValve";
@@ -157,12 +166,16 @@ public class StandardHost extends ContainerBase implements Host {
 
     /**
      * Work Directory base for applications.
+     *
+     * 标识host组件工作的临时目录，$catalinaBase/workDir
      */
     private String workDir = null;
 
 
     /**
      * Should we create directories upon startup for appBase and xmlBase
+     *
+     * 标识是否需要在启动时创建appbase和xmlbase目录
      */
     private boolean createDirs = true;
 
@@ -682,10 +695,11 @@ public class StandardHost extends ContainerBase implements Host {
                 (sm.getString("standardHost.notContext"));
         }
 
+        // 为添加的子容器设置生命周期监听器MemoryLeakTrackingListener
         child.addLifecycleListener(new MemoryLeakTrackingListener());
 
         // Avoid NPE for case where Context is defined in server.xml with only a
-        // docBase
+        // docBase 这里强转难道不怕类型错误？
         Context context = (Context) child;
         if (context.getPath() == null) {
             ContextName cn = new ContextName(context.getDocBase(), true);
@@ -702,6 +716,9 @@ public class StandardHost extends ContainerBase implements Host {
      * is kept of the class loader used every time a context starts.
      */
     private class MemoryLeakTrackingListener implements LifecycleListener {
+        /**
+         * 处理AFTER_START_EVENT生命周期事件，设置childClassLoaders属性
+         */
         @Override
         public void lifecycleEvent(LifecycleEvent event) {
             if (event.getType().equals(Lifecycle.AFTER_START_EVENT)) {
@@ -819,8 +836,8 @@ public class StandardHost extends ContainerBase implements Host {
                     }
                 }
                 if(!found) {
-                    Valve valve =
-                        (Valve) Class.forName(errorValve).getConstructor().newInstance();
+                    Valve valve = (Valve) Class.forName(errorValve).getConstructor().newInstance();
+                    // 添加到倒数第二个
                     getPipeline().addValve(valve);
                 }
             } catch (Throwable t) {

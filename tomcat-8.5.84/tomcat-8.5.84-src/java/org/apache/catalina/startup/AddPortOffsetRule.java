@@ -28,6 +28,7 @@ public class AddPortOffsetRule extends Rule {
     public void begin(String namespace, String name, Attributes attributes) throws Exception {
 
         Connector conn = (Connector) digester.peek();
+        // peek(1)是Service对象
         Server server = (Server) digester.peek(2);
 
         int portOffset = server.getPortOffset();

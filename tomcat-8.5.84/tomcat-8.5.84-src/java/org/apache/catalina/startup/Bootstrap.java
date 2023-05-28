@@ -156,9 +156,14 @@ public final class Bootstrap {
     }
 
 
-    private ClassLoader createClassLoader(String name, ClassLoader parent)
-        throws Exception {
-
+    private ClassLoader createClassLoader(String name, ClassLoader parent) throws Exception {
+        /**
+         * 从 %catalina.home%/conf/cataline.properties 中读取
+         *
+         * common.loader = "${catalina.base}/lib","${catalina.base}/lib/*.jar","${catalina.home}/lib","${catalina.home}/lib/*.jar"
+         * server.loader  无默认值
+         * shared.loader  无默认值
+         */
         String value = CatalinaProperties.getProperty(name + ".loader");
         if ((value == null) || (value.equals(""))) {
             return parent;
@@ -183,8 +188,7 @@ public final class Bootstrap {
 
             // Local repository
             if (repository.endsWith("*.jar")) {
-                repository = repository.substring
-                    (0, repository.length() - "*.jar".length());
+                repository = repository.substring(0, repository.length() - "*.jar".length());
                 repositories.add(new Repository(repository, RepositoryType.GLOB));
             } else if (repository.endsWith(".jar")) {
                 repositories.add(new Repository(repository, RepositoryType.JAR));
@@ -249,10 +253,21 @@ public final class Bootstrap {
      */
     public void init() throws Exception {
 
+        /**
+         * 从 %catalina.home%/conf/cataline.properties 中读取
+         *
+         * common.loader = "${catalina.base}/lib","${catalina.base}/lib/*.jar","${catalina.home}/lib","${catalina.home}/lib/*.jar"
+         * server.loader  无默认值
+         * shared.loader  无默认值
+         *
+         * 初始化commonLoader(parent为AppClassLoader)、catalinaLoader、sharedLoader
+         * 其中catalinaLoader、sharedLoader默认其实就是commonLoader
+         */
         initClassLoaders();
 
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
+        // 如果开启了SecurityManager，那么则要提前加载一些类
         SecurityClassLoad.securityClassLoad(catalinaLoader);
 
         // Load our startup class and call its process() method
@@ -271,8 +286,8 @@ public final class Bootstrap {
         paramTypes[0] = Class.forName("java.lang.ClassLoader");
         Object paramValues[] = new Object[1];
         paramValues[0] = sharedLoader;
-        Method method =
-            startupInstance.getClass().getMethod(methodName, paramTypes);
+        // 把SharedLoader设置到SharedLoader的parentClassLoader属性中
+        Method method = startupInstance.getClass().getMethod(methodName, paramTypes);
         method.invoke(startupInstance, paramValues);
 
         catalinaDaemon = startupInstance;
@@ -283,7 +298,6 @@ public final class Bootstrap {
      * Load daemon.
      */
     private void load(String[] arguments) throws Exception {
-
         // Call the load() method
         String methodName = "load";
         Object param[];
@@ -297,8 +311,7 @@ public final class Bootstrap {
             param = new Object[1];
             param[0] = arguments;
         }
-        Method method =
-            catalinaDaemon.getClass().getMethod(methodName, paramTypes);
+        Method method = catalinaDaemon.getClass().getMethod(methodName, paramTypes);
         if (log.isDebugEnabled()) {
             log.debug("Calling startup class " + method);
         }
@@ -404,8 +417,7 @@ public final class Bootstrap {
         paramTypes[0] = Boolean.TYPE;
         Object paramValues[] = new Object[1];
         paramValues[0] = Boolean.valueOf(await);
-        Method method =
-            catalinaDaemon.getClass().getMethod("setAwait", paramTypes);
+        Method method = catalinaDaemon.getClass().getMethod("setAwait", paramTypes);
         method.invoke(catalinaDaemon, paramValues);
     }
 
@@ -436,12 +448,15 @@ public final class Bootstrap {
      * @param args Command line arguments to be processed
      */
     public static void main(String args[]) {
-
         synchronized (daemonLock) {
             if (daemon == null) {
                 // Don't set daemon until init() has completed
                 Bootstrap bootstrap = new Bootstrap();
                 try {
+                    /**
+                     * 1、初始化 Bootstrap 的 commonLoader、catalinaLoader、sharedLoader；
+                     * 2、实例化 Catalina 对象，赋值给 catalinaDaemon
+                     */
                     bootstrap.init();
                 } catch (Throwable t) {
                     handleThrowable(t);
@@ -471,8 +486,11 @@ public final class Bootstrap {
                 args[args.length - 1] = "stop";
                 daemon.stop();
             } else if (command.equals("start")) {
+                // 调用 catalina.setAwait(true) 方法
                 daemon.setAwait(true);
+                // 调用 catalina.load 方法
                 daemon.load(args);
+                // 调用 catalina.start 方法
                 daemon.start();
                 if (null == daemon.getServer()) {
                     System.exit(1);

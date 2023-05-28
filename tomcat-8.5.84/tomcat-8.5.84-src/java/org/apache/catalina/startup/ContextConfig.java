@@ -432,6 +432,7 @@ public class ContextConfig implements LifecycleListener {
         contextAttrs.add("source");
         fakeAttributes.put(StandardContext.class, contextAttrs);
         digester.setFakeAttributes(fakeAttributes);
+        // 第二个参数传入fasle，表示不再创建Context对象，后面会把Context push到栈中，表示读取配置到当前Context对象中
         RuleSet contextRuleSet = new ContextRuleSet("", false);
         digester.addRuleSet(contextRuleSet);
         RuleSet namingRuleSet = new NamingRuleSet("Context/");
@@ -609,6 +610,7 @@ public class ContextConfig implements LifecycleListener {
         // docBase NOT the canonical docBase. This is because some users symlink
         // WAR files into the appBase and we want this to work correctly.
         boolean docBaseAbsoluteInAppBase = docBaseAbsolute.startsWith(appBase.getPath() + File.separatorChar);
+        // 如果war包没有解压，则进行解压
         if (docBaseAbsolute.toLowerCase(Locale.ENGLISH).endsWith(".war") && !docBaseAbsoluteFile.isDirectory()) {
             URL war = UriUtil.buildJarUrl(docBaseAbsoluteFile);
             if (unpackWARs) {
@@ -1058,11 +1060,15 @@ public class ContextConfig implements LifecycleListener {
                 context.getXmlValidation(), context.getXmlBlockExternal());
 
         Set<WebXml> defaults = new HashSet<>();
+        // ①：先解析全局配置： ${catalina.base}/conf/web.xml
+        // ②：再解析Host级别的配置：${catalina.base}/conf/catalina/${hostName}/web.xml.default
         defaults.add(getDefaultWebXmlFragment(webXmlParser));
 
         WebXml webXml = createWebXml();
 
         // Parse context level web.xml
+        // ③：最后再解析每个context下WEB-INF/web.xml
+        // ③的优先级高于②，②的优先级高于①
         InputSource contextWebXml = getContextWebXmlSource();
         if (!webXmlParser.parseWebXml(contextWebXml, webXml, false)) {
             ok = false;
@@ -1076,26 +1082,52 @@ public class ContextConfig implements LifecycleListener {
         // provided by the container. If any of the application JARs have a
         // web-fragment.xml it will be parsed at this point. web-fragment.xml
         // files are ignored for container provided JARs.
-        Map<String,WebXml> fragments = processJarsForWebFragments(webXml, webXmlParser);
+        //
+        /**
+         * Step 1. 扫描/META-INF/lib/目录下的jar文件，如果META-INF下含有web-fragment.xml文件，解析生成 WebXml
+         *
+         * 原本一个web应用的任何配置都需要放在web.xml中，当项目比较大的时候会使得web.xml变得比较混乱。
+         * 于是从Servlet 3.0开始就可以将每个Servlet、Filter、Listener打成jar包，放在WEB-INF\lib目录下，
+         * 每个模块都有各自的配置文件，这个配置文件的名子就是 web-fragment.xml。
+         * 但其实现在大家进行web应用开发的时候基本都是使用Spring MVC所以基本也不大会用到这个特性。
+         */
+        Map<String, WebXml> fragments = processJarsForWebFragments(webXml, webXmlParser);
 
         // Step 2. Order the fragments.
+        // Step 2. 确定确定这些xml片段的顺序
+        /**
+         * 将web-fragment.xml创建的WebXml对象按照Servlet规范进行排序，同时将排序结果对应的JAR文件名列表设置到ServletContext属性中，
+         * 属性名为javax.servlet.context.orderedLibs。该排序非常重要，因为这决定了Filter等的执行顺序。
+         */
         Set<WebXml> orderedFragments = null;
         orderedFragments =
                 WebXml.orderWebFragments(webXml, fragments, sContext);
 
         // Step 3. Look for ServletContainerInitializer implementations
+        // Step 3. 处理ServletContainerInitializers的实现类
+        /**
+         * 查找ServletContainerInitializer实现，并且创建实例，查找范围分为两个部分：
+         *  1. Web应用下的包：如果javax.servlet.context.orderdLibs不为空，仅搜索该属性包含的包，否则搜索WEB-INF/lib下的所有包。
+         *  2. 容器包：搜索所有包。
+         */
+        // todo https://blog.csdn.net/weixin_42146366/article/details/97883890
         if (ok) {
             processServletContainerInitializers();
         }
 
         if  (!webXml.isMetadataComplete() || typeInitializerMap.size() > 0) {
             // Steps 4 & 5.
+            // Steps 4 处理/WEB-INF/classes 下的注解类和 @HandlesTypes matches
+            // Steps 5 处理 引入的JARs中的注解类和 @HandlesTypes matches
             processClasses(webXml, orderedFragments);
         }
 
+        // web.xml文件metadata-complete属性
+        // 如果设置为 true，则容器在部署时将只依赖部署描述文件，web-fragment.xml不会生效
         if (!webXml.isMetadataComplete()) {
             // Step 6. Merge web-fragment.xml files into the main web.xml
             // file.
+            // Step 6. 将应用中的web.xml与orderedFragments进行合并，合并在WebXml类的merge方法中实现
             if (ok) {
                 ok = webXml.merge(orderedFragments);
             }
@@ -1103,14 +1135,20 @@ public class ContextConfig implements LifecycleListener {
             // Step 7. Apply global defaults
             // Have to merge defaults before JSP conversion since defaults
             // provide JSP servlet definition.
+            // Step 7. 将应用中的web.xml与全局的web.xml文件（conf/web.xml和web.xml.default）进行合并
             webXml.merge(defaults);
 
             // Step 8. Convert explicitly mentioned jsps to servlets
+            // 将显示指定的JSP转换为Servlet
             if (ok) {
                 convertJsps(webXml);
             }
 
             // Step 9. Apply merged web.xml to Context
+            /**
+             * 将web.xml解析完的数据赋值给Context对象，包括显示名称、介绍、版本等信息。也会将例如Filter、Lintener加入到Context中，
+             * 当然最重要的是将ServletDef对象转化为Wrapper对象，并且添加为Context的子容器
+             */
             if (ok) {
                 configureContext(webXml);
             }
@@ -1419,7 +1457,9 @@ public class ContextConfig implements LifecycleListener {
 
         DefaultWebXmlCacheEntry entry = hostWebXmlCache.get(host);
 
+        // 读取 ${catalina.base}/conf/web.xml
         InputSource globalWebXml = getGlobalWebXmlSource();
+        // 读取 ${catalina.base}/conf/catalina/localhost/web.xml.default 一般都为null
         InputSource hostWebXml = getHostWebXmlSource();
 
         long globalTimeStamp = 0;
@@ -1584,6 +1624,7 @@ public class ContextConfig implements LifecycleListener {
         List<ServletContainerInitializer> detectedScis;
         try {
             WebappServiceLoader<ServletContainerInitializer> loader = new WebappServiceLoader<>(context);
+            // 搜集jar包内 META-INF/services/javax.servlet.ServletContainerInitializer
             detectedScis = loader.load(ServletContainerInitializer.class);
         } catch (IOException e) {
             log.error(sm.getString(

@@ -994,6 +994,7 @@ public abstract class AbstractEndpoint<S,U> {
         internalExecutor = true;
         TaskQueue taskqueue = new TaskQueue();
         TaskThreadFactory tf = new TaskThreadFactory(getName() + "-exec-", daemon, getThreadPriority());
+        // 这里的ThreadPoolExecutor不是jdk的，而是tomcat自定义的，区别就是tomcat会预先初始化所有的核心线程
         executor = new ThreadPoolExecutor(getMinSpareThreads(), getMaxThreads(), 60, TimeUnit.SECONDS,taskqueue, tf);
         taskqueue.setParent( (ThreadPoolExecutor) executor);
     }
@@ -1162,8 +1163,7 @@ public abstract class AbstractEndpoint<S,U> {
      *
      * @return if processing was triggered successfully
      */
-    public boolean processSocket(SocketWrapperBase<S> socketWrapper,
-            SocketEvent event, boolean dispatch) {
+    public boolean processSocket(SocketWrapperBase<S> socketWrapper, SocketEvent event, boolean dispatch) {
         try {
             if (socketWrapper == null) {
                 return false;
@@ -1370,10 +1370,10 @@ public abstract class AbstractEndpoint<S,U> {
     protected abstract Log getLog();
 
     protected LimitLatch initializeConnectionLatch() {
-        if (maxConnections==-1) {
+        if (maxConnections == -1) {
             return null;
         }
-        if (connectionLimitLatch==null) {
+        if (connectionLimitLatch == null) {
             connectionLimitLatch = new LimitLatch(getMaxConnections());
         }
         return connectionLimitLatch;

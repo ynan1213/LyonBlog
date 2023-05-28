@@ -190,6 +190,7 @@ public class Http11Processor extends AbstractProcessor {
         httpParser = new HttpParser(protocol.getRelaxedPathChars(),
                 protocol.getRelaxedQueryChars());
 
+        // getMaxHttpRequestHeaderSize 是头部字节大小，不是header个数
         inputBuffer = new Http11InputBuffer(request, protocol.getMaxHttpRequestHeaderSize(),
                 protocol.getRejectIllegalHeader(), httpParser);
         request.setInputBuffer(inputBuffer);
@@ -510,6 +511,7 @@ public class Http11Processor extends AbstractProcessor {
 
             // Parsing the request header
             try {
+                // 用于解析HTTP请求第一行：请求名、路径、协议
                 if (!inputBuffer.parseRequestLine(keptAlive)) {
                     if (inputBuffer.getParsingRequestLinePhase() == -1) {
                         return SocketState.UPGRADING;
@@ -520,18 +522,20 @@ public class Http11Processor extends AbstractProcessor {
 
                 // Process the Protocol component of the request line
                 // Need to know if this is an HTTP 0.9 request before trying to
-                // parse headers.
+                // parse headers. 解析协议
                 prepareRequestProtocol();
 
                 if (endpoint.isPaused()) {
-                    // 503 - Service unavailable
+                    // 503 - Service unavailable  如果端点类被暂停，设置响应码为503：服务不可达
                     response.setStatus(503);
                     setErrorState(ErrorState.CLOSE_CLEAN, null);
                 } else {
                     keptAlive = true;
                     // Set this every time in case limit has been changed via JMX
+                    // 设置请求头的个数限制，默认100
                     request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());
                     // Don't parse headers for HTTP/0.9
+                    // 解析头部
                     if (!http09 && !inputBuffer.parseHeaders()) {
                         // We've read part of the request, don't recycle it
                         // instead associate it with the socket
@@ -571,6 +575,11 @@ public class Http11Processor extends AbstractProcessor {
             }
 
             // Has an upgrade been requested?
+            /**
+             * 请求头中如果有如下两个，代表协议升级，具体有待研究
+             *  Connection: Upgrade
+             *  Upgrade: websocket
+             */
             if (isConnectionToken(request.getMimeHeaders(), "upgrade")) {
                 // Check the protocol
                 String requestedProtocol = request.getHeader("Upgrade");
@@ -636,6 +645,7 @@ public class Http11Processor extends AbstractProcessor {
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    // Adapter对象在Connector的initInternal()方法中被初始化
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both
@@ -880,6 +890,10 @@ public class Http11Processor extends AbstractProcessor {
         MimeHeaders headers = request.getMimeHeaders();
 
         // Check connection header
+        /**
+         * 开启长连接：Connection:keep-alive
+         * 不开启长连接：Connection:close
+         */
         MessageBytes connectionValueMB = headers.getValue(Constants.CONNECTION);
         if (connectionValueMB != null && !connectionValueMB.isNull()) {
             Set<String> tokens = new HashSet<>();
@@ -892,6 +906,14 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         if (http11) {
+            /**
+             * expect: 100-continue
+             *
+             * HTTP/1.1 协议里设计 100 (Continue) HTTP 状态码的的目的是，在客户端发送 Request Message 之前，HTTP/1.1 协议允许客户
+             * 端先判定服务器是否愿意接受客户端发来的消息主体（基于 Request Headers）。即Client 和 Server 在Post （较大）数据之前，允
+             * 许双方“握手”，如果匹配上了，Client 才开始发送（较大）数据，这么做的原因是，如果客户端直接发送请求数据，但是服务器又将该请求
+             * 拒绝的话，这种行为将带来很大的资源开销。
+             */
             prepareExpectation(headers);
         }
 
@@ -912,6 +934,7 @@ public class Http11Processor extends AbstractProcessor {
 
 
         // Check host header
+        // 检查host，HTTP1.1的host请求体必须存在，并且只能有一个host请求体
         MessageBytes hostValueMB = null;
         try {
             hostValueMB = headers.getUniqueValue("host");
@@ -1030,6 +1053,7 @@ public class Http11Processor extends AbstractProcessor {
         prepareInputFilters(headers);
 
         // Validate host name and extract port if present
+        // 解析serverName和serverPort，例如请求 localhost:8080，serverName=localhost  serverPort=8080
         parseHost(hostValueMB);
 
         if (!getErrorState().isIoAllowed()) {
@@ -1053,7 +1077,7 @@ public class Http11Processor extends AbstractProcessor {
     private void prepareInputFilters(MimeHeaders headers) throws IOException {
 
         contentDelimitation = false;
-
+        // IdentityInputFilter、ChunkedInputFilter、VoidInputFilter、BufferedInputFilter
         InputFilter[] inputFilters = inputBuffer.getFilters();
 
         // Parse transfer-encoding header
@@ -1094,6 +1118,7 @@ public class Http11Processor extends AbstractProcessor {
                 request.setContentLength(-1);
                 keepAlive = false;
             } else {
+                // 将第一个filter：IdentityInputFilter设置到activeFilters数组中，否则到下面将第三个VoidInputFilter设置到activeFilters数组中
                 inputBuffer.addActiveFilter(inputFilters[Constants.IDENTITY_FILTER]);
                 contentDelimitation = true;
             }
@@ -1124,7 +1149,7 @@ public class Http11Processor extends AbstractProcessor {
      */
     @Override
     protected final void prepareResponse() throws IOException {
-
+        // 当前响应是否包含响应体
         boolean entityBody = true;
         contentDelimitation = false;
 
@@ -1141,6 +1166,7 @@ public class Http11Processor extends AbstractProcessor {
         if (statusCode < 200 || statusCode == 204 || statusCode == 205 ||
                 statusCode == 304) {
             // No entity body
+            // 这些状态码表示没有响应信息，激活VOID_FILTER，并设置ContentLength
             outputBuffer.addActiveFilter
                 (outputFilters[Constants.VOID_FILTER]);
             entityBody = false;
@@ -1157,8 +1183,10 @@ public class Http11Processor extends AbstractProcessor {
         MessageBytes methodMB = request.method();
         if (methodMB.equals("HEAD")) {
             // No entity body
+            // HEAD请求没有响应体
             outputBuffer.addActiveFilter
                 (outputFilters[Constants.VOID_FILTER]);
+            // 设置为true，表明相应后不关闭连接
             contentDelimitation = true;
         }
 
@@ -1168,6 +1196,7 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         // Check for compression
+        // 使用gzip压缩
         boolean useCompression = false;
         if (entityBody && sendfileData == null) {
             useCompression = protocol.useCompression(request, response);
@@ -1175,6 +1204,7 @@ public class Http11Processor extends AbstractProcessor {
 
         MimeHeaders headers = response.getMimeHeaders();
         // A SC_NO_CONTENT response may include entity headers
+        // 如果当前相应包含响应体（entityBody = true）或者状态码为204，则设置 Content-Type 和 Content-Language
         if (entityBody || statusCode == HttpServletResponse.SC_NO_CONTENT) {
             String contentType = response.getContentType();
             if (contentType != null) {
@@ -1188,8 +1218,10 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         long contentLength = response.getContentLengthLong();
+        // 是否不使用keepalive机制
         boolean connectionClosePresent = isConnectionToken(headers, Constants.CLOSE);
         if (contentLength != -1) {
+            // 存在响应内容
             headers.setValue("Content-Length").setLong(contentLength);
             outputBuffer.addActiveFilter(outputFilters[Constants.IDENTITY_FILTER]);
             contentDelimitation = true;
@@ -1197,6 +1229,7 @@ public class Http11Processor extends AbstractProcessor {
             // If the response code supports an entity body and we're on
             // HTTP 1.1 then we chunk unless we have a Connection: close header
             if (http11 && entityBody && !connectionClosePresent) {
+                // 分块传输
                 outputBuffer.addActiveFilter(outputFilters[Constants.CHUNKED_FILTER]);
                 contentDelimitation = true;
                 headers.addValue(Constants.TRANSFERENCODING).setString(Constants.CHUNKED);
@@ -1205,19 +1238,21 @@ public class Http11Processor extends AbstractProcessor {
             }
         }
 
+        // 使用gzip压缩，激活GZIP_FILTER过滤器
         if (useCompression) {
             outputBuffer.addActiveFilter(outputFilters[Constants.GZIP_FILTER]);
         }
 
         // Add date header unless application has already set one (e.g. in a
         // Caching Filter)
+        // 添加头部Date信息
         if (headers.getValue("Date") == null) {
             headers.addValue("Date").setString(
                     FastHttpDateFormat.getCurrentDate());
         }
 
         // FIXME: Add transfer encoding header
-
+        // 存在发送的数据，并且contentDelimitation为false，表明此次响应后将会关闭连接
         if ((entityBody) && (!contentDelimitation) || connectionClosePresent) {
             // Disable keep-alive if:
             // - there is a response body but way for the client to determine
@@ -1234,16 +1269,19 @@ public class Http11Processor extends AbstractProcessor {
 
         // This may disable keep-alive if there is more body to swallow
         // than the configuration allows
+        // 如果接受的数据超过最大设置，禁用keepalive
         checkMaxSwallowSize();
 
         // If we know that the request is bad this early, add the
         // Connection: close header.
+        // 如果相应状态异常，不使用keepalive
         if (keepAlive && statusDropsConnection(statusCode)) {
             keepAlive = false;
         }
         if (!keepAlive) {
             // Avoid adding the close header twice
             if (!connectionClosePresent) {
+                // 客户端接收到该header后，就会关闭连接
                 headers.addValue(Constants.CONNECTION).setString(
                         Constants.CLOSE);
             }
@@ -1292,6 +1330,7 @@ public class Http11Processor extends AbstractProcessor {
 
         // Build the response header
         try {
+            // 写入状态信息   HTTP/1.1 200
             outputBuffer.sendStatus();
 
             int size = headers.size();

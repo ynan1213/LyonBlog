@@ -211,17 +211,11 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      * @param globalNamingResources The new global naming resources
      */
     @Override
-    public void setGlobalNamingResources
-        (NamingResourcesImpl globalNamingResources) {
-
-        NamingResourcesImpl oldGlobalNamingResources =
-            this.globalNamingResources;
+    public void setGlobalNamingResources(NamingResourcesImpl globalNamingResources) {
+        NamingResourcesImpl oldGlobalNamingResources = this.globalNamingResources;
         this.globalNamingResources = globalNamingResources;
         this.globalNamingResources.setContainer(this);
-        support.firePropertyChange("globalNamingResources",
-                                   oldGlobalNamingResources,
-                                   this.globalNamingResources);
-
+        support.firePropertyChange("globalNamingResources", oldGlobalNamingResources, this.globalNamingResources);
     }
 
 
@@ -442,8 +436,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
 
         // Set up a server socket to wait on
         try {
-            awaitSocket = new ServerSocket(getPortWithOffset(), 1,
-                    InetAddress.getByName(address));
+            awaitSocket = new ServerSocket(getPortWithOffset(), 1, InetAddress.getByName(address));
         } catch (IOException e) {
             log.error(sm.getString("standardServer.awaitSocket.fail", address,
                     String.valueOf(getPortWithOffset()), String.valueOf(getPort()),
@@ -765,8 +758,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
         boolean useNaming = true;
         // Reading the "catalina.useNaming" environment variable
         String useNamingProperty = System.getProperty("catalina.useNaming");
-        if ((useNamingProperty != null)
-            && (useNamingProperty.equals("false"))) {
+        if ((useNamingProperty != null) && (useNamingProperty.equals("false"))) {
             useNaming = false;
         }
         return useNaming;
@@ -856,8 +848,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
                         if (url.getProtocol().equals("file")) {
                             try {
                                 File f = new File (url.toURI());
-                                if (f.isFile() &&
-                                        f.getName().endsWith(".jar")) {
+                                if (f.isFile() && f.getName().endsWith(".jar")) {
                                     ExtensionValidator.addSystemResource(f);
                                 }
                             } catch (URISyntaxException | IOException e) {
@@ -870,6 +861,12 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             }
         }
         // Initialize our defined Services
+        /**
+         * 通过server.xml配置文件可知，一个<server>标签下有下面内容：
+         *  1. 有多个listener标签，被添加到 StandardServer 父类的 lifecycleListeners 集合属性中；
+         *  2. GlobalNamingResources标签，jndi相关，忽略；
+         *  3. 可以配置多个<Service>标签，每个<Service>标签都会解析成对应的Service对象；
+         */
         for (Service service : services) {
             service.init();
         }

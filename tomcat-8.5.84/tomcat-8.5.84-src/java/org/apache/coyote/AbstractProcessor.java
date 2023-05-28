@@ -107,8 +107,10 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         }
         // Use the return value to avoid processing more than one async error
         // in a single async cycle.
+        // 客户端响应对象是否已经设置发生异常
         boolean setError = response.setError();
         boolean blockIo = this.errorState.isIoAllowed() && !errorState.isIoAllowed();
+        // 保留级别高的
         this.errorState = this.errorState.getMostSevere(errorState);
         // Don't change the status code for IOException since that is almost
         // certainly a client disconnect in which case it is preferable to keep
@@ -381,6 +383,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             if (!response.isCommitted()) {
                 try {
                     // Validate and write response headers
+                    // 准备响应header
                     prepareResponse();
                 } catch (IOException e) {
                     handleIOException(e);
@@ -391,6 +394,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         case CLOSE: {
             action(ActionCode.COMMIT, null);
             try {
+                // 将缓冲区数据写入socket
                 finishResponse();
             } catch (IOException e) {
                 handleIOException(e);
@@ -398,6 +402,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             break;
         }
         case ACK: {
+            // 用于响应HTTP1.1的状态码为100的客户端请求，用于回复客户端是否可以继续进行请求
             ack((ContinueResponseTiming) param);
             break;
         }
@@ -412,6 +417,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
             break;
         }
         case AVAILABLE: {
+            // 用于获取缓冲区可用字节数，param用于指明是否在没有数据时进行读操作
             request.setAvailable(available(Boolean.TRUE.equals(param)));
             break;
         }
@@ -432,6 +438,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         }
         case CLOSE_NOW: {
             // Prevent further writes to the response
+            // 将写缓冲区表示为不可写状态
             setSwallowResponse();
             if (param instanceof Throwable) {
                 setErrorState(ErrorState.CLOSE_NOW, (Throwable) param);

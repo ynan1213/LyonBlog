@@ -396,16 +396,20 @@ public class WebappLoader extends LifecycleMBeanBase
 
         // Construct a class loader based on our current repositories list
         try {
-
+            // 每个Context都有一个自己的 classLoader，parent是SharedLoader
             classLoader = createClassLoader();
             classLoader.setResources(context.getResources());
             classLoader.setDelegate(this.delegate);
 
             // Configure our repositories
+            // 依次取出classLoader以及parentClassLoader(SharedLoader、AppClassLoader、...)
+            // 的classPath，拼接成String，存到ServletContext的作用域中
             setClassPath();
 
             setPermissions();
 
+            // 先读取 /WEB-INF/classes 下的所有资源，再读取 /WEB-INF/lib 下的.jar资源
+            // 缓存到localRepositories中
             ((Lifecycle) classLoader).start();
 
             String contextName = context.getName();
@@ -518,6 +522,7 @@ public class WebappLoader extends LifecycleMBeanBase
         WebappClassLoaderBase classLoader = null;
 
         if (parentClassLoader == null) {
+            // 最终获取到的是Catalina的ParentClassLoader，其实就是SharedLoader  详情见Bootstrap.init()
             parentClassLoader = context.getParentClassLoader();
         } else {
             context.setParentClassLoader(parentClassLoader);
@@ -593,6 +598,11 @@ public class WebappLoader extends LifecycleMBeanBase
             loader = loader.getParent();
         }
 
+        /**
+         * loader: ParallelWebappClassLoader
+         * 第一级parent：SharedLoader（默认就是CommonLoader），classpath默认是${catalina.base}/lib
+         * 第二级parnet：AppClassLoader  第三级 ExtClassLoader
+         */
         while (loader != null) {
             if (!buildClassPath(classpath, loader)) {
                 break;

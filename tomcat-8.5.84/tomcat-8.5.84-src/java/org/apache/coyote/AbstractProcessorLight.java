@@ -38,7 +38,7 @@ public abstract class AbstractProcessorLight implements Processor {
 
 
     @Override
-    public SocketState process(SocketWrapperBase<?> socketWrapper, SocketEvent status)
+    public SocketState process(SocketWrapperBase<?> socketWrapper, SocketEvent socketEvent)
             throws IOException {
 
         SocketState state = SocketState.CLOSED;
@@ -53,17 +53,19 @@ public abstract class AbstractProcessorLight implements Processor {
                 if (!dispatches.hasNext()) {
                     state = checkForPipelinedData(state, socketWrapper);
                 }
-            } else if (status == SocketEvent.DISCONNECT) {
+            } else if (socketEvent == SocketEvent.DISCONNECT) {
                 // Do nothing here, just wait for it to get recycled
             } else if (isAsync() || isUpgrade() || state == SocketState.ASYNC_END) {
-                state = dispatch(status);
+                // dispatch 方法是处理非标准 HTTP 模式下的正在处理中的请求，这是在 Servlet 3.0 Async 和 HTTP 升级连接里用到的
+                state = dispatch(socketEvent);
                 state = checkForPipelinedData(state, socketWrapper);
-            } else if (status == SocketEvent.OPEN_WRITE) {
+            } else if (socketEvent == SocketEvent.OPEN_WRITE) {
                 // Extra write event likely after async, ignore
                 state = SocketState.LONG;
-            } else if (status == SocketEvent.OPEN_READ) {
+            } else if (socketEvent == SocketEvent.OPEN_READ) {
+                // 与 dispatch 方法相对立，service 方法是用来处理标准的 HTTP 请求的
                 state = service(socketWrapper);
-            } else if (status == SocketEvent.CONNECT_FAIL) {
+            } else if (socketEvent == SocketEvent.CONNECT_FAIL) {
                 logAccess(socketWrapper);
             } else {
                 // Default to closing the socket if the SocketEvent passed in
@@ -73,7 +75,7 @@ public abstract class AbstractProcessorLight implements Processor {
 
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Socket: [" + socketWrapper +
-                        "], Status in: [" + status +
+                        "], Status in: [" + socketEvent +
                         "], State out: [" + state + "]");
             }
 

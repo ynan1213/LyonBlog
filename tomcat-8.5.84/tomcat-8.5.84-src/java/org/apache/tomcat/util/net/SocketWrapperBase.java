@@ -425,6 +425,7 @@ public abstract class SocketWrapperBase<E> {
                     log.error(sm.getString("endpoint.debug.handlerRelease"), e);
                 }
             } finally {
+                // connectionLimitLatch，控制最大连接数
                 getEndpoint().countDownConnection();
                 doClose();
             }

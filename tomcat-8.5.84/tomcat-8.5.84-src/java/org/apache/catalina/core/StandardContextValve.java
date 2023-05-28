@@ -75,6 +75,7 @@ final class StandardContextValve extends ValveBase {
 
         // Select the Wrapper to be used for this Request
         Wrapper wrapper = request.getWrapper();
+        // 如果没有匹配到servlet，或者servlet不可用 返回404
         if (wrapper == null || wrapper.isUnavailable()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -82,6 +83,7 @@ final class StandardContextValve extends ValveBase {
 
         // Acknowledge the request
         try {
+            // 判断是否向客户端发送100响应码
             response.sendAcknowledgement(ContinueResponseTiming.IMMEDIATELY);
         } catch (IOException ioe) {
             container.getLogger().error(sm.getString(

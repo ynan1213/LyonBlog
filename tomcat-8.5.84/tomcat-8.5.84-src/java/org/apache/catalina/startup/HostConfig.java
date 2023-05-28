@@ -463,9 +463,13 @@ public class HostConfig implements LifecycleListener {
     /**
      * Deploy applications for any directories or WAR files that are found
      * in our "application root" directory.
+     * 三种部署方式
      */
     protected void deployApps() {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        // <host>标签appBase属性配置的路径，默认是 ${catalina.base}/webapps 路径
         File appBase = host.getAppBaseFile();
+        // ${catalina.base}/conf/${1}/${2} 路径下的文件，1为<Engine>的name属性，2为<host>的name属性
         File configBase = host.getConfigBaseFile();
         String[] filteredAppPaths = filterAppPaths(appBase.list());
         // Deploy XML descriptors from configBase
@@ -625,6 +629,7 @@ public class HostConfig implements LifecycleListener {
         boolean isExternal = false;
         File expandedDocBase = null;
 
+        // 读取xml文件，文件配置了<context>标签
         try (FileInputStream fis = new FileInputStream(contextXml)) {
             synchronized (digesterLock) {
                 try {
@@ -639,6 +644,7 @@ public class HostConfig implements LifecycleListener {
                 }
             }
 
+            // 类型：ContextConfig
             Class<?> clazz = Class.forName(host.getConfigClass());
             LifecycleListener listener = (LifecycleListener) clazz.getConstructor().newInstance();
             context.addLifecycleListener(listener);
@@ -648,12 +654,15 @@ public class HostConfig implements LifecycleListener {
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             // Add the associated docBase to the redeployed list if it's a WAR
+            // 如果<context>标签指定了docBase属性，该属性配置的是个路径
             if (context.getDocBase() != null) {
                 File docBase = new File(context.getDocBase());
                 if (!docBase.isAbsolute()) {
+                    // 如果是相对路径，name绝对路径就是基于虚拟主机appBase目录
                     docBase = new File(host.getAppBaseFile(), context.getDocBase());
                 }
                 // If external docBase, register .xml as redeploy first
+                // 如果docBase目录为外部目录，即<context>的docBase指定了绝对路径
                 if (!docBase.getCanonicalFile().toPath().startsWith(host.getAppBaseFile().toPath())) {
                     isExternal = true;
                     deployedApp.redeployResources.put(
@@ -666,10 +675,11 @@ public class HostConfig implements LifecycleListener {
                 } else {
                     log.warn(sm.getString("hostConfig.deployDescriptor.localDocBaseSpecified", docBase));
                     // Ignore specified docBase
+                    // 如果为内部目录，直接忽略，因为总是会部署appBase下的目录？？？
                     context.setDocBase(null);
                 }
             }
-
+            // 将上下文作为Host的子容器，并启动子容器
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -1078,6 +1088,7 @@ public class HostConfig implements LifecycleListener {
 
                 if (tryAddServiced(cn.getName())) {
                     try {
+                        // 检验是否已经部署过
                         if (deploymentExists(cn.getName())) {
                             removeServiced(cn.getName());
                             continue;
@@ -1174,6 +1185,9 @@ public class HostConfig implements LifecycleListener {
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             context.setDocBase(cn.getBaseName());
+            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            // 会触发StandardContext的init()和start()方法
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -1181,8 +1195,9 @@ public class HostConfig implements LifecycleListener {
         } finally {
             deployedApp = new DeployedApplication(cn.getName(), xml.exists() && deployThisXML && copyThisXml);
 
-            // Fake re-deploy resource to detect if a WAR is added at a later
-            // point
+            // Fake re-deploy resource to detect if a WAR is added at a later point
+            // 保存可能导致应用重新部署的资源文件，比如context.xml，docBase，目录路径等,这里面的资源如果有修改会导致应用重新部署，
+            // 如果被删除会导致这个应用被卸载.key为资源名称，value为资源最后一次修改时间
             deployedApp.redeployResources.put(dir.getAbsolutePath() + ".war", Long.valueOf(0));
             deployedApp.redeployResources.put(dir.getAbsolutePath(), Long.valueOf(dir.lastModified()));
             if (deployThisXML && xml.exists()) {
@@ -1202,12 +1217,14 @@ public class HostConfig implements LifecycleListener {
                     deployedApp.redeployResources.put(xml.getAbsolutePath(), Long.valueOf(0));
                 }
             }
+            // 将web.xml加入reloadResources中
             addWatchedResources(deployedApp, dir.getAbsolutePath(), context);
             // Add the global redeploy resources (which are never deleted) at
             // the end so they don't interfere with the deletion process
             addGlobalRedeployResources(deployedApp);
         }
 
+        // 将构造好的DeployedApplication加入deployed中
         deployed.put(cn.getName(), deployedApp);
 
         if( log.isInfoEnabled() ) {
@@ -1835,6 +1852,10 @@ public class HostConfig implements LifecycleListener {
          * removed, the application will be undeployed. Typically, this will
          * contain resources like the context.xml file, a compressed WAR path.
          * The value is the last modification time.
+         *
+         * 保存可能导致应用重新部署的资源文件，比如context.xml，docBase，目录路径等
+         * 这里面的资源如果有修改会导致应用重新部署，如果被删除会导致这个应用被卸载
+         * key为资源名称，value为资源最后一次修改时间
          */
         public final LinkedHashMap<String, Long> redeployResources =
                 new LinkedHashMap<>();
@@ -1845,6 +1866,9 @@ public class HostConfig implements LifecycleListener {
          * such as the web.xml of a webapp, but can be configured to contain
          * additional descriptors.
          * The value is the last modification time.
+         *
+         * 保存可能导致应用重新加载的资源文件，比如web.xml等，同样，key为资源名称,value为资源最后一次修改时间
+         * timestamp：应用最后提供服务的时间
          */
         public final HashMap<String, Long> reloadResources = new HashMap<>();
 

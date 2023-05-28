@@ -53,10 +53,8 @@
   <Service name="Catalina">
 
     <!--The connectors can use a shared executor, you can define one or more named thread pools-->
-    <!--
-    <Executor name="tomcatThreadPool" namePrefix="catalina-exec-"
+    <Executor name="xxx" namePrefix="catalina-exec-"
         maxThreads="150" minSpareThreads="4"/>
-    -->
 
 
     <!-- A "Connector" represents an endpoint by which requests are received
@@ -70,10 +68,12 @@
                connectionTimeout="200001"
                redirectPort="8443"
                maxThreads="11"
+               minSpareThreads="4"
                maxConnections="1111"
                acceptCount="111"
                maxKeepAliveRequests="111"
                xpoweredBy="true"
+               executor="xxx"
     />
     <!-- A "Connector" using the shared thread pool-->
     <!--

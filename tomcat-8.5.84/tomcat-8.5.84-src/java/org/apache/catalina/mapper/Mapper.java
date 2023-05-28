@@ -263,7 +263,7 @@ public final class Mapper {
             WebResourceRoot resources, Collection<WrapperMappingInfo> wrappers) {
 
         hostName = renameWildcardHost(hostName);
-
+        // 精确匹配虚拟主机
         MappedHost mappedHost  = exactFind(hosts, hostName);
         if (mappedHost == null) {
             addHost(hostName, new String[0], host);
@@ -277,6 +277,8 @@ public final class Mapper {
             log.error("No host found: " + hostName);
             return;
         }
+
+        // 路径中 / 分隔符的个数
         int slashCount = slashCount(path);
         synchronized (mappedHost) {
             ContextVersion newContextVersion = new ContextVersion(version,
@@ -689,7 +691,7 @@ public final class Mapper {
      */
     public void map(MessageBytes host, MessageBytes uri, String version,
                     MappingData mappingData) throws IOException {
-
+        // 如果host为空，则用默认host名，defaultHost配置在engine标签
         if (host.isNull()) {
             String defaultHostName = this.defaultHostName;
             if (defaultHostName == null) {
@@ -736,7 +738,7 @@ public final class Mapper {
     @SuppressWarnings("deprecation") // contextPath
     private final void internalMap(CharChunk host, CharChunk uri,
             String version, MappingData mappingData) throws IOException {
-
+        // host如果存在，抛异常
         if (mappingData.host != null) {
             // The legacy code (dating down at least to Tomcat 4.1) just
             // skipped all mapping work in this case. That behaviour has a risk
@@ -747,7 +749,9 @@ public final class Mapper {
 
         // Virtual host mapping
         MappedHost[] hosts = this.hosts;
+        // 精确匹配host
         MappedHost mappedHost = exactFindIgnoreCase(hosts, host);
+        // 如果没有精确匹配到，找到主机名的第一个.下标，略过.之前的字符串继续匹配，例如www.baidu.com，去掉之后变成.baidu.com继续匹配
         if (mappedHost == null) {
             // Note: Internally, the Mapper does not use the leading * on a
             //       wildcard host. This is to allow this shortcut.
@@ -875,16 +879,17 @@ public final class Mapper {
         int servletPath = pathOffset + length;
         path.setOffset(servletPath);
 
-        // Rule 1 -- Exact Match
+        // Rule 1 -- Exact Match 精确匹配
         MappedWrapper[] exactWrappers = contextVersion.exactWrappers;
         internalMapExactWrapper(exactWrappers, path, mappingData);
 
-        // Rule 2 -- Prefix Match
+        // Rule 2 -- Prefix Match 通配符匹配
         boolean checkJspWelcomeFiles = false;
         MappedWrapper[] wildcardWrappers = contextVersion.wildcardWrappers;
         if (mappingData.wrapper == null) {
             internalMapWildcardWrapper(wildcardWrappers, contextVersion.nesting,
                                        path, mappingData);
+            // 如果匹配成功且为jsp匹配，如果path以/结尾，取消Wrapper，让其进去jsp的欢迎页
             if (mappingData.wrapper != null && mappingData.jspWildCard) {
                 char[] buf = path.getBuffer();
                 if (buf[pathEnd - 1] == '/') {
@@ -918,14 +923,14 @@ public final class Mapper {
             return;
         }
 
-        // Rule 3 -- Extension Match
+        // Rule 3 -- Extension Match 拓展名匹配
         MappedWrapper[] extensionWrappers = contextVersion.extensionWrappers;
         if (mappingData.wrapper == null && !checkJspWelcomeFiles) {
             internalMapExtensionWrapper(extensionWrappers, path, mappingData,
                     true);
         }
 
-        // Rule 4 -- Welcome resources processing for servlets
+        // Rule 4 -- Welcome resources processing for servlets 欢迎页匹配
         if (mappingData.wrapper == null) {
             boolean checkWelcomeFiles = checkJspWelcomeFiles;
             if (!checkWelcomeFiles) {
@@ -1712,9 +1717,13 @@ public final class Mapper {
         public final int slashCount;
         public final WebResourceRoot resources;
         public String[] welcomeResources;
+        // 匹配 "/"
         public MappedWrapper defaultWrapper = null;
+        // 精确匹配路径
         public MappedWrapper[] exactWrappers = new MappedWrapper[0];
+        // 通配符匹配已"/*"结尾的路径，比如/aa/bb/*
         public MappedWrapper[] wildcardWrappers = new MappedWrapper[0];
+        // 拓展名匹配以"*."开头的路径，比如*.jsp
         public MappedWrapper[] extensionWrappers = new MappedWrapper[0];
         public int nesting = 0;
         private volatile boolean paused;

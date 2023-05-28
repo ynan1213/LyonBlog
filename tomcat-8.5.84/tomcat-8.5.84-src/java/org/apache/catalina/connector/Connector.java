@@ -77,7 +77,12 @@ public class Connector extends LifecycleMBeanBase  {
         this(null);
     }
 
-
+    /**
+     * Connector对象的创建入口在 org.apache.catalina.startup.Catalina#createStartDigester()：ConnectorCreateRule
+     *
+     * 如果server.xml中connector标签protocol="HTTP/1.1"，则对应的类型是Http11NioProtocol
+     * protocol="AJP/1.3"，则对应的类型是AjpNioProtocol，Ajp是二进制的TCP传输协议，相对于HTTP纯文本协议更快，但是浏览器不支持
+     */
     public Connector(String protocol) {
         setProtocol(protocol);
         // Instantiate protocol handler
@@ -251,6 +256,7 @@ public class Connector extends LifecycleMBeanBase  {
 
     /**
      * Coyote protocol handler.
+     * 在Connector的构造函数内被初始化
      */
     protected final ProtocolHandler protocolHandler;
 
@@ -1081,27 +1087,29 @@ public class Connector extends LifecycleMBeanBase  {
 
         // Initialize adapter
         adapter = new CoyoteAdapter(this);
+
+        /**
+         * protocolHandler 对象的初始化在 Connector 对象的构造函数内，protocolHandler类型由 server.xml文件的 <Connector> 标签的
+         * protocol 属性决定，详情见 Connector 的构造函数
+         */
         protocolHandler.setAdapter(adapter);
 
         // Make sure parseBodyMethodsSet has a default
         if (null == parseBodyMethodsSet) {
+            // protocolHandler没有parseBodyMethods相关属性和字段，那么设置到哪里去了呢？
+            // 通过debug发现，最终是调用了AbstractProtocol.setProperty方法，设置到了endpoint中
             setParseBodyMethods(getParseBodyMethods());
         }
 
         if (protocolHandler.isAprRequired() && !AprLifecycleListener.isInstanceCreated()) {
-            throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoAprListener",
-                    getProtocolHandlerClassName()));
+            throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoAprListener", getProtocolHandlerClassName()));
         }
         if (protocolHandler.isAprRequired() && !AprLifecycleListener.isAprAvailable()) {
-            throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoAprLibrary",
-                    getProtocolHandlerClassName()));
+            throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoAprLibrary", getProtocolHandlerClassName()));
         }
-        if (AprLifecycleListener.isAprAvailable() && AprLifecycleListener.getUseOpenSSL() &&
-                protocolHandler instanceof AbstractHttp11JsseProtocol) {
-            AbstractHttp11JsseProtocol<?> jsseProtocolHandler =
-                    (AbstractHttp11JsseProtocol<?>) protocolHandler;
-            if (jsseProtocolHandler.isSSLEnabled() &&
-                    jsseProtocolHandler.getSslImplementationName() == null) {
+        if (AprLifecycleListener.isAprAvailable() && AprLifecycleListener.getUseOpenSSL() && protocolHandler instanceof AbstractHttp11JsseProtocol) {
+            AbstractHttp11JsseProtocol<?> jsseProtocolHandler = (AbstractHttp11JsseProtocol<?>) protocolHandler;
+            if (jsseProtocolHandler.isSSLEnabled() && jsseProtocolHandler.getSslImplementationName() == null) {
                 // OpenSSL is compatible with the JSSE configuration, so use it if APR is available
                 jsseProtocolHandler.setSslImplementationName(OpenSSLImplementation.class.getName());
             }
@@ -1110,8 +1118,7 @@ public class Connector extends LifecycleMBeanBase  {
         try {
             protocolHandler.init();
         } catch (Exception e) {
-            throw new LifecycleException(
-                    sm.getString("coyoteConnector.protocolHandlerInitializationFailed"), e);
+            throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerInitializationFailed"), e);
         }
     }
 

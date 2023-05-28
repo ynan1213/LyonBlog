@@ -202,8 +202,7 @@ public class SocketProperties {
             socket.setReuseAddress(soReuseAddress.booleanValue());
         }
         if (soLingerOn != null && soLingerTime != null) {
-            socket.setSoLinger(soLingerOn.booleanValue(),
-                    soLingerTime.intValue());
+            socket.setSoLinger(soLingerOn.booleanValue(), soLingerTime.intValue());
         }
         if (soTimeout != null && soTimeout.intValue() >= 0) {
             socket.setSoTimeout(soTimeout.intValue());

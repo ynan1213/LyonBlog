@@ -289,6 +289,8 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
      * delegate to the parent only if the class or resource is not
      * found locally. Note that the default, <code>false</code>, is
      * the behavior called for by the servlet specification.
+     *
+     * 注意该参数
      */
     protected boolean delegate = false;
 
@@ -1267,6 +1269,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
             checkStateForClassLoading(name);
 
             // (0) Check our previously loaded local class cache
+            // 第一步：检查该类是否已经被webapp类加载器加载，如果加载过，直接返回
             clazz = findLoadedClass0(name);
             if (clazz != null) {
                 if (log.isDebugEnabled()) {
@@ -1279,6 +1282,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
             }
 
             // (0.1) Check our previously loaded class cache
+            // 第二步：该方法直接调用findLoadedClass0本地方法，findLoadedClass0方法会检查jvm缓存中是否加载过此类（jvm内存）
             clazz = findLoadedClass(name);
             if (clazz != null) {
                 if (log.isDebugEnabled()) {
@@ -1295,6 +1299,8 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
             //       SRV.10.7.2
             String resourceName = binaryNameToPath(name, false);
 
+            // 第三步：尝试通过JDK系统类加载器加载类(String.class.getClassLoader())，防止webapp重写jdk的类。
+            // 例如：webapp加载一个java.lang.String类，是不被允许的
             ClassLoader javaseLoader = getJavaseClassLoader();
             boolean tryLoadingFromJavaseLoader;
             try {
@@ -1353,6 +1359,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
                 }
             }
 
+            // 是否委派给父类加载，默认为false，表示由webApp加载
             boolean delegateLoad = delegate || filter(name, true);
 
             // (1) Delegate to our parent if requested
@@ -1381,6 +1388,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
                 log.debug("  Searching local repositories");
             }
             try {
+                // 使用webapp加载
                 clazz = findClass(name);
                 if (clazz != null) {
                     if (log.isDebugEnabled()) {
@@ -1396,6 +1404,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
             }
 
             // (3) Delegate to parent unconditionally
+            // 如果webapp类加载器没有找到，则交给父加载器
             if (!delegateLoad) {
                 if (log.isDebugEnabled()) {
                     log.debug("  Delegating to parent classloader at end: " + parent);
@@ -2357,6 +2366,7 @@ public abstract class WebappClassLoaderBase extends URLClassLoader
 
         if (entry == null) {
             resource = resources.getClassLoaderResource(path);
+
 
             if (!resource.exists()) {
                 return null;

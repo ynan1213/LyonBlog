@@ -29,13 +29,11 @@ import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.res.StringManager;
 
-public abstract class LifecycleMBeanBase extends LifecycleBase
-        implements JmxEnabled {
+public abstract class LifecycleMBeanBase extends LifecycleBase implements JmxEnabled {
 
     private static final Log log = LogFactory.getLog(LifecycleMBeanBase.class);
 
-    private static final StringManager sm =
-        StringManager.getManager("org.apache.catalina.util");
+    private static final StringManager sm = StringManager.getManager("org.apache.catalina.util");
 
 
     /* Cache components of the MBean registration. */
@@ -142,8 +140,7 @@ public abstract class LifecycleMBeanBase extends LifecycleBase
      *
      * @return  The name used to register the object
      */
-    protected final ObjectName register(Object obj,
-            String objectNameKeyProperties) {
+    protected final ObjectName register(Object obj, String objectNameKeyProperties) {
 
         // Construct an object name with the right domain
         StringBuilder name = new StringBuilder(getDomain());

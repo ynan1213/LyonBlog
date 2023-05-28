@@ -54,8 +54,7 @@ public class TaskThreadFactory implements ThreadFactory {
             // Set the context class loader of newly created threads to be the
             // class loader that loaded this factory. This avoids retaining
             // references to web application class loaders and similar.
-            PrivilegedAction<Void> pa = new PrivilegedSetTccl(
-                    t, getClass().getClassLoader());
+            PrivilegedAction<Void> pa = new PrivilegedSetTccl(t, getClass().getClassLoader());
             AccessController.doPrivileged(pa);
 
             // This method may be triggered from an InnocuousThread. Ensure that

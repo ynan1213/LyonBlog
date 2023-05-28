@@ -85,10 +85,12 @@ public class EngineRuleSet extends RuleSetBase {
                                  "org.apache.catalina.core.StandardEngine",
                                  "className");
         digester.addSetProperties(prefix + "Engine");
+        // EngineConfig是LifecycleListener类型，添加到StandardEngine的lifecycleListeners集合中
         digester.addRule(prefix + "Engine",
                          new LifecycleListenerRule
                          ("org.apache.catalina.startup.EngineConfig",
                           "engineConfigClass"));
+        // 调用StandardService.setContainer
         digester.addSetNext(prefix + "Engine",
                             "setContainer",
                             "org.apache.catalina.Engine");

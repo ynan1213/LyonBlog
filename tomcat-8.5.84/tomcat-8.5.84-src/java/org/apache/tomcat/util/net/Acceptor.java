@@ -76,7 +76,7 @@ public class Acceptor<U> implements Runnable {
             while (!stopCalled) {
 
                 // Loop if endpoint is paused.
-                // There are two likely scenarios here.
+                // There are two likely scenarios here. 这里有两种可能的情况
                 // The first scenario is that Tomcat is shutting down. In this
                 // case - and particularly for the unit tests - we want to exit
                 // this loop as quickly as possible. The second scenario is a
@@ -87,6 +87,7 @@ public class Acceptor<U> implements Runnable {
                 // < 1ms       - tight loop
                 // 1ms to 10ms - 1ms sleep
                 // > 10ms      - 10ms sleep
+                // 什么情况会进入该while循环？ tomcat停止但是Acceptor仍在运行？
                 while (endpoint.isPaused() && !stopCalled) {
                     if (state != AcceptorState.PAUSED) {
                         pauseStart = System.nanoTime();
@@ -114,6 +115,10 @@ public class Acceptor<U> implements Runnable {
 
                 try {
                     //if we have reached max connections, wait
+                    // 连接数 +1，如果达到了最大值，会阻塞等待，最大连接数的配置详情见文档，默认 8 * 1024
+                    // 这里连接数 +1，什么时候 -1呢？
+                    // 1.获取socket抛出了异常，连接数 -1
+                    // 2.成功获取到socket，然后添加到poller的队列中，什么时候 -1呢？ 最后发现是 socketWrapper.close()；
                     endpoint.countUpOrAwaitConnection();
 
                     // Endpoint might have been paused while waiting for latch
@@ -129,23 +134,30 @@ public class Acceptor<U> implements Runnable {
                         socket = endpoint.serverSocketAccept();
                     } catch (Exception ioe) {
                         // We didn't get a socket
+                        // 获取socket抛出了异常，连接数 -1
                         endpoint.countDownConnection();
+
                         if (endpoint.isRunning()) {
                             // Introduce delay if necessary
+                            // 如果 endpoint 在运行，不会立即抛出异常
+                            // 第一次sleep 0秒，第二次50ms，后面依次 *2，但是最长不会超过 1600ms
+                            // 延迟什么时候解除呢？看下面
                             errorDelay = handleExceptionWithDelay(errorDelay);
                             // re-throw
+                            // 是不是抛出了异常Acceptor就会跳出run循环呢？ 其实不会，注意最下面有个catch
                             throw ioe;
                         } else {
                             break;
                         }
                     }
                     // Successful accept, reset the error delay
+                    // 只要有一次成功，就解除延迟
                     errorDelay = 0;
 
                     // Configure the socket
                     if (!stopCalled && !endpoint.isPaused()) {
-                        // setSocketOptions() will hand the socket off to
-                        // an appropriate processor if successful
+                        // setSocketOptions() will hand the socket off to an appropriate processor if successful
+                        // 如果成功，setSocketOptions（）将把套接字交给适当的处理器
                         if (!endpoint.setSocketOptions(socket)) {
                             endpoint.closeSocket(socket);
                         }
@@ -173,6 +185,7 @@ public class Acceptor<U> implements Runnable {
                 }
             }
         } finally {
+            // 当有其它线程调用Acceptor的stop方法时，会在一定时间内等待Acceptor线程跳出run循环
             stopLatch.countDown();
         }
         state = AcceptorState.ENDED;
@@ -202,6 +215,9 @@ public class Acceptor<U> implements Runnable {
      *                    zero for no wait.
      */
     public void stop(int waitSeconds) {
+        // stopCalled置为true，Acceptor线程就会跳出run循环，但是不会立即跳出，因为有可能阻塞在serverSock.accept()中
+        // 当Acceptor线程跳出run循环后会调用stopLatch.countDown()，此时当前线程执行stopLatch.await才会立即返回，
+        // 否则会等待 waitSeconds
         stopCalled = true;
         if (waitSeconds > 0) {
             try {

@@ -473,6 +473,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
     /**
      * Maximum amount of request body to swallow.
+     * 最大吞吐量
      */
     private int maxSwallowSize = 2 * 1024 * 1024;
     public int getMaxSwallowSize() { return maxSwallowSize; }
@@ -1115,6 +1116,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
         processor.setMaxKeepAliveRequests(getMaxKeepAliveRequests());
         processor.setConnectionUploadTimeout(getConnectionUploadTimeout());
         processor.setDisableUploadTimeout(getDisableUploadTimeout());
+        // 对User-Agent请求头的限制
         processor.setRestrictedUserAgents(getRestrictedUserAgents());
         processor.setMaxSavePostSize(getMaxSavePostSize());
         return processor;

@@ -220,7 +220,6 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      */
     @Override
     public void addConnector(Connector connector) {
-
         synchronized (connectorsLock) {
             connector.setService(this);
             Connector results[] = new Connector[connectors.length + 1];
@@ -282,7 +281,6 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      */
     @Override
     public void removeConnector(Connector connector) {
-
         synchronized (connectorsLock) {
             int j = -1;
             for (int i = 0; i < connectors.length; i++) {
@@ -507,8 +505,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         // Now stop the connectors
         synchronized (connectorsLock) {
             for (Connector connector: connectors) {
-                if (!LifecycleState.STARTED.equals(
-                        connector.getState())) {
+                if (!LifecycleState.STARTED.equals(connector.getState())) {
                     // Connectors only need stopping if they are currently
                     // started. They may have failed to start or may have been
                     // stopped (e.g. via a JMX call)
@@ -517,9 +514,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 try {
                     connector.stop();
                 } catch (Exception e) {
-                    log.error(sm.getString(
-                            "standardService.connector.stopFailed",
-                            connector), e);
+                    log.error(sm.getString("standardService.connector.stopFailed", connector), e);
                 }
             }
         }
@@ -547,11 +542,24 @@ public class StandardService extends LifecycleMBeanBase implements Service {
 
         super.initInternal();
 
+        /**
+         * 一个Service对象只会有一个engine属性，engine 对象的初始化:
+         *  Catalina的createStartDigester方法内 digester.addRuleSet(new EngineRuleSet("Server/Service/")) 一行，
+         *  可知 engine 对象的实际类型是 StandardEngine，初始化完成后通过调用 StandardService的setContainer 方法设置到service对象中
+         *
+         *  engine的lifecycleListeners中有个EngineConfig，但是只监听start和stop事件
+         */
         if (engine != null) {
             engine.init();
         }
 
         // Initialize any Executors
+        /**
+         * 在server.xml文件中，一个 Service 标签可以配置多个 Executor 标签，都会解析为 Executor 对象
+         * 通过Catalina的createStartDigester方法可知，实际类型是 StandardThreadExecutor，通过调用
+         * StandardService对象的addExecutor方法添加到本对象中
+         * 刚开始以为该Executor会传递给AbstractEndpoint的executor，其实不是的，该线程池的作业还不清楚。
+         */
         for (Executor executor : findExecutors()) {
             if (executor instanceof JmxEnabled) {
                 ((JmxEnabled) executor).setDomain(getDomain());
@@ -563,13 +571,17 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         mapperListener.init();
 
         // Initialize our defined Connectors
+        /**
+         * 在server.xml文件中，一个 Service 标签可以配置多个 Connector 标签，都会解析为 Connector 对象
+         * 通过Catalina的createStartDigester方法可知，实际类型是 Connector，通过调用
+         * StandardService对象的 addConnector 方法添加到本对象中
+         */
         synchronized (connectorsLock) {
             for (Connector connector : connectors) {
                 try {
                     connector.init();
                 } catch (Exception e) {
-                    String message = sm.getString(
-                            "standardService.connector.initFailed", connector);
+                    String message = sm.getString("standardService.connector.initFailed", connector);
                     log.error(message, e);
 
                     if (Boolean.getBoolean("org.apache.catalina.startup.EXIT_ON_INIT_FAILURE")) {
@@ -634,8 +646,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     public void setParentClassLoader(ClassLoader parent) {
         ClassLoader oldParentClassLoader = this.parentClassLoader;
         this.parentClassLoader = parent;
-        support.firePropertyChange("parentClassLoader", oldParentClassLoader,
-                                   this.parentClassLoader);
+        support.firePropertyChange("parentClassLoader", oldParentClassLoader, this.parentClassLoader);
     }
 
 

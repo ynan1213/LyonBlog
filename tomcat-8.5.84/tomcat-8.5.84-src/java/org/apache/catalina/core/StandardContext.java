@@ -4978,13 +4978,14 @@ public class StandardContext extends ContainerBase
             log.debug("Starting " + getBaseName());
         }
 
-        // Send j2ee.state.starting notification
+        // Send j2ee.state.starting notification 发送JMX启动通知
         if (this.getObjectName() != null) {
             Notification notification = new Notification("j2ee.state.starting",
                     this.getObjectName(), sequenceNumber.getAndIncrement());
             broadcaster.sendNotification(notification);
         }
 
+        // 默认正确配置失败
         setConfigured(false);
         boolean ok = true;
 
@@ -4995,9 +4996,12 @@ public class StandardContext extends ContainerBase
         }
 
         // Post work directory
+        // 初始化work目录（JSP引擎把JSP转换为Servlet类，这些类会放在该目录下）
+        // 并将work目录放入ServletContext作用域
         postWorkDirectory();
 
         // Add missing components as necessary
+        // Web应用资源不存在，则初始化一个空的StandardRoot实现
         if (getResources() == null) {   // (1) Required by Loader
             if (log.isDebugEnabled()) {
                 log.debug("Configuring default Resources");
@@ -5011,9 +5015,11 @@ public class StandardContext extends ContainerBase
             }
         }
         if (ok) {
+            // 启动StandardRoot，详情见 StandardRoot的startInternal方法
             resourcesStart();
         }
 
+        // 初始化 WebappLoader
         if (getLoader() == null) {
             WebappLoader webappLoader = new WebappLoader();
             webappLoader.setDelegate(getDelegate());
@@ -5021,16 +5027,20 @@ public class StandardContext extends ContainerBase
         }
 
         // An explicit cookie processor hasn't been specified; use the default
+        // 初始化cookie执行器
         if (cookieProcessor == null) {
             cookieProcessor = new Rfc6265CookieProcessor();
         }
 
         // Initialize character set mapper
+        // 初始化字符映射
         getCharsetMapper();
 
         // Validate required extensions
         boolean dependencyCheck = true;
         try {
+            // 检查依赖的资源是否满足，如JNDI资源
+            // 先搜集项目下的/META-INF/MANIFEST.MF和/WEB-INF/classes下jar的MANIFEST.MF，然后读取里面配置的 Extension 信息，进行验证，没有深入研究
             dependencyCheck = ExtensionValidator.validateApplication
                 (getResources(), this);
         } catch (IOException ioe) {
@@ -5038,18 +5048,21 @@ public class StandardContext extends ContainerBase
             dependencyCheck = false;
         }
 
+        // 缺少依赖，启动上下文失败
         if (!dependencyCheck) {
             // do not make application available if dependency check fails
             ok = false;
         }
 
         // Reading the "catalina.useNaming" environment variable
+        // 获取环境变量，决定是否使用JNDI，springboot环境貌似禁用了该配置
         String useNamingProperty = System.getProperty("catalina.useNaming");
         if ((useNamingProperty != null)
             && (useNamingProperty.equals("false"))) {
             useNaming = false;
         }
 
+        // 正确配置且使用JNDI，创建 NamingContextListener 用于填充 JNDI Context上下文
         if (ok && isUseNaming()) {
             if (getNamingContextListener() == null) {
                 NamingContextListener ncl = new NamingContextListener();
@@ -5065,20 +5078,37 @@ public class StandardContext extends ContainerBase
             log.debug("Processing standard container startup");
         }
 
+        // 在Bootstrap.init()的方法中，将catalinaLoader设置为了当前线程上下文的ClassLoader
+        // 所以这里返回的是catalinaLoader
+        ClassLoader c1 = Thread.currentThread().getContextClassLoader();
 
         // Binding thread
+        // 如果使用JNDI，则调用该方法为当前线程绑定一个命名上下文
         ClassLoader oldCCL = bindThread();
 
+        // 因为当前的Context并未创建webApplicationClassLoader，bindThread并没有绑定成功，所以这里仍返回的是catalinaLoader
+        ClassLoader c2 = Thread.currentThread().getContextClassLoader();
+
         try {
+            // 开始启动当前上下文的子组件
             if (ok) {
                 // Start our subordinate components, if any
                 Loader loader = getLoader();
                 if (loader instanceof Lifecycle) {
+                    /**
+                     * 具体步骤：
+                     *  1.创建并初始化 ParallelWebappClassLoader，ParallelWebappClassLoader 的parent是SharedLoader（默认就是CommonLoader）；
+                     *  2.依次取出classLoader以及parentClassLoader(SharedLoader、AppClassLoader）的classPath，拼接成String，存到ServletContext的作用域中
+                     *  3.执行 ParallelWebappClassLoader 的start方法：
+                     *    3.1 先读取 /WEB-INF/classes 下的所有资源，再读取 /WEB-INF/lib 下的.jar资源
+                     *    3.2 缓存到localRepositories中；
+                     */
                     ((Lifecycle) loader).start();
                 }
 
                 // since the loader just started, the webapp classloader is now
                 // created.
+                // 当WebappLoader启动后，name此时Webapp类加载器 WebappClassLoader 必定已经创建
                 if (loader.getClassLoader() instanceof WebappClassLoaderBase) {
                     WebappClassLoaderBase cl = (WebappClassLoaderBase) loader.getClassLoader();
                     cl.setClearReferencesRmiTargets(getClearReferencesRmiTargets());
@@ -5092,11 +5122,17 @@ public class StandardContext extends ContainerBase
 
                 // By calling unbindThread and bindThread in a row, we setup the
                 // current Thread CCL to be the webapp classloader
+                // 解绑当前线程使用的类加载器
                 unbindThread(oldCCL);
+
+                // 将 WebappClassLoader(实际类型是ParallelWebappClassLoader) 设置为当前线程的上下文类加载器
+                // 返回回来的是 catalinaLoader
+                // 这样后面加载class 都是交给 ParallelWebappClassLoader，具体见Introspection.loadClass
                 oldCCL = bindThread();
 
                 // Initialize logger again. Other components might have used it
                 // too early, so it should be reset.
+                // 重新初始化log组件，因为其他子组件可能使用了该组件
                 logger = null;
                 getLogger();
 
@@ -5107,7 +5143,7 @@ public class StandardContext extends ContainerBase
                     }
 
                     // Place the CredentialHandler into the ServletContext so
-                    // applications can have access to it. Wrap it in a "safe"
+                    // applications can have access to it. Wrap it inServiceLoader a "safe"
                     // handler so application's can't modify it.
                     CredentialHandler safeHandler = new CredentialHandler() {
                         @Override
@@ -5124,9 +5160,25 @@ public class StandardContext extends ContainerBase
                 }
 
                 // Notify our interested LifecycleListeners
+                /**
+                 * 详情见 ContextConfig#configureStart() 方法，执行步骤：
+                 * 1.依次解析web.xml：
+                 *   1.1 先解析全局配置： ${catalina.base}/conf/web.xml;
+                 *   1.2 再解析Host级别的配置：${catalina.base}/conf/catalina/${hostName}/web.xml.default;
+                 *   1.3 再解析context下WEB-INF/web.xml
+                 * 2.扫描/META-INF/lib/目录下的jar文件，如果META-INF下含有web-fragment.xml文件，解析生成 WebXml;
+                 * 3.查找ServletContainerInitializer实现，并且创建实例;
+                 * 4.合并上面的web.xml，web.xml文件metadata-complete属性在这里生效；
+                 * 5.依次将web.xml的 ContextParams、errorPages、filters、filterMaps、mimeMappings、listeners、servlets、
+                 *   servletMappings、sessionConfig、welcomeFiles、postConstructMethods、preDestroyMethods等设置到Context中；
+                 * 6.其中会将 servlets 封装为 Wrapper 添加到 Context 中的 children集合中；此时的servlet、filter和listener并未实例化；
+                 *
+                 *
+                 */
                 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
                 // Start our child containers, if not already started
+                // 启动子容器，即 Wrapper
                 for (Container child : findChildren()) {
                     if (!child.getState().isAvailable()) {
                         child.start();
@@ -5142,6 +5194,7 @@ public class StandardContext extends ContainerBase
                 // Acquire clustered manager
                 Manager contextManager = null;
                 Manager manager = getManager();
+                // 创建Session管理器
                 if (manager == null) {
                     if (log.isDebugEnabled()) {
                         log.debug(sm.getString("standardContext.cluster.noManager",
@@ -5150,12 +5203,14 @@ public class StandardContext extends ContainerBase
                     }
                     if ((getCluster() != null) && distributable) {
                         try {
+                            // 使用集群且共享session
                             contextManager = getCluster().createManager(getName());
                         } catch (Exception ex) {
                             log.error("standardContext.clusterFail", ex);
                             ok = false;
                         }
                     } else {
+                        // 标准单机版
                         contextManager = new StandardManager();
                     }
                 }
@@ -5182,10 +5237,12 @@ public class StandardContext extends ContainerBase
             }
 
             // We put the resources into the servlet context
+            // 将WebResourceRoot、InstanceManager、JarScanner等放入ServletContext作用域
             if (ok) {
                 getServletContext().setAttribute
                     (Globals.RESOURCES_ATTR, getResources());
 
+                // 创建实例管理器
                 if (getInstanceManager() == null) {
                     javax.naming.Context context = null;
                     if (isUseNaming() && getNamingContextListener() != null) {
@@ -5198,9 +5255,11 @@ public class StandardContext extends ContainerBase
                 }
                 getServletContext().setAttribute(
                         InstanceManager.class.getName(), getInstanceManager());
+                // 将webapp类加载器与实例管理器关联，因为需要加载类并执行反射创建时，需要通过类加载器来完成
                 InstanceManagerBindings.bind(getLoader().getClassLoader(), getInstanceManager());
 
                 // Create context attributes that will be required
+                // JarScanner 用于扫描jar包中的TLD文件和web-fragment.xml文件
                 getServletContext().setAttribute(
                         JarScanner.class.getName(), getJarScanner());
 
@@ -5209,9 +5268,11 @@ public class StandardContext extends ContainerBase
             }
 
             // Set up the context init params
+            // 设置上下文初始化参数（在web.xml中设置的标签启动参数）
             mergeParameters();
 
             // Call ServletContainerInitializers
+            // 遍历所有的 ServletContainerInitializer，调用他们的 onStartup 方法
             for (Map.Entry<ServletContainerInitializer, Set<Class<?>>> entry :
                 initializers.entrySet()) {
                 try {
@@ -5226,6 +5287,7 @@ public class StandardContext extends ContainerBase
 
             // Configure and call application event listeners
             if (ok) {
+                // 启动配置在web.xml中的监听器
                 if (!listenerStart()) {
                     log.error(sm.getString("standardContext.listenerFail"));
                     ok = false;
@@ -5241,6 +5303,7 @@ public class StandardContext extends ContainerBase
 
             try {
                 // Start manager
+                // 启动session管理器
                 Manager manager = getManager();
                 if (manager instanceof Lifecycle) {
                     ((Lifecycle) manager).start();
@@ -5252,6 +5315,7 @@ public class StandardContext extends ContainerBase
 
             // Configure and call application filters
             if (ok) {
+                // 启动filter过滤器
                 if (!filterStart()) {
                     log.error(sm.getString("standardContext.filterFail"));
                     ok = false;
@@ -5260,6 +5324,7 @@ public class StandardContext extends ContainerBase
 
             // Load and initialize all "load on startup" servlets
             if (ok) {
+                // 加载并初始化配置的 load on startup 的servlet
                 if (!loadOnStartup(findChildren())){
                     log.error(sm.getString("standardContext.servletFail"));
                     ok = false;
@@ -5267,9 +5332,11 @@ public class StandardContext extends ContainerBase
             }
 
             // Start ContainerBackgroundProcessor thread
+            // 启动后台线程，用于执行周期性任务
             super.threadStart();
         } finally {
             // Unbinding thread
+            // 解绑线程，还原线程之前的加载器
             unbindThread(oldCCL);
         }
 
@@ -5296,9 +5363,11 @@ public class StandardContext extends ContainerBase
         // some platforms these references may lock the JAR files. Since web
         // application start is likely to have read from lots of JARs, trigger
         // a clean-up now.
+        // WebResources实现了jar文件的引用，在某些平台上，这些引用可能会锁定jar文件，这时清理并释放引用
         getResources().gc();
 
         // Reinitializing if something went wrong
+        // 如果出现问题，重新初始化。哪里进行初始化了？？？
         if (!ok) {
             setState(LifecycleState.FAILED);
             // Send j2ee.object.failed notification
@@ -5828,6 +5897,10 @@ public class StandardContext extends ContainerBase
     }
 
 
+    /**
+     * 该方法就是将当前Context的webApplicationClassLoader设置到当前线程上下文中，如果webApplicationClassLoader为空，直接返回null；
+     * 如果设置成功，将originalClassLoader返回，如果传入的originalClassLoader为null，则取当前线程上下文的ClassLoader返回
+     */
     @Override
     public ClassLoader bind(boolean usePrivilegedAction, ClassLoader originalClassLoader) {
         Loader loader = getLoader();
@@ -5835,6 +5908,8 @@ public class StandardContext extends ContainerBase
         if (loader != null) {
             webApplicationClassLoader = loader.getClassLoader();
         }
+
+        ClassLoader classLoader = this.getClass().getClassLoader();
 
         if (originalClassLoader == null) {
             if (usePrivilegedAction) {

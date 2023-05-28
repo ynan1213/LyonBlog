@@ -67,7 +67,9 @@ final class StandardWrapperValve extends ValveBase {
     private volatile long processingTime;
     private volatile long maxTime;
     private volatile long minTime = Long.MAX_VALUE;
+    // 请求Servlet的次数
     private final AtomicInteger requestCount = new AtomicInteger(0);
+    // 执行出现异常的次数
     private final AtomicInteger errorCount = new AtomicInteger(0);
 
 
@@ -91,13 +93,16 @@ final class StandardWrapperValve extends ValveBase {
         boolean unavailable = false;
         Throwable throwable = null;
         // This should be a Request attribute...
+        // 保存当前时间
         long t1=System.currentTimeMillis();
+        // 增加请求Servlet的次数
         requestCount.incrementAndGet();
         StandardWrapper wrapper = (StandardWrapper) getContainer();
         Servlet servlet = null;
         Context context = (Context) wrapper.getParent();
 
         // Check for the application being marked unavailable
+        // 检测context是否可用
         if (!context.getState().isAvailable()) {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                            sm.getString("standardContext.isUnavailable"));
@@ -105,6 +110,7 @@ final class StandardWrapperValve extends ValveBase {
         }
 
         // Check for the servlet being marked unavailable
+        // 检测wrapper是否可用
         if (!unavailable && wrapper.isUnavailable()) {
             container.getLogger().info(sm.getString("standardWrapper.isUnavailable",
                     wrapper.getName()));
@@ -114,6 +120,7 @@ final class StandardWrapperValve extends ValveBase {
 
         // Allocate a servlet instance to process this request
         try {
+            // 如果context和wrapper都可用，分配一个新的servlet
             if (!unavailable) {
                 servlet = wrapper.allocate();
             }
@@ -171,8 +178,10 @@ final class StandardWrapperValve extends ValveBase {
                     }
                 } else {
                     if (request.isAsyncDispatching()) {
+                        // 异步执行
                         request.getAsyncContextInternal().doInternalDispatch();
                     } else {
+                        // 同步执行
                         filterChain.doFilter
                             (request.getRequest(), response.getResponse());
                     }
@@ -202,6 +211,7 @@ final class StandardWrapperValve extends ValveBase {
             // Do not save exception in 'throwable', because we
             // do not want to do exception(request, response, e) processing
         } catch (ServletException e) {
+            // SpringMVC的FrameworkServlet会将所有的异常包装成 NestedServletException，这里就是取出原始异常
             Throwable rootCause = StandardWrapper.getRootCause(e);
             if (!(rootCause instanceof ClientAbortException)) {
                 container.getLogger().error(sm.getString(
@@ -210,6 +220,7 @@ final class StandardWrapperValve extends ValveBase {
                         rootCause);
             }
             throwable = e;
+            // 将异常放到 request的Attribute作用域中，并将 response.setError()
             exception(request, response, e);
         } catch (Throwable e) {
             ExceptionUtils.handleThrowable(e);
@@ -268,13 +279,16 @@ final class StandardWrapperValve extends ValveBase {
     }
 
     private void checkWrapperAvailable(Response response, StandardWrapper wrapper) throws IOException {
+        // 获取当前wrapper的下一次可用时间
         long available = wrapper.getAvailable();
+        // 如果在范围内，返回 503
         if ((available > 0L) && (available < Long.MAX_VALUE)) {
             response.setDateHeader("Retry-After", available);
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                        sm.getString("standardWrapper.isUnavailable",
                                     wrapper.getName()));
         } else if (available == Long.MAX_VALUE) {
+            // 可用时间为MAX_VALUE表示永久不可用，返回404
             response.sendError(HttpServletResponse.SC_NOT_FOUND,
                         sm.getString("standardWrapper.notFound",
                                     wrapper.getName()));

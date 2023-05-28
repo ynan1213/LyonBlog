@@ -40,6 +40,7 @@ public class LimitLatch {
 
         @Override
         protected int tryAcquireShared(int ignored) {
+            // 直接通过 AtomicLong 进行计数，学习到了
             long newCount = count.incrementAndGet();
             if (!released && newCount > limit) {
                 // Limit exceeded

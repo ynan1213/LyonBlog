@@ -56,6 +56,7 @@ public class ConnectorCreateRule extends Rule {
             throws Exception {
         Service svc = (Service)digester.peek();
         Executor ex = null;
+        // 如果<Connector>标签的executor属性不为空，就用Service下的全局executor
         if ( attributes.getValue("executor")!=null ) {
             ex = svc.getExecutor(attributes.getValue("executor"));
         }

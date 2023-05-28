@@ -116,6 +116,7 @@ final class StandardHostValve extends ValveBase {
         boolean asyncAtStart = request.isAsync();
 
         try {
+            // 将当前Context的webApplicationClassLoader设置到当前线程上下文中
             context.bind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
 
             if (!asyncAtStart && !context.fireRequestInitEvent(request.getRequest())) {
@@ -131,10 +132,14 @@ final class StandardHostValve extends ValveBase {
             // application defined error pages so DO NOT forward them to the
             // application for processing.
             try {
+                // response的errorState有三种状态 0: 无错误  1:有错误未处理  2:有错误已处理
+                // 如果没有发生任何异常  isErrorReportRequired返回false
                 if (!response.isErrorReportRequired()) {
                     context.getPipeline().getFirst().invoke(request, response);
                 }
             } catch (Throwable t) {
+                // StandardWrapperValve会捕获所有的异常，并存到request的作用域中，因此正常情况下不会进入这里
+                // 什么情况下会抛出异常进入这里呢？自定义的value？
                 ExceptionUtils.handleThrowable(t);
                 container.getLogger().error("Exception Processing " + request.getRequestURI(), t);
                 // If a new error occurred while trying to report a previous
@@ -148,8 +153,10 @@ final class StandardHostValve extends ValveBase {
             // Now that the request/response pair is back under container
             // control lift the suspension so that the error handling can
             // complete and/or the container can flush any remaining data
+            // 处理已经回到tomcat容器控制下，接触挂起状态
             response.setSuspended(false);
 
+            // 获取request作用域中的异常，StandardWrapperValve会捕获所有的异常，并存到request的作用域中
             Throwable t = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
 
             // Protect against NPEs if the context was destroyed during a
@@ -159,15 +166,27 @@ final class StandardHostValve extends ValveBase {
             }
 
             // Look for (and render if found) an application level error page
+            // isErrorReportRequired返回true代表发生了错误，但是没有处理
+            // response的errorState有三种状态 0: 无错误  1:有错误未处理  2:有错误已处理
             if (response.isErrorReportRequired()) {
                 // If an error has occurred that prevents further I/O, don't waste time
                 // producing an error report that will never be read
                 AtomicBoolean result = new AtomicBoolean(false);
+                // 查看当前错误信息是否允许进行IO操作
                 response.getCoyoteResponse().action(ActionCode.IS_IO_ALLOWED, result);
                 if (result.get()) {
+                    /**
+                     * 不论是throwable和status，都是匹配ErrorPage，二者的区别：
+                     *   1.status匹配时先拿statusCode匹配，如果没有匹配到，则拿0匹配，SpringBoot会注册一个0的ErrorPage
+                     *   2.throwable是拿异常类及其父类的全限定类名进行匹配，如果没有匹配到，会继续用statusCode匹配
+                     * 如果匹配到了ErrorPage，则取ErrorPage的location进行重定向（重定向就是继续location对应的servlet）
+                     * 如果没有匹配到ErrorPage，则不处理
+                     */
                     if (t != null) {
+                        // 存在异常对象，根据异常类型构建客户端响应
                         throwable(request, response, t);
                     } else {
+                        // 不存在异常对象，根据设置的状态码构建客户端响应
                         status(request, response);
                     }
                 }
@@ -182,7 +201,7 @@ final class StandardHostValve extends ValveBase {
             if (ACCESS_SESSION) {
                 request.getSession(false);
             }
-
+            // 还原classLoader
             context.unbind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
         }
     }
@@ -288,6 +307,7 @@ final class StandardHostValve extends ValveBase {
         }
 
         // If this is an aborted request from a client just log it and return
+        // 这种类型异常只打印日志
         if (realError instanceof ClientAbortException ) {
             if (log.isDebugEnabled()) {
                 log.debug

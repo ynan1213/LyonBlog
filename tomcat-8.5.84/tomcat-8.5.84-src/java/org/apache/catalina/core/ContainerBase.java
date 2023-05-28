@@ -720,8 +720,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
     @Override
     public void addChild(Container child) {
         if (Globals.IS_SECURITY_ENABLED) {
-            PrivilegedAction<Void> dp =
-                new PrivilegedAddChild(child);
+            PrivilegedAction<Void> dp = new PrivilegedAddChild(child);
             AccessController.doPrivileged(dp);
         } else {
             addChildInternal(child);
@@ -736,8 +735,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
 
         synchronized(children) {
             if (children.get(child.getName()) != null) {
-                throw new IllegalArgumentException(
-                        sm.getString("containerBase.child.notUnique", child.getName()));
+                throw new IllegalArgumentException(sm.getString("containerBase.child.notUnique", child.getName()));
             }
             child.setParent(this);  // May throw IAE
             children.put(child.getName(), child);
@@ -747,9 +745,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
         // Don't do this inside sync block - start can be a slow process and
         // locking the children object can cause problems elsewhere
         try {
-            if ((getState().isAvailable() ||
-                    LifecycleState.STARTING_PREP.equals(getState())) &&
-                    startChildren) {
+            if ((getState().isAvailable() || LifecycleState.STARTING_PREP.equals(getState())) && startChildren) {
                 child.start();
             }
         } catch (LifecycleException e) {
@@ -929,7 +925,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
         for (Container child : children) {
+            // todo yuannan 调试时改为同步执行
             results.add(startStopExecutor.submit(new StartChild(child)));
+            // child.start();
         }
 
         MultiThrowable multiThrowable = null;
@@ -1133,18 +1131,15 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
      */
     @Override
     public void backgroundProcess() {
-
         if (!getState().isAvailable()) {
             return;
         }
-
         Cluster cluster = getClusterInternal();
         if (cluster != null) {
             try {
                 cluster.backgroundProcess();
             } catch (Exception e) {
-                log.warn(sm.getString("containerBase.backgroundProcess.cluster",
-                        cluster), e);
+                log.warn(sm.getString("containerBase.backgroundProcess.cluster", cluster), e);
             }
         }
         Realm realm = getRealmInternal();
@@ -1284,7 +1279,6 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
      * session timeouts.
      */
     protected void threadStart() {
-
         if (thread != null) {
             return;
         }
@@ -1297,7 +1291,6 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
         thread = new Thread(new ContainerBackgroundProcessor(), threadName);
         thread.setDaemon(true);
         thread.start();
-
     }
 
 
@@ -1347,7 +1340,6 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
      * of this container and its children after a fixed delay.
      */
     protected class ContainerBackgroundProcessor implements Runnable {
-
         @Override
         public void run() {
             Throwable t = null;

@@ -67,6 +67,7 @@ public class StandardEngine extends ContainerBase implements Engine {
         pipeline.setBasic(new StandardEngineValve());
         /* Set the jvmRoute using the system property jvmRoute */
         try {
+            // Tomcat实例的JVM路由ID。所有路由ID必须唯一,用于集群环境中
             setJvmRoute(System.getProperty("jvmRoute"));
         } catch(Exception ex) {
             log.warn(sm.getString("standardEngine.jvmRouteFail"));
@@ -95,6 +96,8 @@ public class StandardEngine extends ContainerBase implements Engine {
     /**
      * The JVM Route ID for this Tomcat instance. All Route ID's must be unique
      * across the cluster.
+     *
+     * Tomcat实例的JVM路由ID。所有路由ID必须唯一,用于集群环境中
      */
     private String jvmRouteId;
 
@@ -260,6 +263,7 @@ public class StandardEngine extends ContainerBase implements Engine {
         }
 
         // Standard container startup
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         super.startInternal();
     }
 

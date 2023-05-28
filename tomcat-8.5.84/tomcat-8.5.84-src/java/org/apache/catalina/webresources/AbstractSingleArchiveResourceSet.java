@@ -135,7 +135,7 @@ public abstract class AbstractSingleArchiveResourceSet extends AbstractArchiveRe
     //-------------------------------------------------------- Lifecycle methods
     @Override
     protected void initInternal() throws LifecycleException {
-
+        // 读取Jar包内META-INF/MANIFEST.MF文件
         try (JarFile jarFile = JreCompat.getInstance().jarFileNewInstance(getBase())) {
             setManifest(jarFile.getManifest());
         } catch (IOException ioe) {

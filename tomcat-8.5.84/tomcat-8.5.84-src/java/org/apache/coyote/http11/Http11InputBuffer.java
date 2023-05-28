@@ -353,6 +353,8 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
      *
      * @return true if data is properly fed; false if no data is available
      * immediately and thread should be freed
+     *
+     * 用于解析HTTP请求第一行：请求名、路径、协议
      */
     boolean parseRequestLine(boolean keptAlive) throws IOException {
 
@@ -362,10 +364,12 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         }
         //
         // Skipping blank lines
-        //
+        // 第一阶段：跳过空白行？？
         if (parsingRequestLinePhase < 2) {
             do {
                 // Read new bytes if needed
+                // 进入if说明缓冲区没有数据了，进行填充
+                // 初始化状态都为0，详情见本类init()方法
                 if (byteBuffer.position() >= byteBuffer.limit()) {
                     if (keptAlive) {
                         // Haven't read any request data yet so use the keep-alive
@@ -406,6 +410,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             parsingRequestLineStart = byteBuffer.position();
             parsingRequestLinePhase = 2;
         }
+        // 第二阶段：解析HTTP请求的方法名
         if (parsingRequestLinePhase == 2) {
             //
             // Reading the method name
@@ -436,6 +441,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             }
             parsingRequestLinePhase = 3;
         }
+        // 第三阶段：跳过方法名和路径之间空白字符
         if (parsingRequestLinePhase == 3) {
             // Spec says single SP but also be tolerant of multiple SP and/or HT
             boolean space = true;
@@ -455,6 +461,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             parsingRequestLineStart = byteBuffer.position();
             parsingRequestLinePhase = 4;
         }
+        // 第四阶段：用于读取路径信息
         if (parsingRequestLinePhase == 4) {
             // Mark the current buffer position
 
@@ -532,6 +539,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
                 parsingRequestLinePhase = 5;
             }
         }
+        // 第五阶段：跳过路径和协议之间的空白字符
         if (parsingRequestLinePhase == 5) {
             // Spec says single SP but also be tolerant of multiple and/or HT
             boolean space = true;
@@ -554,6 +562,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             // Mark the current buffer position
             end = 0;
         }
+        // 第六阶段：解析HTTP协议版本
         if (parsingRequestLinePhase == 6) {
             //
             // Reading the protocol
@@ -593,6 +602,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             }
             // If no protocol is found, the ISE below will be triggered.
         }
+        // 解析请求行结束信息，还原变量值并返回
         if (parsingRequestLinePhase == 7) {
             // Parsing is complete. Return and clean-up.
             parsingRequestLine = false;
@@ -756,6 +766,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         wrapper = socketWrapper;
         wrapper.setAppReadBufHandler(this);
 
+        // headerBufferSize：请求和响应HTTP头的最大大小，默认8192(8 KB)
         int bufLength = headerBufferSize +
                 wrapper.getSocketBufferHandler().getReadBuffer().capacity();
         if (byteBuffer == null || byteBuffer.capacity() < bufLength) {

@@ -193,6 +193,7 @@ public final class ApplicationFilterChain implements FilterChain {
                     filter.doFilter(request, response, this);
                 }
             } catch (IOException | ServletException | RuntimeException e) {
+                // SpringMVC的FramworkServlet会将业务异常包装成NestedServletException类型
                 throw e;
             } catch (Throwable e) {
                 e = ExceptionUtils.unwrapInvocationTargetException(e);

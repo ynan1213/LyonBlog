@@ -28,14 +28,14 @@
     <display-name>Servlet and JSP Examples</display-name>
 
     <!-- Define example filters -->
-    <filter>
-        <filter-name>Timing Filter</filter-name>
-        <filter-class>filters.ExampleFilter</filter-class>
-        <init-param>
-            <param-name>attribute</param-name>
-            <param-value>filters.ExampleFilter</param-value>
-        </init-param>
-    </filter>
+<!--    <filter>-->
+<!--        <filter-name>Timing Filter</filter-name>-->
+<!--        <filter-class>filters.ExampleFilter</filter-class>-->
+<!--        <init-param>-->
+<!--            <param-name>attribute</param-name>-->
+<!--            <param-value>filters.ExampleFilter</param-value>-->
+<!--        </init-param>-->
+<!--    </filter>-->
 
     <filter>
         <filter-name>Request Dumper Filter</filter-name>
@@ -57,26 +57,26 @@
         </init-param>
     </filter>
 
-    <filter>
-        <filter-name>Compression Filter</filter-name>
-        <filter-class>compressionFilters.CompressionFilter</filter-class>
-        <init-param>
-            <param-name>compressionThreshold</param-name>
-            <param-value>128</param-value>
-        </init-param>
-        <init-param>
-            <param-name>compressionBuffer</param-name>
-            <param-value>8192</param-value>
-        </init-param>
-        <init-param>
-            <param-name>compressionMimeTypes</param-name>
-            <param-value>text/html,text/plain,text/xml</param-value>
-        </init-param>
-        <init-param>
-          <param-name>debug</param-name>
-          <param-value>0</param-value>
-        </init-param>
-    </filter>
+<!--    <filter>-->
+<!--        <filter-name>Compression Filter</filter-name>-->
+<!--        <filter-class>compressionFilters.CompressionFilter</filter-class>-->
+<!--        <init-param>-->
+<!--            <param-name>compressionThreshold</param-name>-->
+<!--            <param-value>128</param-value>-->
+<!--        </init-param>-->
+<!--        <init-param>-->
+<!--            <param-name>compressionBuffer</param-name>-->
+<!--            <param-value>8192</param-value>-->
+<!--        </init-param>-->
+<!--        <init-param>-->
+<!--            <param-name>compressionMimeTypes</param-name>-->
+<!--            <param-value>text/html,text/plain,text/xml</param-value>-->
+<!--        </init-param>-->
+<!--        <init-param>-->
+<!--          <param-name>debug</param-name>-->
+<!--          <param-value>0</param-value>-->
+<!--        </init-param>-->
+<!--    </filter>-->
 
     <!-- Configured to set X-FRAME-OPTIONS. Disable HSTS in case it          -->
     <!-- interferes with an existing setting. Keep X-Content-Type-Options    -->
@@ -127,17 +127,17 @@
     </filter-mapping>
 
     <!-- Define example application events listeners -->
-    <listener>
-        <listener-class>listeners.ContextListener</listener-class>
-    </listener>
-    <listener>
-        <listener-class>listeners.SessionListener</listener-class>
-    </listener>
+<!--    <listener>-->
+<!--        <listener-class>listeners.ContextListener</listener-class>-->
+<!--    </listener>-->
+<!--    <listener>-->
+<!--        <listener-class>listeners.SessionListener</listener-class>-->
+<!--    </listener>-->
 
-    <!-- Define listeners required by examples -->
-    <listener>
-        <listener-class>async.AsyncStockContextListener</listener-class>
-    </listener>
+<!--    &lt;!&ndash; Define listeners required by examples &ndash;&gt;-->
+<!--    <listener>-->
+<!--        <listener-class>async.AsyncStockContextListener</listener-class>-->
+<!--    </listener>-->
 
     <!-- Define servlets that are included in the example application -->
 
@@ -411,8 +411,8 @@
     </welcome-file-list>
 
     <!-- Websocket examples -->
-    <listener>
-        <listener-class>websocket.drawboard.DrawboardContextListener</listener-class>
-    </listener>
+<!--    <listener>-->
+<!--        <listener-class>websocket.drawboard.DrawboardContextListener</listener-class>-->
+<!--    </listener>-->
 
 </web-app>

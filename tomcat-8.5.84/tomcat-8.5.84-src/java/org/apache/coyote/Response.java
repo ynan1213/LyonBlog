@@ -137,9 +137,9 @@ public final class Response {
      * <pre>
      * The state machine is very simple:
      *
-     * 0 - NONE
-     * 1 - NOT_REPORTED
-     * 2 - REPORTED
+     * 0 - NONE             无错误
+     * 1 - NOT_REPORTED     有错误但未报告
+     * 2 - REPORTED         有错误已报告
      *
      *
      *   -->---->-- >NONE

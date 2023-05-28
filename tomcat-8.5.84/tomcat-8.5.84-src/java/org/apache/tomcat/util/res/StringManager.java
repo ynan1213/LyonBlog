@@ -237,8 +237,7 @@ public class StringManager {
      *
      * @return The instance associated with the given package and Locale
      */
-    public static final synchronized StringManager getManager(
-            String packageName, Locale locale) {
+    public static final synchronized StringManager getManager(String packageName, Locale locale) {
 
         Map<Locale,StringManager> map = managers.get(packageName);
         if (map == null) {

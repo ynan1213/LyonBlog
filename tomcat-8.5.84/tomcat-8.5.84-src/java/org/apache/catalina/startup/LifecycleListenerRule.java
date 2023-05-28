@@ -89,9 +89,15 @@ public class LifecycleListenerRule extends Rule {
     @Override
     public void begin(String namespace, String name, Attributes attributes)
         throws Exception {
-
+        /**
+         * 如果是EngineRuleSet，这里就返回StandardEngine;
+         * 如果是HostRuleSet，这里返回StandardHost;
+         */
         Container c = (Container) digester.peek();
         Container p = null;
+        /**
+         * 如果是EngineRuleSet，这里就返回StandardService
+         */
         Object obj = digester.peek(1);
         if (obj instanceof Container) {
             p = (Container) obj;
@@ -100,6 +106,10 @@ public class LifecycleListenerRule extends Rule {
         String className = null;
 
         // Check the container for the specified attribute
+        /**
+         * 如果是EngineRuleSet，attributeName = engineConfigClass
+         * 如果是HostRuleSet，attributeName = hostConfigClass
+         */
         if (attributeName != null) {
             String value = attributes.getValue(attributeName);
             if (value != null) {
@@ -126,6 +136,9 @@ public class LifecycleListenerRule extends Rule {
         LifecycleListener listener = (LifecycleListener) clazz.getConstructor().newInstance();
 
         // Add this LifecycleListener to our associated component
+        /**
+         * 如果是EngineRuleSet，listener = EngineConfig
+         */
         c.addLifecycleListener(listener);
     }
 

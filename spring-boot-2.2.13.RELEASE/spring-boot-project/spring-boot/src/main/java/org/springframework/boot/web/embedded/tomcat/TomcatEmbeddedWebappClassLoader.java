@@ -50,6 +50,7 @@ public class TomcatEmbeddedWebappClassLoader extends ParallelWebappClassLoader {
 	}
 
 	public TomcatEmbeddedWebappClassLoader(ClassLoader parent) {
+		// SpringBoot环境下这里传入的是jdk的Launcher$AppClassLoader
 		super(parent);
 	}
 

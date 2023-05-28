@@ -103,9 +103,18 @@ public class TomcatWebServer implements WebServer {
 				});
 
 				// Start the server to trigger initialization listeners
+				// 先init
+				// 	1.依次执行server --- service --- engine --- connector --- protocol --- endpoint 的init方法;
+				// 	2.endpoint#init方法内不会初始化channel和bind地址;
+				//  3.conector的executor仍未null（除非自定义了executor）;
+				// 再start
+				// 	1.依次执行server --- service --- engine --- executor --- connector --- protocol --- endpoint 的start方法;
+				//  2.因为上面在在context的START_EVENT事件中，移除了service的connector，所以里面不会执行connector的start方法
+				//  3.connector什么时候start呢？
 				this.tomcat.start();
 
 				// We can re-throw failure exception directly in the main thread
+				// tomcat在start方法中执行ServletContextInitializer#onStartup期间如果产生异常不会立即抛出，当前在main线程再抛出
 				rethrowDeferredStartupExceptions();
 
 				try {
@@ -117,6 +126,7 @@ public class TomcatWebServer implements WebServer {
 
 				// Unlike Jetty, all Tomcat threads are daemon threads. We create a
 				// blocking non-daemon to stop immediate shutdown
+				// 创建个线程防止jvm退出？？？
 				startDaemonAwaitThread();
 			}
 			catch (Exception ex) {
@@ -193,6 +203,8 @@ public class TomcatWebServer implements WebServer {
 				return;
 			}
 			try {
+				ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+				// 将之前server中移除的connector还原回去，同时会调用connector的start方法
 				addPreviouslyRemovedConnectors();
 				Connector connector = this.tomcat.getConnector();
 				if (connector != null && this.autoStart) {

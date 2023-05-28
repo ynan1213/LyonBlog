@@ -180,6 +180,7 @@ public class TomcatServletWebServerFactory extends AbstractServletWebServerFacto
 		tomcat.setBaseDir(baseDir.getAbsolutePath());
 		Connector connector = new Connector(this.protocol);
 		connector.setThrowOnFailure(true);
+		// getService()方法内部会创建StandardServer和StandardService
 		tomcat.getService().addConnector(connector);
 		customizeConnector(connector);
 		tomcat.setConnector(connector);
@@ -303,19 +304,24 @@ public class TomcatServletWebServerFactory extends AbstractServletWebServerFacto
 
 	// Needs to be protected so it can be used by subclasses
 	protected void customizeConnector(Connector connector) {
+		// 如果没有配置server.port，默认是8080
 		int port = Math.max(getPort(), 0);
 		connector.setPort(port);
 		if (StringUtils.hasText(this.getServerHeader())) {
+			// 设置到了Http11NioProtocol的server属性上，server属性有什么用？
 			connector.setAttribute("server", this.getServerHeader());
 		}
 		if (connector.getProtocolHandler() instanceof AbstractProtocol) {
 			customizeProtocol((AbstractProtocol<?>) connector.getProtocolHandler());
 		}
+		// 搜集容器中的TomcatProtocolHandlerCustomizer对ProtocolHandler进行配置，默认无实现
 		invokeProtocolHandlerCustomizers(connector.getProtocolHandler());
 		if (getUriEncoding() != null) {
 			connector.setURIEncoding(getUriEncoding().name());
 		}
 		// Don't bind to the socket prematurely if ApplicationContext is slow to start
+		// 不要过早的绑定socket，该值被设置到了AbstractEndpoint的bindOnInit属性上
+		// 这样AbstractEndpoint#init方法内就不会初始化ServerSocketChannel并bind地址了
 		connector.setProperty("bindOnInit", "false");
 		if (getSsl() != null && getSsl().isEnabled()) {
 			customizeSsl(connector);

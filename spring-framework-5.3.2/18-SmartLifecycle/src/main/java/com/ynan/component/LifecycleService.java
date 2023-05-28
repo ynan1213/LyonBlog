@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
  * @Author yuannan
  * @Date 2021/11/13 10:38
  */
-//@Component
+@Component
 public class LifecycleService implements Lifecycle {
 
 	@Override

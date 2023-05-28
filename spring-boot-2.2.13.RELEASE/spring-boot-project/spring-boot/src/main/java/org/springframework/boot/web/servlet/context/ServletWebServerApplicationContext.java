@@ -159,6 +159,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 		super.onRefresh();
 		try
 		{
+			// 创建并初始化tomcat，但是不会启动connector，也就不会接收请求
 			createWebServer();
 		} catch (Throwable ex)
 		{
@@ -194,6 +195,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 			// WebServerFactoryCustomizerBeanPostProcessor是个BeanPostProcessor，在 ServletWebServerFactory 类型的bean初始化过程中
 			// 会依次调用 WebServerFactoryCustomizer.customize(webServerFactory) 进行自定义配置，所以返回的 factory 的属性都有配置好
 			ServletWebServerFactory factory = getWebServerFactory();
+			// TomcatServletWebServerFactory.getWebServer内部会初始化并启动service、context，但是不会启动connector，也就是这一步之后并不会接收连接请求
 			this.webServer = factory.getWebServer(getSelfInitializer());
 		} else if (servletContext != null)
 		{
@@ -249,9 +251,11 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	{
 		// 将 servletContext 传递给 ApplicationContext，也将ApplicationContext保存到servletContext的attribute种，这样二者就关联起来了
 		prepareWebApplicationContext(servletContext);
+		// 尚不知这个方法的作用
 		registerApplicationScope(servletContext);
+		// 将ServletContext注册到容器中
 		WebApplicationContextUtils.registerEnvironmentBeans(getBeanFactory(), servletContext);
-		// 我们自定义的Servlet、Filter、Listener都会被封装成ServletContextInitializer类型，在这里被注入到 servletContext
+		// 自定义的Servlet、Filter、Listener都会被封装成ServletContextInitializer类型，在这里被注入到 servletContext
 		for (ServletContextInitializer beans : getServletContextInitializerBeans())
 		{
 			beans.onStartup(servletContext);

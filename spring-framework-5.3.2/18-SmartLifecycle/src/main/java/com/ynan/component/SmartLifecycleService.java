@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
  * @Author yuannan
  * @Date 2021/11/13 10:57
  */
-@Component
+//@Component
 public class SmartLifecycleService implements SmartLifecycle {
 
 	@Override

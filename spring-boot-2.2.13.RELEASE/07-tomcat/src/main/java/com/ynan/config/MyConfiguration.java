@@ -23,17 +23,17 @@ public class MyConfiguration {
 		return registrationBean;
 	}
 
-	@Bean
-	public FilterRegistrationBean<HelloFilter> helloFilter() {
-		FilterRegistrationBean<HelloFilter> registrationBean = new FilterRegistrationBean<>();
-		registrationBean.setFilter(new HelloFilter());
-		return registrationBean;
-	}
+//	@Bean
+//	public FilterRegistrationBean<HelloFilter> helloFilter() {
+//		FilterRegistrationBean<HelloFilter> registrationBean = new FilterRegistrationBean<>();
+//		registrationBean.setFilter(new HelloFilter());
+//		return registrationBean;
+//	}
 
-	@Bean
-	public ServletListenerRegistrationBean<HelloListener> helloListener() {
-		ServletListenerRegistrationBean<HelloListener> registrationBean = new ServletListenerRegistrationBean<>();
-		registrationBean.setListener(new HelloListener());
-		return registrationBean;
-	}
+//	@Bean
+//	public ServletListenerRegistrationBean<HelloListener> helloListener() {
+//		ServletListenerRegistrationBean<HelloListener> registrationBean = new ServletListenerRegistrationBean<>();
+//		registrationBean.setListener(new HelloListener());
+//		return registrationBean;
+//	}
 }

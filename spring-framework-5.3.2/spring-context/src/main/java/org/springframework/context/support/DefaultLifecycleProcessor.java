@@ -138,10 +138,20 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 
 	// Internal helpers
 
+	/**
+	 * 容器启动时AbstractApplicationContext#finishRefresh() -> DefaultLifecycleProcessor#onRefresh()
+	 * 调用的该方法传入的autoStartupOnly为true
+	 *
+	 * 主动调用AbstractApplicationContext#start()传入的autoStartupOnly为false
+	 */
 	private void startBeans(boolean autoStartupOnly) {
+		// 获取实现了Lifecycle接口的bean
 		Map<String, Lifecycle> lifecycleBeans = getLifecycleBeans();
 		Map<Integer, LifecycleGroup> phases = new TreeMap<>();
 
+		/**
+		 * 容器启动时，对于实现了Lifecycle的bean并不会回调start方法，只有实现了SmartLifecycle的bean才会
+		 */
 		lifecycleBeans.forEach((beanName, bean) -> {
 			if (!autoStartupOnly || (bean instanceof SmartLifecycle && ((SmartLifecycle) bean).isAutoStartup())) {
 				int phase = getPhase(bean);
@@ -274,6 +284,7 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 	protected Map<String, Lifecycle> getLifecycleBeans() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 		Map<String, Lifecycle> beans = new LinkedHashMap<>();
+		// DefaultLifecycleProcessor也实现了Lifecycle接口，但是会被过滤
 		String[] beanNames = beanFactory.getBeanNamesForType(Lifecycle.class, false, false);
 		for (String beanName : beanNames) {
 			String beanNameToRegister = BeanFactoryUtils.transformedBeanName(beanName);

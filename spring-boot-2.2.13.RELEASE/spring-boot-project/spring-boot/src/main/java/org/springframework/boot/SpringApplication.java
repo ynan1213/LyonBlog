@@ -333,6 +333,7 @@ public class SpringApplication {
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class, new Class[]{ConfigurableApplicationContext.class}, context);
 			// 准备容器
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			// ①：注册shutdown钩子  ②：刷新context
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();

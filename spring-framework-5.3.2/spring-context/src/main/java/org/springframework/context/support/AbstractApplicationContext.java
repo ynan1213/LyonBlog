@@ -932,9 +932,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader i
 		clearResourceCaches();
 
 		// Initialize lifecycle processor for this context.
+		// 初始化LifecycleProcessor
 		initLifecycleProcessor();
 
 		// Propagate refresh to lifecycle processor first.
+		// 执行LifecycleProcessor#onRefresh方法
+		// onClose方法什么时候执行呢？在spring注册到jvm的关闭钩子函数AbstractApplicationContext.doClose内执行
 		getLifecycleProcessor().onRefresh();
 
 		// Publish the final event.

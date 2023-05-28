@@ -11,7 +11,7 @@ public class StartMain {
 
 	public static void main(String[] args) {
 		AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext(RootConfig.class);
-//		ac.start();
+		ac.start();
 //		ac.close();
 	}
 }

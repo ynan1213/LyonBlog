@@ -19,11 +19,12 @@ ribbon:
 PROVIDER-00:
   ribbon:
     ServerListRefreshInterval: 6666
+    NFLoadBalancerRuleClassName: com.netflix.loadbalancer.WeightedResponseTimeRule
 
 eureka:
   client:
     service-url:
-      defaultZone: http://47.100.24.106:8761/eureka
+      defaultZone: http://121.36.200.116:8761/eureka
 
 logging:
   level:

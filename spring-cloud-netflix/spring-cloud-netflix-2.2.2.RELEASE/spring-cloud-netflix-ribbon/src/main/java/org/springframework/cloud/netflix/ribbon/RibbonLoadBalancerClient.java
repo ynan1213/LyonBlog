@@ -67,6 +67,7 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 			ServerIntrospector serverIntrospector = serverIntrospector(serviceId);
 			uri = updateToSecureConnectionIfNeeded(original, clientConfig, serverIntrospector, server);
 		}
+		// 调用reconstructURIWithServer()方法转化URI地址 将http://serviceName/  转化为 http://ip:port/
 		return context.reconstructURIWithServer(server, uri);
 	}
 
@@ -107,13 +108,20 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 	 * @throws IOException executing the request may result in an {@link IOException}
 	 */
 	public <T> T execute(String serviceId, LoadBalancerRequest<T> request, Object hint) throws IOException {
+		// 获取一个ILoadBalancer负载均衡器
+		// 每一个serviceId对应一个SpringContext
 		ILoadBalancer loadBalancer = getLoadBalancer(serviceId);
+
+		// 通过loadBalancer负载均衡器，获得一个Server服务实例，Server中会存储一个服务节点的元数据，比如：host、port、isAliveFlag等属性
 		Server server = getServer(loadBalancer, hint);
 		if (server == null) {
 			throw new IllegalStateException("No instances available for " + serviceId);
 		}
+
+		// 将Server包装成RibbonServer(即：ServiceInstance)
 		RibbonServer ribbonServer = new RibbonServer(serviceId, server, isSecure(server, serviceId), serverIntrospector(serviceId).getMetadata(server));
 
+		// 将Request请求数据发送到RibbonServer（ServiceInstance）服务器端
 		return execute(serviceId, ribbonServer, request);
 	}
 
@@ -128,15 +136,20 @@ public class RibbonLoadBalancerClient implements LoadBalancerClient {
 		}
 
 		RibbonLoadBalancerContext context = this.clientFactory.getLoadBalancerContext(serviceId);
+		// 用于记录请求响应时间、错误数量等
+		// 有些负载均衡策略需要使用到这些指标
 		RibbonStatsRecorder statsRecorder = new RibbonStatsRecorder(context, server);
 
 		try {
+			// 将Request请求数据发送到服务端，具体实现在
 			T returnVal = request.apply(serviceInstance);
+			// 记录请求结果
 			statsRecorder.recordStats(returnVal);
 			return returnVal;
 		}
 		// catch IOException and rethrow so RestTemplate behaves correctly
 		catch (IOException ex) {
+			// 发生了异常，记录错误数量等指标
 			statsRecorder.recordStats(ex);
 			throw ex;
 		}

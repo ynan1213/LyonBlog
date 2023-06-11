@@ -103,6 +103,7 @@ public class BootstrapApplicationListener implements ApplicationListener<Applica
 		ConfigurableEnvironment environment = event.getEnvironment();
 
 		// 可以在application.properties中配置spring.cloud.bootstrap.enabled=false来禁用spring cloud的bootstrap容器
+		// 其实是不行的，因为此时的子容器并未加载配置文件，所以该配置只能配置在系统环境变量中
 		if (!environment.getProperty("spring.cloud.bootstrap.enabled", Boolean.class, true)) {
 			return;
 		}
@@ -116,6 +117,7 @@ public class BootstrapApplicationListener implements ApplicationListener<Applica
 		ConfigurableApplicationContext context = null;
 
 		// 获取配置文件的名字，默认为bootstrap.properties或.yml ,并且这个名字可以通过 spring.cloud.bootstrap.name在环境中配置
+		// 同样的，该配置只能配置在系统环境变量中才会生效
 		String configName = environment.resolvePlaceholders("${spring.cloud.bootstrap.name:bootstrap}");
 
 		// 从spring.factories文件中读取初始化器的配置类实例，如果这个实例类是ParentContextApplicationContextInitializer类型

@@ -1,6 +1,7 @@
 package com.ynan;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 public class LoadBalancerMain {
 
 	@Autowired
+//	@Qualifier("getRestTemplate1")  如果有多个，会报错
 	private RestTemplate restTemplate;
 
 	public static void main(String[] args) {

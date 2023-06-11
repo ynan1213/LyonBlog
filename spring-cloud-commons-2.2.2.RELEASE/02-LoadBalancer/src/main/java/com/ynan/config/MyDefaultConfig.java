@@ -11,12 +11,17 @@ import org.springframework.web.client.RestTemplate;
  * @Date 2022/1/4 15:43
  */
 @Configuration
-@LoadBalancerClient(name = "PROVIDER-00", configuration = XxxConfig.class)
+//@LoadBalancerClient(name = "PROVIDER-00", configuration = XxxConfig.class)
 public class MyDefaultConfig {
 
+	/**
+	 * 容器默认是不会注入RestTemplate，需要自定义创建，
+	 * 带上 @LoadBalanced 注解就表明
+	 */
 	@LoadBalanced
 	@Bean
 	public RestTemplate getRestTemplate() {
-		return new RestTemplate();
+		RestTemplate restTemplate = new RestTemplate();
+		return restTemplate;
 	}
 }

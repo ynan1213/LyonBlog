@@ -89,6 +89,11 @@ public class RibbonClientConfiguration {
 	 */
 	public static final boolean DEFAULT_GZIP_PAYLOAD = true;
 
+	/**
+	 * 注意：每个不同的子容器的name值都会被设置成容器的name，也就是服务name
+	 * 因为该类是在SpringClientFactory里创建的子容器里，SpringClientFactory的propertyName就是ribbon.client.name
+	 * 而每个子容器创建的过程中都会将容器名称作为配置项加入到environment中，key就是ribbon.client.name，详情见NamedContextFactory#createContext
+	 */
 	@RibbonClientName
 	private String name = "client";
 
@@ -99,10 +104,15 @@ public class RibbonClientConfiguration {
 	@Autowired
 	private PropertiesFactory propertiesFactory;
 
+	/**
+	 * 该配置是如何读取到SpringBoot的配置文件的，尚不清楚
+	 * 可能是通过ArchaiusAutoConfiguration，未研究
+	 */
 	@Bean
 	@ConditionalOnMissingBean
 	public IClientConfig ribbonClientConfig() {
 		DefaultClientConfigImpl config = new DefaultClientConfigImpl();
+		// 每个子容器的name都会不同
 		config.loadProperties(this.name);
 		config.set(CommonClientConfigKey.ConnectTimeout, DEFAULT_CONNECT_TIMEOUT);
 		config.set(CommonClientConfigKey.ReadTimeout, DEFAULT_READ_TIMEOUT);
@@ -170,9 +180,11 @@ public class RibbonClientConfiguration {
 	@ConditionalOnMissingBean
 	@SuppressWarnings("unchecked")
 	public ServerListFilter<Server> ribbonServerListFilter(IClientConfig config) {
+		// 如果配置了 PROVIDER-OO.ribbon.NIWSServerListClassName，就取配置的类名进行实例化
 		if (this.propertiesFactory.isSet(ServerListFilter.class, name)) {
 			return this.propertiesFactory.get(ServerListFilter.class, config, name);
 		}
+		// 否则实例化默认的
 		ZonePreferenceServerListFilter filter = new ZonePreferenceServerListFilter();
 		filter.initWithNiwsConfig(config);
 		return filter;

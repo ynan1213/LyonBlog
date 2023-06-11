@@ -101,6 +101,9 @@ public class RibbonAutoConfiguration {
 		return new PropertiesFactory();
 	}
 
+	/**
+	 * 预初始化
+	 */
 	@Bean
 	@ConditionalOnProperty("ribbon.eager-load.enabled")
 	public RibbonApplicationContextInitializer ribbonApplicationContextInitializer() {

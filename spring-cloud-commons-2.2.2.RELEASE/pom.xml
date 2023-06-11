@@ -170,5 +170,6 @@
 		<module>03-eureka-discovery/consumer-01</module>
 		<module>04-nacos-discovery</module>
         <module>05-ribbon</module>
+        <module>06-parentContext</module>
     </modules>
 </project>

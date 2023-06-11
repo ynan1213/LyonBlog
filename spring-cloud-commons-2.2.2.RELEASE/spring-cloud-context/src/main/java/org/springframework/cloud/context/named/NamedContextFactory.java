@@ -118,11 +118,13 @@ public abstract class NamedContextFactory<C extends NamedContextFactory.Specific
 				}
 			}
 		}
+		// 用于解析 ${} 占位符
 		context.register(PropertyPlaceholderAutoConfiguration.class, this.defaultConfigType);
 
 		// 这个有什么用 ？？？
 		// 这样每个子容器都可以通过 propertyName 作为 key 获取当前子容器的名称
 		// 例如: environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
+		// 子容器貌似并没有拿到父容器的配置
 		context.getEnvironment().getPropertySources().addFirst(new MapPropertySource(this.propertySourceName, Collections.<String, Object>singletonMap(this.propertyName, name)));
 		if (this.parent != null) {
 			// Uses Environment from parent as well as beans

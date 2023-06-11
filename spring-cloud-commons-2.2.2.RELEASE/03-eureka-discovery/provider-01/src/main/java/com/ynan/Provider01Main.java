@@ -25,6 +25,7 @@ public class Provider01Main {
 
 	@RequestMapping("/hello")
 	public String hello() {
+//		if (1==1) throw new RuntimeException("XXXXXXXXXX");
 		return "hello 01" + applicationName + " !!!";
 	}
 

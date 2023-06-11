@@ -45,14 +45,17 @@ public class LoadBalancerRequestFactory {
 		this.loadBalancer = loadBalancer;
 	}
 
-	public LoadBalancerRequest<ClientHttpResponse> createRequest(final HttpRequest request, final byte[] body, final ClientHttpRequestExecution execution) {
+	public LoadBalancerRequest<ClientHttpResponse> createRequest(final HttpRequest request,
+			final byte[] body, final ClientHttpRequestExecution execution) {
 		return instance -> {
+			// 将request简单包装一下，重写了getURI方法，将http://serviceName/ 转化为 http://ip:port/
 			HttpRequest serviceRequest = new ServiceRequestWrapper(request, instance, this.loadBalancer);
 			if (this.transformers != null) {
 				for (LoadBalancerRequestTransformer transformer : this.transformers) {
 					serviceRequest = transformer.transformRequest(serviceRequest, instance);
 				}
 			}
+			// 发送请求数据
 			return execution.execute(serviceRequest, body);
 		};
 	}

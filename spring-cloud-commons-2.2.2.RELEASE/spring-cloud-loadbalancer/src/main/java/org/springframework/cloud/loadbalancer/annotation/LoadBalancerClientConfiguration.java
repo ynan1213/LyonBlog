@@ -57,7 +57,7 @@ public class LoadBalancerClientConfiguration {
 	public ReactorLoadBalancer<ServiceInstance> reactorServiceInstanceLoadBalancer(Environment environment, LoadBalancerClientFactory loadBalancerClientFactory) {
 		// 获取当前子容器的名称
 		String name = environment.getProperty(LoadBalancerClientFactory.PROPERTY_NAME);
-		// 注意这里注入的是 LazyProvider，主要因为相关 Bean 可能还没有被加载注册，利用 LazyProvider 防止报找不到
+		// 注意这里注入的是 LazyProvider，主要因为相关 Bean 可能还没有被加载注册，利用 LazyProvider 防止找不到
 		return new RoundRobinLoadBalancer(loadBalancerClientFactory.getLazyProvider(name, ServiceInstanceListSupplier.class), name);
 	}
 

@@ -4,6 +4,7 @@ import con.ynan.service.UserService;
 import con.ynan.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Lookup;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -12,19 +13,24 @@ import org.springframework.context.annotation.Import;
  */
 // @Configuration注解可以不要，因为内部有了@Bean
 //@Configuration
-@Import(UserServiceImpl.class)
+//@Import(UserServiceImpl.class)
 public class RootConfig {
 
 	public RootConfig(){}
 
-	@Autowired
-	public RootConfig(UserService userService){}
+//	@Autowired
+//	public RootConfig(UserService userService){}
+//
+//	@Autowired
+//	private UserService userService;
+//
+//	@Lookup
+//	public void test() {}
 
-	@Autowired
-	private UserService userService;
-
-	@Lookup
-	public void test() {}
+	@Bean
+	public UserService getUserService() {
+		return new UserServiceImpl();
+	}
 
 
 }

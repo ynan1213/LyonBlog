@@ -15,11 +15,14 @@ server:
 ribbon:
   MaxHttpConnectionsPerHost: 1111
   ServerListRefreshInterval: 5555
+  ConnectTimeout: 4444
+
 
 PROVIDER-00:
   ribbon:
     ServerListRefreshInterval: 6666
     NFLoadBalancerRuleClassName: com.netflix.loadbalancer.WeightedResponseTimeRule
+    ConnectTimeout: 3333
 
 eureka:
   client:

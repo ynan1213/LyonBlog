@@ -31,7 +31,9 @@ public class StartMain {
 	@RequestMapping("/xxx")
 	public String xxx() {
 		try {
-			return remoteService.remote(new User(null, 23, "")).toString();
+			User user = new User(null, 23, "");
+			User user1 = remoteService.remote(user, "yyy", "nan");
+			return user1.toString();
 		} catch (Exception e) {
 			throw e;
 		}

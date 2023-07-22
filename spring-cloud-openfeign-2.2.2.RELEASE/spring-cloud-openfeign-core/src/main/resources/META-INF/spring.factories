@@ -5,3 +5,7 @@ org.springframework.cloud.openfeign.FeignAutoConfiguration,\
 org.springframework.cloud.openfeign.encoding.FeignAcceptGzipEncodingAutoConfiguration,\
 org.springframework.cloud.openfeign.encoding.FeignContentGzipEncodingAutoConfiguration,\
 org.springframework.cloud.openfeign.loadbalancer.FeignLoadBalancerAutoConfiguration
+
+
+# 当ribbon生效，就是FeignRibbonClientAutoConfiguration生效
+# 当ribbon未生效而是SpringCloud loadBalancer生效，就是FeignLoadBalancerAutoConfiguration生效

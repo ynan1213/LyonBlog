@@ -17,8 +17,8 @@ public class XxxFallbackFactory implements FallbackFactory<RemoteService> {
 	public RemoteService create(Throwable cause) {
 		return new RemoteService() {
 			@Override
-			public User remote(@Valid User user) {
-				return new User("熔断降级开启", 666, "====================");
+			public User remote(@Valid User user, String xxx, String yuan) {
+				return null;
 			}
 		};
 	}

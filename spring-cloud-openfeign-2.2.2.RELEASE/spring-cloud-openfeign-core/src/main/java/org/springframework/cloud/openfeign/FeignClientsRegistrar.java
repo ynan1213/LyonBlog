@@ -204,6 +204,7 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
 					Map<String, Object> attributes = annotationMetadata.getAnnotationAttributes(FeignClient.class.getCanonicalName());
 					// 按contextId、value、name、serviceId(已被遗弃)的顺序取值，前一个没有取后一个，直到取到一个不为空立即返回
 					// 如果均没有配置，则抛异常：Either 'name' or 'value' must be provided
+					// 这里并没有解析${}占位符，如果配置了岂不是不会被子容器获取到？不必担心，PropertySourcesPlaceholderConfigurer做了解析
 					String name = getClientName(attributes);
 					// 即使 @FeignClient 没有配置 configuration 属性这里也会注入
 					registerClientConfiguration(registry, name, attributes.get("configuration"));
@@ -218,8 +219,8 @@ class FeignClientsRegistrar implements ImportBeanDefinitionRegistrar, ResourceLo
 		String className = annotationMetadata.getClassName();
 		BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(FeignClientFactoryBean.class);
 		validate(attributes);
-		definition.addPropertyValue("url", getUrl(attributes));
-		definition.addPropertyValue("path", getPath(attributes));
+		definition.addPropertyValue("url", getUrl(attributes)); // 会解析${}占位符
+		definition.addPropertyValue("path", getPath(attributes)); // 会解析${}占位符
 		String name = getName(attributes);
 		definition.addPropertyValue("name", name);
 		// 如果未配置contextId，取name或者value值

@@ -118,7 +118,9 @@ public class RibbonClientConfiguration {
 		config.set(CommonClientConfigKey.ReadTimeout, DEFAULT_READ_TIMEOUT);
 		config.set(CommonClientConfigKey.GZipPayload, DEFAULT_GZIP_PAYLOAD);
 
-		Integer integer = config.get(CommonClientConfigKey.ServerListRefreshInterval, 1234);
+		// 很奇怪的是，如果在配置文件中配置了ConnectTimeout和ReadTimeout，上面的默认值就不会生效了
+		Integer integer = config.get(CommonClientConfigKey.ConnectTimeout);
+		Integer integer1 = config.get(CommonClientConfigKey.ReadTimeout);
 
 		return config;
 	}

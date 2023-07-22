@@ -74,7 +74,8 @@ public class LoadBalancerFeignClient implements Client {
 			FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(this.delegate, request, uriWithoutHost);
 			// 关注点：如果未配置超时时间，这里并不是默认的60s，而是ribbon的默认配置
 			IClientConfig requestConfig = getClientConfig(options, clientName);
-			return lbClient(clientName).executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
+			FeignLoadBalancer feignLoadBalancer = lbClient(clientName);
+			return feignLoadBalancer.executeWithLoadBalancer(ribbonRequest, requestConfig).toResponse();
 		}
 		catch (ClientException e) {
 			IOException io = findIOException(e);
@@ -90,10 +91,15 @@ public class LoadBalancerFeignClient implements Client {
 		if (options == DEFAULT_OPTIONS) {
 			// 如果是默认的，并未取默认的数值，通过debug，里面取的是ribbon的默认值（有个父子容器），连接和读取均是 1s，具体要看ribbon的源码
 			// clientFactory 是一个 NamedContextFactory
+			// 这里取的是ribbon内部的配置bean，详情见ribbon文档
+			// 配置方式是
+			//  	全局生效：ribbon.ConnectTimeout=2222
+			// 		xxx服务生效：xxx.ribbon.ConnectTimeout=3333
 			requestConfig = this.clientFactory.getClientConfig(clientName);
 		}
 		else {
 			// 自定义在这里生效
+			// 没有交给spring管理，直接new的，貌似就只有ConnectTimeout和ReadTimeout两个配置
 			requestConfig = new FeignOptionsClientConfig(options);
 		}
 		return requestConfig;

@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @Author yuannan
  * @Date 2021/11/22 19:31
  */
-//@FeignClient(
-//	value = "remote-demo",
-//	path = "/remote",
-//	/*contextId = "bbb"*/
-//	configuration = YyyCustomConfiguration.class
-//)
+/*@FeignClient(
+	value = "remote-demo"
+	*//*,path = "/remote"*//*
+	*//*,contextId = "bbb"*//*
+	,configuration = YyyCustomConfiguration.class
+)*/
 public interface RemoteServiceXxx {
 
 	@RequestMapping("/s")

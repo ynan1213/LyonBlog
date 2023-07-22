@@ -38,6 +38,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.openfeign.loadbalancer.FeignBlockingLoadBalancerClient;
 import org.springframework.cloud.openfeign.ribbon.LoadBalancerFeignClient;
 import org.springframework.context.ApplicationContext;
@@ -109,7 +110,7 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 	 *  	②：application.properties(.yml)配置文件全局默认配置，配置属性feign.client.default-config指定默认值(defult)
 	 *		③：application.properties(.yml)配置文件局部配置，指定@FeignClient#name局部配置
 	 *
-	 *	优先级如何？根据 feign.client.default-to-preperties(默认为true)
+	 *	优先级如何？根据 feign.client.default-to-properties(默认为true)
 	 * 		如果为true：③ > ② > ①
 	 * 		如果为false：① > ③ > ②
 	 */
@@ -252,6 +253,12 @@ class FeignClientFactoryBean implements FactoryBean<Object>, InitializingBean, A
 		 * 因为该对象是在父context中，所以每个@FeignClient共享同一个client
 		 */
 		Client client = getOptional(context, Client.class);
+
+		/**
+		 * 这个是ribbon和SpringCloud loadBalancer整合之后默认的client，
+		 */
+		LoadBalancerClient loadBalancerClient = getOptional(context, LoadBalancerClient.class);
+
 		if (client != null) {
 			builder.client(client);
 			// Targeter 在父容器中，由 FeignAutoConfiguration 类注入

@@ -61,6 +61,7 @@ public class FeignRibbonClientAutoConfiguration {
 	// 前提是没有RetryTemplate类，该类需要单独引入Spring-retry的maven依赖
 	// spring-cloud-openfeign-core 模块引入了该依赖，但是为什么默认还是走该bean？？？
 	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate")
+	// SpringClientFactory由RibbonAutoConfiguration注入，CachingSpringLoadBalancerFactory
 	public CachingSpringLoadBalancerFactory cachingLBClientFactory(SpringClientFactory factory) {
 		return new CachingSpringLoadBalancerFactory(factory);
 	}

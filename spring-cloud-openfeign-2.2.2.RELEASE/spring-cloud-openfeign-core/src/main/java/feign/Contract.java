@@ -54,7 +54,7 @@ public interface Contract {
 			// 1、类上不能存在任何一个泛型变量
 			checkState(targetType.getTypeParameters().length == 0, "Parameterized types unsupported: %s",
 				targetType.getSimpleName());
-			// 2、接口最多最多只能有一个父接口
+			// 2、接口最多只能有一个父接口
 			checkState(targetType.getInterfaces().length <= 1, "Only single inheritance supported: %s",
 				targetType.getSimpleName());
 			if (targetType.getInterfaces().length == 1) {

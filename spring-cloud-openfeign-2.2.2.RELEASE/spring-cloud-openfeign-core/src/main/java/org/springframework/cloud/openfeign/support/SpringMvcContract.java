@@ -203,16 +203,19 @@ public class SpringMvcContract extends Contract.BaseContract implements Resource
 		// HTTP Method
 		RequestMethod[] methods = methodMapping.method();
 		if (methods.length == 0) {
+			// 如果没有配置method属性，默认是GET方式
 			methods = new RequestMethod[] { RequestMethod.GET };
 		}
+		// method必须配置且只能配置一个
 		checkOne(method, methods, "method");
 		data.template().method(Request.HttpMethod.valueOf(methods[0].name()));
 
-		// path
+		// path属性可以不配置，也可以配置一个，不配置就是请求/
 		checkAtMostOne(method, methodMapping.value(), "value");
 		if (methodMapping.value().length > 0) {
 			String pathValue = emptyToNull(methodMapping.value()[0]);
 			if (pathValue != null) {
+				// 可以使用${}占位符
 				pathValue = resolve(pathValue);
 				// Append path from @RequestMapping if value is present on method
 				if (!pathValue.startsWith("/") && !data.template().path().endsWith("/")) {

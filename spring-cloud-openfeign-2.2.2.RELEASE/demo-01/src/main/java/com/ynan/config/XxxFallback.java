@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class XxxFallback implements RemoteService {
 
 	@Override
-	public User remote(User user) {
-		return null;
+	public User remote(User user, String xxx, String yuan) {
+		return new User("sentinel限流或降级", 99, "sentinel限流降级");
 	}
 }

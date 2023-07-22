@@ -57,8 +57,10 @@ public class CachingSpringLoadBalancerFactory {
 			return client;
 		}
 		IClientConfig config = this.factory.getClientConfig(clientName);
+		// ribbon原生的负载均衡器，详情见ribbon文档
 		ILoadBalancer lb = this.factory.getLoadBalancer(clientName);
 		ServerIntrospector serverIntrospector = this.factory.getInstance(clientName, ServerIntrospector.class);
+		// 包装成 FeignLoadBalancer
 		client = this.loadBalancedRetryFactory != null
 				? new RetryableFeignLoadBalancer(lb, config, serverIntrospector, this.loadBalancedRetryFactory)
 				: new FeignLoadBalancer(lb, config, serverIntrospector);

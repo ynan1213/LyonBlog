@@ -53,24 +53,32 @@ public class SentinelResourceAspect extends AbstractSentinelAspectSupport {
         // 如果没有配置，默认取【全限定类名:方法名】例如：com.ynan.controller.AnnoController:world()
         String resourceName = getResourceName(annotation.value(), originMethod);
         EntryType entryType = annotation.entryType();
+        // com.alibaba.csp.sentinel.ResourceTypeConstants，具体作用暂不清楚
         int resourceType = annotation.resourceType();
+        // 未定义 Context ？？？
         Entry entry = null;
         try {
             entry = SphU.entry(resourceName, resourceType, entryType, pjp.getArgs());
             return pjp.proceed();
         } catch (BlockException ex) {
             // 处理限流、降级、黑白名单等异常
+            // sentinel只会抛出该异常
             return handleBlockException(pjp, annotation, ex);
         } catch (Throwable ex) {
+            // 进入到这里，说明是业务异常（正常情况下sentinel不会抛出非BlockException异常）
+
+            // 如果异常类型在 exceptionsToIgnore 属性中，表示忽略该异常，直接原样抛出
             Class<? extends Throwable>[] exceptionsToIgnore = annotation.exceptionsToIgnore();
             if (exceptionsToIgnore.length > 0 && exceptionBelongsTo(ex, exceptionsToIgnore)) {
                 throw ex;
             }
+
+            // 如果异常在 exceptionsToTrace 属性中，表示走fallBack降级，默认情况下 exceptionsToTrace 会匹配所有的异常
             if (exceptionBelongsTo(ex, annotation.exceptionsToTrace())) {
+                // 将异常设置到entry中
                 traceException(ex);
                 return handleFallback(pjp, annotation, ex);
             }
-
             // No fallback function can handle the exception, so throw it out.
             throw ex;
         } finally {

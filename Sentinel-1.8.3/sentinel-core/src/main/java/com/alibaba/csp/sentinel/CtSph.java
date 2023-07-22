@@ -155,8 +155,6 @@ public class CtSph implements Sph {
         /*
          * Means amount of resources (slot chain) exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE},
          * so no rule checking will be done.
-         * lookProcessChain 方法内，当 resource 超过 Constants.MAX_SLOT_CHAIN_SIZE也就是 6000 的时候，
-         * Sentinel 开始不处理新的请求，这么做主要是为了 Sentinel 的性能考虑
          */
         if (chain == null) {
             return new CtEntry(resourceWrapper, null, context);
@@ -229,6 +227,8 @@ public class CtSph implements Sph {
                 chain = chainMap.get(resourceWrapper);
                 if (chain == null) {
                     // Entry size limit.
+                    // 当超过 Constants.MAX_SLOT_CHAIN_SIZE也就是 6000 的时候，
+                    // Sentinel 开始不处理新的请求，这么做主要是为了 Sentinel 的性能考虑
                     if (chainMap.size() >= Constants.MAX_SLOT_CHAIN_SIZE) {
                         return null;
                     }

@@ -125,6 +125,7 @@ public class ContextUtil {
             if (node == null) {
                 // 大于 2000，代表什么意思呢？ 是线程数不能超过2000吗？
                 // localCacheNameMap的key为 context 的 name，不同线程创建Context但是name可以相同，所以2000不是线程数
+                // 防止 Context 过多
                 if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                     setNullContext();
                     return NULL_CONTEXT;

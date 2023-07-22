@@ -98,6 +98,7 @@ public class StatisticNodeTest {
         tickEs.shutdownNow();
 
         // now no biz method execute, so there is no curThreadNum,passQps,successQps
+        // delta 表示期望值与实际值间允许误差，
         assertEquals(0, node.curThreadNum(), 0.01);
         assertEquals(0, node.passQps(), 0.01);
         assertEquals(0, node.successQps(), 0.01);

@@ -101,6 +101,7 @@ public class CommonFilter implements Filter {
                 // origin 解析
                 String origin = parseOrigin(sRequest);
                 // 解析 contextName
+                // webContextUnify:上下文是否统一，默认为true，表示使用固定的上下文
                 String contextName = webContextUnify ? WebServletConfig.WEB_SERVLET_CONTEXT_NAME : target;
                 ContextUtil.enter(contextName, origin);
 
@@ -118,10 +119,14 @@ public class CommonFilter implements Filter {
             }
             chain.doFilter(request, response);
         } catch (BlockException e) {
+            // sentinel只会抛出BlockException异常，也只有sentinel会抛出
+            // 如果抛出了BlockException一场，说明发生了限流降级
             HttpServletResponse sResponse = (HttpServletResponse) response;
             // Return the block page, or redirect to another URL.
             WebCallbackManager.getUrlBlockHandler().blocked(sRequest, sResponse, e);
         } catch (IOException | ServletException | RuntimeException e2) {
+            // 到这里说明是业务代码抛出的异常
+            // traceEntry就是将异常set到entry中，但不是所有的异常都会
             Tracer.traceEntry(e2, urlEntry);
             throw e2;
         } finally {

@@ -123,8 +123,8 @@ public abstract class AbstractSentinelAspectSupport {
 
     protected Object handleBlockException(ProceedingJoinPoint pjp, SentinelResource annotation, BlockException ex)
         throws Throwable {
-
         // Execute block handler if configured.
+        // 匹配Block方法
         Method blockHandlerMethod = extractBlockHandlerMethod(pjp, annotation.blockHandler(), annotation.blockHandlerClass());
         if (blockHandlerMethod != null) {
             Object[] originArgs = pjp.getArgs();
@@ -135,6 +135,7 @@ public abstract class AbstractSentinelAspectSupport {
         }
 
         // If no block handler is present, then go to fallback.
+        // 如果未匹配到，走fallBack
         return handleFallback(pjp, annotation, ex);
     }
 

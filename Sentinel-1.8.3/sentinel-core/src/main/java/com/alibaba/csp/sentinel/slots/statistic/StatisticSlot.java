@@ -59,7 +59,10 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             fireEntry(context, resourceWrapper, node, count, prioritized, args);
 
             // Request passed, add thread count and pass count.
-            // 将正在执行线程数统计指标加一
+            /**
+             * 将正在执行线程数统计指标加一
+             * 一开始觉得qps和thread在的统计是一样的，其实在entry.exit()中不会操作qps指标，但是会将线程数-1（除了-1，还会增加一次rt和success）
+              */
             node.increaseThreadNum();
             // 将通过的请求数量增加对应的值，passQps / intervalInSecond 用于 FlowRule 限流统计用
             node.addPassRequest(count);
@@ -83,6 +86,11 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
                 handler.onPass(context, resourceWrapper, node, count, args);
             }
         } catch (PriorityWaitException ex) {
+            /**
+             * 捕获到PriorityWaitException，这是特殊情况，在需要对请求限流时，只有使用默认流量效果控制器才可能会抛出PriorityWaitException，
+             * 当捕获到PriorityWaitException时，说明当前请求已经被休眠了一段时间了，但还是允许请求通过的，只是不需要让DefaultNode实例统计这个请求了，
+             * 只自增当前资源并行占用的线程数，同时，DefaultNode实例也会让ClusterNode实例自增并行占用的线程数，最后会回调所有；
+             */
             node.increaseThreadNum();
             if (context.getCurEntry().getOriginNode() != null) {
                 // Add count for origin node.
@@ -102,7 +110,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             // 把异常设置给给当前 curEntry，有什么用呢？做个标记，在后面的exit中会用到
             context.getCurEntry().setBlockError(e);
 
-            // 如果没有抛异常，上面是 increasePassQps，这里是抛了异常后增加 block 相应次数
+            // 增加 block 次数
             node.increaseBlockQps(count);
             if (context.getCurEntry().getOriginNode() != null) {
                 context.getCurEntry().getOriginNode().increaseBlockQps(count);
@@ -121,6 +129,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             throw e;
         } catch (Throwable e) {
             // Unexpected internal error, set error to current entry.
+            // 正常情况下是不会进入这里的，除了自定义slot抛出自定义异常
             context.getCurEntry().setError(e);
             throw e;
         }
@@ -135,9 +144,11 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
     @Override
     public void exit(Context context, ResourceWrapper resourceWrapper, int count, Object... args) {
         Node node = context.getCurNode();
-        // 如果发生了BlockException进入这里的CurEntry.getBlockError()是不会为null的
+        /**
+         * 如果没有发生BlockException，增加相应的rt、增加Success次数、减少并发线程数
+         * 为什么发生了BlockException就不用减少并发线程数了呢？因为发生了BlockException异常，上面压根就不会增加并发线程数
+         */
         if (context.getCurEntry().getBlockError() == null) {
-            // 能进入这里，说明没有发生BlockException，下面就是增加相应的 rt 以及 Success 次数
             long completeStatTime = TimeUtil.currentTimeMillis();
             context.getCurEntry().setCompleteTimestamp(completeStatTime);
             long rt = completeStatTime - context.getCurEntry().getCreateTimestamp();
@@ -145,6 +156,11 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
             Throwable error = context.getCurEntry().getError();
 
             // Record response time and success count.
+            // 1. 增加rt和success
+            // 2. 减少并发线程数，
+            // 3. 如果error不为null，增加异常数（为DegradeSlot做异常比例、异常数降级指标）
+            //    什么情况下error会不为null，暂不清楚
+            //    后来发现处理@SentinelResource注解SentinelResourceAspect切面会有这种情况
             recordCompleteFor(node, count, rt, error);
             recordCompleteFor(context.getCurEntry().getOriginNode(), count, rt, error);
             if (resourceWrapper.getEntryType() == EntryType.IN) {

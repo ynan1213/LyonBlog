@@ -1463,12 +1463,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * and so reject the task.
          */
         int c = ctl.get();
+
+        // 当前工作线程数小于核心线程数，直接调用 addWorker 方法创建线程
         if (workerCountOf(c) < corePoolSize) {
             if (addWorker(command, true)) {
                 return;
             }
             c = ctl.get();
         }
+
+        // 调用 offer 方法，看看队列里面是否还能继续添加任务
         if (isRunning(c) && workQueue.offer(command)) {
             int recheck = ctl.get();
             if (! isRunning(recheck) && remove(command)) {
@@ -1477,6 +1481,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 addWorker(null, false);
             }
         }
+
+        // 如果不能继续添加，说明队列满了，执行 addWorker 方法，创建非核心线程，即启用最大线程数。
         else if (!addWorker(command, false)) {
             reject(command);
         }

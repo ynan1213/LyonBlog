@@ -101,14 +101,18 @@ public class TaskQueue extends LinkedBlockingQueue<Runnable> {
             return super.offer(o);
         }
         //we are maxed out on threads, simply queue the object
+        // 如果当前线程池的线程数已经是配置的最大线程数了，那就调用 offer 方法，把当前请求放到到队列里面去。
         if (parent.getPoolSizeNoLock() == parent.getMaximumPoolSize()) {
             return super.offer(o);
         }
         //we have idle threads, just add it to the queue
+        // 如果已经提交到线程池里面待执行或者正在执行的任务个数，比当前线程池的线程数还少。
+        // 则说明当前线程池有空闲线程可以执行任务，则把任务放到队列里面去，就会被空闲线程给取走执行。
         if (parent.getSubmittedCount() <= parent.getPoolSizeNoLock()) {
             return super.offer(o);
         }
         //if we have less threads than maximum force creation of a new thread
+        // 如果当前线程池的线程数比线程池配置的最大线程数还少，则返回 false。
         if (parent.getPoolSizeNoLock() < parent.getMaximumPoolSize()) {
             return false;
         }

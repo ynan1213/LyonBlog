@@ -380,34 +380,34 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
     static final class Node {
         /**
          * Marker to indicate a node is waiting in shared mode
-         * 标识节点当前在共享模式下
+         * <p>标识节点当前在共享模式下</p>
          */
         static final Node SHARED = new Node();
         /**
-         * Marker to indicate a node is waiting in exclusive mode
+         * Marker to indicate a node is waiting in exclusive mode <br/>
          * 标识节点当前在独占模式下
          */
         static final Node EXCLUSIVE = null;
 
         /**
-         * waitStatus value to indicate thread has cancelled
+         * waitStatus value to indicate thread has cancelled <br/>
          * 代表此线程取消了争抢这个锁，该节点被取消了
          */
         static final int CANCELLED =  1;
         /**
-         * waitStatus value to indicate successor's thread needs unparking
+         * waitStatus value to indicate successor's thread needs unparking  <br/>
          * 表示当前node的后继节点对应的线程需要被唤醒
          * signal：信号
          */
         static final int SIGNAL    = -1;
         /**
-         * waitStatus value to indicate thread is waiting on condition
+         * waitStatus value to indicate thread is waiting on condition  <br/>
          * 该节点进入了等待队列，即Condition的队列里
          */
         static final int CONDITION = -2;
         /**
          * waitStatus value to indicate the next acquireShared should
-         * unconditionally propagate
+         * unconditionally propagate  <br/>
          * 共享节点，该节点进锁后会释放锁
          */
         static final int PROPAGATE = -3;
@@ -444,10 +444,10 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
          *
          * The field is initialized to 0 for normal sync nodes, and
          * CONDITION for condition nodes.  It is modified using CAS
-         * (or when possible, unconditional volatile writes).
+         * (or when possible, unconditional volatile writes).  <br/>
          *
-         * 取值为上面的 -3、-2、-1、0、1
-         * 如果这个值 大于0 代表此线程取消了等待，
+         * 取值为上面的 -3、-2、-1、0、1  <br/>
+         * 如果这个值 大于0 代表此线程取消了等待  <br/>
          * ps: 半天抢不到锁，不抢了，ReentrantLock是可以指定timeouot的。。。
          */
         volatile int waitStatus;
@@ -461,8 +461,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
          * because the head node is never cancelled: A node becomes
          * head only as a result of successful acquire. A
          * cancelled thread never succeeds in acquiring, and a thread only
-         * cancels itself, not any other node.
-         *
+         * cancels itself, not any other node.  <br/>
          * 前驱节点的引用
          */
         volatile Node prev;
@@ -478,16 +477,14 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
          * to be null, we can scan prev's from the tail to
          * double-check.  The next field of cancelled nodes is set to
          * point to the node itself instead of null, to make life
-         * easier for isOnSyncQueue.
-         *
+         * easier for isOnSyncQueue.  <br/>
          * 前驱节点的引用
          */
         volatile Node next;
 
         /**
          * The thread that enqueued this node.  Initialized on
-         * construction and nulled out after use.
-         *
+         * construction and nulled out after use.  <br/>
          * 当前线程
          */
         volatile Thread thread;
@@ -500,8 +497,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
          * conditions. They are then transferred to the queue to
          * re-acquire. And because conditions can only be exclusive,
          * we save a field by using special value to indicate shared
-         * mode.
-         *
+         * mode.  <br/>
          * condition中记录下一个节点
          * Lock中记录当前的node是独占node还是共享node
          */
@@ -616,8 +612,8 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      * Creates and enqueues node for current thread and given mode.
      *
      * @param mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared
-     * @return the new node
-     *
+     * @return the new node <br/>
+     * <p>
      * 将自己封装为node并添加到队列的尾部，由tail指向
      * 根据tail是否为空，分为两种情况：
      *      1.tail不为空，则尝试用compareAndSetTail设置，设置成功，就可以返回了，设置失败说明有别的线程抢占成功，则进入enq
@@ -629,6 +625,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      *        这种情况用compareAndSetHead(new Node())即可，因为是在无线for循环里面，失败了再来一次即可
      *
      * 从这里可以看出，经过addWaiter方法后，当前线程一定会被加入到队列尾部
+     * </p>
      */
     private Node addWaiter(Node mode) {
         Node node = new Node(Thread.currentThread(), mode);
@@ -946,7 +943,8 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      */
     private final boolean parkAndCheckInterrupt() {
         LockSupport.park(this);
-        //返回线程是否被interrupte过，并清除interrupt标记
+        // LockSupport.park可以响应interrupte，但是不会抛出InterruptedException，只会将中断标志置为true
+        // 返回线程是否被interrupte过，并清除interrupt标记
         return Thread.interrupted();
     }
 
@@ -979,6 +977,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             // 标识当前线程是否被中断过
             boolean interrupted = false;
 
+            // 该方法和doAcquireInterruptibly（可中断）的区别就是，该方法只要进入了for循环，就会一直阻塞或者死循环知道获取到锁
             for (;;) {
                 // 获取当前节点的前继节点
                 final Node pre = node.predecessor();
@@ -987,8 +986,10 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
                 // 什么时候会出现pre == head 但是 tryAcquire 失败的情况呢？ 其实很常见，前一个节点获取到了锁但是未unLock释放锁
                 if (pre == head && tryAcquire(arg)) {
                     // 将head指向当前node，同时立即清空了当前node的thread和pre指针
+                    // addWaiter方法中如果head为null，会new Node()初始化创建一个
+                    // 这里将head指向当前线程的node，该node和head初始化创建的区别就是初始化的node没有nextWaiter
                     setHead(node);
-                    //p是原先head指向的node，因为当前线程已经获取到了资源，说明前一个node已经释放了资源
+                    // pre是原先head指向的node，因为当前线程已经获取到了资源，说明前一个node已经释放了资源
                     pre.next = null; // help GC
 
                     failed = false;
@@ -1365,7 +1366,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
              * 把当前线程再中断一次。
              *
              * 为什么要这么做呢？
-             * 从上面的代码中我们知道，即使线程在等待资源的过程中被中断唤醒，它还是会不依不饶的再抢锁，
+             * 从acquireQueued中我们知道，即使线程在等待资源的过程中被中断唤醒，它还是会不依不饶的再抢锁，
              * 直到它抢到锁为止。也就是说，它是不响应这个中断的，仅仅是记录下自己被人中断过。
              * 最后，当它抢到锁返回了，如果它发现自己曾经被中断过，它就再中断自己一次，将这个中断补上。
              * 注意，中断对线程来说只是一个建议，一个线程被中断只是其中断状态被设为true, 线程可以选择
@@ -1373,7 +1374,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
              *
              * 知识点：
              *  1.Thread.interrupted()返回中断状态，并清除中断状态
-             *  2.LockSupport可以响应中断,但不会抛出InterruptedException异常.
+             *  2.LockSupport可以响应中断,中断标志会被置为true,但不会抛出InterruptedException异常.
              *
              */
             selfInterrupt();
@@ -1471,7 +1472,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      *        and can represent anything you like.
      */
     public final void acquireShared(int arg) {
-        // tryAcquireShared 返回-1获取锁失败，返回值大于1或者0获取锁成功
+        // tryAcquireShared 返回 小于0 表示获取锁失败，返回值大于1或者0获取锁成功
         if (tryAcquireShared(arg) < 0)
             //获取锁失败，进入队列操作
             doAcquireShared(arg);

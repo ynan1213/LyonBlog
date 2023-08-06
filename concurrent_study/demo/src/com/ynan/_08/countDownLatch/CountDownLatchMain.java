@@ -9,6 +9,8 @@ public class CountDownLatchMain
         // 构造一个资源
         CountDownLatch latch = new CountDownLatch(1000);
 
+        latch.countDown();
+
         Demo demo = new Demo();
 
         for (int i = 0; i < 1000; i++)

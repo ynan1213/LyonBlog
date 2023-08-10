@@ -1,26 +1,23 @@
 package com.ynan._01.实现多线程方式;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
-public class Main4
-{
-    public static void main(String[] args)
-    {
-        // ExecutorService executorService = Executors.newFixedThreadPool(4);
-        // for (int i = 0; i <= 100; i++)
-        // {
-        //     int finalI = i;
-        //     executorService.execute(() -> {
-        //         if (finalI < 4)
-        //         {
-        //             Thread.currentThread().setName("xxxx - " + (finalI + 1));
-        //         }
-        //         System.out.println(Thread.currentThread().getName());
-        //     });
-        // }
+public class Main4 {
 
-        System.out.println(Runtime.getRuntime().availableProcessors());
+    public static void main(String[] args) throws InterruptedException {
+        ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(0, 5, 1000, TimeUnit.MINUTES,
+            new LinkedBlockingQueue<>());
+
+        poolExecutor.submit(() -> {});
+        poolExecutor.submit(() -> {});
+        poolExecutor.submit(() -> {});
+        poolExecutor.submit(() -> {});
+        poolExecutor.submit(() -> {});
+        poolExecutor.submit(() -> {});
+        poolExecutor.submit(() -> {});
+
+
+
 
     }
 }

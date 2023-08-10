@@ -1247,6 +1247,8 @@ class Thread implements Runnable {
 
         if (millis == 0) {
             while (isAlive()) {
+                // 这里的this是线程对象，但是执行到这里的线程通常是其它线程
+                // wait的作用是其它线程执行到这里，进入该线程对象的等待池并释放锁
                 wait(0);
             }
         } else {

@@ -39,7 +39,7 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
     private final boolean releaseTtlValueReferenceAfterRun;
 
     private TtlRunnable(@NonNull Runnable runnable, boolean releaseTtlValueReferenceAfterRun) {
-        // capture()方法就是把父线程内的线程变量获取过来，最后保存到了包装任务TtlRunnable内的capturedRef
+        // capture()方法就是把父线程内的线程变量获取过来
         this.capturedRef = new AtomicReference<Object>(capture());
         this.runnable = runnable;
         this.releaseTtlValueReferenceAfterRun = releaseTtlValueReferenceAfterRun;
@@ -54,7 +54,7 @@ public final class TtlRunnable implements Runnable, TtlWrapper<Runnable>, TtlEnh
         if (captured == null || releaseTtlValueReferenceAfterRun && !capturedRef.compareAndSet(captured, null)) {
             throw new IllegalStateException("TTL value reference is released after run!");
         }
-
+        Thread thread = Thread.currentThread();
         final Object backup = replay(captured);
         try {
             runnable.run();

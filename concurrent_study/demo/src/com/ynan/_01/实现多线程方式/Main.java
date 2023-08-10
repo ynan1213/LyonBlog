@@ -19,10 +19,10 @@ public class Main
 
         // 主线程阻塞等待task执行完毕
         // 如果call方法内抛了异常，这里的get方法也会抛出异常
-        //String result = task.get();
+        String result = task.get();
 
         // 添加超时机制，超时了不是返回null，而是抛出 TimeoutException 异常
-        String result = task.get(3, TimeUnit.SECONDS);
+        String result1 = task.get(3, TimeUnit.SECONDS);
 
         System.out.println("主线程中拿到异步任务执行的结果为：" + result);
 

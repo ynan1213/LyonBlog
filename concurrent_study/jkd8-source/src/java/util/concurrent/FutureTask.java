@@ -120,6 +120,8 @@ public class FutureTask<V> implements RunnableFuture<V> {
             return (V)x;
         if (s >= CANCELLED)
             throw new CancellationException();
+
+        // 到这里，说明是EXCEPTIONAL，将异常包装后返回
         throw new ExecutionException((Throwable)x);
     }
 
@@ -192,8 +194,11 @@ public class FutureTask<V> implements RunnableFuture<V> {
      */
     public V get() throws InterruptedException, ExecutionException {
         int s = state;
+        // 如果NEW（未执行）或者COMPLETING（正在设置值），进入等待
         if (s <= COMPLETING)
             s = awaitDone(false, 0L);
+
+        // 到这里说明已经执行结束，将结果返回
         return report(s);
     }
 
@@ -413,6 +418,15 @@ public class FutureTask<V> implements RunnableFuture<V> {
         for (;;) {
             /**
              * Thread.interrupted()：返回调用线程的中断状态，如果中断过，返回true并清除中断状态，否则false
+             *
+             * for循环的末尾处：
+             *  如果线程进入park阻塞被唤醒：
+             *    1. 要么是执行了uppark，这种情况线程中断标志位为false，不会进入下面的if，表示有正常值返回；
+             *    2. 要么是被interrupt，表示被异常中断，由于park可以响应interrupt，但是不会抛出InterruptedException，所以进入下面的if
+             *       抛出InterruptedException；
+             *  如果进入parkNanos带超时阻塞被唤醒：
+             *    1. 要么是被uppark，不会进入if
+             *    2. 要么是超时自动唤醒（不会抛出异常，中断标志位为false），不会进入if，注意方法外部会抛出TimeoutException
              */
             if (Thread.interrupted()) {
                 removeWaiter(q);

@@ -1067,13 +1067,17 @@ public class ScheduledThreadPoolExecutor extends ThreadPoolExecutor implements S
 
         public RunnableScheduledFuture<?> take() throws InterruptedException {
             final ReentrantLock lock = this.lock;
+            // 获取Lock
             lock.lockInterruptibly();
             try {
                 for (;;) {
+                    // 获取周期任务
                     RunnableScheduledFuture<?> first = queue[0];
                     if (first == null)
+                        // 如果PriorityQueue为空，当前线程到Condition中等待
                         available.await();
                     else {
+                        // 如果PriorityQueue的头元素的time时间比当前时间大，到Condition中等待到time时间；
                         long delay = first.getDelay(NANOSECONDS);
                         if (delay <= 0)
                             return finishPoll(first);

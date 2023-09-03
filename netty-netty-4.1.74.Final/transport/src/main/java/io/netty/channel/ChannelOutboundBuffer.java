@@ -127,6 +127,7 @@ public final class ChannelOutboundBuffer {
             Entry tail = tailEntry;
             tail.next = entry;
         }
+        // 每添加一个entry，挂到链表tail处
         tailEntry = entry;
         if (unflushedEntry == null) {
             unflushedEntry = entry;
@@ -140,6 +141,9 @@ public final class ChannelOutboundBuffer {
     /**
      * Add a flush to this {@link ChannelOutboundBuffer}. This means all previous added messages are marked as flushed
      * and so you will be able to handle them.
+     *
+     * 这个方法并不是做写数据到 Socket 的操作, 而是将 unflushedEntry 的引用转移到 flushedEntry 引用中
+     * 同时将每个entry设置为不可取消，最后将 unflushedEntry 置为 null
      */
     public void addFlush() {
         // There is no need to process all entries if there was already a flush before and no new messages
@@ -152,9 +156,13 @@ public final class ChannelOutboundBuffer {
                 // there is no flushedEntry yet, so start with the entry
                 flushedEntry = entry;
             }
+
+            // while循环的作用就是
             do {
+                // 要冲刷的数量，但是还没真正冲刷出去
                 flushed ++;
-                // 设置 future 无法 cancel
+
+                // 设置当前节点不可取消，相当于锁定该entry，如果锁定失败, 关闭该entry，继续下一个
                 if (!entry.promise.setUncancellable()) {
                     // Was cancelled so make sure we free up memory and notify about the freed bytes
                     int pending = entry.cancel();
@@ -275,6 +283,7 @@ public final class ChannelOutboundBuffer {
 
         removeEntry(e);
 
+        // 这个操作就会标识异步write操作为成功完成，并且会回调已经注册到ByteBuf的promise上的所有listeners
         if (!e.cancelled) {
             // only release message, notify and decrement if it was not canceled before.
             ReferenceCountUtil.safeRelease(msg);
@@ -340,6 +349,9 @@ public final class ChannelOutboundBuffer {
     /**
      * Removes the fully written entries and update the reader index of the partially written entry.
      * This operation assumes all messages in this buffer is {@link ByteBuf}.
+     *
+     * 通过已经写出数据的字节数来清理或修改ByteBuf。
+     * 也就是说writtenBytes的大小可能是包含了多个ByteBuf以及某个ByteBuf的部分数据(因为一个ByteBuf可能只写出了部分数据，还未完成被写出到网络层中)
      */
     public void removeBytes(long writtenBytes) {
         for (;;) {
@@ -354,12 +366,15 @@ public final class ChannelOutboundBuffer {
             final int readableBytes = buf.writerIndex() - readerIndex;
 
             if (readableBytes <= writtenBytes) {
+                // 本次socket的write操作(这里是真的是网络通信写操作了)已经写出去的字节数”大于"了当前ByteBuf包可读取的字节数
+                // 这说明，当前这个包中所有的可写的数据都已经写完了，既然当前这个ByteBuf的数据都写完了，那么久可以将其删除了
                 if (writtenBytes != 0) {
                     progress(readableBytes);
                     writtenBytes -= readableBytes;
                 }
                 remove();
             } else { // readableBytes > writtenBytes
+                // 本次真实写出去的数据 比 当前这个ByteBuf的可读取数据要小（也就说明，当前这个ByteBuf还没有被完全的写完。因此并不会通过调用『remove()』操作
                 if (writtenBytes != 0) {
                     buf.readerIndex(readerIndex + (int) writtenBytes);
                     progress(writtenBytes);

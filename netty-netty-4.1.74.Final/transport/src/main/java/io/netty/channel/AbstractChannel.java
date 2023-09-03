@@ -427,7 +427,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      * {@link Unsafe} implementation which sub-classes must extend and use.
      */
     protected abstract class AbstractUnsafe implements Unsafe {
-
+        // 一个channel唯一对应一个unsafe，一个unsafe唯一对应一个outboundBuffer
         private volatile ChannelOutboundBuffer outboundBuffer = new ChannelOutboundBuffer(AbstractChannel.this);
         private RecvByteBufAllocator.Handle recvHandle;
         private boolean inFlush0;
@@ -441,6 +441,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         @Override
         public RecvByteBufAllocator.Handle recvBufAllocHandle() {
             if (recvHandle == null) {
+                // 这里创建的是AdaptiveRecvByteBufAllocator.HandleImpl实例
                 recvHandle = config().getRecvByteBufAllocator().newHandle();
             }
             return recvHandle;
@@ -870,7 +871,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             int size;
             try {
+                // 在netty中只有ByteBuf和FileRegion才允许进行最终的Socket网络传输，其它的类型都会抛出 UnsupportedOperationException 异常
+                // 并且会把堆ByteBuf转换为一个非堆的ByteBuf
                 msg = filterOutboundMessage(msg);
+                // 估计待发送数据的大小：如果是FileRegion的话直接返回0，否则返回ByteBuf中可读取字节数
                 size = pipeline.estimatorHandle().size(msg);
                 if (size < 0) {
                     size = 0;
@@ -883,10 +887,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 }
                 return;
             }
-            /**
-             *  addMessage方法主要就是将请求写出的数据封装为Entry对象，然后加入到tailEntry和unflushedEntry中。
-             *  然后调用『incrementPendingOutboundBytes(entry.pendingSize, false)对totalPendingSize属性以及 unwritable 字段做调整。
-             */
+            // 将写出的数据封装为Entry对象，然后加入到tailEntry和unflushedEntry中。
+            // 然后调用『incrementPendingOutboundBytes(entry.pendingSize, false)对totalPendingSize属性以及 unwritable 字段做调整。
             outboundBuffer.addMessage(msg, size, promise);
         }
 

@@ -353,7 +353,11 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     @Override
     protected int doReadBytes(ByteBuf byteBuf) throws Exception {
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
+
+        // byteBuf.writableBytes()方法返回byteBuf中可写的字节数，内部计算方法是用byteBuf的容量 - byteBuf的写索引得出
         allocHandle.attemptedBytesRead(byteBuf.writableBytes());
+
+        // 将Channel中的数据写入到byteBuf中，返回值为实际写入到ByteBuf中的字节数，底层还是调用了SocketChannel.read(ByteBuffer)
         return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead());
     }
 
@@ -385,6 +389,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     @Override
     protected void doWrite(ChannelOutboundBuffer in) throws Exception {
         SocketChannel ch = javaChannel();
+        // 最多循环写16次
         int writeSpinCount = config().getWriteSpinCount();
         do {
             if (in.isEmpty()) {
@@ -397,13 +402,22 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
             // Ensure the pending writes are made of ByteBufs only.
             int maxBytesPerGatheringWrite = ((NioSocketChannelConfig) config).getMaxBytesPerGatheringWrite();
             ByteBuffer[] nioBuffers = in.nioBuffers(1024, maxBytesPerGatheringWrite);
+
+            // 本次循环需要写出的ByteBuffer个数
             int nioBufferCnt = in.nioBufferCount();
 
             // Always use nioBuffers() to workaround data-corruption.
             // See https://github.com/netty/netty/issues/2761
+            /**
+             * 如果待发送的消息包含的JDK原生ByteBuffer数为0，则调用父类AbstractNioByteChannel的doWrite0方法，将Netty的Bytebuf发送到TCP缓冲区;
+             * 如果待发送消息的ByteBuffer数量等于1，则直接通过nioBuffers[0]获取待发送消息的ByteBuffer，通过JDK的SocketChannel直接完成消息发送;
+             * 如果待发送消息的ByteBuffer数量大于1，则调用SocketChannel的批量发送接口，将nioBuffers数组写入TCP发送缓冲区；
+             */
             switch (nioBufferCnt) {
                 case 0:
                     // We have something else beside ByteBuffers to write so fallback to normal writes.
+                    // 翻译：除了ByteBuffers之外，还有其他东西要写，所以可以回退到正常写入
+                    // 什么意思？ FileRegion
                     writeSpinCount -= doWrite0(in);
                     break;
                 case 1: {
@@ -412,7 +426,9 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
                     // to check if the total size of all the buffers is non-zero.
                     ByteBuffer buffer = nioBuffers[0];
                     int attemptedBytes = buffer.remaining();
+                    // 调用JDK原生api:socketChannel.write(buffer)，返回值代表实际写出去的字节数
                     final int localWrittenBytes = ch.write(buffer);
+                    // 如果 <= 0，说明内核写缓冲区已经满了
                     if (localWrittenBytes <= 0) {
                         incompleteWrite(true);
                         return;
@@ -426,8 +442,10 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
                     // Zero length buffers are not added to nioBuffers by ChannelOutboundBuffer, so there is no need
                     // to check if the total size of all the buffers is non-zero.
                     // We limit the max amount to int above so cast is safe
+                    // 有多个ByteBuffer等待被传输，那么使用JDK NIO的聚集写操作，一次性传输多个ByteBuffer到NioSocketChannel中
                     long attemptedBytes = in.nioBufferSize();
                     final long localWrittenBytes = ch.write(nioBuffers, 0, nioBufferCnt);
+                    // 如果 <= 0，说明内核写缓冲区已经满了
                     if (localWrittenBytes <= 0) {
                         incompleteWrite(true);
                         return;
@@ -442,6 +460,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
             }
         } while (writeSpinCount > 0);
 
+        // 如果writeSpinCount < 0，说明循环写了16次仍没有写完，注册OP_WRITE事件等待下一次写
         incompleteWrite(writeSpinCount < 0);
     }
 

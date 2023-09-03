@@ -67,6 +67,7 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
     @Deprecated
     public static final AdaptiveRecvByteBufAllocator DEFAULT = new AdaptiveRecvByteBufAllocator();
 
+    // 利用二分查找法对该数组进行size定位 ，目标是为了找出该size值在数组中的下标位置
     private static int getSizeTableIndex(final int size) {
         for (int low = 0, high = SIZE_TABLE.length - 1;;) {
             if (high < low) {
@@ -98,10 +99,14 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
         private int nextReceiveBufferSize;
         private boolean decreaseNow;
 
+        /**
+         *  minIndex是最小下标，表示再怎么缩容，也不会小于它
+         *  maxIndex是最大下标
+         *  initial为初始化大小，也就是第一次推荐的大小
+         */
         HandleImpl(int minIndex, int maxIndex, int initial) {
             this.minIndex = minIndex;
             this.maxIndex = maxIndex;
-
             index = getSizeTableIndex(initial);
             nextReceiveBufferSize = SIZE_TABLE[index];
         }
@@ -113,6 +118,7 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
             // the selector to check for more data. Going back to the selector can add significant latency for large
             // data transfers.
             if (bytes == attemptedBytesRead()) {
+                // 如果本地读将缓冲区填充满，触发一次扩容
                 record(bytes);
             }
             super.lastBytesRead(bytes);
@@ -123,9 +129,18 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
             return nextReceiveBufferSize;
         }
 
+        /**
+         * INDEX_DECREMENT = 1，代表一次缩容多少，比较保守
+         * INDEX_INCREMENT = 4，代表一次扩容跳过4个格子，以保证下次有足够空间可以接收数据
+         *
+         * 入参就是本次实际读取到的字节数
+         */
         private void record(int actualReadBytes) {
             if (actualReadBytes <= SIZE_TABLE[max(0, index - INDEX_DECREMENT)]) {
+                // 进入这里，说明实际读取的字节数 <= 上一个格子，需要缩容
+                // 但是decreaseNow默认为false，第一次进来并不会缩容，只有第二次进来才会缩容
                 if (decreaseNow) {
+                    // 缩容，下标 - 1，但是不会小于minIndex
                     index = max(index - INDEX_DECREMENT, minIndex);
                     nextReceiveBufferSize = SIZE_TABLE[index];
                     decreaseNow = false;
@@ -133,6 +148,7 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
                     decreaseNow = true;
                 }
             } else if (actualReadBytes >= nextReceiveBufferSize) {
+                // 扩容，下标 + 4，但是不会超过maxIndex
                 index = min(index + INDEX_INCREMENT, maxIndex);
                 nextReceiveBufferSize = SIZE_TABLE[index];
                 decreaseNow = false;
@@ -155,6 +171,7 @@ public class AdaptiveRecvByteBufAllocator extends DefaultMaxMessagesRecvByteBufA
      * go down below {@code 64}, and does not go up above {@code 65536}.
      */
     public AdaptiveRecvByteBufAllocator() {
+        //   64               2048             65536
         this(DEFAULT_MINIMUM, DEFAULT_INITIAL, DEFAULT_MAXIMUM);
     }
 

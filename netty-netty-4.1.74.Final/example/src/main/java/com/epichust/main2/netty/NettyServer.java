@@ -1,10 +1,7 @@
 package com.epichust.main2.netty;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -25,9 +22,11 @@ public class NettyServer {
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5 * 1000)
                 .childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5 * 1000)
+                //.childOption(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(592048))
                 .attr(AttributeKey.newInstance("xxx"), "xxx")
                 .childAttr(AttributeKey.newInstance("yyy"), "yyy")
                 .handler(new MyLoggingHandler("服务端-父", LogLevel.INFO))
+                // childHandler 非空
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {

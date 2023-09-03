@@ -28,6 +28,7 @@ public class NettyClient {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
+                        pipeline.addLast(new MyCustomeHandler());
                         pipeline.addLast(new MyLoggingHandler("客户端", LogLevel.INFO));
 //                        pipeline.addLast(new StringEncoder());
                     }
@@ -35,7 +36,7 @@ public class NettyClient {
             ChannelFuture connectFuture = bootstrap.connect("127.0.0.1", 6666);
             System.out.println("connectFuture sync 之前");
             /**
-             * 在sync过程中，main线程会阻塞住，如果再connect过程中发生了异常：Connection refused: /127.0.0.1:6666
+             * 在sync过程中，main线程会阻塞住，如果在connect过程中发生了异常：Connection refused: /127.0.0.1:6666
              * 会唤醒main线程，然后main线程发现异常不为空，就会往外抛
              */
             connectFuture.sync();
@@ -63,14 +64,25 @@ public class NettyClient {
 
             //channelFuture.await(1000);
 
+            connectFuture.channel().closeFuture().sync();
+
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNextLine()) {
+                byte[] by = new byte[1000];
+                by[0] = 1;
+                by[1] = 1;
+                by[2] = 1;
+                by[998] = 2;
+                by[999] = 2;
                 String s = scanner.nextLine();
-                ByteBuf buffer = connectFuture.channel().alloc().buffer(5);
-                buffer.writeBytes(s.getBytes());
+                ByteBuf buffer = connectFuture.channel().alloc().buffer(4096);
+                ByteBuf buffer1 = connectFuture.channel().alloc().buffer(4096);
+                buffer.writeBytes(by);
+                buffer1.writeBytes(by);
                 connectFuture.channel().write(buffer);
-                connectFuture.channel().write(buffer);
-                connectFuture.channel().flush();
+                connectFuture.channel().write(buffer1);
+//                connectFuture.channel().write(buffer);
+//                connectFuture.channel().flush();
 //                ChannelFuture future = connectFuture.channel().writeAndFlush(buffer)
 //                    .addListener(new GenericFutureListener<Future<? super Void>>() {
 //                        @Override

@@ -150,7 +150,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
-                // config 是 ServerBootstrap 的成员变量，这里的handler方法返回的是 ServerBootstrap 的handler，注意不是childHandler
+                // config 是 ServerBootstrap 的成员变量，这里的handler方法返回的是 AbstractBootstrap 的handler，不是childHandler
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);

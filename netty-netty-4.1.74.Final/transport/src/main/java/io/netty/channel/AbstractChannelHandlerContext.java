@@ -717,6 +717,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void write(Object msg, boolean flush, ChannelPromise promise) {
         ObjectUtil.checkNotNull(msg, "msg");
         try {
+            // 判断promise是否有效，因为promise有可能是外部传入的
             if (isNotValidPromise(promise, true)) {
                 ReferenceCountUtil.release(msg);
                 // cancelled
@@ -737,6 +738,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
                 next.invokeWrite(m, promise);
             }
         } else {
+            // 不在NioEventLoop线程，封装成WriteTask异步提交
             final WriteTask task = WriteTask.newInstance(next, m, promise, flush);
             if (!safeExecute(executor, task, promise, m, !flush)) {
                 // We failed to submit the WriteTask. We need to cancel it so we decrement the pending bytes
@@ -1050,12 +1052,14 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             task.msg = msg;
             task.promise = promise;
 
+            // 提交任务时，是否计算 AbstractWriteTask 对象的自身占用内存大小，默认为true
             if (ESTIMATE_TASK_SIZE_ON_SUBMIT) {
                 /**
-                 * 为什么要加上 WRITE_TASK_OVERHEAD ？
-                 *  因为要加上 WriteTask 本身的大小，详情见write数据时 Entry 也类似
+                 * 为什么要加上 WRITE_TASK_OVERHEAD ？因为要加上 WriteTask 本身的大小，详情见write数据时 Entry 也类似
                  */
                 task.size = ctx.pipeline.estimatorHandle().size(msg) + WRITE_TASK_OVERHEAD;
+
+                // 增加 totalPendingSize 计数
                 ctx.pipeline.incrementPendingOutboundBytes(task.size);
             } else {
                 task.size = 0;
@@ -1088,6 +1092,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
 
         private void decrementPendingOutboundBytes() {
+            // 如果提交任务时，计算 AbstractWriteTask 对象的自身占用内存大小，这里就减掉
             if (ESTIMATE_TASK_SIZE_ON_SUBMIT) {
                 ctx.pipeline.decrementPendingOutboundBytes(size & Integer.MAX_VALUE);
             }

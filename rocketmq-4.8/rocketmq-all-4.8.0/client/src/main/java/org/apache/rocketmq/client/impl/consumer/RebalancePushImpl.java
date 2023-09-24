@@ -150,7 +150,9 @@ public class RebalancePushImpl extends RebalanceImpl {
             case CONSUME_FROM_MIN_OFFSET:
             case CONSUME_FROM_MAX_OFFSET:
             case CONSUME_FROM_LAST_OFFSET: {
-                // RemoteBrokerOffsetStore 是从broker中获取，有一点需要注意
+                // RemoteBrokerOffsetStore 是从broker中获取
+                //  如果broker中有该消费组的消费位置，返回值 > 0
+                //  如果broker中不存在，返回 -1
                 long lastOffset = offsetStore.readOffset(mq, ReadOffsetType.READ_FROM_STORE);
                 if (lastOffset >= 0) {
                     // 情况1：对于不是一个新的consumerGroup（之前消费过，broker端会记住consumer的消费位置），这里会返回上一次的offset，接着上一次进行消费。
@@ -159,7 +161,8 @@ public class RebalancePushImpl extends RebalanceImpl {
                 }
                 // First start,no offset
                 else if (-1 == lastOffset) {
-                    // 情况3：返回-1，说明broker端的数据有点多，非%RETRY%情况就是从messageQueue的最高位开始消费
+                    // 情况3：返回-1，说明broker端的数据有点多，这句话怎么理解？ 返回-1不是说明是新消费组吗？
+                    // 非%RETRY%情况就是从messageQueue的最高位开始消费
                     if (mq.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                         result = 0L;
                     } else {

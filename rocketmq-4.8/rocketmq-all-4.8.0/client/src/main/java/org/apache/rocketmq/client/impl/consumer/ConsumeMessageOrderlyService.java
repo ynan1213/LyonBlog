@@ -458,7 +458,7 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
                             .getConsumeMessageBatchMaxSize();
                         List<MessageExt> msgs = this.processQueue.takeMessages(consumeBatchSize);
 
-                        // 如果是 %RETRY% 开通的topic，恢复原先的topic
+                        // 如果是 %RETRY% 开头的topic，恢复原先的topic
                         defaultMQPushConsumerImpl.resetRetryAndNamespace(msgs, defaultMQPushConsumer.getConsumerGroup());
                         if (!msgs.isEmpty()) {
                             final ConsumeOrderlyContext context = new ConsumeOrderlyContext(this.messageQueue);

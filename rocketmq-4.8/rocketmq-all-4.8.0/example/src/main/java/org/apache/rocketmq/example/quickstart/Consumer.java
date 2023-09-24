@@ -24,6 +24,7 @@ import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragelyByCircle;
 import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
@@ -35,17 +36,20 @@ public class Consumer {
 
     public static void main(String[] args) throws InterruptedException, MQClientException {
 
+        startProducer();
+
         System.setProperty("rocketmq.client.logUseSlf4j", "true");
+        System.setProperty("rocketmq.client.logRoot", "/Users/yuannan/GitProjects/rocketmq/logs/consumer");
 
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("groupName");
-        consumer.setNamespace("namespaceName");
+        consumer.setNamespace("namespace0001");
         //DefaultMQPullConsumer pullConsumer = new DefaultMQPullConsumer()
 
         // 消费组模式，集群还是广播，默认集群
         consumer.setMessageModel(MessageModel.CLUSTERING);
         //consumer.setMessageModel(MessageModel.BROADCASTING);
 
-        consumer.setNamesrvAddr("47.100.24.106:9876");
+        consumer.setNamesrvAddr("localhost:9876");
 
         // 默认是 CONSUME_FROM_LAST_OFFSET
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
@@ -57,14 +61,14 @@ public class Consumer {
 
         // 可以订阅多个
         // subExpression 可以填多个，用 || 分隔
-        consumer.subscribe("signal_topic", "*");
-//        consumer.subscribe("aaa111", "EXP_A || EXP_B");
+        consumer.subscribe("Topic-A06", "*");
+        // consumer.subscribe("aaa111", "EXP_A || EXP_B");
 
         // 取消主题订阅
         // consumer.unsubscribe("TOPIC_02");
 
         // 注册队列分配策略器
-        consumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragelyByCircle());
+        // consumer.setAllocateMessageQueueStrategy(new AllocateMessageQueueAveragelyByCircle());
 
         // 注册消息消费钩子函数
         //consumer.getDefaultMQPushConsumerImpl().registerConsumeMessageHook(hook)
@@ -84,7 +88,7 @@ public class Consumer {
             System.out.println(messageExt.getProperties());
 //            context.setDelayLevelWhenNextConsume(1);
 //            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
         });
         AtomicInteger i = new AtomicInteger(0);
         //顺序消费
@@ -95,5 +99,19 @@ public class Consumer {
 
         consumer.start();
 
+    }
+
+    public static void startProducer() throws MQClientException {
+        System.setProperty("rocketmq.client.name", "xxx" + "@" + System.currentTimeMillis());
+        System.setProperty("rocketmq.client.logRoot", "/Users/yuannan/GitProjects/rocketmq/logs/producer");
+
+        DefaultMQProducer producer01 = new DefaultMQProducer("namespace0001", "producerGroupTest0001");
+        // DefaultMQProducer producer = new DefaultMQProducer("producerGroupTest0001");
+        // enableMsgTrace：开启消息轨迹
+        //        DefaultMQProducer producer = new DefaultMQProducer("groupName", true);
+        producer01.setNamesrvAddr("localhost:9876");
+        producer01.setDefaultTopicQueueNums(5);
+        producer01.setRetryTimesWhenSendFailed(0);
+        producer01.start();
     }
 }

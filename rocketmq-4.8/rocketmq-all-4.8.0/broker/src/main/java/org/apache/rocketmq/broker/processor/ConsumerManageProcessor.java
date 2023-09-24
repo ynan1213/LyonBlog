@@ -109,9 +109,12 @@ public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implemen
         final UpdateConsumerOffsetRequestHeader requestHeader =
             (UpdateConsumerOffsetRequestHeader) request
                 .decodeCommandCustomHeader(UpdateConsumerOffsetRequestHeader.class);
-        this.brokerController.getConsumerOffsetManager()
-            .commitOffset(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), requestHeader.getConsumerGroup(),
-                requestHeader.getTopic(), requestHeader.getQueueId(), requestHeader.getCommitOffset());
+        this.brokerController.getConsumerOffsetManager().commitOffset(
+            RemotingHelper.parseChannelRemoteAddr(ctx.channel()),
+            requestHeader.getConsumerGroup(),
+            requestHeader.getTopic(),
+            requestHeader.getQueueId(),
+            requestHeader.getCommitOffset());
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
         return response;
@@ -126,7 +129,7 @@ public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implemen
             (QueryConsumerOffsetRequestHeader) request
                 .decodeCommandCustomHeader(QueryConsumerOffsetRequestHeader.class);
 
-        // 如果没有该消费组的偏移量记录，返回 -1
+        // 如果没有该消费组的偏移量记录，内部会返回 -1
         long offset = this.brokerController.getConsumerOffsetManager().queryOffset(
             requestHeader.getConsumerGroup(), requestHeader.getTopic(), requestHeader.getQueueId());
 
@@ -135,14 +138,12 @@ public class ConsumerManageProcessor extends AsyncNettyRequestProcessor implemen
             response.setCode(ResponseCode.SUCCESS);
             response.setRemark(null);
         } else {
-            // 如果上面没有找到，再查找该 messageQueue 最小的偏移量
-            // 获取topic对应的队列的最小偏移量。新的队列或消息数据未清理过的话，返回值为0（注意：如果新扩容队列也是新队列）
-            long minOffset = this.brokerController.getMessageStore()
-                .getMinOffsetInQueue(requestHeader.getTopic(), requestHeader.getQueueId());
+            // offset小于0，即broker中不存在该消费者组的offset信息，说明是一个新加入的消费者组
+            // 查找该 ConsumeQueue 最小的偏移量minOffset？？？  没理解
+            long minOffset = this.brokerController.getMessageStore().getMinOffsetInQueue(requestHeader.getTopic(), requestHeader.getQueueId());
+
             if (minOffset <= 0
-                // 检查此队列的最老的数据是否还在内存，在内存则返回0
-                && !this.brokerController.getMessageStore()
-                .checkInDiskByConsumeOffset(requestHeader.getTopic(), requestHeader.getQueueId(), 0)) {
+                && !this.brokerController.getMessageStore().checkInDiskByConsumeOffset(requestHeader.getTopic(), requestHeader.getQueueId(), 0)) {
                 responseHeader.setOffset(0L);
                 response.setCode(ResponseCode.SUCCESS);
                 response.setRemark(null);

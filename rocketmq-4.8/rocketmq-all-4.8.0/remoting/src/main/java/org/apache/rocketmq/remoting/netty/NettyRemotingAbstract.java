@@ -191,7 +191,7 @@ public abstract class NettyRemotingAbstract {
         // 根据 RemotingCommand 的 code 匹配处理器
         final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
         // 如果未匹配到，则用默认的
-        // nameServer 维护了一个默认的处理器
+        // nameServer 只维护了一个默认的处理器
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
         final int opaque = cmd.getOpaque();
 
@@ -244,8 +244,9 @@ public abstract class NettyRemotingAbstract {
                 }
             };
 
-            // 拒绝策略拒绝请求，可以通过设置该processor拒绝请求，来缓解服务器压力，但是通过什么途经可以设置该processor呢？不同的processor有不同的实现
-            // 1.SendMessageProcessor 可以通过判断 getMessageStore().isOSPageCacheBusy() || getMessageStore().isTransientStorePoolDeficient()
+            // 拒绝策略拒绝请求，可以通过设置该processor拒绝请求，来缓解服务器压力，通过什么方式设置该processor呢？不同的processor有不同的实现
+            // 1、SendMessageProcessor 可以通过判断 getMessageStore().isOSPageCacheBusy() || getMessageStore().isTransientStorePoolDeficient()
+            // 2、Namesrv的 DefaultRequestProcessor 固定写死了false
             if (pair.getObject1().rejectRequest()) {
                 final RemotingCommand response = RemotingCommand
                     .createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY,
@@ -263,7 +264,7 @@ public abstract class NettyRemotingAbstract {
                 // RejectedExecutionException 为线程池异常，有两种情形抛出：
                 //      1. 每次在submit任务的时候，会先进行addWorker()的判断，如果不能添加成功，则会抛出RejectedExecutionException
                 //      2. 当执行完execute.shutdown()后，任然往executor里提交task,也会抛出该异常
-                // todo 这是什么意思？？？ 每10秒打印一次？？？
+                // 这是什么意思？？？ 每10秒打印一次？？？
                 if ((System.currentTimeMillis() % 10000) == 0) {
                     log.warn(RemotingHelper.parseChannelRemoteAddr(ctx.channel())
                         + ", too many requests and system thread pool busy, RejectedExecutionException " + pair.getObject2().toString()
@@ -432,8 +433,10 @@ public abstract class NettyRemotingAbstract {
 
     public RemotingCommand invokeSyncImpl(final Channel channel, final RemotingCommand request, final long timeoutMillis)
         throws InterruptedException, RemotingSendRequestException, RemotingTimeoutException {
+
         // 每个RemotingCommand的opaque都会不一样，AtomicInteger增加
         final int opaque = request.getOpaque();
+
         try {
             final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis, null, null);
             this.responseTable.put(opaque, responseFuture);
@@ -456,23 +459,27 @@ public abstract class NettyRemotingAbstract {
                 }
             });
 
-            // todo 最多等待timeoutMillis（debug调试过程将 timeoutMillis 改成3000）
-            //RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
-            // 该方法是同步调用，所有线程需要阻塞一会等待远程服务的返回消息
-            // responseFuture的RemotingCommand是怎么设置进去的呢？ 其实是另一个处理的线程在接收到服务的返回消息后设置的
-            RemotingCommand responseCommand = responseFuture.waitResponse(3000);
+            /*
+             * 最多等待timeoutMillis（debug调试过程将 timeoutMillis 改成3000）
+             * 该方法是同步调用，所有线程需要阻塞等待远程服务的返回消息，但是最多不会超过timeoutMillis时长
+             * 然后根据responseCommand是否为null判断broker是否有返回:
+             *  1.responseCommand 不为空说明已经接收到了Server的返回数据
+             *  2.responseCommand 为null说明 timeoutMillis 时长内broker未返回，然后根据isSendRequestOK()抛出不同类型的异常
+             *
+             * responseFuture 的 RemotingCommand 是怎么设置进去的呢？
+             * 另一个处理线程在接收到服务返回消息后设置的，详情见NettyRemotingAbstract.processResponseCommand
+             */
+            RemotingCommand responseCommand = responseFuture.waitResponse(/*timeoutMillis*/ 3000);
             if (null == responseCommand) {
                 // 能进入if，说明等待了 timeoutMillis 时长
                 if (responseFuture.isSendRequestOK()) {
-                    // responseFuture.isSendRequestOK()=true 说明发送成功但是还未接收到返回数据
-                    throw new RemotingTimeoutException(RemotingHelper.parseSocketAddressAddr(addr), timeoutMillis,
-                        responseFuture.getCause());
+                    // responseFuture.isSendRequestOK() = true 说明发送成功但是还未接收到返回数据
+                    throw new RemotingTimeoutException(RemotingHelper.parseSocketAddressAddr(addr), timeoutMillis, responseFuture.getCause());
                 } else {
-                    // responseFuture.isSendRequestOK()=false 说明发送失败
+                    // responseFuture.isSendRequestOK() = false 说明发送失败
                     throw new RemotingSendRequestException(RemotingHelper.parseSocketAddressAddr(addr), responseFuture.getCause());
                 }
             }
-            // responseCommand又远程服务器返回消息时设置，不为空说明已经接收到了Server的返回数据
             return responseCommand;
         } finally {
             this.responseTable.remove(opaque);

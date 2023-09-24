@@ -56,6 +56,7 @@ public class NamesrvController
 
     private BrokerHousekeepingService brokerHousekeepingService;
 
+    // Executors.newFixedThreadPool(8)
     private ExecutorService remotingExecutor;
 
     private Configuration configuration;

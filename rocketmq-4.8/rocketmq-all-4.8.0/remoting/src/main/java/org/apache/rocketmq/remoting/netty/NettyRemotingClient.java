@@ -381,10 +381,10 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
             try {
                 doBeforeRpcHooks(addr, request);
                 long costTime = System.currentTimeMillis() - beginStartTime;
-                //todo 先注掉
-                //                if (timeoutMillis < costTime) {
-                //                    throw new RemotingTimeoutException("invokeSync call timeout");
-                //                }
+                // 先注掉
+                // if (timeoutMillis < costTime) {
+                //     throw new RemotingTimeoutException("invokeSync call timeout");
+                // }
                 // timeoutMillis - costTime 减去前面创建通道消耗后的剩余时间
                 RemotingCommand response = this.invokeSyncImpl(channel, request, timeoutMillis - costTime);
                 doAfterRpcHooks(RemotingHelper.parseChannelRemoteAddr(channel), request, response);

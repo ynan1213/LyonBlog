@@ -45,20 +45,29 @@ public class ProcessQueue {
     private final InternalLogger log = ClientLogger.getLog();
 
     private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
+
+    // 消息存储容器，key为消息在ConsumeQueue中的偏移量
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
 
-    private final AtomicLong msgCount = new AtomicLong();// ProcessQueue 中总消息数
-    private final AtomicLong msgSize = new AtomicLong();
-    private final Lock lockConsume = new ReentrantLock();
     /**
      * A subset of msgTreeMap, will only be used when orderly consume
      */
     private final TreeMap<Long, MessageExt> consumingMsgOrderlyTreeMap = new TreeMap<Long, MessageExt>();
+
+    // ProcessQueue 中总消息数
+    private final AtomicLong msgCount = new AtomicLong();
+    private final AtomicLong msgSize = new AtomicLong();
+    private final Lock lockConsume = new ReentrantLock();
+
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
-    private volatile long queueOffsetMax = 0L;// 当前 ProcessQueue 中包含的最大队列偏移量
-    private volatile boolean dropped = false;// 当前 ProcessQueue 是否被丢弃
-    private volatile long lastPullTimestamp = System.currentTimeMillis();// 上一次开始消息拉取时间戳
-    private volatile long lastConsumeTimestamp = System.currentTimeMillis();// 上一次消息消费时间戳
+    // 当前 ProcessQueue 中包含的最大队列偏移量
+    private volatile long queueOffsetMax = 0L;
+    // 当前 ProcessQueue 是否被丢弃
+    private volatile boolean dropped = false;
+    // 上一次开始消息拉取时间戳
+    private volatile long lastPullTimestamp = System.currentTimeMillis();
+    // 上一次消息消费时间戳
+    private volatile long lastConsumeTimestamp = System.currentTimeMillis();
     private volatile boolean locked = false;
     private volatile long lastLockTimestamp = System.currentTimeMillis();
     private volatile boolean consuming = false;

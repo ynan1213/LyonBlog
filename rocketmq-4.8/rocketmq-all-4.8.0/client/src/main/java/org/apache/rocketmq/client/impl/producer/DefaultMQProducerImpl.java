@@ -548,7 +548,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         long beginTimestampPrev = beginTimestampFirst;
         long endTimestamp = beginTimestampFirst;
 
-        /**
+        /*
          * 获取指定主题的路由信息：
          *      1、先从缓存查找，如果没有再从nameServer中查找；
          *      2、nameServer返回的 TopicRouteData 类型对象，该对象有个QueueData类型的List，每一个QueueData记录一个拥有指
@@ -556,7 +556,8 @@ public class DefaultMQProducerImpl implements MQProducerInner {
          *      3、如果nameServer不存在该topic的路由信息，会再次以默认主题TBW102去nameServer查找，只要Broker开启了默认创
          *         建主题的开关，都会向nameServer注册该主题信息，并且读写队列都是8，所以再次查找时会返回该路由信息，并且
          *         producer的默认读写队列数量是4，会将返回的TopicRouteData的读写队列数量改为4；
-         *      4、查找到的TopicRouteData对象，会根据写队列数量，创建对应数量的MessageQueue，封装为TopicPublishInfo对象
+         *      4、查找到的TopicRouteData对象，会根据写队列数量，创建对应数量的MessageQueue，封装为TopicPublishInfo对象,然后存到
+         *         topicPublishInfoTable缓存中，下次可以直接从缓存中取，topicPublishInfoTable是可以被多个线程共享的；
          */
         TopicPublishInfo topicPublishInfo = this.tryToFindTopicPublishInfo(msg.getTopic());
         if (topicPublishInfo != null && topicPublishInfo.ok()) {
@@ -566,7 +567,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             Exception exception = null;
             SendResult sendResult = null;
 
-            // 同步发送方式有两次重发机会，异步和单向没有重发机会
+            // 同步发送方式有两次重发机会，异步和单向没有重发机会。异步也有重试机会，只不过异步的重试机会在回调里面，下面的重试只针对同步发送
             int timesTotal = communicationMode == CommunicationMode.SYNC ? 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed() : 1;
             int times = 0;
             String[] brokersSent = new String[timesTotal];
@@ -587,17 +588,17 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
                         // 发送方法会传进来一个timeout，代表整个发送流程的超时时间，如果timeout < costTime，说明超时了
                         long costTime = beginTimestampPrev - beginTimestampFirst;
-                        // todo 先注掉
-                        //                        if (timeout < costTime) {
-                        //                            callTimeout = true;
-                        //                            break;
-                        //                        }
+                        // 先注掉
+                        // if (timeout < costTime) {
+                        //     callTimeout = true;
+                        //     break;
+                        // }
 
                         // 调用发送方法，将timeout - costTime传进去，代表剩余的超时时间
                         sendResult = this.sendKernelImpl(msg, mq, communicationMode, sendCallback, topicPublishInfo, timeout - costTime);
                         endTimestamp = System.currentTimeMillis();
 
-                        /**
+                        /*
                          * 走到这里说明并没有发生网络异常或者超时总超时（默认3S）
                          * 但是如果开启了sendLatencyFaultEnabley延迟优化，会加入到延迟队列
                          * 具体策略是：
@@ -662,7 +663,6 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                                 if (sendResult != null) {
                                     return sendResult;
                                 }
-
                                 throw e;
                         }
                     } catch (InterruptedException e) {
@@ -691,6 +691,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             info += FAQUrl.suggestTodo(FAQUrl.SEND_MSG_FAILED);
 
             MQClientException mqClientException = new MQClientException(info, exception);
+            // callTimeout在上面只有一个地方被设置为true
             if (callTimeout) {
                 throw new RemotingTooMuchRequestException("sendDefaultImpl call timeout");
             }
@@ -719,6 +720,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         if (null == topicPublishInfo || !topicPublishInfo.ok()) {
             // putIfAbsent:如果传入key对应的value已经存在，就返回存在的value，不进行替换。如果不存在，就添加key和value，返回null
             this.topicPublishInfoTable.putIfAbsent(topic, new TopicPublishInfo());
+            // MQClientInstance拉取到topic后会更新每一个producer的topicPublishInfoTable缓存
             this.mQClientFactory.updateTopicRouteInfoFromNameServer(topic);
             topicPublishInfo = this.topicPublishInfoTable.get(topic);
         }
@@ -859,8 +861,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                         }
 
                         long costTimeAsync = System.currentTimeMillis() - beginStartTime;
-                        // if (timeout < costTimeAsync)
-                        // {
+                        // if (timeout < costTimeAsync) {
                         //     throw new RemotingTooMuchRequestException("sendKernelImpl call timeout");
                         // }
                         sendResult = this.mQClientFactory.getMQClientAPIImpl().sendMessage(
@@ -881,10 +882,10 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                     case ONEWAY:
                     case SYNC:
                         long costTimeSync = System.currentTimeMillis() - beginStartTime;
-                        // todo 先注掉
-                        //                        if (timeout < costTimeSync) {
-                        //                            throw new RemotingTooMuchRequestException("sendKernelImpl call timeout");
-                        //                        }
+                        // 先注掉
+                        // if (timeout < costTimeSync) {
+                        //     throw new RemotingTooMuchRequestException("sendKernelImpl call timeout");
+                        // }
                         sendResult = this.mQClientFactory.getMQClientAPIImpl().sendMessage(
                             brokerAddr,
                             mq.getBrokerName(),

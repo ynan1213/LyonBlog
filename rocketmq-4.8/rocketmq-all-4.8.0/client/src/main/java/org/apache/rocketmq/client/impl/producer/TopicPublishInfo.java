@@ -68,7 +68,7 @@ public class TopicPublishInfo {
         this.haveTopicRouterInfo = haveTopicRouterInfo;
     }
 
-    // lastBrokerName 为上一次发送失败的brokername，lastBrokerName不为空，说明现在是进入了重发
+    // lastBrokerName 为上一次发送失败的 lastBrokerName，不为空，说明现在是进入了重发
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
         if (lastBrokerName == null) {
             return selectOneMessageQueue();

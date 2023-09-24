@@ -206,8 +206,7 @@ public class BrokerController {
         this.replyThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getReplyThreadPoolQueueCapacity());
         this.queryThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getQueryThreadPoolQueueCapacity());
         this.clientManagerThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getClientManagerThreadPoolQueueCapacity());
-        this.consumerManagerThreadPoolQueue = new LinkedBlockingQueue<Runnable>(
-            this.brokerConfig.getConsumerManagerThreadPoolQueueCapacity());
+        this.consumerManagerThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getConsumerManagerThreadPoolQueueCapacity());
         this.heartbeatThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getHeartbeatThreadPoolQueueCapacity());
         this.endTransactionThreadPoolQueue = new LinkedBlockingQueue<Runnable>(this.brokerConfig.getEndTransactionPoolQueueCapacity());
 
@@ -238,14 +237,21 @@ public class BrokerController {
     }
 
     public boolean initialize() throws CloneNotSupportedException {
-        boolean result = this.topicConfigManager.load();// 从历史的配置文件中加载topic的配置信息,/store/config/topics.json
-        result = result && this.consumerOffsetManager.load();// 加载consumer的偏移量,/store/config/consumerOffset.json
-        result = result && this.subscriptionGroupManager.load();// 加载订阅的分组,/store/config/subscriptionGroup.json
-        result = result && this.consumerFilterManager.load();// 加载过滤器,/store/config/consumerFilter.json
+        // 从历史的配置文件中加载topic的配置信息,/store/config/topics.json
+        boolean result = this.topicConfigManager.load();
+
+        // 加载consumer的偏移量,/store/config/consumerOffset.json
+        result = result && this.consumerOffsetManager.load();
+
+        // 加载订阅的分组,/store/config/subscriptionGroup.json
+        result = result && this.subscriptionGroupManager.load();
+
+        // 加载过滤器,/store/config/consumerFilter.json
+        result = result && this.consumerFilterManager.load();
 
         if (result) {
             try {
-                //核心文件存储实现类
+                // 核心文件存储实现类
                 this.messageStore = new DefaultMessageStore(this.messageStoreConfig, this.brokerStatsManager, this.messageArrivingListener,
                     this.brokerConfig);
 
@@ -599,6 +605,8 @@ public class BrokerController {
         this.fastRemotingServer.registerProcessor(RequestCode.CONSUMER_SEND_MSG_BACK, sendProcessor, this.sendMessageExecutor);
         /**
          * PullMessageProcessor
+         *
+         * fastRemotingServer没有注册
          */
         this.remotingServer.registerProcessor(RequestCode.PULL_MESSAGE, this.pullMessageProcessor, this.pullMessageExecutor);
         this.pullMessageProcessor.registerConsumeMessageHook(consumeMessageHookList);

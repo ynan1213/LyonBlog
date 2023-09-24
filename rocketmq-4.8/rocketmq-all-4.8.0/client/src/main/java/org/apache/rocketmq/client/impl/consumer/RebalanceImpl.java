@@ -40,14 +40,28 @@ import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.logging.InternalLogger;
 
+/**
+ * 每一个Consumer都持有一个RebalanceImpl实例,每个RebalanceImpl实例也只服务于一个Consumer
+ */
 public abstract class RebalanceImpl {
 
     protected static final InternalLogger log = ClientLogger.getLog();
-    protected final ConcurrentMap<MessageQueue, ProcessQueue> processQueueTable = new ConcurrentHashMap<MessageQueue, ProcessQueue>(64);
-    protected final ConcurrentMap<String/* topic */, Set<MessageQueue>> topicSubscribeInfoTable = new ConcurrentHashMap<String, Set<MessageQueue>>();
+
+    // 这里面存储的是consumer所有感兴趣的topic及订阅信息，通常由用户设置
     protected final ConcurrentMap<String /* topic */, SubscriptionData> subscriptionInner = new ConcurrentHashMap<String, SubscriptionData>();
+
+    // 存储的是从nameServer拉取到topic对应的所有的queue
+    // 有一点需要注意的是这里的topic是有可能比上面的subscriptionInner多，因为producer关注的topic信息也会存到这里
+    // 后来发现上面一句话是错的，在set的时候会判断subscriptionInner是否存在，如果不存在，是不会set到该缓存的
+    protected final ConcurrentMap<String/* topic */, Set<MessageQueue>> topicSubscribeInfoTable = new ConcurrentHashMap<String, Set<MessageQueue>>();
+
+    // 分给自己的MessageQueue信息
+    protected final ConcurrentMap<MessageQueue, ProcessQueue> processQueueTable = new ConcurrentHashMap<MessageQueue, ProcessQueue>(64);
+
     protected String consumerGroup;
     protected MessageModel messageModel;
+
+    // 分配策略
     protected AllocateMessageQueueStrategy allocateMessageQueueStrategy;
     protected MQClientInstance mQClientFactory;
 
@@ -206,16 +220,29 @@ public abstract class RebalanceImpl {
         }
     }
 
+    /**
+     * MQConsumerInner有push模式和pull模式两种实现，二者的Rebalance逻辑并不相同:
+     *  对于push模式，其会根据消费者指定的消息监听器是有序还是无序进行判定Rebalance过程中是否需要对有序消费进行特殊处理;
+     *  而pull模式，总是认为是无序的，因为写死了为false;
+     *
+     * 不管是push还是pull模式的Consumer实现，内部都是调用RebalanceImpl的doRebalance方法进行触发，将是否有序作为一个参数传入
+     */
     public void doRebalance(final boolean isOrder) {
-        // subTable 订阅信息由每个consumer 启动时注册进去
+        // consumer所有感兴趣的topic及订阅信息
         Map<String, SubscriptionData> subTable = this.getSubscriptionInner();
         if (subTable != null) {
             // 如果一个消费者订阅了多个Topic，会迭代每个Topic维度逐一触发Rebalance
+            // 在这一点上，Kafka与不RocketMQ同，其是将所有Topic下的所有队列合并在一起，进行Rebalance。
             for (final Map.Entry<String, SubscriptionData> entry : subTable.entrySet()) {
                 final String topic = entry.getKey();
                 try {
-                    /**
+                    /*
                      * 如果一个消费者组订阅多个Topic，可能会出现分配不均，部分消费者处于空闲状态
+                     * 例如：TopicX、TopicY各有2个队列，因此总共有4个队列；而刚好又有4个消费者，我们的期望是每个消费者分配一个队列。
+                     *      然后实际分配情况是192.168.0.1、192.168.0.2各出现2两次，也就是分配到了两个队列，另外2个IP(192.168.0.3、192.168.0.4)
+                     *      并没有出现，表示没有分配到任何队列。之所以出现分配不均，就是因为按照Topic维度进行Rebalance，因此这里TopicX和TopicY会各Rebalance一次。
+                     *      且每次Rebalance时都对消费者组下的实例进行排序，所以TopicX和TopicY各自的两个队列，都分配给消费者组中的前两个消费者了。
+                     * 另一款消息中间件Kafka会将所有Topic队列合并在一起，然后在消费者中进行分配，因此相对会更加平均。
                      * 这是在RocketMQ中我们为什么不建议同一个消费者组订阅多个Topic的重要原因
                      */
                     this.rebalanceByTopic(topic, isOrder);
@@ -255,9 +282,9 @@ public abstract class RebalanceImpl {
                 break;
             }
             case CLUSTERING: {
-                // topic对应的所有消息队列
+                // topic对应的所有消息队列，来源于nameServer
                 Set<MessageQueue> mqSet = this.topicSubscribeInfoTable.get(topic);
-                // 向broker查询指定消费者组下的消费者集合，内部是随机选择一个broker
+                // 向broker查询指定消费者组下的消费者集合，内部是随机选择一个broker，返回的是MQClientInstance的clientId，默认等于IP@PID
                 // 这里有个问题：如果两个broker的数据不一致（consumer的数量不一样），两个consumer分别向这两个broker获取消费者集合就会不一样，会不会出现问题呢？
                 // 问题是有的，比如某个consumer会消费得多，某个consumer消费得少，但是不会重复消费，因为集群模式下每次消费时都会向broker锁住当前的队列
                 List<String> cidAll = this.mQClientFactory.findConsumerIdList(topic, consumerGroup);
@@ -283,7 +310,7 @@ public abstract class RebalanceImpl {
 
                     List<MessageQueue> allocateResult = null;
                     try {
-                        /**
+                        /*
                          * 进行分配，每个消费者是自己给自己分配，相当于存在多个大脑。那么如何保证分配结果的一致呢？通过以下两个手段来保证：
                          *      1、对Topic队列，以及消费者各自进行排序
                          *      2、每个消费者需要使用相同的分配策略。
@@ -346,7 +373,7 @@ public abstract class RebalanceImpl {
      *  2、对于 mqSet 和 processQueueTable 都有的，但是距离上一次拉取时间超过了阈值的，也要剔除掉；
      *  3、对于 mqSet 中有但是 processQueueTable 中没有的，说明是此次新分配的，生成 ProcessQueue 和 PullRequest；
      *
-     * 对于移除的队列，要移除缓存的消息，并停止拉取消息，并持久化offset。
+     * 对于移除的队列，要移除缓存的消息，并停止拉取消息，且持久化offset。
      * 对于新增的队列，需要先计算从哪个位置开始消费，接着从这个位置开始拉取消息进行消费；
      */
     private boolean updateProcessQueueTableInRebalance(final String topic, final Set<MessageQueue> mqSet, final boolean isOrder) {

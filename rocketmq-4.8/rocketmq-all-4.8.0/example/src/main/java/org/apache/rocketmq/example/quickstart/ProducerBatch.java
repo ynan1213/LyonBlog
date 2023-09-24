@@ -34,7 +34,7 @@ public class ProducerBatch {
 
         DefaultMQProducer producer = new DefaultMQProducer("producerGroupTest0001");
 
-        producer.setNamesrvAddr("47.100.24.106:9876");
+        producer.setNamesrvAddr("localhost:9876");
 
         producer.start();
 

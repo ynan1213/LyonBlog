@@ -16,6 +16,8 @@
  */
 package org.apache.rocketmq.example.quickstart;
 
+import java.util.Arrays;
+import java.util.List;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -30,33 +32,49 @@ public class ProducerSync {
     public static void main(String[] args) throws MQClientException, InterruptedException {
 
         System.setProperty("rocketmq.client.name", "xxx" + "@" + System.currentTimeMillis());
+        System.setProperty("rocketmq.client.logRoot", "/Users/yuannan/GitProjects/rocketmq/logs/producer");
 
-        // DefaultMQProducer producer = new DefaultMQProducer("namespace0001", "producerGroupTest0001");
+        DefaultMQProducer producer01 = new DefaultMQProducer("namespace0001", "producerGroupTest0001");
         // DefaultMQProducer producer = new DefaultMQProducer("producerGroupTest0001");
         // enableMsgTrace：开启消息轨迹
-        DefaultMQProducer producer = new DefaultMQProducer("groupName", true);
-        producer.setNamespace("namespaceName");
+//        DefaultMQProducer producer = new DefaultMQProducer("groupName", true);
+        producer01.setNamesrvAddr("localhost:9876");
+        producer01.setDefaultTopicQueueNums(5);
+        producer01.setRetryTimesWhenSendFailed(0);
+        producer01.start();
 
-        producer.setNamesrvAddr("47.100.24.106:9876");
+        byte[] data = new byte[1024 * 1024 * 2];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = 'a';
+        }
 
-        producer.start();
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 20; i++) {
             try {
-                Message msg = new Message("signal_topic", "TagA", ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
-
-                // key用于建立索引，之后可以通过命令工具/API/或者管理平台查询key，可以为一个消息设置多个key，用空格""进行分割
-                // key存在properties中，
+                Message msg = new Message();
+                msg.setTopic("Topic-A06");
+                msg.setTags("TagA");
+                // key用于建立索引，之后可以通过命令工具、API、管理平台查询key，可以为一个消息设置多个key，用空格""进行分割
                 msg.setKeys("message_keys");
+                //msg.setBody(("Hello RocketMQ 1" + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+                msg.setBody(data);
+                SendResult sendResult = producer01.send(msg);
 
-                //同步发送
-                SendResult sendResult = producer.send(msg);
+                Message msg1 = new Message();
+                msg1.setTopic("Topic-A03");
+                msg1.setTags("TagA");
+                // key用于建立索引，之后可以通过命令工具、API、管理平台查询key，可以为一个消息设置多个key，用空格""进行分割
+                msg1.setKeys("message_keys");
+                msg1.setBody(("Hello RocketMQ 2" + i).getBytes(RemotingHelper.DEFAULT_CHARSET));
+
+                List<Message> messages = Arrays.asList(msg, msg1);
+//                SendResult sendResult = producer01.send(messages);
                 System.out.printf("%s%n", sendResult);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        producer.shutdown();
+        producer01.shutdown();
     }
 }

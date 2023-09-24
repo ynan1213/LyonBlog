@@ -67,28 +67,29 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     private static final InternalLogger log = InternalLoggerFactory.getLogger(RemotingHelper.ROCKETMQ_REMOTING);
     private final ServerBootstrap serverBootstrap;
-    private final EventLoopGroup eventLoopGroupSelector;
+    // boss group
     private final EventLoopGroup eventLoopGroupBoss;
-    private final NettyServerConfig nettyServerConfig;
-
-    private final ExecutorService publicExecutor;
-    private final ChannelEventListener channelEventListener;
-
-    private final Timer timer = new Timer("ServerHouseKeepingService", true);
+    // worker group
+    private final EventLoopGroup eventLoopGroupSelector;
+    // 业务group
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
+    // Executors.newFixedThreadPool线程池
+    private final ExecutorService publicExecutor;
 
+    private final ChannelEventListener channelEventListener;
+    private HandshakeHandler handshakeHandler;
+    private NettyEncoder encoder;
+    // 起事件广播器的作用
+    private NettyConnectManageHandler connectionManageHandler;
+    private NettyServerHandler serverHandler;
 
+    private final NettyServerConfig nettyServerConfig;
+    private final Timer timer = new Timer("ServerHouseKeepingService", true);
     private int port = 0;
 
     private static final String HANDSHAKE_HANDLER_NAME = "handshakeHandler";
     private static final String TLS_HANDLER_NAME = "sslHandler";
     private static final String FILE_REGION_ENCODER_NAME = "fileRegionEncoder";
-
-    // sharable handlers
-    private HandshakeHandler handshakeHandler;
-    private NettyEncoder encoder;
-    private NettyConnectManageHandler connectionManageHandler;// 起了个事件广播器的作用
-    private NettyServerHandler serverHandler;
 
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig) {
         this(nettyServerConfig, null);
@@ -140,19 +141,18 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
         } else {
             this.eventLoopGroupBoss = new NioEventLoopGroup(1, new ThreadFactory() {
                 private AtomicInteger threadIndex = new AtomicInteger(0);
-
-                // todo 为什么不使用netty的 FastThreadLocalThread
+                // 为什么不使用netty的 FastThreadLocalThread
                 @Override
                 public Thread newThread(Runnable r) {
                     return new Thread(r, String.format("NettyNIOBoss_%d", this.threadIndex.incrementAndGet()));
                 }
             });
 
+            // workGroup默认3个线程数
             this.eventLoopGroupSelector = new NioEventLoopGroup(nettyServerConfig.getServerSelectorThreads(), new ThreadFactory() {
                 private AtomicInteger threadIndex = new AtomicInteger(0);
                 private int threadTotal = nettyServerConfig.getServerSelectorThreads();
-
-                // todo 为什么不使用netty的 FastThreadLocalThread
+                // 为什么不使用netty的 FastThreadLocalThread
                 @Override
                 public Thread newThread(Runnable r) {
                     return new Thread(r, String.format("NettyServerNIOSelector_%d_%d", threadTotal, this.threadIndex.incrementAndGet()));
@@ -185,7 +185,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
-        //业务线程池，默认8个，由netty提供，和NioEventLoop类似，区别是没有selector不能注册channel
+        // 业务线程池，线程数默认8，由netty提供，和NioEventLoop类似，区别是没有selector不能注册channel
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
             nettyServerConfig.getServerWorkerThreads(),
             new ThreadFactory() {

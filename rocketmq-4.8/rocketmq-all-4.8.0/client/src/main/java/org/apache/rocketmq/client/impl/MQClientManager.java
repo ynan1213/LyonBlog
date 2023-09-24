@@ -52,7 +52,7 @@ public class MQClientManager {
         // 所以只要没有自定义unitName，同一个JVM中的不同消费者和生产者的 MQClientInstance 实例都是同一个
         MQClientInstance instance = this.factoryTable.get(clientId);
 
-        /**
+        /*
          * 这里应该加个锁，防止多个线程并发创建
          * 问题：如果加锁，锁对象选什么呢？ 因为不同的clientId，必然要创建不同的 MQClientInstance，如果锁住同一个对象的话，就会导致阻塞
          * 如果不加锁，相同的clientId就会创建多个 MQClientInstance 实例，然后 put 到 factoryTable 中时忽略会，结果是不会产生问题，仅仅是创建了多余的对象

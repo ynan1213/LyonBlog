@@ -441,6 +441,9 @@ public class MQClientAPIImpl {
         RemotingCommand request = null;
         String msgType = msg.getProperty(MessageConst.PROPERTY_MESSAGE_TYPE);
         boolean isReply = msgType != null && msgType.equals(MixAll.REPLY_MESSAGE_FLAG);
+        /**
+         * sendSmartMsg 开关控制是否将 SendMessageRequestHeader 装换成 SendMessageRequestHeaderV2
+         */
         if (isReply) {
             if (sendSmartMsg) {
                 SendMessageRequestHeaderV2 requestHeaderV2 = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
@@ -467,7 +470,7 @@ public class MQClientAPIImpl {
             case ASYNC:
                 final AtomicInteger times = new AtomicInteger();
                 long costTimeAsync = System.currentTimeMillis() - beginStartTime;
-                // todo 先注掉
+                // 先注掉
                 // if (timeoutMillis < costTimeAsync) {
                 //    throw new RemotingTooMuchRequestException("sendMessage call timeout");
                 // }
@@ -477,7 +480,7 @@ public class MQClientAPIImpl {
                 return null;
             case SYNC:
                 long costTimeSync = System.currentTimeMillis() - beginStartTime;
-                // todo 先注掉
+                // 先注掉
                 // if (timeoutMillis < costTimeSync) {
                 //     throw new RemotingTooMuchRequestException("sendMessage call timeout");
                 // }
@@ -680,7 +683,7 @@ public class MQClientAPIImpl {
         SendMessageResponseHeader responseHeader = (SendMessageResponseHeader) response
             .decodeCommandCustomHeader(SendMessageResponseHeader.class);
 
-        //If namespace not null , reset Topic without namespace.
+        // If namespace not null , reset Topic without namespace.
         String topic = msg.getTopic();
         if (StringUtils.isNotEmpty(this.clientConfig.getNamespace())) {
             topic = NamespaceUtil.withoutNamespace(topic, this.clientConfig.getNamespace());
@@ -697,8 +700,7 @@ public class MQClientAPIImpl {
             }
             uniqMsgId = sb.toString();
         }
-        SendResult sendResult = new SendResult(sendStatus, uniqMsgId, responseHeader.getMsgId(), messageQueue,
-            responseHeader.getQueueOffset());
+        SendResult sendResult = new SendResult(sendStatus, uniqMsgId, responseHeader.getMsgId(), messageQueue, responseHeader.getQueueOffset());
         sendResult.setTransactionId(responseHeader.getTransactionId());
         String regionId = response.getExtFields().get(MessageConst.PROPERTY_MSG_REGION);
         String traceOn = response.getExtFields().get(MessageConst.PROPERTY_TRACE_SWITCH);

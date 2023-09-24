@@ -125,7 +125,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
             return response;
         }
 
-        // 消息拉取时是否支持挂起
+        // 消息拉取时是否支持挂起，DefaultMQPushConsumerImpl写死了true，支持挂起
         final boolean hasSuspendFlag = PullSysFlag.hasSuspendFlag(requestHeader.getSysFlag());
         // 消费者从内存中读取的消费进度大于0，则设置该标记位
         final boolean hasCommitOffsetFlag = PullSysFlag.hasCommitOffsetFlag(requestHeader.getSysFlag());
@@ -196,7 +196,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
             }
 
             subscriptionData = consumerGroupInfo.findSubscriptionData(requestHeader.getTopic());
-            // 如果一个消费组内的不同消费者订阅了不同的主题，会出现这种情况
+            // 如果一个消费组内的不同消费者订阅了不同的主题，就有可能出现这种情况
             if (null == subscriptionData) {
                 log.warn("the consumer's subscription not exist, group: {}, topic:{}", requestHeader.getConsumerGroup(),
                     requestHeader.getTopic());

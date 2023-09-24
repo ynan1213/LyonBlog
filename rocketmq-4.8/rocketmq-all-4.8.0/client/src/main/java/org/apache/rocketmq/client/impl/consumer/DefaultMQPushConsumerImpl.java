@@ -213,12 +213,12 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
     // 执行消息拉取，这个方法好像只会单线程串行操作
     public void pullMessage(final PullRequest pullRequest) {
         final ProcessQueue processQueue = pullRequest.getProcessQueue();
+        // rebalance后如果该processQueue不属于该consumer，会将drouped置为true
         if (processQueue.isDropped()) {
             log.info("the pull request[{}] is dropped.", pullRequest.toString());
             return;
         }
 
-        // 这里为什么不直接用 processQueue 而是用 pullRequest.getProcessQueue() ？？？
         // 更新 ProcessQueue 最后一次消息拉取时间
         pullRequest.getProcessQueue().setLastPullTimestamp(System.currentTimeMillis());
 
@@ -430,6 +430,8 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         };
 
         boolean commitOffsetEnable = false;
+
+        // 当前MessageQueue的消费进度（内存中）
         long commitOffsetValue = 0L;
 
         // 如果是集群消费模式，则从内存中获取 MessageQueue 的 CommitLog 的最新偏移量
@@ -623,7 +625,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
 
                 this.checkConfig();
 
-                // 每个消费者默认会订阅 (%RETRY% + 消费组名) 的重试主题，重试主题是以消费者组为单位
+                // 每个消费者默认会订阅 (%RETRY% + 消费组名) 的重试topic，重试是消费者组维度的
                 this.copySubscription();
 
                 // 集群模式下才 设置 instanceName 为线程号，
@@ -650,12 +652,10 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 } else {
                     switch (this.defaultMQPushConsumer.getMessageModel()) {
                         case BROADCASTING:
-                            this.offsetStore = new LocalFileOffsetStore(this.mQClientFactory,
-                                this.defaultMQPushConsumer.getConsumerGroup());
+                            this.offsetStore = new LocalFileOffsetStore(this.mQClientFactory, this.defaultMQPushConsumer.getConsumerGroup());
                             break;
                         case CLUSTERING:
-                            this.offsetStore = new RemoteBrokerOffsetStore(this.mQClientFactory,
-                                this.defaultMQPushConsumer.getConsumerGroup());
+                            this.offsetStore = new RemoteBrokerOffsetStore(this.mQClientFactory, this.defaultMQPushConsumer.getConsumerGroup());
                             break;
                         default:
                             break;
@@ -667,12 +667,10 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 // 根据是否是顺序消费，创建消费端消费线程服务
                 if (this.getMessageListenerInner() instanceof MessageListenerOrderly) {
                     this.consumeOrderly = true;
-                    this.consumeMessageService = new ConsumeMessageOrderlyService(this,
-                        (MessageListenerOrderly) this.getMessageListenerInner());
+                    this.consumeMessageService = new ConsumeMessageOrderlyService(this, (MessageListenerOrderly) this.getMessageListenerInner());
                 } else if (this.getMessageListenerInner() instanceof MessageListenerConcurrently) {
                     this.consumeOrderly = false;
-                    this.consumeMessageService = new ConsumeMessageConcurrentlyService(this,
-                        (MessageListenerConcurrently) this.getMessageListenerInner());
+                    this.consumeMessageService = new ConsumeMessageConcurrentlyService(this, (MessageListenerConcurrently) this.getMessageListenerInner());
                 }
                 // consumeMessageService 负责消息消费，内部维护一个线程池
                 this.consumeMessageService.start();
@@ -700,17 +698,17 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
         }
 
         // 从nameserver更新topic路由信息，收集到了 Rebalance 所需的队列信息
-        // 通过这一步，当前Consumer就拿到了Topic下所有队列信息，具备了 Rebalance 的第一个条件
+        // 通过这一步，当前Consumer就拿到了Topic下所有队列信息
         this.updateTopicSubscribeInfoWhenSubscriptionChanged();
 
         // 检查consumer配置(主要是为了功能兼容，例如consumer要使用SQL92过滤，但是broker并没有开启，则broker会返回错误)
         this.mQClientFactory.checkClientInBroker();
 
         // 向每个broker发送心跳信息
-        // 当Broker收到心跳请求后，将这个消费者注册到 ConsumerManager中，当Consumer数量变化时，Broker会主动通知其他消费者进行Rebalance。
+        // Broker收到心跳将该消费者注册到ConsumerManager中，当ConsumerManager检测到Consumer数量变化时，Broker会主动通知其他消费者进行Rebalance
         this.mQClientFactory.sendHeartbeatToAllBrokerWithLock();
 
-        // 立即触发一次rebalance，在步骤2和4的基础上立即触发一次Rebalance
+        // 立即触发一次rebalance
         this.mQClientFactory.rebalanceImmediately();
     }
 

@@ -28,10 +28,15 @@ import java.util.Set;
 
 public class SubscriptionData implements Comparable<SubscriptionData> {
     public final static String SUB_ALL = "*";
-    private boolean classFilterMode = false;// 是否类过滤模式，默认false
+    // 是否类过滤模式，默认false
+    private boolean classFilterMode = false;
     private String topic;
-    private String subString;// 消息过滤表达式，多个用双竖线隔开，如 "TAGA||TAGB"
+
+    // 消息过滤表达式，多个用双竖线隔开，如 "TAGA||TAGB"
+    private String subString;
+    // 分割后的表达式
     private Set<String> tagsSet = new HashSet<String>();
+    // 分割后的表达式的hashcode
     private Set<Integer> codeSet = new HashSet<Integer>();
     private long subVersion = System.currentTimeMillis();
     private String expressionType = ExpressionType.TAG;

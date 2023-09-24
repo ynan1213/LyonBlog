@@ -639,16 +639,18 @@ public class CommitLog {
                 beginTimeInLock = 0;
                 return CompletableFuture.completedFuture(new PutMessageResult(PutMessageStatus.CREATE_MAPEDFILE_FAILED, null));
             }
-            //将消息存储到ByteBuffer中，但这里并没有刷写到磁盘，刷盘操作在后面
-            // 还有一点需要注意的是，消息添加到commitlog之前会生成一个全局唯一的消息ID，返回的result中含有此ID
+            // 将消息追加到MappedFile中（也就是ByteBuffer中），这一步是同步的，但这里并没有刷写到磁盘，刷盘操作在后面
+            // 还有一点需要注意的是，消息追加到commitlog之前会生成一个全局唯一的msgId，返回的result中含有此ID
+            // msgId = 4字节IP + 4字节端口号 + 8字节物理偏移量，可以根据该消息ID提取出物理偏移量，快速定位到消息
             result = mappedFile.appendMessage(msg, this.appendMessageCallback);
             switch (result.getStatus()) {
                 case PUT_OK:
                     break;
                 case END_OF_FILE:
-                    //当前 mappedFile 剩余空间不足
+                    // 当前 mappedFile 剩余空间不足
                     unlockMappedFile = mappedFile;
                     // Create a new file, re-write the message
+                    // 创建新的文件
                     mappedFile = this.mappedFileQueue.getLastMappedFile(0);
                     if (null == mappedFile) {
                         // XXX: warn and notify me
@@ -694,7 +696,7 @@ public class CommitLog {
 
         // 提交刷盘任务
         CompletableFuture<PutMessageStatus> flushResultFuture = submitFlushRequest(result, msg);
-        // 这是提交啥任务???
+        // 这是提交啥任务??? 主从同步
         CompletableFuture<PutMessageStatus> replicaResultFuture = submitReplicaRequest(result, msg);
         // thenCombine：等待前面两个任务执行完毕并将两个任务的执行结果作为方法入参传递到指定方法中
         return flushResultFuture.thenCombine(replicaResultFuture, (flushStatus, replicaStatus) -> {

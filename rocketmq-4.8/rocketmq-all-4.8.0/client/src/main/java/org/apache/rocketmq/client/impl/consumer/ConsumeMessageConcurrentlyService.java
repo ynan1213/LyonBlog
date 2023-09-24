@@ -480,7 +480,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
 
             // 再次验证，如果为true，不对结果进行处理
             // 刚进入run方法的时候做了验证，这里又做一次验证，是为了防止在这个过程中进行的负载将该processQueue分配给了别的消费者
-            // 同时这里有一个关键点需要注意的，如果前面回调了业务方法也就是消息被成功消费了，到这一步是重新进行了rebalance，然后将该队列分给了其它消费者
+            // 同时这里有一个关键点需要注意的，如果前面回调了业务方法也就是消息被成功消费了，到这一步时重新进行了rebalance，然后将该队列分给了其它消费者
             // 就不会进入if了，然后这条消息就会被重复消费。
             if (!processQueue.isDropped()) {
                 ConsumeMessageConcurrentlyService.this.processConsumeResult(status, context, this);

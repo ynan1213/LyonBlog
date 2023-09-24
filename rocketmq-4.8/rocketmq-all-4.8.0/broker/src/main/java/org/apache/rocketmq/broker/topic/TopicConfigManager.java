@@ -212,7 +212,8 @@ public class TopicConfigManager extends ConfigManager {
         }
 
         if (createNew) {
-            this.brokerController.registerBrokerAll(false, true, true);// 创建新的主题后立即更新到nameServer中
+            // 创建新的主题后立即更新到nameServer中
+            this.brokerController.registerBrokerAll(false, true, true);
         }
         return topicConfig;
     }

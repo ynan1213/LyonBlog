@@ -119,6 +119,8 @@ public class MQClientInstance {
     private final ConcurrentMap<String/* group */, MQProducerInner> producerTable = new ConcurrentHashMap<String, MQProducerInner>();
     private final ConcurrentMap<String/* group */, MQConsumerInner> consumerTable = new ConcurrentHashMap<String, MQConsumerInner>();
     private final ConcurrentMap<String/* group */, MQAdminExtInner> adminExtTable = new ConcurrentHashMap<String, MQAdminExtInner>();
+
+    // 存储的是从nameServer拉取到的topic信息
     private final ConcurrentMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<String, TopicRouteData>();
     private final ConcurrentMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable = new ConcurrentHashMap<String, HashMap<Long, String>>();
     private final ConcurrentMap<String/* Broker Name */, HashMap<String/* address */, Integer>> brokerVersionTable = new ConcurrentHashMap<String, HashMap<String, Integer>>();
@@ -571,7 +573,8 @@ public class MQClientInstance {
                         String addr = entry1.getValue();
                         if (addr != null) {
                             // 如果消费者为空，且当前brokerId != 0，则忽略当前broker，也即消费者不为空，则会往每一个broker发送心跳
-                            // 为什么呢？消费者也会关注salve节点吗？
+                            // 为什么呢？消费者也会关注slave节点吗？是的，消费者也会从slave节点消息
+                            // producer只会发送消息到master节点
                             if (consumerEmpty) {
                                 if (id != MixAll.MASTER_ID) {
                                     continue;
@@ -698,6 +701,7 @@ public class MQClientInstance {
                                     Entry<String, MQConsumerInner> entry = it.next();
                                     MQConsumerInner impl = entry.getValue();
                                     if (impl != null) {
+                                        // 注意，这里面即使队列变了，也不会触发 rebalance
                                         impl.updateTopicSubscribeInfo(topic, subscribeInfo);
                                     }
                                 }
@@ -1113,10 +1117,10 @@ public class MQClientInstance {
     }
 
     public List<String> findConsumerIdList(final String topic, final String group) {
+        // 随机选择一个broker，首选master，如果master为空则选择slave
         String brokerAddr = this.findBrokerAddrByTopic(topic);
         if (null == brokerAddr) {
             this.updateTopicRouteInfoFromNameServer(topic);
-            // 选择一个
             brokerAddr = this.findBrokerAddrByTopic(topic);
         }
 

@@ -16,7 +16,9 @@ public class User {
 
     private Integer id;
     private String name;
-    private GenderEnum gender;
+    private Integer age;
+//    private GenderEnum gender;
+
 
 //    public User(String name, Integer age) {
 //        this.name = name;

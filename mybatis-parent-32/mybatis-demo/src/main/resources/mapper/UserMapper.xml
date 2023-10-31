@@ -16,4 +16,9 @@
     <select id="getById" resultMap="UserResultMap">
         select * from user where id = #{xxxx}
     </select>
+
+    <insert id="insert">
+        insert into user(name, age) values( #{name}, #{age})
+    </insert>
+
 </mapper>

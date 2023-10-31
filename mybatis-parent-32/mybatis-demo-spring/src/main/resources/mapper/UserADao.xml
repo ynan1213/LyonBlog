@@ -15,10 +15,10 @@
     </insert>
 
     <select id="getById" resultMap="xxxUserResultMap" statementType="PREPARED">
-        select * from user where id = #{xxxx}
-        <if test="xxx != null and xxx != ''">
-            and age = 10
-        </if>
+        select * from user where id = #{id}
+<!--        <if test="xxx != null and xxx != ''">-->
+<!--            and age = 10-->
+<!--        </if>-->
     </select>
 
 <!--    <select id="returnMap" resultMap="xxxUserResultMap">-->

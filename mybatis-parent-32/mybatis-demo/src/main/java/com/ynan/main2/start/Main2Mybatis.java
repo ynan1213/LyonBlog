@@ -36,8 +36,19 @@ public class Main2Mybatis {
     @Test
     public void select() {
         UserDao userDao = sqlSession.getMapper(UserDao.class);
-        User user = userDao.getById(1);
+        User user = userDao.getById(6);
         System.out.println(user);
+
+//        User user = new User();
+//        user.setName("222");
+//        user.setAge(22);
+//        userDao.insert(user);
+
+        sqlSession.commit();
+//
+//        sqlSession.rollback();
+//
+//        sqlSession.close();
     }
 
 }

@@ -26,6 +26,9 @@ public class MybatisMain {
 
         User user = userDao.getById(Integer.valueOf(1), "xxx");
         System.out.println(user);
+
+//        int i = userDao.insert(new User("444", 33));
+//        System.out.println(i);
     }
 
     @Test
@@ -36,8 +39,9 @@ public class MybatisMain {
 
         transactionTemplate.execute(status -> {
             Integer integer = new Integer(1);
+            Integer integer1 = new Integer(2);
             User user1 = userDao.getById(integer, "xxx");
-            User user2 = userDao.getById(integer, "xxx");
+            User user2 = userDao.getById(integer1, "xxx");
             System.out.println(user1);
             System.out.println(user2);
             return user1;

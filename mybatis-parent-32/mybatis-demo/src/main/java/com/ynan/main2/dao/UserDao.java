@@ -9,4 +9,6 @@ import com.ynan.main2.entity.User;
 public interface UserDao {
 
     User getById(int id);
+
+    void insert(User user);
 }

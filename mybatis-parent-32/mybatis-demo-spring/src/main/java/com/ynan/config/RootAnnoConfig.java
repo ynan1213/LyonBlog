@@ -56,7 +56,7 @@ public class RootAnnoConfig {
 
         // 还可以设置 mapperLocations，注意：这里不能使用通配符
         //sqlSessionFactoryBean.setMapperLocations(new ClassPathResource("mapper/*.xml"));
-        sqlSessionFactoryBean.setMapperLocations(new ClassPathResource("mapper/UserMapper.xml"));
+        sqlSessionFactoryBean.setMapperLocations(new ClassPathResource("mapper/UserADao.xml"));
         return sqlSessionFactoryBean;
     }
 }

@@ -15,6 +15,7 @@
         <module>05-config-file</module>
         <module>06-ComponentScan</module>
         <module>07-tomcat</module>
+        <module>08-stock</module>
     </modules>
 	<packaging>pom</packaging>
 	<name>Spring Boot Build</name>

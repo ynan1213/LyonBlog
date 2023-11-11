@@ -1,0 +1,28 @@
+CREATE TABLE `stk_picked`
+(
+    `id`               bigint                                  NOT NULL AUTO_INCREMENT,
+    `sku_id`           bigint                                  NOT NULL COMMENT '货品ID',
+    `lot_id`           bigint                                  NOT NULL COMMENT '批次ID',
+    `lpn_no`           varchar(50) COLLATE utf8mb4_general_ci           DEFAULT NULL COMMENT 'LPN号',
+    `loc_id`           bigint                                           DEFAULT NULL COMMENT '拣货暂存库位ID',
+    `qty_picked`       decimal(20, 3)                          NOT NULL COMMENT '已拣货库存数量',
+    `warehouse_id`     bigint                                  NOT NULL,
+    `qty_hold`         decimal(20, 3)                          NOT NULL DEFAULT '0.000' COMMENT '拣货冻结数',
+    `create_time`      datetime                                         DEFAULT NULL,
+    `create_by`        varchar(60) COLLATE utf8mb4_general_ci           DEFAULT NULL,
+    `update_time`      datetime                                         DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    `update_by`        varchar(60) COLLATE utf8mb4_general_ci           DEFAULT NULL,
+    `version`          int                                              DEFAULT '0',
+    `is_deleted`       bigint                                           DEFAULT '0',
+    `corporation_code` varchar(32) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT '1014' COMMENT '主体编码',
+    `corporation_name` varchar(128) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '上海雨生百谷食品有限公司' COMMENT '主体名称',
+    `tenant_code`      varchar(32) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT 'DDGY' COMMENT '租户编码',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `idx_sku_lot_loc_lpn` (`sku_id`,`lot_id`,`loc_id`,`lpn_no`,`is_deleted`) USING BTREE,
+    KEY                `idx_update_time` (`update_time`) USING BTREE,
+    KEY                `idx_warehouse_loc` (`warehouse_id`,`loc_id`) USING BTREE,
+    KEY                `idx_warehouse_sku` (`warehouse_id`,`sku_id`) USING BTREE,
+    KEY                `idx_create_time` (`create_time`) USING BTREE,
+    KEY                `idx_lpn_warehouse` (`lpn_no`,`warehouse_id`,`is_deleted`) USING BTREE,
+    KEY                `index_0` (`warehouse_id`,`is_deleted`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1172489160708169729 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='已拣货库存'

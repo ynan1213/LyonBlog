@@ -1,0 +1,27 @@
+CREATE TABLE `stk_lot_lpn_loc`
+(
+    `id`               bigint                                  NOT NULL AUTO_INCREMENT,
+    `sku_id`           bigint                                  NOT NULL,
+    `loc_id`           bigint                                  NOT NULL,
+    `lot_id`           bigint                                  NOT NULL COMMENT '批次属性ID',
+    `lpn_no`           varchar(30) COLLATE utf8mb4_general_ci           DEFAULT NULL,
+    `qty_available`    decimal(20, 3)                          NOT NULL COMMENT '可用库存数',
+    `qty_hold`         decimal(20, 3)                          NOT NULL DEFAULT '0.000' COMMENT '锁定库存数',
+    `version`          int                                              DEFAULT '0',
+    `create_time`      timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+    `create_by`        varchar(30) COLLATE utf8mb4_general_ci           DEFAULT NULL,
+    `update_time`      timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `update_by`        varchar(30) COLLATE utf8mb4_general_ci           DEFAULT NULL,
+    `is_deleted`       bigint                                           DEFAULT '0',
+    `warehouse_id`     bigint                                  NOT NULL,
+    `corporation_code` varchar(32) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT '1014' COMMENT '主体编码',
+    `corporation_name` varchar(128) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '上海雨生百谷食品有限公司' COMMENT '主体名称',
+    `tenant_code`      varchar(32) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT 'DDGY' COMMENT '租户编码',
+    PRIMARY KEY (`id`) USING BTREE,
+    UNIQUE KEY `idx_sku_loc_lot_lpn` (`sku_id`,`lot_id`,`loc_id`,`lpn_no`,`is_deleted`) USING BTREE,
+    KEY                `idx_update_time` (`update_time`) USING BTREE,
+    KEY                `idx_warehouse_loc` (`warehouse_id`,`loc_id`) USING BTREE,
+    KEY                `idx_warehouse_sku` (`warehouse_id`,`sku_id`) USING BTREE,
+    KEY                `idx_lpn_warehouse_is_deleted` (`lpn_no`,`warehouse_id`,`is_deleted`) USING BTREE,
+    KEY                `idx_warehouse_id_is_deleted` (`warehouse_id`,`is_deleted`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1172536062942212097 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='库存主表'

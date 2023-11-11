@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ynan.mappers.PickedStockMapper">
+	<resultMap id="BaseResultMap" type="com.ynan.entity.PickedStock">
+		<!--
+		  WARNING - @mbggenerated
+		-->
+		<id column="id" property="id" jdbcType="BIGINT"/>
+		<result column="sku_id" property="skuId" jdbcType="BIGINT"/>
+		<result column="lpn_no" property="lpnNo" jdbcType="VARCHAR"/>
+		<result column="lot_id" property="lotId" jdbcType="BIGINT"/>
+		<result column="loc_id" property="locId" jdbcType="BIGINT"/>
+		<result column="qty_picked" property="qtyPicked" jdbcType="DECIMAL"/>
+		<result column="qty_hold" property="qtyHold" jdbcType="DECIMAL"/>
+		<result column="version" property="version" jdbcType="BIGINT"/>
+		<!--		<result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>-->
+		<!--		<result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>-->
+		<!--		<result column="create_by" property="createBy" jdbcType="VARCHAR"/>-->
+		<!--		<result column="is_deleted" property="isDeleted" jdbcType="BIGINT"/>-->
+		<result column="warehouse_id" property="warehouseId" jdbcType="BIGINT"/><!---->
+	</resultMap>
+
+	<sql id="Base_Column_List">
+		<!--
+		  WARNING - @mbggenerated
+		-->
+		id, sku_id, lpn_no, loc_id, lot_id, qty_picked, qty_hold, version, create_time,
+		update_time, create_by, is_deleted, warehouse_id
+	</sql>
+
+	<sql id="Stock_Query_Column">
+		id
+		, sku_id, lpn_no, loc_id, lot_id, qty_picked, qty_hold, warehouse_id
+	</sql>
+
+	<insert id="insertSelective" parameterType="com.ynan.entity.PickedStock">
+		insert into stk_picked
+		(
+		<trim suffixOverrides=",">
+			<if test="id != null">
+				id,
+			</if>
+			<if test="skuId != null">
+				sku_id,
+			</if>
+			<if test="lotId != null">
+				lot_id,
+			</if>
+			<if test="locId != null">
+				loc_id,
+			</if>
+			<if test="lpnNo != null">
+				lpn_no,
+			</if>
+			<if test="qtyPicked != null">
+				qty_picked,
+			</if>
+			<if test="qtyHold != null">
+				qty_hold,
+			</if>
+			<if test="warehouseId != null">
+				warehouse_id,
+			</if>
+			<if test="version != null">
+				version,
+			</if>
+			<if test="createTime != null">
+				create_time,
+			</if>
+			<if test="updateTime != null">
+				update_time,
+			</if>
+			<if test="createBy != null">
+				create_by,
+			</if>
+			<if test="updateBy != null">
+				update_by,
+			</if>
+			<if test="isDeleted != null">
+				is_deleted,
+			</if>
+		</trim>
+		)
+		values
+		(
+		<trim suffixOverrides=",">
+			<if test="id != null">
+				#{id},
+			</if>
+			<if test="skuId != null">
+				#{skuId},
+			</if>
+			<if test="lotId != null">
+				#{lotId},
+			</if>
+			<if test="locId != null">
+				#{locId},
+			</if>
+			<if test="lpnNo != null">
+				#{lpnNo},
+			</if>
+			<if test="qtyPicked != null">
+				#{qtyPicked},
+			</if>
+			<if test="qtyHold != null">
+				#{qtyHold},
+			</if>
+			<if test="warehouseId != null">
+				#{warehouseId},
+			</if>
+			<if test="version != null">
+				#{version},
+			</if>
+			<if test="createTime != null">
+				#{createTime},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime},
+			</if>
+			<if test="createBy != null">
+				#{createBy},
+			</if>
+			<if test="updateBy != null">
+				#{updateBy},
+			</if>
+			<if test="isDeleted != null">
+				#{isDeleted},
+			</if>
+		</trim>
+		)
+	</insert>
+
+	<update id="plus" parameterType="map">
+		update stk_picked set qty_picked = qty_picked + #{plusNum}
+		where
+		sku_id = #{locator.skuId}
+		and lot_id = #{locator.lotId}
+		and loc_id = #{locator.locId}
+		<if test="locator.lpnNo != null">
+			and lpn_no = #{locator.lpnNo}
+		</if>
+		and is_deleted = 0
+	</update>
+
+	<update id="reduce" parameterType="map">
+		update stk_picked
+		set qty_picked = qty_picked - #{reduceNum}
+		where
+		sku_id = #{locator.skuId}
+		and lot_id = #{locator.lotId}
+		and loc_id = #{locator.locId}
+		<if test="locator.lpnNo != null">
+			and lpn_no = #{locator.lpnNo}
+		</if>
+		and (qty_picked - #{reduceNum}) >= 0
+		and is_deleted = 0
+	</update>
+
+	<update id="verifyAndReduce" parameterType="map">
+		update stk_picked
+		set qty_picked = qty_picked - #{reduceNum}
+		where
+		sku_id = #{locator.skuId}
+		and lot_id = #{locator.lotId}
+		and loc_id = #{locator.locId}
+		<if test="locator.lpnNo != null">
+			and lpn_no = #{locator.lpnNo}
+		</if>
+		and (qty_picked - #{reduceNum}) >= 0
+		and qty_picked = #{verifyNum}
+		and is_deleted = 0
+	</update>
+
+	<update id="reduceHold" parameterType="map">
+		update stk_picked
+		set qty_hold = qty_hold - #{reduceNum}
+		where
+		sku_id = #{locator.skuId}
+		and lot_id = #{locator.lotId}
+		and loc_id = #{locator.locId}
+		<if test="locator.lpnNo != null">
+			and lpn_no = #{locator.lpnNo}
+		</if>
+		and (qty_hold - #{reduceNum}) >= 0
+		and is_deleted = 0
+	</update>
+
+	<update id="verifyAndReduceHold" parameterType="map">
+		update stk_picked
+		set qty_hold = qty_hold - #{reduceNum}
+		where
+		sku_id = #{locator.skuId}
+		and lot_id = #{locator.lotId}
+		and loc_id = #{locator.locId}
+		<if test="locator.lpnNo != null">
+			and lpn_no = #{locator.lpnNo}
+		</if>
+		and (qty_hold - #{reduceNum}) >= 0
+		and is_deleted = 0
+		and qty_hold = #{verifyNum}
+	</update>
+
+	<update id="plusHold" parameterType="map">
+		update stk_picked
+		set qty_hold = qty_hold + #{plusNum}
+		where
+		sku_id = #{locator.skuId}
+		and lot_id = #{locator.lotId}
+		and loc_id = #{locator.locId}
+		<if test="locator.lpnNo != null">
+			and lpn_no = #{locator.lpnNo}
+		</if>
+		and is_deleted = 0
+	</update>
+
+	<select id="selectZeroRecord" parameterType="java.util.Map" resultType="java.lang.Long">
+		SELECT id
+		FROM stk_picked
+		WHERE warehouse_id = #{whId}
+		AND update_time <![CDATA[<=]]> #{endTime}
+		AND ( (qty_picked = 0 AND qty_hold = 0) OR is_deleted > 0 )
+		ORDER BY id ASC
+		LIMIT #{limit}
+	</select>
+
+	<delete id="deleteZeroRecord" parameterType="java.util.Map">
+		DELETE FROM stk_picked
+		WHERE warehouse_id = #{whId}
+		AND update_time <![CDATA[<=]]> #{endTime}
+		AND ( (qty_picked = 0 AND qty_hold = 0) OR is_deleted > 0 )
+		AND id IN
+		<foreach collection="ids" item="item" index="" separator="," open="(" close=")">#{item}</foreach>
+	</delete>
+
+	<select id="selectByLocator" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List"/>
+		from stk_picked
+		where
+		sku_id = #{skuId}
+		and lot_id = #{lotId}
+		and loc_id = #{locId}
+		<if test="lpnNo != null">
+			and lpn_no = #{lpnNo}
+		</if>
+		and is_deleted = 0
+	</select>
+
+	<select id="selectBySkuId" parameterType="map" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List"/>
+		from stk_picked
+		where
+		sku_id = #{skuId}
+		and qty_picked > 0
+		and is_deleted = 0
+		and warehouse_id = #{warehouseId}
+	</select>
+
+	<select id="selectBySkuAndLpn" parameterType="map" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List"/>
+		from stk_picked
+		where
+		sku_id = #{skuId}
+		and lpn_no = #{lpnNo}
+		and qty_picked > 0
+		and is_deleted = 0
+		and warehouse_id = #{warehouseId}
+	</select>
+
+	<select id="selectBySkuAndLpnList" parameterType="map" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List"/>
+		from stk_picked
+		where
+		sku_id = #{skuId}
+		and lpn_no in
+		<foreach collection="lpnNoList" item="lpnNo" open="(" close=")" separator=",">
+			#{lpnNo}
+		</foreach>
+		and qty_picked > 0
+		and is_deleted = 0
+		and warehouse_id = #{warehouseId}
+	</select>
+
+	<select id="selectByCondition" parameterType="map" resultMap="BaseResultMap">
+		select
+		stk.id as id, sku_id, lpn_no, loc_id, lot_id, qty_picked, qty_hold, stk.warehouse_id as warehouse_id
+		from stk_picked stk
+		<if test="condition.partitionIds != null and condition.partitionIds.size > 0">
+			left join md_location t2 on stk.loc_id = t2.id
+		</if>
+		where
+		stk.warehouse_id = #{condition.warehouseId}
+		<if test="condition.skuIds != null and condition.skuIds.size > 0">
+			and stk.sku_id in
+			<foreach collection="condition.skuIds" item="skuId" open="(" close=")" separator=",">
+				#{skuId}
+			</foreach>
+		</if>
+		<if test="condition.locIds != null and condition.locIds.size > 0">
+			and stk.loc_id in
+			<foreach collection="condition.locIds" item="locId" open="(" close=")" separator=",">
+				#{locId}
+			</foreach>
+		</if>
+		<if test="condition.lotIds != null and condition.lotIds.size > 0">
+			and stk.lot_id in
+			<foreach collection="condition.lotIds" item="lotId" open="(" close=")" separator=",">
+				#{lotId}
+			</foreach>
+		</if>
+		<if test="condition.partitionIds != null and condition.partitionIds.size > 0">
+			and t2.partition_id in
+			<foreach collection="condition.partitionIds" item="partitionId" open="(" close=")" separator=",">
+				#{partitionId}
+			</foreach>
+		</if>
+		<if test="condition.lpnNos != null and condition.lpnNos.size > 0">
+			and stk.lpn_no in
+			<foreach collection="condition.lpnNos" item="lpnNo" open="(" close=")" separator=",">
+				#{lpnNo}
+			</foreach>
+		</if>
+		and stk.is_deleted = 0
+		and (qty_picked > 0 or qty_hold > 0)
+	</select>
+
+	<update id="batchUpdateDeleteFlag">
+		update stk_picked t set
+		<if test="flag == 1">
+			t.is_deleted = t.id
+		</if>
+		<if test="flag == 0">
+			t.is_deleted = 0
+		</if>
+		where t.warehouse_id = #{warehouseId}
+		and t.id in
+		<foreach collection="ids" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</update>
+
+
+	<select id="batchPickedAndLabelSumStock">
+		SELECT b.sku_id as skuId, sum(b.qty_picked) as stockQty
+		FROM stk_picked b, stk_label c
+		WHERE c.is_deleted = 0
+		<foreach collection="labelNos" item="labelNo" open=" AND c.label_no in (" close=")" separator=",">
+			#{labelNo}
+		</foreach>
+		AND c.warehouse_id = b.warehouse_id AND b.is_deleted = 0 AND b.qty_picked > 0
+		AND c.sku_id = b.sku_id AND c.lot_id = b.lot_id
+		AND c.label_no = b.lpn_no AND c.loc_id = b.loc_id
+		GROUP BY b.sku_id
+	</select>
+
+	<select id="listPickExistStockGroupBySkuLpn">
+		select
+		lpn_no as lpnNo,
+		sku_id as skuId,
+		sum(qty_picked) as qty,
+		update_by as operatorId,
+		update_time as operateTime
+		from stk_picked
+		where warehouse_id = #{warehouseId}
+		and loc_id = #{locId}
+		and is_deleted = 0
+		and qty_picked > 0
+		<if test="excludeLpnNos != null and excludeLpnNos.size > 0">
+			and lpn_no not in
+			<foreach collection="excludeLpnNos" item="lpnNo" open="(" close=")" separator=",">
+				#{lpnNo}
+			</foreach>
+		</if>
+		<if test="includeLpnNos != null and includeLpnNos.size > 0">
+			and lpn_no in
+			<foreach collection="includeLpnNos" item="lpnNo" open="(" close=")" separator=",">
+				#{lpnNo}
+			</foreach>
+		</if>
+		group by lpn_no,sku_id
+	</select>
+
+	<select id="listByLpnExistStockGroupBySkuLpn">
+		select lpn_no as lpnNo,
+		sku_id as skuId,
+		sum(qty_picked) as qty,
+		update_by as operatorId,
+		update_time as operateTime
+		from stk_picked
+		where warehouse_id = #{warehouseId}
+		and loc_id = #{locId}
+		and is_deleted = 0
+		and qty_picked > 0
+		and lpn_no = #{lpnNo}
+		group by lpn_no, sku_id
+	</select>
+
+	<select id="selectOneExistStock" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List"/>
+		from stk_picked
+		where warehouse_id = #{warehouseId}
+		and loc_id = #{locId}
+		and is_deleted = 0
+		and qty_picked + qty_hold > 0
+		limit 1
+	</select>
+
+	<select id="multiGetSummarySkuStock" resultType="com.ynan.entity.PickedStock">
+		select sku_id,loc_id,sum(qty_picked + qty_hold) as total_qty
+		from stk_picked
+		where warehouse_id = #{warehouseId}
+		and is_deleted = 0
+		and loc_id in
+		<foreach collection="locIdList" separator="," index="index" open="(" close=")" item="item">
+			#{item}
+		</foreach>
+		and (qty_picked + qty_hold) > 0
+		group by sku_id,loc_id
+	</select>
+	<select id="selectOneExistLabelStock" resultType="com.ynan.entity.PickedStock">
+		select
+		<include refid="Base_Column_List"/>
+		from stk_picked
+		where warehouse_id = #{warehouseId}
+		and loc_id = #{locId}
+		and lpn_no = #{lpnNo}
+		and is_deleted = 0
+		limit 1
+
+	</select>
+</mapper>

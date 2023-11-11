@@ -1,0 +1,25 @@
+CREATE TABLE `stk_pick_locked`
+(
+    `id`               bigint                                  NOT NULL COMMENT '主键',
+    `sku_id`           bigint                                  NOT NULL COMMENT '货品id',
+    `lot_id`           bigint                                  NOT NULL COMMENT '批次id',
+    `loc_id`           bigint                                  NOT NULL COMMENT '库位id',
+    `lpn_no`           varchar(30) COLLATE utf8mb4_general_ci  NOT NULL,
+    `qty_locked`       decimal(20, 3)                          NOT NULL,
+    `warehouse_id`     bigint                                  NOT NULL,
+    `attach_info`      varchar(256) CHARACTER SET utf8mb3               DEFAULT NULL,
+    `version`          bigint                                  NOT NULL DEFAULT '1',
+    `create_time`      timestamp                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`      timestamp                               NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by`        varchar(60) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT 'sys' COMMENT '创建人',
+    `update_by`        varchar(60) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT 'sys' COMMENT '更新人',
+    `is_deleted`       bigint                                  NOT NULL DEFAULT '0' COMMENT '删除标记',
+    `corporation_code` varchar(32) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT '1014' COMMENT '主体编码',
+    `corporation_name` varchar(128) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '上海雨生百谷食品有限公司' COMMENT '主体名称',
+    `tenant_code`      varchar(32) COLLATE utf8mb4_general_ci  NOT NULL DEFAULT 'DDGY' COMMENT '租户编码',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY                `idx_sku_lot_loc_lpn` (`sku_id`,`lot_id`,`loc_id`,`lpn_no`,`warehouse_id`) USING BTREE,
+    KEY                `idx_create_time` (`create_time`) USING BTREE,
+    KEY                `idx_update_time` (`update_time`) USING BTREE,
+    KEY                `idx_wh_loc` (`warehouse_id`,`loc_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=COMPACT COMMENT='拣货库存锁定'

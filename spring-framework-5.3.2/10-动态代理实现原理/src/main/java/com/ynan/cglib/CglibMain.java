@@ -1,15 +1,12 @@
 package com.ynan.cglib;
 
-import net.sf.cglib.core.DebuggingClassWriter;
+import java.lang.reflect.Method;
 import net.sf.cglib.proxy.Enhancer;
 
-import java.lang.reflect.Method;
 
+public class CglibMain {
 
-public class CglibMain
-{
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		//System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY, "D:\\code");
 		Enhancer enhancer = new Enhancer();
 		enhancer.setSuperclass(Process.class);
@@ -21,8 +18,7 @@ public class CglibMain
 		System.out.println("subject的Class类是：" + subject.getClass().toString());
 		System.out.print("subject中的方法有：");
 		Method[] method = subject.getClass().getDeclaredMethods();
-		for (Method m : method)
-		{
+		for (Method m : method) {
 			System.out.print(m.getName() + ", ");
 		}
 

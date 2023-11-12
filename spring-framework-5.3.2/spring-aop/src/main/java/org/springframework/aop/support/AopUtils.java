@@ -242,9 +242,12 @@ public abstract class AopUtils {
 		if (!Proxy.isProxyClass(targetClass)) {
 			classes.add(ClassUtils.getUserClass(targetClass));
 		}
+		// 拿到所有的接口
 		classes.addAll(ClassUtils.getAllInterfacesForClassAsSet(targetClass));
 
+		// 遍历当前类和所有接口的方法，为什么不获取父类呢
 		for (Class<?> clazz : classes) {
+			// 原来是getAllDeclaredMethods方法能获取到所有的父类方法
 			Method[] methods = ReflectionUtils.getAllDeclaredMethods(clazz);
 			for (Method method : methods) {
 				if (introductionAwareMethodMatcher != null ?
@@ -282,14 +285,18 @@ public abstract class AopUtils {
 	 */
 	public static boolean canApply(Advisor advisor, Class<?> targetClass, boolean hasIntroductions) {
 		if (advisor instanceof IntroductionAdvisor) {
+			// IntroductionAdvisor的匹配是class级别
 			return ((IntroductionAdvisor) advisor).getClassFilter().matches(targetClass);
 		}
 		else if (advisor instanceof PointcutAdvisor) {
+			// 正常的是PointcutAdvisor类型，@Before、@After等封装Advisor就是该类型
+			// 里面是遍历方法
 			PointcutAdvisor pca = (PointcutAdvisor) advisor;
 			return canApply(pca.getPointcut(), targetClass, hasIntroductions);
 		}
 		else {
 			// It doesn't have a pointcut so we assume it applies.
+			// 注意这里如果是其它类型的，会直接返回true，也就是说默认是匹配到
 			return true;
 		}
 	}
@@ -307,6 +314,8 @@ public abstract class AopUtils {
 			return candidateAdvisors;
 		}
 		List<Advisor> eligibleAdvisors = new ArrayList<>();
+
+		// 先对IntroductionAdvisor类型的进行匹配，优先级高一些？ 哪里会使用到该类型尚不清楚
 		for (Advisor candidate : candidateAdvisors) {
 			if (candidate instanceof IntroductionAdvisor && canApply(candidate, clazz)) {
 				eligibleAdvisors.add(candidate);
@@ -318,6 +327,7 @@ public abstract class AopUtils {
 				// already processed
 				continue;
 			}
+			// @Before、@After等封装Advisor会走到这里
 			if (canApply(candidate, clazz, hasIntroductions)) {
 				eligibleAdvisors.add(candidate);
 			}

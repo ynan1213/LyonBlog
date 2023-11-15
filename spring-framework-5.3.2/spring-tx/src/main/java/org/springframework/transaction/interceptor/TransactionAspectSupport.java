@@ -371,7 +371,9 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		PlatformTransactionManager ptm = asPlatformTransactionManager(tm);
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
-		// spring事物管理器则进入if，自定义事物管理器则进入else，自定义事物管理器有待研究
+		// spring事物管理器则进入if，回调型进入else
+		// 回调型事物管理对象 CallbackPreferringPlatformTransactionManager，事物管理对象可以是非数据库事物管理，如kafka事物.
+		// 在执行事物的过程中跟数据库很不一样，所有需要基础该类自己实现.
 		if (txAttr == null || !(ptm instanceof CallbackPreferringPlatformTransactionManager)) {
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
 			// ①：执行自己的业务逻辑之前，先获取事物信息，具体步骤：
@@ -409,7 +411,6 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			return retVal;
 		}
 		else {
-			//自定义事务管理器
 			Object result;
 			final ThrowableHolder throwableHolder = new ThrowableHolder();
 

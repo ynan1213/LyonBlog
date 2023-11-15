@@ -792,16 +792,15 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 		 * shouldCommitOnGlobalRollbackOnly默认实现是false
 		 * defStatus.isGlobalRollbackOnly()的判断是去读status中transaction对象的ConnectionHolder的rollbackOnly标志位。
 		 *
-		 * 什么情况下会走进入if呢？内层事物设置了回滚，并且未抛出异常，导致这层事物未捕捉到异常而进行提交
-		 * 		1、内层事物手动回滚了事物`TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()`；
-		 * 		2、将内层事物的异常进行了捕获；
-		 * 这里判断的语义是一个事务对象被打上需要回滚的全局标记后，是否需要回滚。
-		 *
+		 * 什么情况下会走进入if呢？内层事物设置了全局回滚标志，并且未抛出异常，导致这层事物未捕捉到异常而进行commit
+		 * 	 1、内层事物手动回滚了事物`TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()`；
+		 * 	 2、将内层事物的异常进行了捕获；
 		 */
 		if (!shouldCommitOnGlobalRollbackOnly() && defStatus.isGlobalRollbackOnly()) {
 			if (defStatus.isDebug()) {
 				logger.debug("Global transaction is marked as rollback-only but transactional code requested commit");
 			}
+			// 这里进行回滚，注意第二个参数传入了true，会抛出 Transaction rolled back because it has been marked as rollback-only
 			processRollback(defStatus, true);
 			return;
 		}
@@ -841,6 +840,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 					if (status.isDebug()) {
 						logger.debug("Initiating transaction commit");
 					}
+					// 什么情况下这里会返回true呢？ 因为在外层如果为true就不会进入这个方法了
 					unexpectedRollback = status.isGlobalRollbackOnly();
 					doCommit(status);
 				}
@@ -1021,6 +1021,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 * @param status object representing the transaction
 	 */
 	protected final void triggerBeforeCommit(DefaultTransactionStatus status) {
+		// 外层事务才会执行
 		if (status.isNewSynchronization()) {
 			if (status.isDebug()) {
 				logger.trace("Triggering beforeCommit synchronization");
@@ -1034,6 +1035,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 * @param status object representing the transaction
 	 */
 	protected final void triggerBeforeCompletion(DefaultTransactionStatus status) {
+		// 外层事务才会执行
 		if (status.isNewSynchronization()) {
 			if (status.isDebug()) {
 				logger.trace("Triggering beforeCompletion synchronization");
@@ -1047,6 +1049,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 * @param status object representing the transaction
 	 */
 	private void triggerAfterCommit(DefaultTransactionStatus status) {
+		// 外层事务才会执行
 		if (status.isNewSynchronization()) {
 			if (status.isDebug()) {
 				logger.trace("Triggering afterCommit synchronization");
@@ -1061,6 +1064,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 	 * @param completionStatus completion status according to TransactionSynchronization constants
 	 */
 	private void triggerAfterCompletion(DefaultTransactionStatus status, int completionStatus) {
+		// 外层事务才会执行
 		if (status.isNewSynchronization()) {
 			List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
 			TransactionSynchronizationManager.clearSynchronization();

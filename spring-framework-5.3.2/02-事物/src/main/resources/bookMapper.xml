@@ -19,4 +19,8 @@
 		select * from book
 	</select>
 
+	<update id="update">
+		update book set name = 'xxxxxx' where id = 1
+	</update>
+
 </mapper>

@@ -18,10 +18,15 @@ public class BookServiceImpl implements BookService {
 	@Autowired
 	private BookService bookServiceImpl2;
 
-	@Transactional
+	@Transactional(readOnly = true)
 	public int insert(Book book) throws Exception {
+		int insert = dao.insert(book);
 		System.out.println("外层事物---- before");
-		bookServiceImpl2.insert(book);
+		//		try {
+		//			bookServiceImpl2.insert(book);
+		//		} catch (Exception e) {
+		//
+		//		}
 		//		if(1 == 1)
 		//		{
 		//			throw new FileNotFoundException("xxx");
@@ -41,5 +46,11 @@ public class BookServiceImpl implements BookService {
 
 	public List<Book> selectAll() {
 		return null;
+	}
+
+	@Override
+	@Transactional(timeout = 300)
+	public int update() {
+		return dao.update();
 	}
 }

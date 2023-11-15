@@ -54,7 +54,7 @@ public class DefaultTransactionStatus extends AbstractTransactionStatus {
 	 * 事务切面对于尝试提交会判断是否到了最外层事务(某个事务边界)，当退栈到方法的事务切面时，如果发现没有到事务最外层，是不会有真正的物理提交。
 	 * Spring是怎么判断这所谓“最外层事务”的呢。
 	 * 		1、TxStatus中有个属性叫 newTransaction 用于标记是否是新建事务(根据事务传播行为得出，比如加入已有事务则会是false)
-	 * 		2、以及一个名为transaction的Object用于表示物理事务对象(由具体TxMgr子类负责给出）。
+	 * 		2、以及一个名为transaction的Object用于表示物理事务对象(由具体TransactionManager子类负责给出）。
 	 * Spring会根据每一层事务切面创建的TxStatus内部是否持有transaction对象以及newTransaction标志位判断是否属于外层事务。
 	 *
 	 * 类似的，Spring对于回滚事务也是会在最外层事务方法对应的切面中进行物理回滚。而在非最外层事务的时候会由具体txMgr子类

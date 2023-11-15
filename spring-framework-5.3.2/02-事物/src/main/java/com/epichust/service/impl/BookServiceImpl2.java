@@ -18,10 +18,10 @@ public class BookServiceImpl2 implements BookService {
 	@Transactional
 	public int insert(Book book) throws InterruptedException {
 		System.out.println("内层事务开始执行");
-		TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+		// TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 		// TimeUnit.SECONDS.sleep(2);
 		//dao.insert(book);
-//		if (1 == 1) throw new RuntimeException("xxx");
+		if (1 == 1) throw new RuntimeException("xxx");
 		return 1;
 	}
 
@@ -33,6 +33,11 @@ public class BookServiceImpl2 implements BookService {
 	@Override
 	public List<Book> selectAll() {
 		return null;
+	}
+
+	@Override
+	public int update() {
+		return 0;
 	}
 
 }

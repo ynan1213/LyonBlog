@@ -28,7 +28,10 @@ public class TxMain {
 		Book book = new Book("1111", 222222);
 
 		try {
-			bs.insert(book);
+			System.out.println("--------------- 开始 ---------------");
+			bs.update();
+			System.out.println("--------------- 结束 ---------------");
+//			bs.insert(book);
 		} catch (Exception e) {
 			System.out.println("主方法抛出异常:" + e.getMessage());
 		}

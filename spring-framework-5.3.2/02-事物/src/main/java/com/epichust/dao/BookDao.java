@@ -13,5 +13,6 @@ public interface BookDao {
 	Book select(int id);
 	
 	List<Book> selectAll();
-	
+
+	int update();
 }

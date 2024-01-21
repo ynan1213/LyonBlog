@@ -958,6 +958,7 @@ public class CommitLog {
             if (messageExt.isWaitStoreMsgOK()) {
                 GroupCommitRequest request = new GroupCommitRequest(result.getWroteOffset() + result.getWroteBytes(),
                     this.defaultMessageStore.getMessageStoreConfig().getSyncFlushTimeout());
+                // 将请求存入内部的requestWrite，并且唤醒同步刷盘线程，然后仅仅返回future，没有填充刷盘结果，将会在外部thenCombine方法处阻塞等待
                 service.putRequest(request);
                 return request.future();
             } else {

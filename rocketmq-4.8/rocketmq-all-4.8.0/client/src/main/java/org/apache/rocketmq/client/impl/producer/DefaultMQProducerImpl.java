@@ -1234,6 +1234,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
 
         // ignore DelayTimeLevel parameter
         if (msg.getDelayTimeLevel() != 0) {
+            // 事务消息不支持延迟发送
             MessageAccessor.clearProperty(msg, MessageConst.PROPERTY_DELAY_TIME_LEVEL);
         }
 
@@ -1245,6 +1246,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
         // 设置 PGROUP 属性，作用是在查询本地事物状态时，从该生产者组中随机选择一个消息生产者即可
         MessageAccessor.putProperty(msg, MessageConst.PROPERTY_PRODUCER_GROUP, this.defaultMQProducer.getProducerGroup());
         try {
+            // 事务消息使用同步方式发送，默认有两次重试机会
             sendResult = this.send(msg);
         } catch (Exception e) {
             throw new MQClientException("send message Exception", e);

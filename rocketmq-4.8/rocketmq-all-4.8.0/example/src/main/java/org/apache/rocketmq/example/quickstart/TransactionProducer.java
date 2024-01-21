@@ -34,15 +34,24 @@ public class TransactionProducer {
     public static void main(String[] args) throws MQClientException, InterruptedException {
         TransactionMQProducer producer = new TransactionMQProducer("ns01", "please_rename_unique_group_name");
 
-        producer.setNamesrvAddr("47.100.24.106:9876");
+        producer.setNamesrvAddr("121.36.200.116:9876");
 
         producer.setTransactionListener(new TransactionListener() {
+
+            /**
+             * 由producer在发送完消息后调用
+             * 返回值有COMMIT_MESSAGE、ROLLBACK_MESSAGE、UNKNOW
+             * 也可以抛出异常，抛出异常就是UNKNOW
+             */
             @Override
             public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
                 System.out.println("执行本地事物 : " + arg);
                 return null;
             }
 
+            /**
+             * 由Borker反查，返回值有COMMIT_MESSAGE、ROLLBACK_MESSAGE、UNKNOW
+             */
             @Override
             public LocalTransactionState checkLocalTransaction(MessageExt msg) {
                 System.out.println("执行消息回查");

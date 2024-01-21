@@ -53,6 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TransactionalMessageBridge {
     private static final InternalLogger LOGGER = InnerLoggerFactory.getLogger(LoggerName.TRANSACTION_LOGGER_NAME);
 
+    // key是 RMQ_SYS_TRANS_HALF_TOPIC 的queue，value是 RMQ_SYS_TRANS_OP_HALF_TOPIC 的queue
     private final ConcurrentHashMap<MessageQueue, MessageQueue> opQueueMap = new ConcurrentHashMap<>();
     private final BrokerController brokerController;
     private final MessageStore store;
@@ -213,6 +214,7 @@ public class TransactionalMessageBridge {
     }
 
     public boolean putOpMessage(MessageExt messageExt, String opType) {
+        // 此时的topic是 RMQ_SYS_TRANS_HALF_TOPIC
         MessageQueue messageQueue = new MessageQueue(messageExt.getTopic(),
             this.brokerController.getBrokerConfig().getBrokerName(), messageExt.getQueueId());
         if (TransactionalMessageUtil.REMOVETAG.equals(opType)) {
@@ -308,6 +310,8 @@ public class TransactionalMessageBridge {
      * @return This method will always return true.
      */
     private boolean addRemoveTagInTransactionOp(MessageExt messageExt, MessageQueue messageQueue) {
+        // 这里的topic是RMQ_SYS_TRANS_OP_HALF_TOPIC，比RMQ_SYS_TRANS_HALF_TOPIC多了一个OP
+        // Op消息的内容为对应的Half消息的存储的Offset，这样通过Op消息能索引到Half消息进行后续的回查操作
         Message message = new Message(TransactionalMessageUtil.buildOpTopic(), TransactionalMessageUtil.REMOVETAG,
             String.valueOf(messageExt.getQueueOffset()).getBytes(TransactionalMessageUtil.charset));
         writeOp(message, messageQueue);

@@ -1,0 +1,50 @@
+buildscript {
+    repositories {
+        // 优先使用国内源
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        mavenCentral()
+    }
+    dependencies {
+        // 让spring-boot支持gradle
+        //classpath("org.springframework.boot:spring-boot-gradle-plugin:2.1.1.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.4.1")
+    }
+}
+
+plugins {
+    id("java")
+    id 'org.springframework.boot' version '2.4.1'
+}
+
+group = "org.springframework"
+version = "5.3.2"
+
+apply plugin: 'java'
+apply plugin: 'idea'
+// 使用spring boot
+apply plugin: "org.springframework.boot"
+// 使用spring boot的自动依赖管理
+apply plugin: 'io.spring.dependency-management'
+
+sourceCompatibility = 1.8
+
+repositories {
+	maven { url 'https://maven.aliyun.com/repository/public' }
+    mavenCentral()
+}
+
+dependencies {
+	compile(project(":spring-webmvc"))
+    compile(project(":spring-web"))
+    compile(project(":spring-context"))
+    compile(project(":spring-core"))
+    compile(project(":spring-context-support"))
+    compile 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.1")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}

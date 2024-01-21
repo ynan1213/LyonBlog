@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 /**
  * @author yuannan
  */
-@Component
+//@Component
 public class LogAdvisor extends StaticMethodMatcherPointcutAdvisor {
 
 	private static final long serialVersionUID = 1l;

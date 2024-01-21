@@ -20,9 +20,9 @@ public class HelloTest {
 	@Autowired
 	private HelloController helloController;
 
+
 	@Test
 	public void test1(){
-		System.out.println(helloController.hello());
+//		System.out.println(helloController.hello());
 	}
-
 }

@@ -34,15 +34,17 @@ public class SampleXxlJob {
     /**
      * 1、简单任务示例（Bean模式）
      */
-    @XxlJob("demoJobHandler")
-    public void demoJobHandler() throws Exception {
+    @XxlJob(value = "demoJobHandler", init = "init")
+    public String demoJobHandler(String xxx) throws Exception {
         XxlJobHelper.log("XXL-JOB, Hello World.");
 
         for (int i = 0; i < 5; i++) {
             XxlJobHelper.log("beat at:" + i);
             TimeUnit.SECONDS.sleep(2);
         }
+//        throw new RuntimeException("xxxxxxxx -------- yyyyyyyy");
         // default success
+        return "yyy";
     }
 
 
@@ -244,6 +246,7 @@ public class SampleXxlJob {
     }
     public void init(){
         logger.info("init");
+        System.out.println("init ........  xxxxxxxxxxxx ----------- yyyyyyyyyyyy ");
     }
     public void destroy(){
         logger.info("destroy");

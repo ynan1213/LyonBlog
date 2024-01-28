@@ -24,12 +24,33 @@ public class XxlJobScheduler  {
         // init i18n
         initI18n();
 
+        /**
+         * 初始化fastTriggerPool（默认大小200）、slowTriggerPool（默认大小100）线程池。
+         * JobTriggerPoolHelper作用：
+         * 1、执行器的触发均是提交到该两个线程池中执行；
+         * 2、内部还维护了一个map缓存，key是jobId，value是次数；
+         * 3、每次job的时候同时会统计执行时间，若执行时间超过500ms，则记录到map缓存中，且value值+1；
+         * 4、下次提交任务的时候，如果该job在map缓存中的值超过10次，则提交给慢线程池，否则提交给快线程池；
+         * 5、map缓存每60s清空一次；
+         */
         // admin trigger pool start
         JobTriggerPoolHelper.toStart();
 
+        /**
+         * 1、初始化registryOrRemoveThreadPool线程池。
+         * JobTriggerPoolHelper作用：
+         * 2、启动定时任务，每30s执行一次，剔除90S未更新的执行器节点，并将存活的执行器节点地址更新到Group中；
+         */
         // admin registry monitor run
         JobRegistryHelper.getInstance().start();
 
+        /**
+         * 启动定时任务，每10s执行一次：
+         * 1、扫描出【执行失败 && 告警状态为0（初始化）】的log；
+         *  2、将告警状态更新为-1（锁定），防止多节点并发操作；
+         *  3、如果还有重试次数，则进行重试，重试次数配置在任务页面；
+         *  4、触发告警，根据告警结果更新log的告警状态字段：2-告警成功/3-告警失败；
+         */
         // admin fail-monitor run
         JobFailMonitorHelper.getInstance().start();
 

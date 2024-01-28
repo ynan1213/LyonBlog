@@ -27,6 +27,9 @@ public class JobScheduleHelper {
         return instance;
     }
 
+    /**
+     * 最多预读5S之内的任务
+     */
     public static final long PRE_READ_MS = 5000;    // pre read
 
     private Thread scheduleThread;
@@ -35,6 +38,9 @@ public class JobScheduleHelper {
     private volatile boolean ringThreadToStop = false;
     private volatile static Map<Integer, List<Integer>> ringData = new ConcurrentHashMap<>();
 
+    /**
+     * XXL-JOB 任务执行已经摒弃 Quartz 框架，目前通过时间轮方式来管理和触发任务
+     */
     public void start(){
 
         // schedule thread
@@ -43,6 +49,7 @@ public class JobScheduleHelper {
             public void run() {
 
                 try {
+                    // 随机睡眠4000ms - 5000ms ？
                     TimeUnit.MILLISECONDS.sleep(5000 - System.currentTimeMillis()%1000 );
                 } catch (InterruptedException e) {
                     if (!scheduleThreadToStop) {
@@ -52,6 +59,8 @@ public class JobScheduleHelper {
                 logger.info(">>>>>>>>> init xxl-job admin scheduler success.");
 
                 // pre-read count: treadpool-size * trigger-qps (each trigger cost 50ms, qps = 1000/50 = 20)
+                // 每次最多读取的任务个数，线程个数 = TriggerPoolFastMax + TriggerPoolSlowMax，每个线程每秒可处理20个任务
+                // 为什么qps是20？ 应该是经验值
                 int preReadCount = (XxlJobAdminConfig.getAdminConfig().getTriggerPoolFastMax() + XxlJobAdminConfig.getAdminConfig().getTriggerPoolSlowMax()) * 20;
 
                 while (!scheduleThreadToStop) {
@@ -69,7 +78,7 @@ public class JobScheduleHelper {
                         conn = XxlJobAdminConfig.getAdminConfig().getDataSource().getConnection();
                         connAutoCommit = conn.getAutoCommit();
                         conn.setAutoCommit(false);
-
+                        // 调度中心可集群部署，加分布式锁
                         preparedStatement = conn.prepareStatement(  "select * from xxl_job_lock where lock_name = 'schedule_lock' for update" );
                         preparedStatement.execute();
 
@@ -77,6 +86,7 @@ public class JobScheduleHelper {
 
                         // 1、pre read
                         long nowTime = System.currentTimeMillis();
+                        // 从数据库中读取运行中且截止未来5S之内会执行的job信息，并且读取分页大小为preReadCount=6000条数据
                         List<XxlJobInfo> scheduleList = XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().scheduleJobQuery(nowTime + PRE_READ_MS, preReadCount);
                         if (scheduleList!=null && scheduleList.size()>0) {
                             // 2、push time-ring
@@ -84,6 +94,10 @@ public class JobScheduleHelper {
 
                                 // time-ring jump
                                 if (nowTime > jobInfo.getTriggerNextTime() + PRE_READ_MS) {
+                                    /**
+                                     * 当前时间 大于 （任务的下一次触发时间 + 5s），说明任务过期了
+                                     * 过期策略有两种：忽略、立即执行一次
+                                     */
                                     // 2.1、trigger-expire > 5s：pass && make next-trigger-time
                                     logger.warn(">>>>>>>>>>> xxl-job, schedule misfire, jobId = " + jobInfo.getId());
 
@@ -99,6 +113,7 @@ public class JobScheduleHelper {
                                     refreshNextValidTime(jobInfo, new Date());
 
                                 } else if (nowTime > jobInfo.getTriggerNextTime()) {
+                                    // 时间到了，可以执行了
                                     // 2.2、trigger-expire < 5s：direct-trigger && make next-trigger-time
 
                                     // 1、trigger
@@ -109,6 +124,7 @@ public class JobScheduleHelper {
                                     refreshNextValidTime(jobInfo, new Date());
 
                                     // next-trigger-time in 5s, pre-read again
+                                    // 下一次执行在未来5S之内
                                     if (jobInfo.getTriggerStatus()==1 && nowTime + PRE_READ_MS > jobInfo.getTriggerNextTime()) {
 
                                         // 1、make ring second
@@ -118,13 +134,14 @@ public class JobScheduleHelper {
                                         pushTimeRing(ringSecond, jobInfo.getId());
 
                                         // 3、fresh next
+                                        // 加入时间轮之后再次将下次触发时间往后提一次，避免重复触发，因为只要加入时间轮时间到了就会被触发一次
                                         refreshNextValidTime(jobInfo, new Date(jobInfo.getTriggerNextTime()));
 
                                     }
 
                                 } else {
                                     // 2.3、trigger-pre-read：time-ring trigger && make next-trigger-time
-
+                                    // 执行时间在此时 ~ 未来5S之内
                                     // 1、make ring second
                                     int ringSecond = (int)((jobInfo.getTriggerNextTime()/1000)%60);
 
@@ -173,6 +190,7 @@ public class JobScheduleHelper {
                                 }
                             }
                             try {
+                                // 先恢复connAutoCommit再close，难道close不会重置connAutoCommit吗？有时间研究DataSource
                                 conn.close();
                             } catch (SQLException e) {
                                 if (!scheduleThreadToStop) {
@@ -184,6 +202,7 @@ public class JobScheduleHelper {
                         // close PreparedStatement
                         if (null != preparedStatement) {
                             try {
+                                // conn关闭之后再关闭preparedStatement？顺序反了吧
                                 preparedStatement.close();
                             } catch (SQLException e) {
                                 if (!scheduleThreadToStop) {
@@ -238,6 +257,7 @@ public class JobScheduleHelper {
                         List<Integer> ringItemData = new ArrayList<>();
                         int nowSecond = Calendar.getInstance().get(Calendar.SECOND);   // 避免处理耗时太长，跨过刻度，向前校验一个刻度；
                         for (int i = 0; i < 2; i++) {
+                            // 没有明白为什么 +60
                             List<Integer> tmpData = ringData.remove( (nowSecond+60-i)%60 );
                             if (tmpData != null) {
                                 ringItemData.addAll(tmpData);

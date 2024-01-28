@@ -68,6 +68,9 @@ public class TriggerCallbackThread {
 
                             // callback list param
                             List<HandleCallbackParam> callbackParamList = new ArrayList<HandleCallbackParam>();
+                            /**
+                             * drainTo: 将队列中的元素转移到指定的集合中，如果队列为空，则不执行任何操作
+                             */
                             int drainToNum = getInstance().callBackQueue.drainTo(callbackParamList);
                             callbackParamList.add(callback);
 

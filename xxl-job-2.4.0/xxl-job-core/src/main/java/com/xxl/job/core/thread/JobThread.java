@@ -98,6 +98,8 @@ public class JobThread extends Thread{
 
     	// init
     	try {
+			// 通过调试，发现每启动一次都会会执行一次init
+			// handler是单例的情况下，会不会出现问题？？？
 			handler.init();
 		} catch (Throwable e) {
     		logger.error(e.getMessage(), e);
@@ -106,6 +108,7 @@ public class JobThread extends Thread{
 		// execute
 		while(!toStop){
 			running = false;
+			// 每循环一次，空闲次数+1
 			idleTimes++;
 
             TriggerParam triggerParam = null;
@@ -114,11 +117,14 @@ public class JobThread extends Thread{
 				triggerParam = triggerQueue.poll(3L, TimeUnit.SECONDS);
 				if (triggerParam!=null) {
 					running = true;
+					// 有了任务，空闲次数清零
 					idleTimes = 0;
 					triggerLogIdSet.remove(triggerParam.getLogId());
 
 					// log filename, like "logPath/yyyy-MM-dd/9999.log"
 					String logFileName = XxlJobFileAppender.makeLogFileName(new Date(triggerParam.getLogDateTime()), triggerParam.getLogId());
+
+					// 默认创建一个执行成功的上下文 handleCode = 200
 					XxlJobContext xxlJobContext = new XxlJobContext(
 							triggerParam.getJobId(),
 							triggerParam.getExecutorParams(),
@@ -132,6 +138,7 @@ public class JobThread extends Thread{
 					// execute
 					XxlJobHelper.log("<br>----------- xxl-job job execute start -----------<br>----------- Param:" + xxlJobContext.getJobParam());
 
+					// 任务可以配置超时时间，不配置默认为0
 					if (triggerParam.getExecutorTimeout() > 0) {
 						// limit timeout
 						Thread futureThread = null;
@@ -142,7 +149,7 @@ public class JobThread extends Thread{
 
 									// init job context
 									XxlJobContext.setXxlJobContext(xxlJobContext);
-
+									TimeUnit.SECONDS.sleep(5);
 									handler.execute();
 									return true;
 								}
@@ -157,6 +164,7 @@ public class JobThread extends Thread{
 							XxlJobHelper.log(e);
 
 							// handle result
+							// 将上下文XxlJobContext的 handleCode = 502
 							XxlJobHelper.handleTimeout("job execute timeout ");
 						} finally {
 							futureThread.interrupt();
@@ -183,6 +191,7 @@ public class JobThread extends Thread{
 					);
 
 				} else {
+					// 空闲次数超过30次，说明空闲时间超过了90S，销毁线程
 					if (idleTimes > 30) {
 						if(triggerQueue.size() == 0) {	// avoid concurrent trigger causes jobId-lost
 							XxlJobExecutor.removeJobThread(jobId, "excutor idel times over limit.");
@@ -207,6 +216,7 @@ public class JobThread extends Thread{
                     // callback handler info
                     if (!toStop) {
                         // commonm
+						// 执行结果回传
                         TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
                         		triggerParam.getLogId(),
 								triggerParam.getLogDateTime(),

@@ -46,6 +46,8 @@ public class ExecutorBizImpl implements ExecutorBiz {
     @Override
     public ReturnT<String> run(TriggerParam triggerParam) {
         // load old：jobHandler + jobThread
+        // 获取任务线程，首次进来为空的话则会创建一个，不为空则使用任务线程执行
+        // 如果任务线程空闲时间超过90S，会主动销毁
         JobThread jobThread = XxlJobExecutor.loadJobThread(triggerParam.getJobId());
         IJobHandler jobHandler = jobThread!=null?jobThread.getHandler():null;
         String removeOldReason = null;
@@ -68,6 +70,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
 
             // valid handler
             if (jobHandler == null) {
+                // 从这里可以看出，在调度器端可以主动切换执行器，也就是JobHandler
                 jobHandler = newJobHandler;
                 if (jobHandler == null) {
                     return new ReturnT<String>(ReturnT.FAIL_CODE, "job handler [" + triggerParam.getExecutorHandler() + "] not found.");
@@ -119,21 +122,25 @@ public class ExecutorBizImpl implements ExecutorBiz {
         }
 
         // executor block strategy
+        // 任务线程不为空
         if (jobThread != null) {
             ExecutorBlockStrategyEnum blockStrategy = ExecutorBlockStrategyEnum.match(triggerParam.getExecutorBlockStrategy(), null);
             if (ExecutorBlockStrategyEnum.DISCARD_LATER == blockStrategy) {
                 // discard when running
+                // 如果阻塞策略为【丢弃后续调度】 && 当前线程正在执行中，则立即返回失败
                 if (jobThread.isRunningOrHasQueue()) {
                     return new ReturnT<String>(ReturnT.FAIL_CODE, "block strategy effect："+ExecutorBlockStrategyEnum.DISCARD_LATER.getTitle());
                 }
             } else if (ExecutorBlockStrategyEnum.COVER_EARLY == blockStrategy) {
                 // kill running jobThread
+                // 如果是【覆盖之前调度】，则新起一个线程
                 if (jobThread.isRunningOrHasQueue()) {
                     removeOldReason = "block strategy effect：" + ExecutorBlockStrategyEnum.COVER_EARLY.getTitle();
 
                     jobThread = null;
                 }
             } else {
+                // 【单机串行】，则加入任务队列
                 // just queue trigger
             }
         }
@@ -145,6 +152,10 @@ public class ExecutorBizImpl implements ExecutorBiz {
 
         // push data to queue
         ReturnT<String> pushResult = jobThread.pushTriggerQueue(triggerParam);
+        /**
+         * 这里返回的是调度结果，因为到目前为止属于调度阶段，执行阶段是异步执行的，执行结果也是异步回传的
+         * 注意：是同步方式
+         */
         return pushResult;
     }
 

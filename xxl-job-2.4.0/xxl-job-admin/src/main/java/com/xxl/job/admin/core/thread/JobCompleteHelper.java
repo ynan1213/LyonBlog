@@ -64,6 +64,7 @@ public class JobCompleteHelper {
 
 				// wait for JobTriggerPoolHelper-init
 				try {
+					// 上来休眠50毫秒，等待 JobTriggerPoolHelper 初始化完成
 					TimeUnit.MILLISECONDS.sleep(50);
 				} catch (InterruptedException e) {
 					if (!toStop) {
@@ -76,6 +77,7 @@ public class JobCompleteHelper {
 					try {
 						// 任务结果丢失处理：调度记录停留在 "运行中" 状态超过10min，且对应执行器心跳注册失败不在线，则将本地调度主动标记失败；
 						Date losedTime = DateUtil.addMinutes(new Date(), -10);
+						// 查询的是调度成功、执行结果未回传、对应执行器不在线
 						List<Long> losedJobIds  = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLostJobIds(losedTime);
 
 						if (losedJobIds!=null && losedJobIds.size()>0) {
@@ -87,7 +89,7 @@ public class JobCompleteHelper {
 								jobLog.setHandleTime(new Date());
 								jobLog.setHandleCode(ReturnT.FAIL_CODE);
 								jobLog.setHandleMsg( I18nUtil.getString("joblog_lost_fail") );
-
+								// 将jog状态更新为失败
 								XxlJobCompleter.updateHandleInfoAndFinish(jobLog);
 							}
 

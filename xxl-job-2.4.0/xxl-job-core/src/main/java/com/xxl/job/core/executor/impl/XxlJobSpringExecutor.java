@@ -27,7 +27,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
     private static final Logger logger = LoggerFactory.getLogger(XxlJobSpringExecutor.class);
 
 
-    // start
+    // start 该方法会在所有单例Bean初始化完毕后再执行
     @Override
     public void afterSingletonsInstantiated() {
 

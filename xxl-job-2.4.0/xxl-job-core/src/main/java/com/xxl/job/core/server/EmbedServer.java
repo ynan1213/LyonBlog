@@ -82,6 +82,7 @@ public class EmbedServer {
                     logger.info(">>>>>>>>>>> xxl-job remoting server start success, nettype = {}, port = {}", EmbedServer.class, port);
 
                     // start registry
+                    // 启动定时器，定时向调度中心注册
                     startRegistry(appname, address);
 
                     // wait util stop
@@ -183,9 +184,9 @@ public class EmbedServer {
             // services mapping
             try {
                 switch (uri) {
-                    case "/beat":
+                    case "/beat": // 心跳检测
                         return executorBiz.beat();
-                    case "/idleBeat":
+                    case "/idleBeat": // 空闲检测
                         IdleBeatParam idleBeatParam = GsonTool.fromJson(requestData, IdleBeatParam.class);
                         return executorBiz.idleBeat(idleBeatParam);
                     case "/run":

@@ -98,6 +98,7 @@ public class JobTriggerPoolHelper {
                 } finally {
 
                     // check timeout-count-map
+                    // 60S之内统计一次
                     long minTim_now = System.currentTimeMillis()/60000;
                     if (minTim != minTim_now) {
                         minTim = minTim_now;

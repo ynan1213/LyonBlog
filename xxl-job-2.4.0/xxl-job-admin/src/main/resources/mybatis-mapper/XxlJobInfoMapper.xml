@@ -218,7 +218,7 @@
 		FROM xxl_job_info
 	</select>
 
-
+	<!-- trigger_status: 调度状态，0-停止，1-运行 -->
 	<select id="scheduleJobQuery" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
 		SELECT <include refid="Base_Column_List" />
 		FROM xxl_job_info AS t

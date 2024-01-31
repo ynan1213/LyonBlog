@@ -245,6 +245,10 @@ public class JobScheduleHelper {
 
                     // align second
                     try {
+                        /*
+                         * 下面代码每次睡眠 0.001S ~ 1S 时长。
+                         * 为什么不是直接睡眠1S？ 为什么要减掉一个随机毫秒值？不理解
+                         */
                         TimeUnit.MILLISECONDS.sleep(1000 - System.currentTimeMillis() % 1000);
                     } catch (InterruptedException e) {
                         if (!ringThreadToStop) {
@@ -257,7 +261,9 @@ public class JobScheduleHelper {
                         List<Integer> ringItemData = new ArrayList<>();
                         int nowSecond = Calendar.getInstance().get(Calendar.SECOND);   // 避免处理耗时太长，跨过刻度，向前校验一个刻度；
                         for (int i = 0; i < 2; i++) {
-                            // 没有明白为什么 +60
+                            /*
+                             * 效果和nowSecond-i一样，但是为什么+60，避免0S的情况
+                             */
                             List<Integer> tmpData = ringData.remove( (nowSecond+60-i)%60 );
                             if (tmpData != null) {
                                 ringItemData.addAll(tmpData);

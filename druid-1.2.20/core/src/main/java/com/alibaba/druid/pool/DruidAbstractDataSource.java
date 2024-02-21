@@ -101,16 +101,29 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile NameCallback userCallback;
 
     protected volatile int initialSize = DEFAULT_INITIAL_SIZE;
-    protected volatile int maxActive = DEFAULT_MAX_ACTIVE_SIZE;
-    protected volatile int minIdle = DEFAULT_MIN_IDLE;
-    protected volatile int maxIdle = DEFAULT_MAX_IDLE;
+
+    /**
+     * 连接池有maxPoolSize和minPoolSize，druid的maxActive和minIdle，分别相当于maxPoolSize和minPoolSize。
+     */
+    protected volatile int maxActive = DEFAULT_MAX_ACTIVE_SIZE; // 默认8
+    protected volatile int minIdle = DEFAULT_MIN_IDLE; // 默认0
+    protected volatile int maxIdle = DEFAULT_MAX_IDLE; // 默认8
     protected volatile long maxWait = DEFAULT_MAX_WAIT;
+    // 获取连接最大重试次数
     protected int notFullTimeoutRetryCount;
 
     protected volatile String validationQuery = DEFAULT_VALIDATION_QUERY;
     protected volatile int validationQueryTimeout = -1;
+
+    /**
+     * testOnBorrow：如果为true（默认为false），当应用向连接池申请连接时，连接池会判断这条连接是否是可用的。
+     */
     protected volatile boolean testOnBorrow = DEFAULT_TEST_ON_BORROW;
     protected volatile boolean testOnReturn = DEFAULT_TEST_ON_RETURN;
+    /**
+     * testWhileIdle和testOnBorrow的作用都是一样的，都是去检查连接有效性，而testWhileIdle多了个闲置时间的判断，判断闲置时间是否大于
+     * timeBetweenEvictionRunsMillis，如果大于才会进行连接有效性的校验,这个参数是可配置的;两者都是在获取连接的时候去检查
+     */
     protected volatile boolean testWhileIdle = DEFAULT_WHILE_IDLE;
     protected volatile boolean poolPreparedStatements;
     protected volatile boolean sharePreparedStatements;
@@ -140,6 +153,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile int maxWaitThreadCount = -1;
     protected volatile boolean accessToUnderlyingConnectionAllowed = true;
 
+    /**
+     * 检查空闲连接的频率，默认值为1分钟，超过该值需要验证连接是否有效
+     */
     protected volatile long timeBetweenEvictionRunsMillis = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;
     protected volatile int numTestsPerEvictionRun = DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
     protected volatile long minEvictableIdleTimeMillis = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
@@ -1424,6 +1440,11 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
             throw new SQLException("validateConnection: connection closed");
         }
 
+        /**
+         * druid有两种方式:
+         *  如果validConnectionChecker不为空则优先使用validConnectionChecker进行校验
+         *  如果validConnectionChecker为空，则创建statement进行校验
+         */
         if (validConnectionChecker != null) {
             boolean result;
             Exception error = null;
@@ -1468,6 +1489,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
                     stmt.setQueryTimeout(getValidationQueryTimeout());
                 }
                 rs = stmt.executeQuery(query);
+                // validationQuery是用来验证数据库连接的查询语句，这个查询语句必须是至少返回一条数据的SELECT语句
                 if (!rs.next()) {
                     throw new SQLException("validationQuery didn't return a row");
                 }
@@ -1521,9 +1543,11 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
                     ((ConnectionProxyImpl) conn).setLastValidateTimeMillis(currentTimeMillis);
                 }
                 if (valid && isMySql) { // unexcepted branch
+                    // 上一次收包时间
                     long lastPacketReceivedTimeMs = MySqlUtils.getLastPacketReceivedTimeMs(conn);
                     if (lastPacketReceivedTimeMs > 0) {
                         long mysqlIdleMillis = currentTimeMillis - lastPacketReceivedTimeMs;
+                        // 没有明白这里的判断，当空闲时间超过timeBetweenEvictionRunsMillis就会关闭
                         if (mysqlIdleMillis >= timeBetweenEvictionRunsMillis) {
                             discardConnection(holder);
                             String errorMsg = "discard long time none received connection. "
@@ -1697,21 +1721,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
     protected abstract void recycle(DruidPooledConnection pooledConnection) throws SQLException;
 
-    public Connection createPhysicalConnection(String url, Properties info) throws SQLException {
-        Connection conn;
-        if (getProxyFilters().isEmpty()) {
-            conn = getDriver().connect(url, info);
-        } else {
-            FilterChainImpl filterChain = createChain();
-            conn = filterChain.connection_connect(info);
-            recycleFilterChain(filterChain);
-        }
-
-        createCountUpdater.incrementAndGet(this);
-
-        return conn;
-    }
-
     public PhysicalConnectionInfo createPhysicalConnection() throws SQLException {
         String url = this.getUrl();
         Properties connectProperties = getConnectProperties();
@@ -1785,20 +1794,24 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
         Connection conn = null;
 
+        // 记录连接创建开始时刻
         long connectStartNanos = System.nanoTime();
         long connectedNanos, initedNanos, validatedNanos;
 
+        // 默认false，配置为true则会记录【show variables】语句返回的变量
         Map<String, Object> variables = initVariants
-                ? new HashMap<String, Object>()
-                : null;
+            ? new HashMap<String, Object>()
+            : null;
+        // 默认false，配置为true则会记录【show global variables】语句返回的变量
         Map<String, Object> globalVariables = initGlobalVariants
-                ? new HashMap<String, Object>()
-                : null;
+            ? new HashMap<String, Object>()
+            : null;
 
         createStartNanosUpdater.set(this, connectStartNanos);
         creatingCountUpdater.incrementAndGet(this);
         try {
             conn = createPhysicalConnection(url, physicalConnectProperties);
+            // 记录连接创建完成时刻
             connectedNanos = System.nanoTime();
 
             if (conn == null) {
@@ -1806,12 +1819,14 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
             }
 
             initPhysicalConnection(conn, variables, globalVariables);
+            // 记录连接初始化完成时刻
             initedNanos = System.nanoTime();
 
             boolean skipSocketTimeout = "odps".equals(dbTypeName);
             if (socketTimeout > 0 && !netTimeoutError && !skipSocketTimeout) {
                 try {
                     // As SQLServer-jdbc-driver 6.1.7 can use this, see https://github.com/microsoft/mssql-jdbc/wiki/SocketTimeout
+                    // socketTimeout的设置和connectTimeout不在一个地方，有待研究
                     conn.setNetworkTimeout(netTimeoutExecutor, socketTimeout); // here is milliseconds defined by JDBC
                 } catch (SQLFeatureNotSupportedException | AbstractMethodError e) {
                     netTimeoutError = true;
@@ -1821,6 +1836,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
             }
 
             validateConnection(conn);
+            // 记录连接校验完成时刻
             validatedNanos = System.nanoTime();
 
             setFailContinuous(false);
@@ -1844,7 +1860,30 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
             creatingCountUpdater.decrementAndGet(this);
         }
 
-        return new PhysicalConnectionInfo(conn, connectStartNanos, connectedNanos, initedNanos, validatedNanos, variables, globalVariables);
+        return new PhysicalConnectionInfo(
+            conn, // 物理连接
+            connectStartNanos, // 连接创建开始时刻
+            connectedNanos, // 连接创建完成时刻
+            initedNanos, // 连接初始化完成时刻
+            validatedNanos, // 连接校验完成时刻
+            variables, //
+            globalVariables
+        );
+    }
+
+    public Connection createPhysicalConnection(String url, Properties info) throws SQLException {
+        Connection conn;
+        if (getProxyFilters().isEmpty()) {
+            conn = getDriver().connect(url, info);
+        } else {
+            FilterChainImpl filterChain = createChain();
+            conn = filterChain.connection_connect(info);
+            recycleFilterChain(filterChain);
+        }
+
+        createCountUpdater.incrementAndGet(this);
+
+        return conn;
     }
 
     protected void setCreateError(Throwable ex) {

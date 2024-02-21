@@ -29,6 +29,11 @@ import java.util.List;
  */
 @ConfigurationProperties("spring.datasource.druid")
 public class DruidDataSourceWrapper extends DruidDataSource implements InitializingBean {
+
+    /**
+     * 这里也会读取
+     * spring.datasource.* 的配置
+     */
     @Autowired
     private DataSourceProperties basicProperties;
 

@@ -67,6 +67,7 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
 
         this.conn = holder.getConnection();
         this.holder = holder;
+        // 每个holder都有一个单独的lock
         this.lock = holder.lock;
         dupCloseLogEnable = holder.getDataSource().isDupCloseLogEnable();
         ownerThread = Thread.currentThread();
@@ -253,6 +254,7 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
             dataSource.setAsyncCloseConnectionEnable(true);
         }
 
+        // 这里和下面有什么区别？
         if (dataSource.removeAbandoned || dataSource.asyncCloseConnectionEnable) {
             syncClose();
             return;

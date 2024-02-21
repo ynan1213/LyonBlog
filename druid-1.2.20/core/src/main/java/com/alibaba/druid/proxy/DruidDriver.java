@@ -35,6 +35,7 @@ import java.lang.management.ManagementFactory;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.sql.*;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -81,9 +82,30 @@ public class DruidDriver implements Driver, DruidDriverMBean {
         });
     }
 
+    /**
+     * 个人理解：DruidDriver是个包装类，是对其它驱动的包装
+     */
     public static boolean registerDriver(Driver driver) {
         try {
+            /**
+             * registerDriver 就是把驱动放进内部的CopyOnWriteArrayList缓存中
+             * 注意：DriverManager类的静态代码块会使用SPI方式加载第三方的驱动
+             */
             DriverManager.registerDriver(driver);
+
+            // ########################################################
+            /**
+             * 通过下面demo发现，除了上面的DruidDriver，还注册了MockDriver，以为MockDriver实现了SPI方式
+             */
+            Enumeration<Driver> drivers = DriverManager.getDrivers();
+            int nums = 0;
+            while(drivers.hasMoreElements()) {
+                nums ++;
+                System.out.println(drivers.nextElement());
+            }
+            // 这里打印了三个：MockDriver、DruidDriver、com.mysql.cj.jdbc.Driver
+            System.out.println("驱动个数:" + nums);
+            // ########################################################
 
             try {
                 MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();

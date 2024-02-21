@@ -392,12 +392,16 @@ public final class JdbcUtils implements JdbcConstants {
         }
     }
 
+    /**
+     * 根据URL协议，推断出驱动类
+     */
     public static String getDriverClassName(String rawUrl) throws SQLException {
         if (rawUrl == null) {
             return null;
         }
 
         if (rawUrl.startsWith("jdbc:derby:")) {
+            // Derby数据库是一个纯用Java实现的内存数据库，属于Apache的一个开源项目。
             return "org.apache.derby.jdbc.EmbeddedDriver";
         } else if (rawUrl.startsWith("jdbc:mysql:")) {
             if (mysql_driver_version_6 == null) {

@@ -101,6 +101,7 @@ public class MySqlValidConnectionChecker extends ValidConnectionCheckerAdapter i
             return false;
         }
 
+        // 默认false
         if (usePingMethod) {
             if (conn instanceof DruidPooledConnection) {
                 conn = ((DruidPooledConnection) conn).getConnection();

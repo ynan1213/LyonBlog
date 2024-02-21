@@ -59,26 +59,48 @@ public final class DruidConnectionHolder {
     protected final Connection conn;
     protected final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();
     protected final List<StatementEventListener> statementEventListeners = new CopyOnWriteArrayList<StatementEventListener>();
+
+    // 连接时间毫秒
     protected final long connectTimeMillis;
+    // 最后一次活跃时间
     protected volatile long lastActiveTimeMillis;
+    // 最后一次执行时间
     protected volatile long lastExecTimeMillis;
+    // 最后一次保活时间
     protected volatile long lastKeepTimeMillis;
+    // 最后一次验证时间
     protected volatile long lastValidTimeMillis;
+    // 连接被使用次数
     protected long useCount;
+    // 连接探活次数
     private long keepAliveCheckCount;
+    // 上一次获取连接的等待时长
     private long lastNotEmptyWaitNanos;
+    // 创建的时间区间
     private final long createNanoSpan;
+    // statement缓存
     protected PreparedStatementPool statementPool;
     protected final List<Statement> statementTrace = new ArrayList<Statement>(2);
+    // 默认只读标识
     protected final boolean defaultReadOnly;
+    // 默认长链接能力
     protected final int defaultHoldability;
+    // 默认事务隔离级别
     protected final int defaultTransactionIsolation;
+    // 默认事务自动提交
     protected final boolean defaultAutoCommit;
+
+    // 底层只读标识
     protected boolean underlyingReadOnly;
+    // 底层长链接能力
     protected int underlyingHoldability;
+    // 底层事务隔离级别
     protected int underlyingTransactionIsolation;
+    // 底层事务自动提交
     protected boolean underlyingAutoCommit;
+    // 连接状态：是否已丢弃
     protected volatile boolean discard;
+    // 连接状态：是否活跃连接
     protected volatile boolean active;
     protected final Map<String, Object> variables;
     protected final Map<String, Object> globalVariables;
@@ -113,14 +135,17 @@ public final class DruidConnectionHolder {
     ) throws SQLException {
         this.dataSource = dataSource;
         this.conn = conn;
+        // 创建连接耗时
         this.createNanoSpan = connectNanoSpan;
+        // 【show variables】语句返回的变量
         this.variables = variables;
+        // 和【show global variables】语句返回的变量
         this.globalVariables = globalVariables;
 
         this.connectTimeMillis = System.currentTimeMillis();
         this.lastActiveTimeMillis = connectTimeMillis;
         this.lastExecTimeMillis = connectTimeMillis;
-
+        // 层底层事务自动提交
         this.underlyingAutoCommit = conn.getAutoCommit();
 
         if (conn instanceof WrapperProxy) {

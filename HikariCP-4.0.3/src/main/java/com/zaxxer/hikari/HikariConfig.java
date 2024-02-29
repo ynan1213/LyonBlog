@@ -65,9 +65,21 @@ public class HikariConfig implements HikariConfigMXBean
    //
    private volatile String catalog;
    private volatile long connectionTimeout;
+   /**
+    * 校验连接活性允许的超时时间
+    * 默认 5000 ms，最小值为 250 ms，要求小于 connectionTimeout。支持 JMX 动态修改
+    */
    private volatile long validationTimeout;
    private volatile long idleTimeout;
+   /**
+    * 一个连接被拿出去使用时间超过leakDetectionThreshold未归还的，会触发一个连接泄漏警告，通知业务方目前存在连接泄漏的问题。
+    * 默认 0（不开启），最小允许值为 2000 ms。支持 JMX 动态修改
+    */
    private volatile long leakDetectionThreshold;
+   /**
+    * 此属性控制池中连接的最大生存期。当一个连接存活了maxLifetime时间，HikariCP 将会在它空闲时把它抛弃
+    * 默认 1800000  ms，最小值为 30000 ms，如果设置为0，表示存活时间无限大。支持 JMX 动态修改
+    */
    private volatile long maxLifetime;
    private volatile int maxPoolSize;
    private volatile int minIdle;
@@ -75,32 +87,82 @@ public class HikariConfig implements HikariConfigMXBean
    private volatile String password;
 
    // Properties NOT changeable at runtime
-   //
+   /**
+    * 如果启动连接池时不能成功初始化连接，是否快速失败
+    *  >0 时，会尝试获取连接。如果获取时间超过指定时长，不会开启连接池，并抛出异常
+    *  =0 时，会尝试获取并验证连接。如果获取成功但验证失败则不开启池，但是如果获取失败还是会开启池
+    *  <0 时，不管是否获取或校验成功都会开启池。
+    * 默认为 1
+    */
    private long initializationFailTimeout;
+   /**
+    * 在每个连接创建后、放入池前，需要执行的初始化语句
+    * 如果执行失败，该连接会被丢弃
+    * 默认为空
+    */
    private String connectionInitSql;
+   /**
+    * 用来检查连接活性的 sql，要求是一个查询语句，常用select 'x'
+    * 如果驱动支持 JDBC4.0，建议不设置，这时默认会调用  Connection.isValid() 来检查，该方式会更高效一些
+    * 默认为空
+    */
    private String connectionTestQuery;
    private String dataSourceClassName;
    private String dataSourceJndiName;
    private String driverClassName;
    private String exceptionOverrideClassName;
    private String jdbcUrl;
+   /**
+    * 连接池名称。
+    * 默认自动生成
+    */
    private String poolName;
    private String schema;
    private String transactionIsolationName;
    private boolean isAutoCommit;
    private boolean isReadOnly;
+   /**
+    * 是否在事务中隔离 HikariCP 自己的查询。
+    * autoCommit 为 false 时才生效
+    * 默认 false
+    */
    private boolean isIsolateInternalQueries;
+   /**
+    * 是否开启 JMX
+    * 默认 false
+    */
    private boolean isRegisterMbeans;
+   /**
+    * 是否允许通过 JMX 挂起和恢复连接池
+    * 默认为 false
+    */
    private boolean isAllowPoolSuspension;
+   /**
+    * 直接指定 DataSource 实例，而不是通过 dataSourceClassName 来反射构造
+    * 默认为空，只能通过代码设置
+    */
    private DataSource dataSource;
    private Properties dataSourceProperties;
    private ThreadFactory threadFactory;
    private ScheduledExecutorService scheduledExecutor;
    private MetricsTrackerFactory metricsTrackerFactory;
+   /**
+    * 用于记录连接池各项指标的 MetricRegistry 实现类
+    * 默认为空，只能通过代码设置
+    */
    private Object metricRegistry;
+   /**
+    * 用于报告连接池健康状态的 HealthCheckRegistry 实现类
+    * 默认为空，只能通过代码设置
+    */
    private Object healthCheckRegistry;
    private Properties healthCheckProperties;
 
+   /**
+    * 多久检查一次连接的活性
+    * 检查时会先把连接从池中拿出来（空闲的话），然后调用isValid()或执行connectionTestQuery来校验活性，如果通过校验，则放回池里。
+    * 默认 0 （不启用），最小值为 30000 ms，必须小于 maxLifetime。支持 JMX 动态修改
+    */
    private long keepaliveTime;
 
    private volatile boolean sealed;

@@ -60,21 +60,33 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
 {
    private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentBag.class);
 
+   /**
+    * sharedList是用来真正保存连接的集合，使用了CopyOnWriteArrayList, 这个并发集合类特点是用空间换时间，提高了获取效率,
+    * 但可能存在读的不一致。但是因为配合了cas，所以解决了这个问题。
+    *
+    * 除了通过标记 + CopyOnWriteArrayList + cas 来避免了上锁，极大的优化了borrow 和 requite的效率。
+    */
    private final CopyOnWriteArrayList<T> sharedList;
    private final boolean weakThreadLocals;
 
+   // 缓存线程级连接对象，会被优先使用，避免被争抢
    private final ThreadLocal<List<Object>> threadList;
    private final IBagStateListener listener;
+   // 等待获取连接的线程数
    private final AtomicInteger waiters;
    private volatile boolean closed;
 
+   // 即时处理连接的队列，当有等待线程时，通过该队列将连接分配给等待线程
+   // handoff:传球、移交
    private final SynchronousQueue<T> handoffQueue;
 
    public interface IConcurrentBagEntry
    {
       int STATE_NOT_IN_USE = 0;
       int STATE_IN_USE = 1;
+      // 被废弃
       int STATE_REMOVED = -1;
+      // 保留态，中间状态，用于尝试驱逐连接对象时
       int STATE_RESERVED = -2;
 
       boolean compareAndSet(int expectState, int newState);
@@ -95,8 +107,9 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    public ConcurrentBag(final IBagStateListener listener)
    {
       this.listener = listener;
+      // 是否使用弱引用
       this.weakThreadLocals = useWeakThreadLocals();
-
+      // handoff:传球、移交
       this.handoffQueue = new SynchronousQueue<>(true);
       this.waiters = new AtomicInteger();
       this.sharedList = new CopyOnWriteArrayList<>();
@@ -104,6 +117,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
          this.threadList = ThreadLocal.withInitial(() -> new ArrayList<>(16));
       }
       else {
+         // 创建一个FastList的ThreadLocal
          this.threadList = ThreadLocal.withInitial(() -> new FastList<>(IConcurrentBagEntry.class, 16));
       }
    }
@@ -119,6 +133,10 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     */
    public T borrow(long timeout, final TimeUnit timeUnit) throws InterruptedException
    {
+      /**
+       * hikariCP为什么快，最主要就是该borrow和return模型
+       * ①：首先从ThreadLocal中获取，避免了加锁
+       */
       // Try the thread-local list first
       final List<Object> list = threadList.get();
       for (int i = list.size() - 1; i >= 0; i--) {
@@ -131,11 +149,18 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       }
 
       // Otherwise, scan the shared list ... then poll the handoff queue
+      // 线程级别的缓存threadList不存在连接的情况下，等待线程数才+1
       final int waiting = waiters.incrementAndGet();
       try {
+         /**
+          * ②：再从共享缓存中获取，sharedList是个CopyOnWriteArrayList类型，会存在读一致性问题，但是不影响，详情看③
+          *    如果获取到了连接，直接在连接粒度上做CAS，即使失败了再对下一个连接做CAS即可。
+          *    相比较Druid获取时必须获取一个全局锁，并且改锁在borrow、return、add、remove操作上是一把锁，从锁粒度来说，hikari小很多
+          */
          for (T bagEntry : sharedList) {
             if (bagEntry.compareAndSet(STATE_NOT_IN_USE, STATE_IN_USE)) {
                // If we may have stolen another waiter's connection, request another bag add.
+               // 阻塞线程数大于1时，需要触发异步创建连接
                if (waiting > 1) {
                   listener.addBagItem(waiting - 1);
                }
@@ -143,22 +168,29 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
             }
          }
 
+         // 走到这里说明不光线程缓存里的列表竞争不到连接对象，连sharedList里也找不到可用的连接，这时则认为需要通知HikariPool，该触发添加连接操作了
          listener.addBagItem(waiting);
 
          timeout = timeUnit.toNanos(timeout);
          do {
             final long start = currentTime();
+            /**
+             * ③：如果共享缓存里没有，或者因为读一致性缓存里有但是未读取到，就会走到这里
+             * 尝试从handoffQueue队列里获取最新被加进来的连接对象（一般新入的连接对象除了加进sharedList之外，还会被offer进该队列）
+             */
             final T bagEntry = handoffQueue.poll(timeout, NANOSECONDS);
             if (bagEntry == null || bagEntry.compareAndSet(STATE_NOT_IN_USE, STATE_IN_USE)) {
                return bagEntry;
             }
 
+            // 走到这里说明从队列内获取到了连接对象，但是cas设置失败，说明该对象被其它线程拿到，时间够的话，再次循环
             timeout -= elapsedNanos(start);
          } while (timeout > 10_000);
-
+         // 超时了还是没有获取到，返回null
          return null;
       }
       finally {
+         // 等待获取连接的线程数-1
          waiters.decrementAndGet();
       }
    }
@@ -167,6 +199,11 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     * This method will return a borrowed object to the bag.  Objects
     * that are borrowed from the bag but never "requited" will result
     * in a memory leak.
+    *
+    * 归还连接
+    * 因为concurrentBag的方法中有连接池的四个重要操作：borrow获取连接，requite归还连接，add添加连接，remove移除连接。
+    * 一般来说，这四个操作为了保证线程安全和一致性，会同时加一把锁。而HikarCP建立了一套标记模型， 通过在获取连接时，cas标记连接状态为已使用，
+    * 归还连接时，cas标记连接未使用，弱化了borrow 和 requite理应加的“重锁”。
     *
     * @param bagEntry the value to return to the bag
     * @throws NullPointerException if value is null
@@ -189,6 +226,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       }
 
       final List<Object> threadLocalList = threadList.get();
+      // 存进threadLocalList里，最多不超过50个
       if (threadLocalList.size() < 50) {
          threadLocalList.add(weakThreadLocals ? new WeakReference<>(bagEntry) : bagEntry);
       }
@@ -209,6 +247,13 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
       sharedList.add(bagEntry);
 
       // spin until a thread takes it or none are waiting
+      /**
+       * waiters.get() > 0 : 说明存在等待线程
+       * bagEntry.getState() == STATE_NOT_IN_USE: 因为add操作并没有限定和更新state，所以这里要判断一下
+       * !handoffQueue.offer(bagEntry): 加到队列里，这里有个疑问，如果因为并发或者某些原因该连接并未被获取，offer方法是不是就会一直阻塞下去
+       *
+       * 结合borrow来理解的话，这里在存在等待线程时会添加到handoffQueue队列，可以让borrow里发生等待的地方更容易poll到这个连接对象
+       */
       while (waiters.get() > 0 && bagEntry.getState() == STATE_NOT_IN_USE && !handoffQueue.offer(bagEntry)) {
          Thread.yield();
       }
@@ -225,6 +270,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
     */
    public boolean remove(final T bagEntry)
    {
+      // 被romove的连接状态必须为 STATE_IN_USE 或 STATE_RESERVED
       if (!bagEntry.compareAndSet(STATE_IN_USE, STATE_REMOVED) && !bagEntry.compareAndSet(STATE_RESERVED, STATE_REMOVED) && !closed) {
          LOGGER.warn("Attempt to remove an object from the bag that was not borrowed or reserved: {}", bagEntry);
          return false;
@@ -261,6 +307,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    public List<T> values(final int state)
    {
       final List<T> list = sharedList.stream().filter(e -> e.getState() == state).collect(Collectors.toList());
+      // 为什么要逆序？？？
       Collections.reverse(list);
       return list;
    }
@@ -384,7 +431,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
          if (System.getProperty("com.zaxxer.hikari.useWeakReferences") != null) {   // undocumented manual override of WeakReference behavior
             return Boolean.getBoolean("com.zaxxer.hikari.useWeakReferences");
          }
-
+         // getSystemClassLoader返回的应该是sun.misc.Launcher.AppClassLoader
          return getClass().getClassLoader() != ClassLoader.getSystemClassLoader();
       }
       catch (SecurityException se) {

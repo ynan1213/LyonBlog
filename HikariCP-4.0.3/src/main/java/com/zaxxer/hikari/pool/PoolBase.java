@@ -149,6 +149,9 @@ abstract class PoolBase
       }
    }
 
+   /**
+    * Druid是根据驱动程序里是否存在ping方法来判断是否启用ping的方式判断连接是否存活
+    */
    boolean isConnectionAlive(final Connection connection)
    {
       try {
@@ -156,7 +159,7 @@ abstract class PoolBase
             setNetworkTimeout(connection, validationTimeout);
 
             final int validationSeconds = (int) Math.max(1000L, validationTimeout) / 1000;
-
+            // 默认false
             if (isUseJdbc4Validation) {
                return connection.isValid(validationSeconds);
             }
@@ -165,7 +168,7 @@ abstract class PoolBase
                if (isNetworkTimeoutSupported != TRUE) {
                   setQueryTimeout(statement, validationSeconds);
                }
-
+               // 直接执行testQuery进行判断
                statement.execute(config.getConnectionTestQuery());
             }
          }

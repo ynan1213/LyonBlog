@@ -43,6 +43,14 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
 
    private final AtomicBoolean isShutdown = new AtomicBoolean();
 
+   /**
+    * fastPathPool和poll都是数据库链接池的引用，且指向了同一个连接池对象。因为只有一个初始化的地方
+    * 之所以有两个引用的原因是用final修饰的fastPathPool引用比用volatile修饰的poll引用在使用时效率更改，这一点也可以看出来在HikariCP中作者对细节的处理。
+    *
+    * fastPathPool默认和pool指向同一个对象，用final修饰在使用时更快。
+    * 但只有用HikariConfig做构造参数时才会给fastPathPool赋值。
+    * 因为final类型的变量不能在方法内赋值（getConnection是一个普通方法，不能给类final成员变量赋值）
+    */
    private final HikariPool fastPathPool;
    private volatile HikariPool pool;
 
@@ -105,6 +113,7 @@ public class HikariDataSource extends HikariConfig implements DataSource, Closea
       if (result == null) {
          synchronized (this) {
             result = pool;
+            // 双重锁检测
             if (result == null) {
                validate();
                LOGGER.info("{} - Starting...", getPoolName());

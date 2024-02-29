@@ -53,9 +53,11 @@ public final class PropertyElf
       List<Method> methods = Arrays.asList(target.getClass().getMethods());
       properties.forEach((key, value) -> {
          if (target instanceof HikariConfig && key.toString().startsWith("dataSource.")) {
+            // 如果是dataSource.*的参数，直接加入到dataSourceProperties属性
             ((HikariConfig) target).addDataSourceProperty(key.toString().substring("dataSource.".length()), value);
          }
          else {
+            // 找到参数对应的setter方法并赋值
             setProperty(target, key.toString(), value, methods);
          }
       });

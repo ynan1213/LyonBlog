@@ -98,7 +98,7 @@ public final class JavassistProxyFactory
          }
       }
 
-      proxyCt.writeFile(genDirectory + "target/classes");
+      proxyCt.writeFile(genDirectory + "target/classes/1");
    }
 
    /**

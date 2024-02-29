@@ -86,15 +86,27 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
    private final PoolEntryCreator poolEntryCreator = new PoolEntryCreator(null /*logging prefix*/);
    private final PoolEntryCreator postFillPoolEntryCreator = new PoolEntryCreator("After adding ");
+
+   /**
+    * addConnectionQueueReadOnlyView是addConnectionQueue的镜像。也就是说该size等于添加队列的size，即等待新建db连接的连接数。
+    */
    private final Collection<Runnable> addConnectionQueueReadOnlyView;
+   /**
+    * 执行创建连接任务的线程池。只开启一个线程执行任务
+    */
    private final ThreadPoolExecutor addConnectionExecutor;
+   /**
+    * 执行关闭原生连接任务的线程池。只开启一个线程执行任务。
+    */
    private final ThreadPoolExecutor closeConnectionExecutor;
 
    private final ConcurrentBag<PoolEntry> connectionBag;
 
    private final ProxyLeakTaskFactory leakTaskFactory;
    private final SuspendResumeLock suspendResumeLock;
-
+   /**
+    * 用于执行检查 idleTimeout、leakDetectionThreshold、keepaliveTime、maxLifetime 等任务的线程池。
+    */
    private final ScheduledExecutorService houseKeepingExecutorService;
    private ScheduledFuture<?> houseKeeperTask;
 
@@ -112,6 +124,16 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
       this.houseKeepingExecutorService = initializeHouseKeepingExecutorService();
 
+      /**
+       * 快速检测过程，会先尝试创建一个连接，如果说失败，就直接启动结束。
+       * 所以，即使默认minimumIdle为10，在启动这一步也只是创建一个连接，剩下9个是在houseKeeperTask定时任务中处理的
+       *
+       * hikari一共有三个地方创建连接
+       * 1.快速失败阶段，但是这个阶段最多只会创建一个连接
+       * 2.管家线程 HouseKeeper 创建连接；
+       * 3.获取连接时连接数不够用；
+       * 该方法就是快速失败阶段创建连接的唯一入口
+       */
       checkFailFast();
 
       if (config.getMetricsTrackerFactory() != null) {
@@ -121,20 +143,43 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
          setMetricRegistry(config.getMetricRegistry());
       }
 
+      // 设置健康检查
       setHealthCheckRegistry(config.getHealthCheckRegistry());
-
+      // 注册 MBean
       handleMBeans(this, true);
 
       ThreadFactory threadFactory = config.getThreadFactory();
 
       final int maxPoolSize = config.getMaximumPoolSize();
       LinkedBlockingQueue<Runnable> addConnectionQueue = new LinkedBlockingQueue<>(maxPoolSize);
-      this.addConnectionQueueReadOnlyView = unmodifiableCollection(addConnectionQueue);
-      this.addConnectionExecutor = createThreadPoolExecutor(addConnectionQueue, poolName + " connection adder", threadFactory, new ThreadPoolExecutor.DiscardOldestPolicy());
-      this.closeConnectionExecutor = createThreadPoolExecutor(maxPoolSize, poolName + " connection closer", threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
+      /**
+       * addConnectionQueueReadOnlyView对应addConnectionExecutor线程池的队列，拿到addConnectionQueueReadOnlyView就能知道
+       * 线程池队列中的任务个数，也就知道正在等待获取连接的线程个数，但是准确吗？
+       */
+      this.addConnectionQueueReadOnlyView = unmodifiableCollection(addConnectionQueue);
+      /**
+       * DiscardOldestPolicy:将最早进入队列的任务删除，之后再尝试加入队列
+       */
+      this.addConnectionExecutor = createThreadPoolExecutor(
+         addConnectionQueue,
+         poolName + " connection adder",
+         threadFactory,
+         new ThreadPoolExecutor.DiscardOldestPolicy());
+      /**
+       * CallerRunsPolicy:使用主线程来执行
+       */
+      this.closeConnectionExecutor = createThreadPoolExecutor(
+         maxPoolSize,
+         poolName + " connection closer",
+         threadFactory,
+         new ThreadPoolExecutor.CallerRunsPolicy());
+
+      // config.getLeakDetectionThreshold(): 连接借出去多长时间进行泄露检查
       this.leakTaskFactory = new ProxyLeakTaskFactory(config.getLeakDetectionThreshold(), houseKeepingExecutorService);
 
+      // HouseKeeper: 主要是用来补充和移除连接池中的空闲连接，尽可能的保证连接池中的数量维持在minimumIdle数量。
+      // 第一次执行是在HikariPool初始化后的100秒，随后每30s执行一次。
       this.houseKeeperTask = houseKeepingExecutorService.scheduleWithFixedDelay(new HouseKeeper(), 100L, housekeepingPeriodMs, MILLISECONDS);
 
       if (Boolean.getBoolean("com.zaxxer.hikari.blockUntilFilled") && config.getInitializationFailTimeout() > 1) {
@@ -183,7 +228,15 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
             }
 
             final long now = currentTime();
-            if (poolEntry.isMarkedEvicted() || (elapsedMillis(poolEntry.lastAccessed, now) > aliveBypassWindowMs && !isConnectionAlive(poolEntry.connection))) {
+            /**
+             * elapsedMillis(poolEntry.lastAccessed, now) > aliveBypassWindowMs: 距离上次使用超过500ms
+             *
+             * 在长连接检查这块，与Druid不同，这里的长连接判活检查在连接对象没有被标记为“已丢弃”时，只要距离上次使用超过500ms每次取出都会
+             * 进行检查（500ms是默认值，可通过配置com.zaxxer.hikari.aliveBypassWindowMs的系统参数来控制），也就是说HikariCP对长连接
+             * 的活性检查很频繁，但是其并发性能依旧优于Druid，说明频繁的长连接检查并不是导致连接池性能高低的关键所在。
+             */
+            if (poolEntry.isMarkedEvicted() ||
+               (elapsedMillis(poolEntry.lastAccessed, now) > aliveBypassWindowMs && !isConnectionAlive(poolEntry.connection))) {
                closeConnection(poolEntry, poolEntry.isMarkedEvicted() ? EVICTED_CONNECTION_MESSAGE : DEAD_CONNECTION_MESSAGE);
                timeout = hardTimeout - elapsedMillis(startTime);
             }
@@ -334,6 +387,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
    @Override
    public void addBagItem(final int waiting)
    {
+      // addConnectionQueueReadOnlyView.size()是正在等待创建连接的任务数
       final boolean shouldAdd = waiting - addConnectionQueueReadOnlyView.size() >= 0; // Yes, >= is intentional.
       if (shouldAdd) {
          addConnectionExecutor.submit(poolEntryCreator);
@@ -477,12 +531,25 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
          final long maxLifetime = config.getMaxLifetime();
          if (maxLifetime > 0) {
+            /**
+             * MaxLifetimeTask：检查连接是否达到了最大存活时间。  schedule:不会周期执行，只会执行一次
+             * 若达到了，则将连接 PoolEntry 设置为已驱逐状态：evit = true，如果连接不是使用中状态的话则关闭连接，调用 addBagItem(final int waiting) 方法；
+             * 当close的时候会cancel操作，这样MaxLifetimeTask就被取消了
+             *
+             * 注意：在注册延时任务时，增加了一定范围的时间变化（MaxLifetimeTask， 2.5%；KeepaliveTask：10%）。
+             * 用来防止出现大面积的connection因maxLifetime同一时刻失效
+             */
+            //
             // variance up to 2.5% of the maxlifetime
             final long variance = maxLifetime > 10_000 ? ThreadLocalRandom.current().nextLong( maxLifetime / 40 ) : 0;
             final long lifetime = maxLifetime - variance;
             poolEntry.setFutureEol(houseKeepingExecutorService.schedule(new MaxLifetimeTask(poolEntry), lifetime, MILLISECONDS));
          }
 
+         /**
+          * KeepaliveTask：keepaliveTime时间周期循环，检查连接是否有效，如果连接失效，将连接设置为已驱逐
+          * keepaliveTime: 默认为0，表示不启用
+          */
          final long keepaliveTime = config.getKeepaliveTime();
          if (keepaliveTime > 0) {
             // variance up to 10% of the heartbeat time
@@ -551,6 +618,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
     */
    private void checkFailFast()
    {
+      // 默认为1
       final long initializationTimeout = config.getInitializationFailTimeout();
       if (initializationTimeout < 0) {
          return;
@@ -560,17 +628,20 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       do {
          final PoolEntry poolEntry = createPoolEntry();
          if (poolEntry != null) {
+            // 如果配置有最小存活数量，加入池中
             if (config.getMinimumIdle() > 0) {
                connectionBag.add(poolEntry);
                logger.debug("{} - Added connection {}", poolName, poolEntry.connection);
             }
             else {
+               // 否则关闭连接，因为该方法只是测试连接是否可用
                quietlyCloseConnection(poolEntry.close(), "(initialization check complete and minimumIdle is zero)");
             }
-
+            // 最多只会创建一个连接
             return;
          }
 
+         // ConnectionSetupException类型的异常不再重试，直接往外抛出异常，终止连接池的创建
          if (getLastConnectionFailure() instanceof ConnectionSetupException) {
             throwPoolInitializationException(getLastConnectionFailure().getCause());
          }
@@ -611,12 +682,14 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
     */
    private boolean softEvictConnection(final PoolEntry poolEntry, final String reason, final boolean owner)
    {
+      // 上来直接置为evict
       poolEntry.markEvicted();
+      // 是否关闭连接还会根据条件
       if (owner || connectionBag.reserve(poolEntry)) {
          closeConnection(poolEntry, reason);
          return true;
       }
-
+      // 如果不关闭，什么时候会被关闭呢？
       return false;
    }
 
@@ -632,7 +705,13 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       if (config.getScheduledExecutor() == null) {
          final ThreadFactory threadFactory = Optional.ofNullable(config.getThreadFactory()).orElseGet(() -> new DefaultThreadFactory(poolName + " housekeeper", true));
          final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, threadFactory, new ThreadPoolExecutor.DiscardPolicy());
+         // 当true时，在执行shutdown方法后，当前正在等待的任务的和正在运行的任务需要被执行完，然后进程被销毁；
+         // 当false时，表示放弃等待的任务，正在运行的任务一旦完成，则进程被销毁
          executor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+         // removeOnCancel用来控制任务取消后是否从队列中移除。当一个已经提交的周期或延迟任务在运行之前被取消，那么它之后将不会运行。
+         // 默认配置下，这种已经取消的任务在届期之前不会被移除。 通过这种机制，可以方便检查和监控线程池状态，但也可能导致已经取消的任务
+         // 无限滞留。为了避免这种情况的发生，我们可以通过setRemoveOnCancelPolicy方法设置移除策略，把参数removeOnCancel设为true
+         // 可以在任务取消后立即从队列中移除。
          executor.setRemoveOnCancelPolicy(true);
          return executor;
       }
@@ -727,6 +806,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
             if (poolEntry != null) {
                connectionBag.add(poolEntry);
                logger.debug("{} - Added connection {}", poolName, poolEntry.connection);
+               System.out.println(" --------------------- PoolEntryCreator线程：成功创建了个新connection --------------------");
                if (loggingPrefix != null) {
                   logPoolState(loggingPrefix);
                }
@@ -736,6 +816,11 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
             // failed to get connection from db, sleep and retry
             if (loggingPrefix != null) logger.debug("{} - Connection add failed, sleeping with backoff: {}ms", poolName, sleepBackoff);
             quietlySleep(sleepBackoff);
+            /**
+             * 到这里，说明获取连接失败，并且sleep了sleepBackoff时间，接着再次进行一次。
+             * 再次获取连接之前，将sleepBackoff * 1.5，表示下一次如果失败sleep时间延长1.5倍，以此循环，但是最高不会超过connectionTimeout和10S
+             * 这种写法值得借鉴
+             */
             sleepBackoff = Math.min(SECONDS.toMillis(10), Math.min(connectionTimeout, (long) (sleepBackoff * 1.5)));
          }
 
@@ -746,6 +831,8 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       /**
        * We only create connections if we need another idle connection or have threads still waiting
        * for a new connection.  Otherwise we bail out of the request to create.
+       * 翻译：只有当我们需要另一个空闲连接或线程仍在等待新连接时，我们才会创建连接。否则，我们将退出创建请求
+       * 也就是说，只有当有线程在等待获取连接 或者 活跃线程数 < 最小活跃线程数阈值
        *
        * @return true if we should create a connection, false if the need has disappeared
        */
@@ -767,8 +854,11 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       {
          try {
             // refresh values in case they changed via MBean
+            // 默认30S
             connectionTimeout = config.getConnectionTimeout();
+            // 默认5S
             validationTimeout = config.getValidationTimeout();
+            // 更新连接泄露处理的阈值
             leakTaskFactory.updateLeakDetectionThreshold(config.getLeakDetectionThreshold());
             catalog = (config.getCatalog() != null && !config.getCatalog().equals(catalog)) ? config.getCatalog() : catalog;
 
@@ -776,10 +866,22 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
             final long now = currentTime();
 
             // Detect retrograde time, allowing +128ms as per NTP spec.
+            /**
+             * now：就是当前系统时间，不一定准确，因为有可能发生时钟回拨
+             * previous：就是上次触发该任务时的时间
+             * housekeepingPeriodMs：就是隔多久触发该任务一次
+             *
+             * plusMillis(previous, housekeepingPeriodMs)表示计算出来的当前时间，是准的
+             * 如果系统时间没被回拨，那么plusMillis(now, 128)一定是大于当前时间的
+             * 如果系统时间被回拨，且超过128ms，那么下面的判断就成立
+             */
+            // 为了防止时钟回拨，给了128ms的gap，如果还不满足，就直接标记connectionBag 中所有连接为evict, 不是直接close连接，本轮任务就算结束了。
+            // 直到当client使用连接，调用hikariPool的getConnection(final long hardTimeout)时，对标记为evict连接做批量移除操作（细节，又是细节）。
             if (plusMillis(now, 128) < plusMillis(previous, housekeepingPeriodMs)) {
                logger.warn("{} - Retrograde clock change detected (housekeeper delta={}), soft-evicting connections from pool.",
                            poolName, elapsedDisplayString(previous, now));
                previous = now;
+               // 如果发生回拨，直接把池子里所有的连接对象取出来挨个儿的标记成废弃，并且尝试把状态值修改为STATE_RESERVED
                softEvictConnections();
                return;
             }
@@ -791,11 +893,13 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
             previous = now;
 
             String afterPrefix = "Pool ";
+            // 回收符合条件的空闲连接
             if (idleTimeout > 0L && config.getMinimumIdle() < config.getMaximumPoolSize()) {
                logPoolState("Before cleanup ");
                afterPrefix = "After cleanup  ";
-
+               // 拿到所有处于闲置状态的连接
                final List<PoolEntry> notInUse = connectionBag.values(STATE_NOT_IN_USE);
+               // 计算出需要被检查闲置时间的数量，简单来说，池内需要保证最小minIdle个连接活着，所以需要计算出超出这个范围的闲置对象进行检查
                int toRemove = notInUse.size() - config.getMinimumIdle();
                for (PoolEntry entry : notInUse) {
                   if (toRemove > 0 && elapsedMillis(entry.lastAccessed, now) > idleTimeout && connectionBag.reserve(entry)) {
@@ -826,6 +930,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
 
       public void run()
       {
+         // 能走到这里，说明连接已经到了最大存活时间，标记为evict
          if (softEvictConnection(poolEntry, "(connection has passed maxLifetime)", false /* not owner */)) {
             addBagItem(connectionBag.getWaitingThreadCount());
          }

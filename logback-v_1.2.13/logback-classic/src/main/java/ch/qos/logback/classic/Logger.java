@@ -40,6 +40,8 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
     /**
      * The fully qualified name of this class. Used in gathering caller
      * information.
+     *
+     * FQCN: 完全限定类名
      */
     public static final String FQCN = ch.qos.logback.classic.Logger.class.getName();
 
@@ -85,6 +87,10 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
      * 3) all the other methods check whether 'aai' is null
      * <p>
      * 4) AppenderAttachableImpl is thread safe
+     *
+     * 可连接的输出终端
+     * Logger是委托这个类实现AppenderAttachable接口，
+     * 也是委托这个类来调用Appender组件来实际记录日志，所以这个字段是最关键的
      */
     transient private AppenderAttachableImpl<ILoggingEvent> aai;
     /**
@@ -166,6 +172,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
             for (int i = 0; i < len; i++) {
                 Logger child = (Logger) childrenList.get(i);
                 // tell child to handle parent levelInt change
+                // 通知child log
                 child.handleParentLevelChange(effectiveLevelInt);
             }
         }
@@ -254,6 +261,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
     public void callAppenders(ILoggingEvent event) {
         int writes = 0;
         for (Logger l = this; l != null; l = l.parent) {
+            // 从自己开始依次往父辈调用
             writes += l.appendLoopOnAppenders(event);
             if (!l.additive) {
                 break;
@@ -267,8 +275,10 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
 
     private int appendLoopOnAppenders(ILoggingEvent event) {
         if (aai != null) {
+            // aai不为空，说明配置了appender-ref标签
             return aai.appendLoopOnAppenders(event);
         } else {
+            // aai为空，说明没有配置appender-ref标签
             return 0;
         }
     }
@@ -367,9 +377,17 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
      * logging by about 20 nanoseconds.
      */
 
-    private void filterAndLog_0_Or3Plus(final String localFQCN, final Marker marker, final Level level, final String msg, final Object[] params,
-                    final Throwable t) {
+    private void filterAndLog_0_Or3Plus(
+        final String localFQCN,
+        final Marker marker, // marker传入了turboFilter和filter，主要做过滤作用
+        final Level level,
+        final String msg,
+        final Object[] params,
+        final Throwable t) {
 
+        /**
+         * TurboFilter在这里生效，TurboFilter控制全局的，因为在创建LoggingEvent之前就做校验，所以性能比Filter高
+         */
         final FilterReply decision = loggerContext.getTurboFilterChainDecision_0_3OrMore(marker, this, level, msg, params, t);
 
         if (decision == FilterReply.NEUTRAL) {
@@ -380,13 +398,17 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, Appe
             return;
         }
 
+        // 再构建日志事件并添加
         buildLoggingEventAndAppend(localFQCN, marker, level, msg, params, t);
     }
 
     private void filterAndLog_1(final String localFQCN, final Marker marker, final Level level, final String msg, final Object param, final Throwable t) {
 
+        // 先通过turboFilter过滤
         final FilterReply decision = loggerContext.getTurboFilterChainDecision_1(marker, this, level, msg, param, t);
 
+        // 如果结果是FilterReply.DENY本条日志消息直接丢弃；如果是FilterReply.NEUTRAL会继续判断日志级别是否在该方法级别之上；
+        // 如果是FilterReply.ACCEPT直接跳到下一步。
         if (decision == FilterReply.NEUTRAL) {
             if (effectiveLevelInt > level.levelInt) {
                 return;

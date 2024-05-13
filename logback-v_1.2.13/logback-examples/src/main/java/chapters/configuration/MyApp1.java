@@ -13,6 +13,7 @@
  */
 package chapters.configuration;
 
+import ch.qos.logback.core.util.StatusPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,13 @@ public class MyApp1 {
     final static Logger logger = LoggerFactory.getLogger(MyApp1.class);
 
     public static void main(String[] args) {
+        logger.debug("Entering application.");
+        logger.debug(" {} is best player in world", "xxx");
+
         logger.info("Entering application.");
+        logger.warn("Entering application.");
+        logger.error("Entering application.");
+
 
         Foo foo = new Foo();
         foo.doIt();

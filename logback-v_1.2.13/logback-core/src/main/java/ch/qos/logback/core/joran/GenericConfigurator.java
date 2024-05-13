@@ -43,10 +43,12 @@ public abstract class GenericConfigurator extends ContextAwareBase {
     public final void doConfigure(URL url) throws JoranException {
         InputStream in = null;
         try {
+            // 将该url添加到watch list中
             informContextOfURLUsedForConfiguration(getContext(), url);
             URLConnection urlConnection = url.openConnection();
             // per http://jira.qos.ch/browse/LBCORE-105
             // per http://jira.qos.ch/browse/LBCORE-127
+            // 如果设置成true的话，当这个配置文件在一个jar中的时候，jar被锁住。如果应用需要重新加载的话会出现问题。所以设置成false。
             urlConnection.setUseCaches(false);
 
             in = urlConnection.getInputStream();
@@ -105,6 +107,7 @@ public abstract class GenericConfigurator extends ContextAwareBase {
     }
 
     public final void doConfigure(InputStream inputStream, String systemId) throws JoranException {
+        // 将InputStream转换成sax的InputSource对象
         InputSource inputSource = new InputSource(inputStream);
         inputSource.setSystemId(systemId);
         doConfigure(inputSource);
@@ -147,8 +150,11 @@ public abstract class GenericConfigurator extends ContextAwareBase {
         // if (!ConfigurationWatchListUtil.wasConfigurationWatchListReset(context)) {
         // informContextOfURLUsedForConfiguration(getContext(), null);
         // }
+        // 将xml的<tag>bodyStr</tag>解析成StartEvent，BodyEvent，EndEvent,保存到recorder.saxEventList中
+        // 如果解析期间遇到warn、error、fatalError情况则会生成信息存入StaticLoggerBinder.defaultLoggerContext.sm中后期将会将这些日志输出
         SaxEventRecorder recorder = new SaxEventRecorder(context);
         recorder.recordEvents(inputSource);
+        // 根据xml每个element对应的event来进行解析
         doConfigure(recorder.saxEventList);
         // no exceptions a this level
         StatusUtil statusUtil = new StatusUtil(context);
@@ -159,6 +165,11 @@ public abstract class GenericConfigurator extends ContextAwareBase {
     }
 
     public void doConfigure(final List<SaxEvent> eventList) throws JoranException {
+        // 将大部分的element path包装成ElementSelector并映射一个Action,比如xml中configuration/logger element path映射成LoggerAction
+        // 当解析到<configuration><logger>时会触发LoggerAction的begin方法
+        // 当解析到<configuration><logger>bodyStr 时会触发LoggerAction的body方法，当然logger element是没有body的
+        // 当解析到<configuration><logger>bodyStr</logger> 时会触发LoggerAction的end方法
+        // action的映射关系存在JoranConfigurator#interpreter中
         buildInterpreter();
         // disallow simultaneous configurations of the same context
         synchronized (context.getConfigurationLock()) {

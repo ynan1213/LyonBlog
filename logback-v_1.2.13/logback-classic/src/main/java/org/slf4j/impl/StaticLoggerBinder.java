@@ -81,14 +81,28 @@ public class StaticLoggerBinder implements LoggerFactoryBinder {
     void init() {
         try {
             try {
+                // 解析配置文件
                 new ContextInitializer(defaultLoggerContext).autoConfig();
             } catch (JoranException je) {
                 Util.report("Failed to auto configure default logger context", je);
             }
             // logback-292
+            // 打印logback内部error、warn信息
+            // 如果没有配置StatusListener,则使用StatusPrinter的stdout方式打印
+            // 配置StatusListener的代码实现在ContextInitializer#autoConfig()方法第一行
+            // 内部产生的error、warn等日志在StaticLoggerBinder.defaultLoggerContext.sm中维护的。
+            // 比如之前autoConfig方法中解析xml配置时出现error或者warn日志会在sm中存储，然后在此处打印
             if (!StatusUtil.contextHasStatusListener(defaultLoggerContext)) {
                 StatusPrinter.printInCaseOfErrorsOrWarnings(defaultLoggerContext);
             }
+
+            /**
+             * 日志隔离，可以实现多个不同的LoggerContext共存
+             * DefaultContextSelector是默认实现，只支持一个LoggerContext
+             * ContextJNDISelector支持多个，具体用法有待研究
+             *
+             * key 用来做权限控制 当key对象初始化后不能变更
+             */
             contextSelectorBinder.init(defaultLoggerContext, KEY);
             initialized = true;
         } catch (Exception t) { // see LOGBACK-1159

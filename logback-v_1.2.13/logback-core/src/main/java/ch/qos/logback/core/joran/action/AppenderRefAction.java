@@ -42,6 +42,7 @@ public class AppenderRefAction<E> extends Action {
             return;
         }
 
+        // 通过debug，该对象就是<appender-ref>标签外层的logger对象
         AppenderAttachable<E> appenderAttachable = (AppenderAttachable<E>) o;
 
         String appenderName = ec.subst(attributes.getValue(ActionConst.REF_ATTRIBUTE));
@@ -67,6 +68,7 @@ public class AppenderRefAction<E> extends Action {
         }
 
         addInfo("Attaching appender named [" + appenderName + "] to " + appenderAttachable);
+        // 添加给logger
         appenderAttachable.addAppender(appender);
     }
 

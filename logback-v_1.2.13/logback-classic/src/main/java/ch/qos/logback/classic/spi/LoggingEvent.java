@@ -112,6 +112,7 @@ public class LoggingEvent implements ILoggingEvent {
         this.argumentArray = argArray;
 
         if (throwable == null) {
+            // 异常对象只能放在最后一个
             throwable = extractThrowableAnRearrangeArguments(argArray);
         }
 

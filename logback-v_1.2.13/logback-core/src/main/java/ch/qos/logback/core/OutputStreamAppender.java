@@ -190,10 +190,11 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         writeBytes(byteArray);
     }
 
+
     private void writeBytes(byte[] byteArray) throws IOException {
         if(byteArray == null || byteArray.length == 0)
             return;
-        
+        // 使用AQS锁控制并发问题。这也是Logback性能不如 Log4j2的原因。
         lock.lock();
         try {
             this.outputStream.write(byteArray);
@@ -220,6 +221,7 @@ public class OutputStreamAppender<E> extends UnsynchronizedAppenderBase<E> {
         try {
             // this step avoids LBCLASSIC-139
             if (event instanceof DeferredProcessingAware) {
+                // 拼接日志信息（填充占位符），设置当前线程以及MDC等信息
                 ((DeferredProcessingAware) event).prepareForDeferredProcessing();
             }
             // the synchronization prevents the OutputStream from being closed while we

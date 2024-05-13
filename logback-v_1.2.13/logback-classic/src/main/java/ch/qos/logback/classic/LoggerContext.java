@@ -56,6 +56,8 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
     public static final boolean DEFAULT_PACKAGING_DATA = false;
 
     final Logger root;
+
+    // 表示LoggerContext一共创建了几个Logger
     private int size;
     private int noAppenderWarning = 0;
     final private List<LoggerContextListener> loggerContextListenerList = new ArrayList<LoggerContextListener>();
@@ -112,6 +114,13 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
         return getLogger(clazz.getName());
     }
 
+    /**
+     * 1、如果请求ROOT logger，则直接返回root
+     * 2、如果请求的Logger已经存在，则直接返回
+     * 3、如果请求的Logger尚未创建，则从ROOT开始，级联创建所有Logger
+     * 4、每创建一个Logger，都要设置父子关系，继承生效级别
+     * 5、每创建一个Logger，都将其放入loggerCache，并将size++
+     */
     @Override
     public final Logger getLogger(final String name) {
 
@@ -121,6 +130,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
 
         // if we are asking for the root logger, then let us return it without
         // wasting time
+        // 如果请求的是ROOT Logger，那么就直接返回root
         if (Logger.ROOT_LOGGER_NAME.equalsIgnoreCase(name)) {
             return root;
         }
@@ -130,6 +140,7 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
 
         // check if the desired logger exists, if it does, return it
         // without further ado.
+        // 如果已经创建过，就直接从loggerCache中返回
         Logger childLogger = (Logger) loggerCache.get(name);
         // if we have the child, then let us return it without wasting time
         if (childLogger != null) {
@@ -138,6 +149,14 @@ public class LoggerContext extends ContextBase implements ILoggerFactory, LifeCy
 
         // if the desired logger does not exist, them create all the loggers
         // in between as well (if they don't already exist)
+        /**
+         * 如果还没创建过，那就开始逐层创建，比如请求的Logger的name是com.company.package.ClassName，那么一共会创建4个Logger，
+         * 分别是
+         *  Logger[com]、
+         *  Logger[com.company]、
+         *  Logger[com.company.package]、
+         *  Logger[com.company.package.ClassName]
+         */
         String childName;
         while (true) {
             int h = LoggerNameUtil.getSeparatorIndexOf(name, i);

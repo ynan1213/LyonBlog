@@ -128,7 +128,14 @@ public class ContextInitializer {
     }
 
     public void autoConfig() throws JoranException {
+        // 解析环境变量中配置的StatusListener实现类，生成实例，调用其start方法
         StatusListenerConfigHelper.installIfAsked(loggerContext);
+
+        // 获取logback配置文件URL，依次从下面三个地方读取
+        // 1.从环境变量logback.configurationFile中获取
+        // 2.读取logback-test.xml配置文件
+        // 3.读取logback.xml配置文件
+        // 对于logback-spring.xml文件如何识别？
         URL url = findURLOfDefaultConfigurationFile(true);
         if (url != null) {
             configureByResource(url);
@@ -143,6 +150,7 @@ public class ContextInitializer {
                                     .getCanonicalName() : "null"), e);
                 }
             } else {
+                // 设置默认的config，后期日志直接输出到控制台
                 BasicConfigurator basicConfigurator = new BasicConfigurator();
                 basicConfigurator.setContext(loggerContext);
                 basicConfigurator.configure(loggerContext);

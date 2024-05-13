@@ -58,7 +58,11 @@ public class ContextSelectorStaticBinder {
         } else if (this.key != key) {
             throw new IllegalAccessException("Only certain classes can access this method.");
         }
-
+        /**
+         * 日志隔离，可以实现多个不同的LoggerContext共存
+         * DefaultContextSelector是默认实现，只支持一个LoggerContext
+         * ContextJNDISelector支持多个，具体用法有待研究
+         */
         String contextSelectorStr = OptionHelper.getSystemProperty(ClassicConstants.LOGBACK_CONTEXT_SELECTOR);
         if (contextSelectorStr == null) {
             contextSelector = new DefaultContextSelector(defaultLoggerContext);

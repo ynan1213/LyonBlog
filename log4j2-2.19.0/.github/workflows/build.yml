@@ -1,0 +1,157 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements. See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache license, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the license for the specific language governing permissions and
+# limitations under the license.
+
+name: build
+
+on:
+  push:
+    branches:
+      - release-2.x
+  pull_request:
+
+permissions: read-all
+
+jobs:
+
+  build:
+
+    runs-on: ${{ matrix.os }}
+    # Based on: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+    env:
+      MAVEN_OPTS: -Xms3072m -Xmx3072m
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b   # 3.0.2
+
+      # JDK 11 is needed for the build.
+      # Search `maven-toolchains-plugin` usages for details.
+      - name: Setup JDK 11
+        uses: actions/setup-java@2c7a4878f5d120bd643426d54ae1209b29cc01a3   # 3.4.1
+        with:
+          distribution: temurin
+          java-version: 11
+          java-package: jdk
+          architecture: x64
+          cache: maven
+
+      # JDK 8 is needed for the build, and it is the primary bytecode target.
+      # Hence, JDK 8 is set up after 11, so that JAVA_HOME used by Maven during build will point to 8.
+      - name: Setup JDK 8
+        uses: actions/setup-java@2c7a4878f5d120bd643426d54ae1209b29cc01a3   # 3.4.1
+        with:
+          distribution: temurin
+          java-version: 8
+          java-package: jdk
+          architecture: x64
+          cache: maven
+
+      - name: Inspect environment (Linux)
+        if: runner.os == 'Linux'
+        run: env | grep '^JAVA'
+
+      - name: Inspect environment (Windows)
+        if: runner.os == 'Windows'
+        run: set java
+
+      - name: Inspect environment (MacOS)
+        if: runner.os == 'macOS'
+        run: env | grep '^JAVA'
+
+      - name: Maven "verify"
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          ./mvnw \
+            --show-version --batch-mode --errors --no-transfer-progress \
+            -DtrimStackTrace=false \
+            -Dsurefire.rerunFailingTestsCount=2 \
+            -Dlog4j2.junit.fileCleanerSleepPeriodMillis=1000 \
+            --global-toolchains ".github/workflows/maven-toolchains.xml" \
+            verify
+
+      # Maven `site` goal takes ~1 hour and mostly irrelevant for typical PRs.
+      # Hence, we only execute that for `dependabot` PRs, which tend to break `site` occasionally.
+      - name: Maven "site"
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        timeout-minutes: 60
+        shell: bash
+        run: |
+          ./mvnw \
+            --show-version --batch-mode --errors --no-transfer-progress \
+            --non-recursive \
+            -Dmaven.doap.skip \
+            -DskipTests \
+            --global-toolchains ".github/workflows/maven-toolchains.xml" \
+            site
+
+  deploy:
+
+    runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: -Xms3072m -Xmx3072m
+    needs: build
+    if: github.repository == 'apache/logging-log4j2' && github.ref == 'refs/heads/release-2.x'
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b   # 3.0.2
+
+      # JDK 11 is needed for the build.
+      # Search `maven-toolchains-plugin` usages for details.
+      - name: Setup JDK 11
+        uses: actions/setup-java@2c7a4878f5d120bd643426d54ae1209b29cc01a3   # 3.4.1
+        with:
+          distribution: temurin
+          java-version: 11
+          java-package: jdk
+          architecture: x64
+          cache: maven
+
+      # JDK 8 is needed for the build, and it is the primary bytecode target.
+      # Hence, JDK 8 is set up after 11, so that JAVA_HOME used by Maven during build will point to 8.
+      - name: Setup JDK 8
+        uses: actions/setup-java@2c7a4878f5d120bd643426d54ae1209b29cc01a3   # 3.4.1
+        with:
+          distribution: temurin
+          java-version: 8
+          java-package: jdk
+          architecture: x64
+          cache: maven
+
+      - name: Inspect environment
+        run: env | grep '^JAVA'
+
+      - name: Maven "deploy"
+        timeout-minutes: 15
+        shell: bash
+        # `package install:install deploy:deploy` goal is needed to deploy without configuring the plugin in the POM.
+        # For details see: https://maven.apache.org/plugins/maven-gpg-plugin/examples/deploy-signed-artifacts.html
+        run: |
+          ./mvnw \
+            --show-version --batch-mode --errors --no-transfer-progress \
+            -Dgpg.skip=true \
+            -DskipTests=true \
+            --settings .github/workflows/maven-settings.xml \
+            --global-toolchains ".github/workflows/maven-toolchains.xml" \
+            package install:install deploy:deploy
+        env:
+          NEXUS_USER: ${{ secrets.NEXUS_USER }}
+          NEXUS_PW: ${{ secrets.NEXUS_PW }}

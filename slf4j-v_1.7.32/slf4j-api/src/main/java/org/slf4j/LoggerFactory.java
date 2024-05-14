@@ -80,9 +80,13 @@ public final class LoggerFactory {
     static final int ONGOING_INITIALIZATION = 1;
     static final int FAILED_INITIALIZATION = 2;
     static final int SUCCESSFUL_INITIALIZATION = 3;
+
+    // NOP: 没有;空操作指令;
     static final int NOP_FALLBACK_INITIALIZATION = 4;
 
     static volatile int INITIALIZATION_STATE = UNINITIALIZED;
+
+    // Substitute: 代替
     static final SubstituteLoggerFactory SUBST_FACTORY = new SubstituteLoggerFactory();
     static final NOPLoggerFactory NOP_FALLBACK_FACTORY = new NOPLoggerFactory();
 
@@ -123,6 +127,7 @@ public final class LoggerFactory {
     private final static void performInitialization() {
         bind();
         if (INITIALIZATION_STATE == SUCCESSFUL_INITIALIZATION) {
+            // 这里会获取binder的静态变量REQUESTED_API_VERSION(要求API的版本号)和slf4j做比较
             versionSanityCheck();
         }
     }
@@ -143,12 +148,19 @@ public final class LoggerFactory {
             // skip check under android, see also
             // http://jira.qos.ch/browse/SLF4J-328
             if (!isAndroid()) {
+                /**
+                 * 查找classpath下org.slf4j.impl.StaticLoggerBinder.class
+                 * StaticLoggerBinder由第三方日志框架提供，可能存在多个，也有可能不存在
+                 * 不存在的话，StaticLoggerBinder.getSingleton()方法就会抛出NoClassDefFoundError异常
+                 * 存在多个的话，取第一个（maven依赖的第一个吗？）并将所有的打印输出
+                 */
                 staticLoggerBinderPathSet = findPossibleStaticLoggerBinderPathSet();
                 reportMultipleBindingAmbiguity(staticLoggerBinderPathSet);
             }
             // the next line does the binding
             StaticLoggerBinder.getSingleton();
             INITIALIZATION_STATE = SUCCESSFUL_INITIALIZATION;
+            // 如果StaticLoggerBinder class个数大于1个，打印实际绑定的类型
             reportActualBinding(staticLoggerBinderPathSet);
         } catch (NoClassDefFoundError ncde) {
             String msg = ncde.getMessage();
@@ -414,6 +426,7 @@ public final class LoggerFactory {
             synchronized (LoggerFactory.class) {
                 if (INITIALIZATION_STATE == UNINITIALIZED) {
                     INITIALIZATION_STATE = ONGOING_INITIALIZATION;
+                    // 执行初始化
                     performInitialization();
                 }
             }
@@ -422,8 +435,10 @@ public final class LoggerFactory {
         case SUCCESSFUL_INITIALIZATION:
             return StaticLoggerBinder.getSingleton().getLoggerFactory();
         case NOP_FALLBACK_INITIALIZATION:
+            // 没有找到StaticLoggerBinder这个类
             return NOP_FALLBACK_FACTORY;
         case FAILED_INITIALIZATION:
+            // 版本不对，或者StaticLoggerBinder包路径不对，或者其他
             throw new IllegalStateException(UNSUCCESSFUL_INIT_MSG);
         case ONGOING_INITIALIZATION:
             // support re-entrant behavior.

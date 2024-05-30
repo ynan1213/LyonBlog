@@ -157,6 +157,9 @@ public class Logger extends AbstractLogger implements Supplier<LoggerConfig> {
     @Override
     protected void log(final Level level, final Marker marker, final String fqcn, final StackTraceElement location,
         final Message message, final Throwable throwable) {
+        /**
+         * Reliability: 可靠性
+         */
         final ReliabilityStrategy strategy = privateConfig.loggerConfig.getReliabilityStrategy();
         if (strategy instanceof LocationAwareReliabilityStrategy) {
             ((LocationAwareReliabilityStrategy) strategy).log(this, getName(), fqcn, location, marker, level,

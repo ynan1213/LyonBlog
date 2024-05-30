@@ -107,6 +107,8 @@ public class XmlConfiguration extends AbstractConfiguration implements Reconfigu
             }
             rootElement = document.getDocumentElement();
             final Map<String, String> attrs = processAttributes(rootNode, rootElement);
+
+            // statusConfig会影响到StatusLogger
             final StatusConfiguration statusConfig = new StatusConfiguration().withVerboseClasses(VERBOSE_CLASSES)
                     .withStatus(getDefaultStatus());
             int monitorIntervalSeconds = 0;
@@ -138,6 +140,8 @@ public class XmlConfiguration extends AbstractConfiguration implements Reconfigu
                 }
             }
             initializeWatchers(this, configSource, monitorIntervalSeconds);
+
+            // 这里会影响到StatusLogger
             statusConfig.initialize();
         } catch (final SAXException | IOException | ParserConfigurationException e) {
             LOGGER.error("Error parsing " + configSource.getLocation(), e);

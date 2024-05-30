@@ -61,6 +61,7 @@ public class LogManager {
     private static final Logger LOGGER = StatusLogger.getLogger();
 
     // for convenience
+    // FQCN: 完全限定类名 ???
     private static final String FQCN = LogManager.class.getName();
 
     private static volatile LoggerContextFactory factory;
@@ -68,6 +69,11 @@ public class LogManager {
     /**
      * Scans the classpath to find all logging implementation. Currently, only one will be used but this could be
      * extended to allow multiple implementations to be used.
+     *
+     * 实例化 LoggerContextFactory，依次如下判断：
+     * 1、首先从log4j2.component.properties配置中读取是否配置了LoggerContextFactory，默认为空
+     * 2、如果1为空，则通过SPI机制获取Provider实例，默认是Log4jProvider，对应org.apache.logging.log4j.core.impl.Log4jContextFactory
+     * 3、如果1、2为空，则使用默认的SimpleLoggerContextFactory
      */
     static {
         // Shortcut binding to force a specific logging implementation.

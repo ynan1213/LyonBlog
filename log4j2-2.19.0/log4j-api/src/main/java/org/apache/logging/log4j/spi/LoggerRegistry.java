@@ -30,6 +30,13 @@ import org.apache.logging.log4j.message.MessageFactory;
  * Convenience class to be used by {@code LoggerContext} implementations.
  */
 public class LoggerRegistry<T extends ExtendedLogger> {
+
+    /**
+     *  按如下优先级依次取：
+     *    1、如果配置了【log4j2.messageFactory】，则优先取配置的值；
+     *    2、如果 非web环境 && 【log4j2.enable.threadlocals】环境变量为true（默认为true），代表启用threadlocals，使用ReusableMessageFactory
+     *    3、如果 !2，则使用ParameterizedMessageFactory
+     */
     private static final String DEFAULT_FACTORY_KEY = AbstractLogger.DEFAULT_MESSAGE_FACTORY_CLASS.getName();
     private final MapFactory<T> factory;
     private final Map<String, Map<String, T>> map;

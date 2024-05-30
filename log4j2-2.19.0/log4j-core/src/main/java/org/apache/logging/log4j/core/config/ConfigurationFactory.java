@@ -370,6 +370,7 @@ public abstract class ConfigurationFactory extends ConfigurationBuilderFactory {
         public Configuration getConfiguration(final LoggerContext loggerContext, final String name, final URI configLocation) {
 
             if (configLocation == null) {
+                // ① 先从log4j.configurationFile环境变量中读取文件
                 final String configLocationStr = this.substitutor.replace(PropertiesUtil.getProperties()
                         .getStringProperty(CONFIGURATION_FILE_PROPERTY));
                 if (configLocationStr != null) {
@@ -397,12 +398,16 @@ public abstract class ConfigurationFactory extends ConfigurationBuilderFactory {
                     }
                     return getConfiguration(loggerContext, configLocationStr);
                 }
+
+                // ② 如果①不存在，再从环境变量log4j.configuration中读取（①是log4j2的配置项，②是log4j的配置项）
                 final String log4j1ConfigStr = this.substitutor.replace(PropertiesUtil.getProperties()
                         .getStringProperty(LOG4J1_CONFIGURATION_FILE_PROPERTY));
                 if (log4j1ConfigStr != null) {
                     System.setProperty(LOG4J1_EXPERIMENTAL, "true");
                     return getConfiguration(LOG4J1_VERSION, loggerContext, log4j1ConfigStr);
                 }
+
+                // ③ 如果②不存在，再从4个插件中获取，这里仅支持*
                 for (final ConfigurationFactory factory : getFactories()) {
                     final String[] types = factory.getSupportedTypes();
                     if (types != null) {
@@ -447,7 +452,7 @@ public abstract class ConfigurationFactory extends ConfigurationBuilderFactory {
                     }
                 }
             }
-
+            // ④ 再从4个插件中获取
             Configuration config = getConfiguration(loggerContext, true, name);
             if (config == null) {
                 config = getConfiguration(loggerContext, true, null);

@@ -139,6 +139,9 @@ public final class ProviderUtil {
         // noinspection DoubleCheckedLocking
         if (instance == null) {
             try {
+                /**
+                 * lockInterruptibly 是为了让osgi可以阻止启动，具体不是很明白
+                 */
                 STARTUP_LOCK.lockInterruptibly();
                 try {
                     if (instance == null) {

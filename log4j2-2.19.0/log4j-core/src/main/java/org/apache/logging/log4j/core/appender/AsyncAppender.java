@@ -155,7 +155,13 @@ public final class AsyncAppender extends AbstractAppender {
         }
         final Log4jLogEvent memento = Log4jLogEvent.createMemento(logEvent, includeLocation);
         InternalAsyncUtil.makeMessageImmutable(logEvent.getMessage());
+
+        // 将 event 放入队列，返回 false 表示队列已满
         if (!transfer(memento)) {
+            // blocking：false表示当队列满时是否放入 ErrorAppender
+            //           true表示执行FULL策略
+            //           DiscardingAsyncQueueFullPolicy -- 按照日志等级抛弃日志策略
+            //           DefaultAsyncQueueFullPolicy -- 等待队列，转为同步操作策略
             if (blocking) {
                 if (AbstractLogger.getRecursionDepth() > 1) { // LOG4J2-1518, LOG4J2-2031
                     // If queue is full AND we are in a recursive call, call appender directly to prevent deadlock

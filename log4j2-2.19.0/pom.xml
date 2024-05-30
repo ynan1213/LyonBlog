@@ -412,12 +412,12 @@
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-api-java9</artifactId>
-        <version>${project.version}</version>
-        <type>zip</type>
-      </dependency>
+<!--      <dependency>-->
+<!--        <groupId>org.apache.logging.log4j</groupId>-->
+<!--        <artifactId>log4j-api-java9</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--        <type>zip</type>-->
+<!--      </dependency>-->
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-api</artifactId>
@@ -430,12 +430,12 @@
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-core-java9</artifactId>
-        <version>${project.version}</version>
-        <type>zip</type>
-      </dependency>
+<!--      <dependency>-->
+<!--        <groupId>org.apache.logging.log4j</groupId>-->
+<!--        <artifactId>log4j-core-java9</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--        <type>zip</type>-->
+<!--      </dependency>-->
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-core</artifactId>
@@ -510,11 +510,11 @@
         <artifactId>log4j-jul</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-jpl</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+<!--      <dependency>-->
+<!--        <groupId>org.apache.logging.log4j</groupId>-->
+<!--        <artifactId>log4j-jpl</artifactId>-->
+<!--        <version>${project.version}</version>-->
+<!--      </dependency>-->
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-taglib</artifactId>
@@ -1685,9 +1685,9 @@
     </snapshotRepository>
   </distributionManagement>
   <modules>
-    <module>log4j-api-java9</module>
+<!--    <module>log4j-api-java9</module>-->
     <module>log4j-api</module>
-    <module>log4j-core-java9</module>
+<!--    <module>log4j-core-java9</module>-->
     <module>log4j-core</module>
     <module>log4j-layout-template-json</module>
     <module>log4j-core-its</module>
@@ -1710,10 +1710,10 @@
     <module>log4j-cassandra</module>
     <module>log4j-web</module>
     <module>log4j-jakarta-web</module>
-    <module>log4j-perf</module>
+<!--    <module>log4j-perf</module>-->
     <module>log4j-iostreams</module>
     <module>log4j-jul</module>
-    <module>log4j-jpl</module>
+<!--    <module>log4j-jpl</module>-->
     <module>log4j-liquibase</module>
     <module>log4j-appserver</module>
     <module>log4j-osgi</module>

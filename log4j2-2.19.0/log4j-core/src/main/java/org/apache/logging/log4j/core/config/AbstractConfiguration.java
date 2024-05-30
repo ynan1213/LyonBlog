@@ -132,7 +132,16 @@ public abstract class AbstractConfiguration extends AbstractFilterable implement
     private ConcurrentMap<String, LoggerConfig> loggerConfigs = new ConcurrentHashMap<>();
     private List<CustomLevelConfig> customLevels = Collections.emptyList();
     private final ConcurrentMap<String, String> propertyMap = new ConcurrentHashMap<>();
+
+    /**
+     * 包含了Lookup的所有插件
+     */
     private final Interpolator tempLookup = new Interpolator(propertyMap);
+
+    /**
+     * 占位符字符串替换
+     * Substitutor: 替代者
+     */
     private final StrSubstitutor runtimeStrSubstitutor = new RuntimeStrSubstitutor(tempLookup);
     private final StrSubstitutor configurationStrSubstitutor = new ConfigurationStrSubstitutor(runtimeStrSubstitutor);
     private LoggerConfig root = new LoggerConfig();
@@ -238,6 +247,7 @@ public abstract class AbstractConfiguration extends AbstractFilterable implement
                 LOGGER.info("Cannot initialize scripting support because this JRE does not support it.", e);
             }
         }
+        // 对应<Configuration>标签的packages属性
         pluginManager.collectPlugins(pluginPackages);
         final PluginManager levelPlugins = new PluginManager(Level.CATEGORY);
         levelPlugins.collectPlugins(pluginPackages);
@@ -628,14 +638,21 @@ public abstract class AbstractConfiguration extends AbstractFilterable implement
         return addList;
     }
 
+    /**
+     * rootNode就是<Configuration>标签
+     */
     protected void doConfigure() {
+        // <SpringProfile>标签在此解析
         processConditionals(rootNode);
         preConfigure(rootNode);
         configurationScheduler.start();
+
+        // <Properties>标签必须放在第一位，否则会被忽略
         if (rootNode.hasChildren() && rootNode.getChildren().get(0).getName().equalsIgnoreCase("Properties")) {
             final Node first = rootNode.getChildren().get(0);
             createConfiguration(first, null);
             if (first.getObject() != null) {
+                // lookup对象就包含有自定义的key-value
                 StrLookup lookup = (StrLookup) first.getObject();
                 if (lookup instanceof LoggerContextAware) {
                     ((LoggerContextAware) lookup).setLoggerContext(loggerContext.get());
@@ -654,7 +671,12 @@ public abstract class AbstractConfiguration extends AbstractFilterable implement
 
         boolean setLoggers = false;
         boolean setRoot = false;
+
+        /**
+         * 解析根节点<Configuration>下的直接子节点
+         */
         for (final Node child : rootNode.getChildren()) {
+            // <Properties>标签必须放在第一位，否则会被忽略
             if (child.getName().equalsIgnoreCase("Properties")) {
                 if (tempLookup == runtimeStrSubstitutor.getVariableResolver()) {
                     LOGGER.error("Properties declaration must be the first element in the configuration");
@@ -677,6 +699,7 @@ public abstract class AbstractConfiguration extends AbstractFilterable implement
             } else if (child.getName().equalsIgnoreCase("Appenders")) {
                 appenders = child.getObject();
             } else if (child.isInstanceOf(Filter.class)) {
+                // 这里的Filter是全局过滤器，可以配置多个，会被合并成CompositeFilter
                 addFilter(child.getObject(Filter.class));
             } else if (child.getName().equalsIgnoreCase("Loggers")) {
                 final Loggers l = child.getObject();

@@ -129,20 +129,26 @@ public class PluginManager {
         final Map<String, PluginType<?>> newPlugins = new LinkedHashMap<>();
 
         // First, iterate the Log4j2Plugin.dat files found in the main CLASSPATH
+        // 第一步：读取META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat
+        // Log4j2Plugins.dat文件的生成在编译阶段，并且会被打包进log4j-core的jar包，详情见log4j文档
         Map<String, List<PluginType<?>>> builtInPlugins = PluginRegistry.getInstance().loadFromMainClassLoader();
         if (builtInPlugins.isEmpty()) {
             // If we didn't find any plugins above, someone must have messed with the log4j-core.jar.
             // Search the standard package in the hopes we can find our core plugins.
+            // 如果log4j-core的jar包内没有，则从org.apache.logging.log4j.core包内检索带@Plugin注解的类
+            // 什么情况下会没有呢？log4j-core编译打包错误吧
             builtInPlugins = PluginRegistry.getInstance().loadFromPackage(LOG4J_PACKAGES);
         }
         mergeByName(newPlugins, builtInPlugins.get(categoryLowerCase));
 
         // Next, iterate any Log4j2Plugin.dat files from OSGi Bundles
+        // 第二步：osgi Bundle相关，没搞明白是什么东西
         for (final Map<String, List<PluginType<?>>> pluginsByCategory : PluginRegistry.getInstance().getPluginsByCategoryByBundleId().values()) {
             mergeByName(newPlugins, pluginsByCategory.get(categoryLowerCase));
         }
 
         // Next iterate any packages passed to the static addPackage method.
+        // 第三步：如果添加过packages包，从则指定包路径下检索
         for (final String pkg : PACKAGES) {
             mergeByName(newPlugins, PluginRegistry.getInstance().loadFromPackage(pkg).get(categoryLowerCase));
         }

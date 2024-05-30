@@ -90,6 +90,7 @@ public class AppenderControl extends AbstractFilterable {
     }
 
     private boolean shouldSkip(final LogEvent event) {
+        // AppenderRef标签也可以配置level属性
         return isFilteredByAppenderControl(event) || isFilteredByLevel(event) || isRecursiveCall();
     }
 

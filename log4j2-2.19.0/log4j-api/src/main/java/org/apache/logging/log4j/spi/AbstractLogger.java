@@ -90,6 +90,11 @@ public abstract class AbstractLogger implements ExtendedLogger, LocationAwareLog
 
     /**
      * The default MessageFactory class.
+     *
+     * 按如下优先级依次取：
+     * 1、如果配置了【log4j2.messageFactory】，则优先取配置的值；
+     * 2、如果 非web环境 && 【log4j2.enable.threadlocals】环境变量为true（默认为true），代表启用threadlocals，使用ReusableMessageFactory
+     * 3、如果 !2，则使用ParameterizedMessageFactory
      */
     public static final Class<? extends MessageFactory> DEFAULT_MESSAGE_FACTORY_CLASS =
             createClassForProperty("log4j2.messageFactory", ReusableMessageFactory.class,
@@ -204,6 +209,9 @@ public abstract class AbstractLogger implements ExtendedLogger, LocationAwareLog
             final Class<ReusableMessageFactory> reusableParameterizedMessageFactoryClass,
             final Class<ParameterizedMessageFactory> parameterizedMessageFactoryClass) {
         try {
+            /**
+             * ENABLE_THREADLOCALS的判断逻辑：非web环境 && 【log4j2.enable.threadlocals】环境变量为true（默认为true）
+             */
             final String fallback = Constants.ENABLE_THREADLOCALS ? reusableParameterizedMessageFactoryClass.getName()
                     : parameterizedMessageFactoryClass.getName();
             final String clsName = PropertiesUtil.getProperties().getStringProperty(property, fallback);

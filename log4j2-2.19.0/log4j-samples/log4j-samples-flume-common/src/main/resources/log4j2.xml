@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- status，可选值包括OFF、FATAL、ERROR、WARN、INFO、DEBUG、TRACE、ALL，该值决定StatusConsoleListener级别，默认是ERROR -->
+<!-- dest，可选值包括out、err、标准的URI路径，该值决定StatusConsoleListener输出流目的地，默认是System.out -->
+<Configuration name="ConfigService"
+               status="WARN"
+               dest="err"
+               advertiser="memory"
+               shutdownHook="disable"
+               shutdownTimeout="5000">
+
+    <!-- Configuration标签下的直接子标签有：Properties、Appenders、Loggers、Scripts、CustomLevels-->
+
+
+    <!-- 该标签会被解析成 PropertiesPlugin 对象，注意：<Properties>标签必须放在第一位，否则会被忽略-->
+    <Properties>
+        <Property name="test2">test2default</Property>
+        <Property name="xxx" value="yyy"/>
+        <Property name="yuan" value="attribValue">nan</Property>
+        <Property name="test5">${sys:test:-${sys:test2}}</Property>
+    </Properties>
+
+    <!-- 每一个标签都对应了一个插件，如果对应的插件不存在，会被忽略 -->
+    <xxx>yyy</xxx>
+
+    <!-- 全局filter -->
+    <!-- 该标签会被解析成 ContextMapFilter 对象-->
+    <ContextMapFilter onMatch="ACCEPT" onMismatch="NEUTRAL" operator="or">
+        <KeyValuePair key="User1" value="DEBUG"/>
+        <KeyValuePair key="User2" value="WARN"/>
+    </ContextMapFilter>
+
+    <!-- 第一级：全局filter -->
+    <!-- 该标签会被解析成 CompositeFilter 对象，持有多个Filter对象-->
+    <Filters>
+        <DynamicThresholdFilter key="loginId" defaultThreshold="ERROR" onMatch="ACCEPT" onMismatch="NEUTRAL">
+            <KeyValuePair key="User1" value="DEBUG"/>
+        </DynamicThresholdFilter>
+        <ContextMapFilter onMatch="ACCEPT" onMismatch="NEUTRAL" operator="or">
+            <KeyValuePair key="User1" value="DEBUG"/>
+            <KeyValuePair key="User2" value="WARN"/>
+        </ContextMapFilter>
+    </Filters>
+
+    <!-- 该标签被解析成 AppendersPlugin 对象 -->
+    <Appenders>
+        <!-- 该标签被解析成 ConsoleAppender 对象 -->
+        <Console name="STDOUT">
+            <PatternLayout pattern="%d %-5level [%t][%logger]%notEmpty{[%markerSimpleName]} %msg%n%xThrowable"/>
+            <!-- 该标签被解析成 ThresholdFilter 对象 -->
+            <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <RollingFile name="RollingFile"
+                     fileName="${sys:user.home}/logs/warn.log"
+                     filePattern="${sys:user.home}/logs/$${date:yyyy-MM}/warn-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %X traceId=%X{traceId} %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!-- 第四级：Appender级别 -->
+            <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+        </RollingFile>
+
+        <!-- 注意：配置在这里的Filter是无效的，只有在具体某个Appender中才有效 -->
+        <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+    </Appenders>
+
+    <!-- 该标签被解析成 LoggersPlugin 对象 -->
+    <Loggers>
+        <!-- 注意：该标签被解析成 LoggerConfig 对象！！！！！！！ 而不是 Logger对象-->
+        <Logger name="com.ynan" level="INFO" additivity="true">
+            <!-- 该标签被解析成AppenderRef对象 -->
+            <AppenderRef ref="RollingFile">
+                <!-- 第三级：AppenderRef 级别 -->
+                <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+            </AppenderRef>
+            <AppenderRef ref="STDOUT" level="ERROR"/>
+            <!-- 第二级：LoggerConfig级别 -->
+            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Logger>
+        <!-- 该标签被解析成 LoggerConfig.RootLogger 对象-->
+        <Root level="DEBUG">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+
+        <!-- 注意：配置在这里的Filter是无效的，只有在具体某个Logger中才有效 -->
+        <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+    </Loggers>
+</Configuration>

@@ -41,6 +41,8 @@ public class LoggingApp {
     private List<AuditEvent> events;
 
     public static void main(final String[] args) {
+        logger.info("xxx");
+
         String member = "fakemember";
         if (args.length == 1) {
             member = args[0];

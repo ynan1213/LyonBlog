@@ -112,10 +112,13 @@ public class PluginRegistry {
      */
     public Map<String, List<PluginType<?>>> loadFromMainClassLoader() {
         final Map<String, List<PluginType<?>>> existing = pluginsByCategoryRef.get();
+        // 如果 get 方法返回非空，说明已经通过 main class loader 加载过插件配置
         if (existing != null) {
             // already loaded
             return existing;
         }
+
+        // 从配置文件加载 插件配置
         final Map<String, List<PluginType<?>>> newPluginsByCategory = decodeCacheFiles(Loader.getClassLoader());
 
         // Note multiple threads could be calling this method concurrently. Both will do the work,

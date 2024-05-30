@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration name="ConfigService"
+               status="WARN"
+               dest="err"
+               advertiser="memory"
+               shutdownHook="disable"
+               shutdownTimeout="5000">
+
+    <Appenders>
+        <Console name="STDOUT">
+            <PatternLayout pattern="%d %-5level traceId=%X{traceId} [%t][%logger]%notEmpty{[%markerSimpleName]} %msg%n%xThrowable"/>
+            <ThresholdFilter level="TRACE" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <RollingFile name="RollingFile"
+                     fileName="${sys:user.home}/logs/log4j2.log"
+                     filePattern="${sys:user.home}/logs/$${date:yyyy-MM}/log4j2-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] traceId=%X{traceId} %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+        </RollingFile>
+
+        <!-- 被解析成 AsyncAppender 对象 -->
+        <Async name="async-stdout" bufferSize="262144">
+            <AppenderRef ref="STDOUT"/>
+            <LinkedTransferQueue/>
+        </Async>
+
+    </Appenders>
+
+    <Loggers>
+        <!-- 这里设置includeLocation=false，则PatternLayout的%l将不会打印出来 -->
+<!--        <AsyncLogger name="com.ynan" includeLocation="false" level="INFO" additivity="false">-->
+<!--            <AppenderRef ref="STDOUT" level="INFO"/>-->
+<!--        </AsyncLogger>-->
+        <Logger name="com.ynan" includeLocation="false" level="INFO" additivity="false">
+            <AppenderRef ref="STDOUT" level="INFO"/>
+        </Logger>
+
+        <Root level="DEBUG">
+            <AppenderRef ref="STDOUT"/>
+        </Root>
+
+    </Loggers>
+</Configuration>

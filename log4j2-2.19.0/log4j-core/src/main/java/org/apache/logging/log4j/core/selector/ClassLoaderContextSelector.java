@@ -181,6 +181,8 @@ public class ClassLoaderContextSelector implements ContextSelector, LoggerContex
         // LOG4J2-477: class loader may be null
         final ClassLoader loader = loaderOrNull != null ? loaderOrNull : ClassLoader.getSystemClassLoader();
         final String name = toContextMapKey(loader);
+
+        // 以ClassLoader作为key进行缓存，意义是什么？
         AtomicReference<WeakReference<LoggerContext>> ref = CONTEXT_MAP.get(name);
         if (ref == null) {
             if (configLocation == null) {

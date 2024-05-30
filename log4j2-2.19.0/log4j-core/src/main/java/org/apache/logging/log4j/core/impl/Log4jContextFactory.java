@@ -147,11 +147,16 @@ public class Log4jContextFactory implements LoggerContextFactory, ShutdownCallba
     @Override
     public LoggerContext getContext(final String fqcn, final ClassLoader loader, final Object externalContext,
                                     final boolean currentContext) {
+        /**
+         * 获取LoggerContext交给了ContextSelector
+         * 默认实现是ClassLoaderContextSelector，内部有个Map缓存，classLoader作为key，有则立即返回，没有则创建
+         */
         final LoggerContext ctx = selector.getContext(fqcn, loader, currentContext);
         if (externalContext != null && ctx.getExternalContext() == null) {
             ctx.setExternalContext(externalContext);
         }
         if (ctx.getState() == LifeCycle.State.INITIALIZED) {
+            // 初始化状态的LoggerContext需要加载配置
             ctx.start();
         }
         return ctx;

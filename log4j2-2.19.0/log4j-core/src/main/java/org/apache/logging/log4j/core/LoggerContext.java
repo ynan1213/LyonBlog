@@ -250,6 +250,7 @@ public class LoggerContext extends AbstractLifeCycle
             try {
                 if (this.isInitialized() || this.isStopped()) {
                     this.setStarting();
+                    // 核心：解析配置文件
                     reconfigure();
                     if (this.configuration.isShutdownHookEnabled()) {
                         setUpShutdownHook();
@@ -687,6 +688,12 @@ public class LoggerContext extends AbstractLifeCycle
         final ClassLoader cl = ClassLoader.class.isInstance(externalContext) ? (ClassLoader) externalContext : null;
         LOGGER.debug("Reconfiguration started for context[name={}] at URI {} ({}) with optional ClassLoader: {}",
                 contextName, configURI, this, cl);
+        /**
+         * PropertiesConfigurationFactory: .properties
+         * YamlConfigurationFactory: .yml .yaml
+         * JsonConfigurationFactory: .json  .jsn
+         * XmlConfigurationFactory: .xml  *
+         */
         final Configuration instance = ConfigurationFactory.getInstance().getConfiguration(this, contextName, configURI, cl);
         if (instance == null) {
             LOGGER.error("Reconfiguration failed: No configuration found for '{}' at '{}' in '{}'", contextName, configURI, cl);

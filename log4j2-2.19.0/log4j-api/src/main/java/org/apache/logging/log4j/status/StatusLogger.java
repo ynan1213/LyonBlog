@@ -131,8 +131,10 @@ public final class StatusLogger extends AbstractLogger {
      */
     private StatusLogger(final String name, final MessageFactory messageFactory) {
         super(name, messageFactory);
+        // PROPS会读取系统环境变量和【log4j2.StatusLogger.properties】文件
         final String dateFormat = PROPS.getStringProperty(STATUS_DATE_FORMAT, Strings.EMPTY);
         final boolean showDateTime = !Strings.isEmpty(dateFormat);
+        // 如果配置了系统环境变量或者JVM参数 log4j2.debug=true，这里并不会读取【log4j2.StatusLogger.properties】配置文件
         final Level loggerLevel = isDebugPropertyEnabled() ? Level.TRACE : Level.ERROR;
         this.logger = new SimpleLogger("StatusLogger", loggerLevel, false, true, showDateTime, false, dateFormat, messageFactory, PROPS, System.err);
         this.listenersLevel = Level.toLevel(DEFAULT_STATUS_LEVEL, Level.WARN).intLevel();

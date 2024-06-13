@@ -19,8 +19,10 @@ package org.apache.shardingsphere.mode.manager.standalone;
 
 import org.apache.shardingsphere.infra.config.RuleConfiguration;
 import org.apache.shardingsphere.infra.config.schema.impl.DataSourceProvidedSchemaConfiguration;
+import org.apache.shardingsphere.infra.instance.ComputeNodeInstance;
 import org.apache.shardingsphere.infra.instance.InstanceContext;
 import org.apache.shardingsphere.infra.instance.definition.InstanceType;
+import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
 import org.apache.shardingsphere.infra.rule.identifier.type.InstanceAwareRule;
 import org.apache.shardingsphere.mode.manager.ContextManager;
 import org.apache.shardingsphere.mode.manager.ContextManagerBuilder;
@@ -29,6 +31,7 @@ import org.apache.shardingsphere.mode.manager.standalone.workerid.generator.Stan
 import org.apache.shardingsphere.mode.metadata.MetaDataContexts;
 import org.apache.shardingsphere.mode.metadata.MetaDataContextsBuilder;
 import org.apache.shardingsphere.mode.metadata.persist.MetaDataPersistService;
+import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRepository;
 import org.apache.shardingsphere.mode.repository.standalone.StandalonePersistRepositoryFactory;
 import org.apache.shardingsphere.transaction.context.TransactionContexts;
 import org.apache.shardingsphere.transaction.context.TransactionContextsBuilder;
@@ -46,12 +49,16 @@ public final class StandaloneContextManagerBuilder implements ContextManagerBuil
     
     @Override
     public ContextManager build(final ContextManagerBuilderParameter parameter) throws SQLException {
-        MetaDataPersistService metaDataPersistService = new MetaDataPersistService(StandalonePersistRepositoryFactory.newInstance(parameter.getModeConfig().getRepository()));
+        StandalonePersistRepository persistRepository = StandalonePersistRepositoryFactory.newInstance(parameter.getModeConfig().getRepository());
+        MetaDataPersistService metaDataPersistService = new MetaDataPersistService(persistRepository);
         persistConfigurations(metaDataPersistService, parameter);
-        return createContextManager(metaDataPersistService, parameter, createMetaDataContexts(metaDataPersistService, parameter));
+        MetaDataContexts metaDataContexts = createMetaDataContexts(metaDataPersistService, parameter);
+        return createContextManager(metaDataPersistService, parameter, metaDataContexts);
     }
     
-    private MetaDataContexts createMetaDataContexts(final MetaDataPersistService metaDataPersistService, final ContextManagerBuilderParameter parameter) throws SQLException {
+    private MetaDataContexts createMetaDataContexts(
+        final MetaDataPersistService metaDataPersistService,
+        final ContextManagerBuilderParameter parameter) throws SQLException {
         Collection<RuleConfiguration> globalRuleConfigs = metaDataPersistService.getGlobalRuleService().load();
         Properties props = metaDataPersistService.getPropsService().load();
         MetaDataContextsBuilder builder = new MetaDataContextsBuilder(globalRuleConfigs, props);
@@ -71,11 +78,20 @@ public final class StandaloneContextManagerBuilder implements ContextManagerBuil
         }
     }
     
-    private ContextManager createContextManager(final MetaDataPersistService metaDataPersistService, final ContextManagerBuilderParameter parameter, final MetaDataContexts metaDataContexts) {
+    private ContextManager createContextManager(
+        final MetaDataPersistService metaDataPersistService,
+        final ContextManagerBuilderParameter parameter,
+        final MetaDataContexts metaDataContexts) {
+
         ContextManager result = new ContextManager();
-        TransactionContexts transactionContexts = new TransactionContextsBuilder(metaDataContexts.getMetaDataMap(), metaDataContexts.getGlobalRuleMetaData().getRules()).build();
-        InstanceContext instanceContext = new InstanceContext(
-                metaDataPersistService.getComputeNodePersistService().loadComputeNodeInstance(parameter.getInstanceDefinition()), new StandaloneWorkerIdGenerator(), parameter.getModeConfig());
+
+        Collection<ShardingSphereRule> rules = metaDataContexts.getGlobalRuleMetaData().getRules();
+        TransactionContextsBuilder transactionContextsBuilder = new TransactionContextsBuilder(metaDataContexts.getMetaDataMap(), rules);
+        TransactionContexts transactionContexts = transactionContextsBuilder.build();
+
+        ComputeNodeInstance computeNodeInstance = metaDataPersistService.getComputeNodePersistService()
+            .loadComputeNodeInstance(parameter.getInstanceDefinition());
+        InstanceContext instanceContext = new InstanceContext(computeNodeInstance, new StandaloneWorkerIdGenerator(), parameter.getModeConfig());
         result.init(metaDataContexts, transactionContexts, instanceContext);
         setInstanceContext(result);
         return result;

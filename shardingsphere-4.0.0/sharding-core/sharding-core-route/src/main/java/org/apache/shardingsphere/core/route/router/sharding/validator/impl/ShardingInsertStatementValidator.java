@@ -33,7 +33,14 @@ import java.util.List;
  * @author zhangliang
  */
 public final class ShardingInsertStatementValidator implements ShardingStatementValidator<InsertStatement> {
-    
+
+    /**
+     * ON DUPLICATE KEY UPDATE 是 Mysql 特有的语法相关，该语法允许我们通过 Update 的方式插入有重复主键的数据行
+     * 实际上这个语法也不是常规语法，本身也不大应该被使用
+     *
+     * 先判断是否存在 OnDuplicateKeyColumn，然后再判断这个 Column 是否是分片键，如果同时满足这两个条件，则直接抛出一个异常，
+     * 不允许在分片 Column 上执行"INSERT INTO …. ON DUPLICATE KEY UPDATE"语法
+     */
     @Override
     public void validate(final ShardingRule shardingRule, final InsertStatement sqlStatement, final List<Object> parameters) {
         Optional<OnDuplicateKeyColumnsSegment> onDuplicateKeyColumnsSegment = sqlStatement.findSQLSegment(OnDuplicateKeyColumnsSegment.class);

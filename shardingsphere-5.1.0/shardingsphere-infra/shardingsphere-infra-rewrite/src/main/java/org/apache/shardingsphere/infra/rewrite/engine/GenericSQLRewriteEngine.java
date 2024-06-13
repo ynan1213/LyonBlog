@@ -22,6 +22,8 @@ import org.apache.shardingsphere.infra.rewrite.engine.result.GenericSQLRewriteRe
 import org.apache.shardingsphere.infra.rewrite.engine.result.SQLRewriteUnit;
 import org.apache.shardingsphere.infra.rewrite.sql.impl.DefaultSQLBuilder;
 
+import java.util.List;
+
 /**
  * Generic SQL rewrite engine.
  */
@@ -34,6 +36,8 @@ public final class GenericSQLRewriteEngine {
      * @return SQL rewrite result
      */
     public GenericSQLRewriteResult rewrite(final SQLRewriteContext sqlRewriteContext) {
-        return new GenericSQLRewriteResult(new SQLRewriteUnit(new DefaultSQLBuilder(sqlRewriteContext).toSQL(), sqlRewriteContext.getParameterBuilder().getParameters()));
+        String sql = new DefaultSQLBuilder(sqlRewriteContext).toSQL();
+        List<Object> parameters = sqlRewriteContext.getParameterBuilder().getParameters();
+        return new GenericSQLRewriteResult(new SQLRewriteUnit(sql, parameters));
     }
 }

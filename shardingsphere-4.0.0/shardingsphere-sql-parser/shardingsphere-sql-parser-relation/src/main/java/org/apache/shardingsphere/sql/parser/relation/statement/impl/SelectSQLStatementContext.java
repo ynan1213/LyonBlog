@@ -65,8 +65,12 @@ public final class SelectSQLStatementContext extends CommonSQLStatementContext {
     private final boolean containsSubquery;
 
     // TODO to be remove, for test case only
-    public SelectSQLStatementContext(final SelectStatement sqlStatement, final GroupByContext groupByContext,
-                                     final OrderByContext orderByContext, final ProjectionsContext projectionsContext, final PaginationContext paginationContext) {
+    public SelectSQLStatementContext(
+        final SelectStatement sqlStatement,
+        final GroupByContext groupByContext,
+        final OrderByContext orderByContext,
+        final ProjectionsContext projectionsContext,
+        final PaginationContext paginationContext) {
         super(sqlStatement);
         this.groupByContext = groupByContext;
         this.orderByContext = orderByContext;

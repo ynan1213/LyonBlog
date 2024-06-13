@@ -56,7 +56,10 @@ public final class InsertClauseShardingConditionEngine {
      * @param parameters SQL parameters
      * @return sharding conditions
      */
-    public List<ShardingCondition> createShardingConditions(final InsertSQLStatementContext insertSQLStatementContext, final GeneratedKey generatedKey, final List<Object> parameters) {
+    public List<ShardingCondition> createShardingConditions(
+        final InsertSQLStatementContext insertSQLStatementContext,
+        final GeneratedKey generatedKey,
+        final List<Object> parameters) {
         List<ShardingCondition> result = new LinkedList<>();
         String tableName = insertSQLStatementContext.getTablesContext().getSingleTableName();
         Collection<String> columnNames = getColumnNames(insertSQLStatementContext, generatedKey);

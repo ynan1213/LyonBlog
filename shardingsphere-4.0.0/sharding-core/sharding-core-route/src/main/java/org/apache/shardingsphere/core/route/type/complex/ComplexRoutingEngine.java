@@ -80,6 +80,7 @@ public final class ComplexRoutingEngine implements RoutingEngine {
         if (1 == result.size()) {
             return result.iterator().next();
         }
+        // Cartesian 笛卡尔
         return new CartesianRoutingEngine(result).route();
     }
 }

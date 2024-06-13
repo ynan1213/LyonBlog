@@ -43,8 +43,12 @@ public final class PreparedQueryShardingEngine extends BaseShardingEngine {
     
     private final PreparedStatementRoutingEngine routingEngine;
     
-    public PreparedQueryShardingEngine(final String sql, 
-                                       final ShardingRule shardingRule, final ShardingProperties shardingProperties, final ShardingSphereMetaData metaData, final SQLParseEngine sqlParseEngine) {
+    public PreparedQueryShardingEngine(
+        final String sql,
+        final ShardingRule shardingRule,
+        final ShardingProperties shardingProperties,
+        final ShardingSphereMetaData metaData,
+        final SQLParseEngine sqlParseEngine) {
         super(shardingRule, shardingProperties, metaData);
         routingEngine = new PreparedStatementRoutingEngine(sql, shardingRule, metaData, sqlParseEngine);
     }

@@ -200,8 +200,13 @@ public final class ShardingSphereStatement extends AbstractStatementAdapter {
     
     private DriverExecutionPrepareEngine<JDBCExecutionUnit, Connection> createDriverExecutionPrepareEngine() {
         int maxConnectionsSizePerQuery = metaDataContexts.getProps().<Integer>getValue(ConfigurationPropertyKey.MAX_CONNECTIONS_SIZE_PER_QUERY);
-        return new DriverExecutionPrepareEngine<>(JDBCDriverType.STATEMENT, maxConnectionsSizePerQuery, connection.getConnectionManager(), 
-                statementOption, metaDataContexts.getMetaData(connection.getSchema()).getRuleMetaData().getRules());
+        return new DriverExecutionPrepareEngine<>(
+            JDBCDriverType.STATEMENT,
+            maxConnectionsSizePerQuery,
+            connection.getConnectionManager(),
+            statementOption,
+            metaDataContexts.getMetaData(connection.getSchema()).getRuleMetaData().getRules()
+        );
     }
     
     @Override
@@ -219,8 +224,11 @@ public final class ShardingSphereStatement extends AbstractStatementAdapter {
             }
             ExecutionGroupContext<JDBCExecutionUnit> executionGroupContext = createExecutionContext();
             cacheStatements(executionGroupContext.getInputGroups());
-            return executeUpdate(executionGroupContext,
-                (actualSQL, statement) -> statement.executeUpdate(actualSQL), executionContext.getSqlStatementContext(), executionContext.getRouteContext().getRouteUnits());
+            return executeUpdate(
+                executionGroupContext,
+                (actualSQL, statement) -> statement.executeUpdate(actualSQL),
+                executionContext.getSqlStatementContext(),
+                executionContext.getRouteContext().getRouteUnits());
         } finally {
             currentResultSet = null;
         }
@@ -297,8 +305,11 @@ public final class ShardingSphereStatement extends AbstractStatementAdapter {
         }
     }
     
-    private int executeUpdate(final ExecutionGroupContext<JDBCExecutionUnit> executionGroupContext, final ExecuteUpdateCallback updater,
-                              final SQLStatementContext<?> sqlStatementContext, final Collection<RouteUnit> routeUnits) throws SQLException {
+    private int executeUpdate(
+        final ExecutionGroupContext<JDBCExecutionUnit> executionGroupContext,
+        final ExecuteUpdateCallback updater,
+        final SQLStatementContext<?> sqlStatementContext,
+        final Collection<RouteUnit> routeUnits) throws SQLException {
         boolean isExceptionThrown = SQLExecutorExceptionHandler.isExceptionThrown();
         JDBCExecutorCallback<Integer> callback = new JDBCExecutorCallback<Integer>(
                 metaDataContexts.getMetaData(connection.getSchema()).getResource().getDatabaseType(), sqlStatementContext.getSqlStatement(), isExceptionThrown) {
@@ -409,11 +420,14 @@ public final class ShardingSphereStatement extends AbstractStatementAdapter {
     }
     
     private LogicSQL createLogicSQL(final String sql) {
-        ShardingSphereSQLParserEngine sqlParserEngine = new ShardingSphereSQLParserEngine(
-                DatabaseTypeRegistry.getTrunkDatabaseTypeName(metaDataContexts.getMetaData(connection.getSchema()).getResource().getDatabaseType()), findSQLParserRule());
+        String trunkDatabaseTypeName = DatabaseTypeRegistry.getTrunkDatabaseTypeName(metaDataContexts.getMetaData(connection.getSchema()).getResource().getDatabaseType());
+        ShardingSphereSQLParserEngine sqlParserEngine = new ShardingSphereSQLParserEngine(trunkDatabaseTypeName, findSQLParserRule());
         SQLStatement sqlStatement = sqlParserEngine.parse(sql, false);
-        SQLStatementContext<?> sqlStatementContext = SQLStatementContextFactory.newInstance(metaDataContexts.getMetaDataMap(), Collections.emptyList(), sqlStatement,
-                connection.getSchema());
+        SQLStatementContext<?> sqlStatementContext = SQLStatementContextFactory.newInstance(
+            metaDataContexts.getMetaDataMap(),
+            Collections.emptyList(),
+            sqlStatement,
+            connection.getSchema());
         return new LogicSQL(sqlStatementContext, sql, Collections.emptyList());
     }
     
@@ -424,8 +438,13 @@ public final class ShardingSphereStatement extends AbstractStatementAdapter {
     
     private ExecutionContext createExecutionContext(final LogicSQL logicSQL) throws SQLException {
         clearStatements();
-        SQLCheckEngine.check(logicSQL.getSqlStatementContext().getSqlStatement(), logicSQL.getParameters(), 
-                metaDataContexts.getMetaData(connection.getSchema()).getRuleMetaData().getRules(), connection.getSchema(), metaDataContexts.getMetaDataMap(), null);
+        SQLCheckEngine.check(
+            logicSQL.getSqlStatementContext().getSqlStatement(),
+            logicSQL.getParameters(),
+            metaDataContexts.getMetaData(connection.getSchema()).getRuleMetaData().getRules(),
+            connection.getSchema(),
+            metaDataContexts.getMetaDataMap(),
+            null);
         return kernelProcessor.generateExecutionContext(logicSQL, metaDataContexts.getMetaData(connection.getSchema()), metaDataContexts.getProps());
     }
     

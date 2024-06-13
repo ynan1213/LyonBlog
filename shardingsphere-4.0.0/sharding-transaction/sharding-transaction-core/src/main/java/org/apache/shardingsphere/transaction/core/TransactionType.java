@@ -23,6 +23,10 @@ package org.apache.shardingsphere.transaction.core;
  * @author zhaojun
  */
 public enum TransactionType {
-    
+
+    /**
+     * ShardingSphere 对外提供 begin/commit/rollback 传统事务接口，通过 LOCAL，XA，BASE 三种模式提供了分布式事务的能力
+     *
+     */
     LOCAL, XA, BASE
 }

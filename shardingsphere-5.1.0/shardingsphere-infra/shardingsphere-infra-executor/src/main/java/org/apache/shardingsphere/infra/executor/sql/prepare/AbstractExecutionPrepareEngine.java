@@ -64,6 +64,12 @@ public abstract class AbstractExecutionPrepareEngine<T> implements ExecutionPrep
             String dataSourceName = entry.getKey();
             List<SQLUnit> sqlUnits = entry.getValue();
             List<List<SQLUnit>> sqlUnitGroups = group(sqlUnits);
+            /*
+             * 用户通过配置 maxConnectionSizePerQuery 参数，可以指定每条语句在同一个数据源上最大允许的连接数。
+             * 通过计算公式，当每个数据库连接需执行的 SQL 数量小于等于 1 时，说明当前可以满足每条真实执行的 SQL 都分配一个独立的数据库连接，
+             * 此时会选择内存限制模式，同一个数据源允许创建多个数据库连接进行并行执行。反之则会选择连接限制模式，同一个数据源只允许创建一个数
+             * 据库连接进行执行，然后将结果集加载进内存结果集，再提供给归并引擎使用。
+             */
             ConnectionMode connectionMode = maxConnectionsSizePerQuery < sqlUnits.size() ? ConnectionMode.CONNECTION_STRICTLY : ConnectionMode.MEMORY_STRICTLY;
             result.addAll(group(dataSourceName, sqlUnitGroups, connectionMode));
         }

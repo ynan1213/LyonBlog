@@ -33,7 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Getter
 public final class ShardingSphereSchema {
-    
+
+    // key 为 tableName，value 是表名对应表的元数据
     private final Map<String, TableMetaData> tables;
     
     @SuppressWarnings("CollectionWithoutInitialCapacity")

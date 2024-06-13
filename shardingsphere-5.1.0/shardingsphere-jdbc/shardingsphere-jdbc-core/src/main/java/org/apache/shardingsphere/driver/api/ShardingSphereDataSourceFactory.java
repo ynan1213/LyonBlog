@@ -72,9 +72,18 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig, 
-                                              final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
-        return new ShardingSphereDataSource(Strings.isNullOrEmpty(schemaName) ? DefaultSchema.LOGIC_NAME : schemaName, modeConfig, dataSourceMap, configs, props);
+    public static DataSource createDataSource(
+        final String schemaName,
+        final ModeConfiguration modeConfig,
+        final Map<String, DataSource> dataSourceMap,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
+        return new ShardingSphereDataSource(
+            Strings.isNullOrEmpty(schemaName) ? DefaultSchema.LOGIC_NAME : schemaName,
+            modeConfig,
+            dataSourceMap,
+            configs,
+            props);
     }
     
     /**
@@ -87,8 +96,11 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final ModeConfiguration modeConfig, 
-                                              final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final ModeConfiguration modeConfig,
+        final Map<String, DataSource> dataSourceMap,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource(DefaultSchema.LOGIC_NAME, modeConfig, dataSourceMap, configs, props);
     }
     
@@ -103,8 +115,12 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final String schemaName, final ModeConfiguration modeConfig, 
-                                              final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final String schemaName,
+        final ModeConfiguration modeConfig,
+        final DataSource dataSource,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource(schemaName, modeConfig, Collections.singletonMap(Strings.isNullOrEmpty(schemaName) ? DefaultSchema.LOGIC_NAME : schemaName, dataSource), configs, props);
     }
     
@@ -118,8 +134,11 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final ModeConfiguration modeConfig, 
-                                              final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final ModeConfiguration modeConfig,
+        final DataSource dataSource,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource(modeConfig, Collections.singletonMap(DefaultSchema.LOGIC_NAME, dataSource), configs, props);
     }
     
@@ -133,8 +152,11 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final String schemaName,
-                                              final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final String schemaName,
+        final Map<String, DataSource> dataSourceMap,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource(schemaName, null, dataSourceMap, configs, props);
     }
     
@@ -147,7 +169,10 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final Map<String, DataSource> dataSourceMap, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final Map<String, DataSource> dataSourceMap,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource((ModeConfiguration) null, dataSourceMap, configs, props);
     }
     
@@ -161,7 +186,11 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final String schemaName, final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final String schemaName,
+        final DataSource dataSource,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource(schemaName, null, dataSource, configs, props);
     }
     
@@ -174,7 +203,10 @@ public final class ShardingSphereDataSourceFactory {
      * @return ShardingSphere data source
      * @throws SQLException SQL exception
      */
-    public static DataSource createDataSource(final DataSource dataSource, final Collection<RuleConfiguration> configs, final Properties props) throws SQLException {
+    public static DataSource createDataSource(
+        final DataSource dataSource,
+        final Collection<RuleConfiguration> configs,
+        final Properties props) throws SQLException {
         return createDataSource((ModeConfiguration) null, dataSource, configs, props);
     }
 }

@@ -43,7 +43,11 @@ public final class SimpleQueryShardingEngine extends BaseShardingEngine {
     
     private final StatementRoutingEngine routingEngine;
     
-    public SimpleQueryShardingEngine(final ShardingRule shardingRule, final ShardingProperties shardingProperties, final ShardingSphereMetaData metaData, final SQLParseEngine sqlParseEngine) {
+    public SimpleQueryShardingEngine(
+        final ShardingRule shardingRule,
+        final ShardingProperties shardingProperties,
+        final ShardingSphereMetaData metaData,
+        final SQLParseEngine sqlParseEngine) {
         super(shardingRule, shardingProperties, metaData);
         routingEngine = new StatementRoutingEngine(shardingRule, metaData, sqlParseEngine);
     }

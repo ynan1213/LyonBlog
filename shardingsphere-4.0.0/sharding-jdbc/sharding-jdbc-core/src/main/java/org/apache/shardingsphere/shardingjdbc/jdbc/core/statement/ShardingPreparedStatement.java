@@ -94,13 +94,21 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
     }
     
     public ShardingPreparedStatement(
-            final ShardingConnection connection, final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability) throws SQLException {
+        final ShardingConnection connection,
+        final String sql,
+        final int resultSetType,
+        final int resultSetConcurrency,
+        final int resultSetHoldability) throws SQLException {
         this(connection, sql, resultSetType, resultSetConcurrency, resultSetHoldability, false);
     }
     
     private ShardingPreparedStatement(
-            final ShardingConnection connection, final String sql, final int resultSetType, final int resultSetConcurrency, final int resultSetHoldability, final boolean returnGeneratedKeys)
-            throws SQLException {
+        final ShardingConnection connection,
+        final String sql,
+        final int resultSetType,
+        final int resultSetConcurrency,
+        final int resultSetHoldability,
+        final boolean returnGeneratedKeys) throws SQLException {
         if (Strings.isNullOrEmpty(sql)) {
             throw new SQLException(SQLExceptionConstant.SQL_STRING_NULL_OR_EMPTY);
         }
@@ -119,8 +127,13 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
             clearPrevious();
             shard();
             initPreparedStatementExecutor();
-            MergeEngine mergeEngine = MergeEngineFactory.newInstance(connection.getRuntimeContext().getDatabaseType(), 
-                    connection.getRuntimeContext().getRule(), sqlRouteResult, connection.getRuntimeContext().getMetaData().getRelationMetas(), preparedStatementExecutor.executeQuery());
+            MergeEngine mergeEngine = MergeEngineFactory.newInstance(
+                connection.getRuntimeContext().getDatabaseType(),
+                connection.getRuntimeContext().getRule(),
+                sqlRouteResult,
+                connection.getRuntimeContext().getMetaData().getRelationMetas(),
+                preparedStatementExecutor.executeQuery()
+            );
             result = getResultSet(mergeEngine);
         } finally {
             clearBatch();
@@ -159,7 +172,10 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
         EncryptRule encryptRule = connection.getRuntimeContext().getRule().getEncryptRule();
         if (null != encryptRule && sqlRouteResult.getSqlStatementContext().getSqlStatement() instanceof DALStatement) {
             MergedResult mergedResult = new DALEncryptMergeEngine(
-                    encryptRule, Collections.<QueryResult>singletonList(new StreamQueryResult(resultSets.get(0))), sqlRouteResult.getSqlStatementContext()).merge();
+                encryptRule,
+                Collections.<QueryResult>singletonList(new StreamQueryResult(resultSets.get(0))),
+                sqlRouteResult.getSqlStatementContext()
+            ).merge();
             return new ShardingResultSet(resultSets, mergedResult, this, sqlRouteResult);
         }
         MergedResult mergedResult = mergeEngine.merge();
@@ -213,6 +229,11 @@ public final class ShardingPreparedStatement extends AbstractShardingPreparedSta
     }
     
     private void initPreparedStatementExecutor() throws SQLException {
+        /**
+         * 这里主要做的事是：
+         * 1.执行一个逻辑SQL需要几个数据库连接？
+         * 2.同一个逻辑SQL的多个实际SQL是并行执行还是串行执行？
+         */
         preparedStatementExecutor.init(sqlRouteResult);
         setParametersForStatements();
         replayMethodForStatements();

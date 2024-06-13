@@ -31,7 +31,13 @@ import java.util.Properties;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ContextManagerBuilderFactory {
-    
+
+    /**
+     * 默认情况下有三个：
+     *      MemoryContextManagerBuilder --- Memory
+     *      StandaloneContextManagerBuilder --- Standalone
+     *      ClusterContextManagerBuilder --- Cluster
+     */
     static {
         ShardingSphereServiceLoader.register(ContextManagerBuilder.class);
     }
@@ -44,6 +50,8 @@ public final class ContextManagerBuilderFactory {
      */
     public static ContextManagerBuilder newInstance(final ModeConfiguration modeConfig) {
         return null == modeConfig
-                ? RequiredSPIRegistry.getRegisteredService(ContextManagerBuilder.class) : TypedSPIRegistry.getRegisteredService(ContextManagerBuilder.class, modeConfig.getType(), new Properties());
+            // 未指定，选取一个默认的: MemoryContextManagerBuilder
+            ? RequiredSPIRegistry.getRegisteredService(ContextManagerBuilder.class)
+            : TypedSPIRegistry.getRegisteredService(ContextManagerBuilder.class, modeConfig.getType(), new Properties());
     }
 }

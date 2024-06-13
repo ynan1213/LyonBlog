@@ -55,10 +55,17 @@ public final class InlineShardingStrategy implements ShardingStrategy {
     @Override
     public Collection<String> doSharding(final Collection<String> availableTargetNames, final Collection<RouteValue> shardingValues) {
         RouteValue shardingValue = shardingValues.iterator().next();
+
+        // 范围查询，在这里会报错
         Preconditions.checkState(shardingValue instanceof ListRouteValue, "Inline strategy cannot support range sharding.");
+        /*
+         * 将shardingValue的值（一个list）通过Inline表达式解析为结果值
+         * 例如: Inline表达式为 t_order_${order_id % 2}，shardingValue值为 1、2、3，则doSharding的结果为t_order_1、t_order_0、t_order_1
+         */
         Collection<String> shardingResult = doSharding((ListRouteValue) shardingValue);
         Collection<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (String each : shardingResult) {
+            // 上面doSharding返回的值还要过滤
             if (availableTargetNames.contains(each)) {
                 result.add(each);
             }

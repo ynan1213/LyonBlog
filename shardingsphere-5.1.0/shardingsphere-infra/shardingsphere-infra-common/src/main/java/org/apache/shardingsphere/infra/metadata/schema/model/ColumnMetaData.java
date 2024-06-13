@@ -30,14 +30,14 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public final class ColumnMetaData {
-    
+    // 列名
     private final String name;
-    
+    // 数据类型
     private final int dataType;
-    
+    // 是否主键
     private final boolean primaryKey;
-    
+    // 是否自动生成
     private final boolean generated;
-    
+    // 是否区分大小写
     private final boolean caseSensitive;
 }

@@ -38,6 +38,7 @@ public class JavaConfigurationExampleMain {
 //    private static ShardingType shardingType = ShardingType.SHARDING_MASTER_SLAVE;
     
     public static void main(final String[] args) throws SQLException {
+        System.setProperty("sql.show", "true");
         DataSource dataSource = DataSourceFactory.newInstance(shardingType);
         ExampleExecuteTemplate.run(getExampleService(dataSource));
     }

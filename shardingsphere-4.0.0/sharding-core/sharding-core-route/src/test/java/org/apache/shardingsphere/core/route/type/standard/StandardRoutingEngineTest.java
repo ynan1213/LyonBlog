@@ -66,10 +66,26 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         StandardRoutingEngine standardRoutingEngine = new StandardRoutingEngine(null, null, sqlStatementContext, null);
         standardRoutingEngine.route();
     }
-    
+
+    /**
+     * createBasedShardingRule()方法：
+     *   logicTable: t_order
+     *   actualDataNodes: ds_${0..1}.t_order_${0..1} 两个库四张表
+     *   databaseShardingStrategy: InlineShardingStrategy类型
+     *   tableShardingStrategy: InlineShardingStrategy类型
+     *
+     * shardingConditions为空，StandardRoutingEngine的处理逻辑是不经过ShardingStrategy处理，直接返回所有的库和表
+     * 结果：
+     * ds_0.t_order_0
+     * ds_0.t_order_1
+     * ds_1.t_order_0
+     * ds_1.t_order_1
+     */
     @Test
     public void assertRouteByNonConditions() {
-        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(createBasedShardingRule(), "t_order", new ShardingConditions(Collections.<ShardingCondition>emptyList()));
+        ShardingRule shardingRule = createBasedShardingRule();
+        ShardingConditions shardingConditions = new ShardingConditions(Collections.<ShardingCondition>emptyList());
+        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(shardingRule, "t_order", shardingConditions);
         RoutingResult routingResult = standardRoutingEngine.route();
         List<RoutingUnit> tableUnitList = new ArrayList<>(routingResult.getRoutingUnits());
         assertThat(routingResult, instanceOf(RoutingResult.class));
@@ -91,10 +107,24 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         assertThat(tableUnitList.get(3).getTableUnits().get(0).getActualTableName(), is("t_order_1"));
         assertThat(tableUnitList.get(3).getTableUnits().get(0).getLogicTableName(), is("t_order"));
     }
-    
+
+    /**
+     * createBasedShardingRule()方法：
+     *   logicTable: t_order
+     *   actualDataNodes: ds_${0..1}.t_order_${0..1} 两个库四张表
+     *   databaseShardingStrategy: InlineShardingStrategy类型
+     *   tableShardingStrategy: InlineShardingStrategy类型
+     *
+     * shardingConditions: t_order[{user_id: 1}, {order_id: 1}]
+     * shardingConditions不为空，StandardRoutingEngine的处理逻辑是拿到shardingConditions的值再通过ShardingStrategy处理
+     * 因为shardingConditions限定值均为1，所以结果：
+     * ds_1.t_order_1
+     */
     @Test
     public void assertRouteByShardingConditions() {
-        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(createBasedShardingRule(), "t_order", createShardingConditions("t_order"));
+        ShardingRule shardingRule = createBasedShardingRule();
+        ShardingConditions shardingConditions = createShardingConditions("t_order");
+        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(shardingRule, "t_order", shardingConditions);
         RoutingResult routingResult = standardRoutingEngine.route();
         List<RoutingUnit> tableUnitList = new ArrayList<>(routingResult.getRoutingUnits());
         assertThat(routingResult, instanceOf(RoutingResult.class));
@@ -104,10 +134,25 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         assertThat(tableUnitList.get(0).getTableUnits().get(0).getActualTableName(), is("t_order_1"));
         assertThat(tableUnitList.get(0).getTableUnits().get(0).getLogicTableName(), is("t_order"));
     }
-    
+
+    /**
+     * createBasedShardingRule()方法：
+     *   logicTable: t_order
+     *   actualDataNodes: ds_${0..1}.t_order_${0..1} 两个库四张表
+     *   databaseShardingStrategy: HintShardingStrategy类型
+     *   tableShardingStrategy: HintShardingStrategy类型
+     *
+     * shardingConditions: t_order[{user_id: 1}, {order_id: 1}]
+     * 当使用HintShardingStrategy类型，不论shardingConditions是否为空，StandardRoutingEngine的都会忽略shardingConditions的值
+     * 也就是hintManager.addDatabaseShardingValue、hintManager.addTableShardingValue的优先级高于shardingConditions
+     * HintShardingStrategy不是简单的返回，还会配置HintShardingAlgorithm算法进行计算
+     * 结果: ds_1.t_order_1
+     */
     @Test
     public void assertRouteByHint() {
-        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(createHintShardingRule(), "t_hint_test", new ShardingConditions(Collections.<ShardingCondition>emptyList()));
+        ShardingRule shardingRule = createHintShardingRule();
+        ShardingConditions shardingConditions = new ShardingConditions(Collections.<ShardingCondition>emptyList());
+        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(shardingRule, "t_hint_test", shardingConditions);
         HintManager hintManager = HintManager.getInstance();
         hintManager.addDatabaseShardingValue("t_hint_test", 1);
         hintManager.addTableShardingValue("t_hint_test", 1);
@@ -120,10 +165,16 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         assertThat(tableUnitList.get(0).getTableUnits().get(0).getActualTableName(), is("t_hint_test_1"));
         assertThat(tableUnitList.get(0).getTableUnits().get(0).getLogicTableName(), is("t_hint_test"));
     }
-    
+
+    /**
+     * dsShardingStrategy: HintShardingStrategy，hintManager限定了1，所以数据源未ds_1
+     * tableShardingStrategy: InlineShardingStrategy，shardingConditions限定了1，所以表为t_hint_ds_test_1
+     */
     @Test
     public void assertRouteByMixedWithHintDatasource() {
-        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(createMixedShardingRule(), "t_hint_ds_test", createShardingConditions("t_hint_ds_test"));
+        ShardingRule mixedShardingRule = createMixedShardingRule();
+        ShardingConditions shardingConditions = createShardingConditions("t_hint_ds_test");
+        StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(mixedShardingRule, "t_hint_ds_test", shardingConditions);
         HintManager hintManager = HintManager.getInstance();
         hintManager.addDatabaseShardingValue("t_hint_ds_test", 1);
         RoutingResult routingResult = standardRoutingEngine.route();
@@ -135,7 +186,11 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         assertThat(tableUnitList.get(0).getTableUnits().get(0).getActualTableName(), is("t_hint_ds_test_1"));
         assertThat(tableUnitList.get(0).getTableUnits().get(0).getLogicTableName(), is("t_hint_ds_test"));
     }
-    
+
+    /**
+     * dsShardingStrategy: HintShardingStrategy，hintManager限定了1，所以数据源分片结果为：ds_1
+     * tableShardingStrategy: InlineShardingStrategy，shardingConditions为空，所以表分片结果为：t_hint_ds_test_0、t_hint_ds_test_1
+     */
     @Test
     public void assertRouteByMixedWithHintDatasourceOnly() {
         StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(createMixedShardingRule(), "t_hint_ds_test", new ShardingConditions(Collections.<ShardingCondition>emptyList()));
@@ -154,7 +209,11 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         assertThat(tableUnitList.get(1).getTableUnits().get(0).getActualTableName(), is("t_hint_ds_test_1"));
         assertThat(tableUnitList.get(1).getTableUnits().get(0).getLogicTableName(), is("t_hint_ds_test"));
     }
-    
+
+    /**
+     * dsShardingStrategy: HintShardingStrategy，hintManager限定了1，所以数据源分片结果为：ds_1
+     * tableShardingStrategy: InlineShardingStrategy，shardingConditions为空，所以表分片结果为：t_hint_ds_test_0、t_hint_ds_test_1
+     */
     @Test
     public void assertRouteByMixedWithHintTable() {
         StandardRoutingEngine standardRoutingEngine = createStandardRoutingEngine(createMixedShardingRule(), "t_hint_table_test", createShardingConditions("t_hint_table_test"));
@@ -189,10 +248,18 @@ public final class StandardRoutingEngineTest extends AbstractRoutingEngineTest {
         assertThat(tableUnitList.get(1).getTableUnits().get(0).getLogicTableName(), is("t_hint_table_test"));
     }
     
-    private StandardRoutingEngine createStandardRoutingEngine(final ShardingRule shardingRule, final String logicTableName, final ShardingConditions shardingConditions) {
-        return new StandardRoutingEngine(shardingRule, logicTableName, new SelectSQLStatementContext(new SelectStatement(),
-                new GroupByContext(Collections.<OrderByItem>emptyList(), 0), new OrderByContext(Collections.<OrderByItem>emptyList(), false),
-                new ProjectionsContext(0, 0, false, Collections.<Projection>emptyList(), Collections.<String>emptyList()),
-                new PaginationContext(null, null, Collections.emptyList())), shardingConditions);
+    private StandardRoutingEngine createStandardRoutingEngine(
+        final ShardingRule shardingRule,
+        final String logicTable,
+        final ShardingConditions shardingConditions) {
+
+        SelectSQLStatementContext statementContext = new SelectSQLStatementContext(
+            new SelectStatement(),
+            new GroupByContext(Collections.<OrderByItem>emptyList(), 0),
+            new OrderByContext(Collections.<OrderByItem>emptyList(), false),
+            new ProjectionsContext(0, 0, false, Collections.<Projection>emptyList(), Collections.<String>emptyList()),
+            new PaginationContext(null, null, Collections.emptyList()));
+
+        return new StandardRoutingEngine(shardingRule, logicTable, statementContext, shardingConditions);
     }
 }

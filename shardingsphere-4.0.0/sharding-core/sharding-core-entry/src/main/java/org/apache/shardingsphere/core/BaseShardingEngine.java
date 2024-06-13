@@ -65,8 +65,14 @@ public abstract class BaseShardingEngine {
      */
     public SQLRouteResult shard(final String sql, final List<Object> parameters) {
         List<Object> clonedParameters = cloneParameters(parameters);
+        // sql路由
         SQLRouteResult result = executeRoute(sql, clonedParameters);
-        result.getRouteUnits().addAll(HintManager.isDatabaseShardingOnly() ? convert(sql, clonedParameters, result) : rewriteAndConvert(sql, clonedParameters, result));
+        // sql改写
+        result.getRouteUnits().addAll(HintManager.isDatabaseShardingOnly()
+            ? convert(sql, clonedParameters, result)
+            : rewriteAndConvert(sql, clonedParameters, result));
+
+        // sql打印
         boolean showSQL = shardingProperties.getValue(ShardingPropertiesConstant.SQL_SHOW);
         if (showSQL) {
             boolean showSimple = shardingProperties.getValue(ShardingPropertiesConstant.SQL_SIMPLE);
@@ -102,11 +108,21 @@ public abstract class BaseShardingEngine {
     }
     
     private Collection<RouteUnit> rewriteAndConvert(final String sql, final List<Object> parameters, final SQLRouteResult sqlRouteResult) {
+        // 上下文
         SQLRewriteContext sqlRewriteContext = new SQLRewriteContext(metaData.getRelationMetas(), sqlRouteResult.getSqlStatementContext(), sql, parameters);
-        new ShardingSQLRewriteContextDecorator(shardingRule, sqlRouteResult).decorate(sqlRewriteContext);
-        boolean isQueryWithCipherColumn = shardingProperties.<Boolean>getValue(ShardingPropertiesConstant.QUERY_WITH_CIPHER_COLUMN);
-        new EncryptSQLRewriteContextDecorator(shardingRule.getEncryptRule(), isQueryWithCipherColumn).decorate(sqlRewriteContext);
+
+        /*
+         * 一共有两个类型的 SQLRewriteContextDecorator：
+         * ①：ShardingSQLRewriteContextDecorator负责分片处理
+         * ②：EncryptSQLRewriteContextDecorator负责数据脱敏
+         */
+        new ShardingSQLRewriteContextDecorator(shardingRule, sqlRouteResult)
+            .decorate(sqlRewriteContext);
+        new EncryptSQLRewriteContextDecorator(shardingRule.getEncryptRule(), shardingProperties.<Boolean>getValue(ShardingPropertiesConstant.QUERY_WITH_CIPHER_COLUMN))
+            .decorate(sqlRewriteContext);
+
         sqlRewriteContext.generateSQLTokens();
+
         Collection<RouteUnit> result = new LinkedHashSet<>();
         for (RoutingUnit each : sqlRouteResult.getRoutingResult().getRoutingUnits()) {
             ShardingSQLRewriteEngine sqlRewriteEngine = new ShardingSQLRewriteEngine(shardingRule, sqlRouteResult.getShardingConditions(), each);

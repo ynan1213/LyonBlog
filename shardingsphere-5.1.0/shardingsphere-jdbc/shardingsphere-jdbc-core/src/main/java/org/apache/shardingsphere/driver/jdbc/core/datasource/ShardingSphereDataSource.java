@@ -57,8 +57,12 @@ public final class ShardingSphereDataSource extends AbstractDataSourceAdapter im
         contextManager = createContextManager(schemaName, modeConfig, new HashMap<>(), new LinkedList<>(), new Properties());
     }
     
-    public ShardingSphereDataSource(final String schemaName, final ModeConfiguration modeConfig, final Map<String, DataSource> dataSourceMap,
-                                    final Collection<RuleConfiguration> ruleConfigs, final Properties props) throws SQLException {
+    public ShardingSphereDataSource(
+        final String schemaName,
+        final ModeConfiguration modeConfig,
+        final Map<String, DataSource> dataSourceMap,
+        final Collection<RuleConfiguration> ruleConfigs,
+        final Properties props) throws SQLException {
         checkRuleConfiguration(schemaName, ruleConfigs);
         this.schemaName = schemaName;
         contextManager = createContextManager(schemaName, modeConfig, dataSourceMap, ruleConfigs, null == props ? new Properties() : props);
@@ -69,9 +73,15 @@ public final class ShardingSphereDataSource extends AbstractDataSourceAdapter im
         ruleConfigs.forEach(each -> RuleConfigurationCheckerFactory.newInstance(each).ifPresent(optional -> optional.check(schemaName, each)));
     }
     
-    private ContextManager createContextManager(final String schemaName, final ModeConfiguration modeConfig, final Map<String, DataSource> dataSourceMap,
-                                                final Collection<RuleConfiguration> ruleConfigs, final Properties props) throws SQLException {
-        Collection<RuleConfiguration> globalRuleConfigs = ruleConfigs.stream().filter(each -> each instanceof GlobalRuleConfiguration).collect(Collectors.toList());
+    private ContextManager createContextManager(
+        final String schemaName,
+        final ModeConfiguration modeConfig,
+        final Map<String, DataSource> dataSourceMap,
+        final Collection<RuleConfiguration> ruleConfigs,
+        final Properties props) throws SQLException {
+        Collection<RuleConfiguration> globalRuleConfigs = ruleConfigs.stream()
+            .filter(each -> each instanceof GlobalRuleConfiguration)
+            .collect(Collectors.toList());
         ContextManagerBuilderParameter parameter = ContextManagerBuilderParameter.builder()
                 .modeConfig(modeConfig)
                 .schemaConfigs(Collections.singletonMap(schemaName, new DataSourceProvidedSchemaConfiguration(dataSourceMap, ruleConfigs)))

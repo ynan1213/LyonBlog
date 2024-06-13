@@ -78,8 +78,11 @@ public final class MetaDataPersistService {
      * @param props properties
      * @param isOverwrite whether overwrite registry center's configuration if existed
      */
-    public void persistConfigurations(final Map<String, ? extends SchemaConfiguration> schemaConfigs,
-                                      final Collection<RuleConfiguration> globalRuleConfigs, final Properties props, final boolean isOverwrite) {
+    public void persistConfigurations(
+        final Map<String, ? extends SchemaConfiguration> schemaConfigs,
+        final Collection<RuleConfiguration> globalRuleConfigs,
+        final Properties props,
+        final boolean isOverwrite) {
         globalRuleService.persist(globalRuleConfigs, isOverwrite);
         propsService.persist(props, isOverwrite);
         for (Entry<String, ? extends SchemaConfiguration> entry : schemaConfigs.entrySet()) {

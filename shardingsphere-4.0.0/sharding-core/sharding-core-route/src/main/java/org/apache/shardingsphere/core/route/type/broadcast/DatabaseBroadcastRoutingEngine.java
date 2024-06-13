@@ -33,7 +33,10 @@ import org.apache.shardingsphere.core.rule.ShardingRule;
 public final class DatabaseBroadcastRoutingEngine implements RoutingEngine {
     
     private final ShardingRule shardingRule;
-    
+
+    /**
+     * 非常直接，即基于每个 DataSourceName 构建一个 RoutingUnit
+     */
     @Override
     public RoutingResult route() {
         RoutingResult result = new RoutingResult();

@@ -53,7 +53,10 @@ import java.util.Set;
 public final class TableRule {
     
     private final String logicTable;
-    
+
+    /**
+     * 一个logicTable对应的所有真实的数据节点，一个DataNode由数据源名+表名组成
+     */
     private final List<DataNode> actualDataNodes;
     
     @Getter(AccessLevel.NONE)
@@ -99,13 +102,19 @@ public final class TableRule {
     
     public TableRule(final TableRuleConfiguration tableRuleConfig, final ShardingDataSourceNames shardingDataSourceNames, final String defaultGenerateKeyColumn) {
         logicTable = tableRuleConfig.getLogicTable().toLowerCase();
+
+        // 解析 xxx_ds$->{0..1}.t_user_$->{0..1}
+        // 解析后的数据必须是xxx.yyy形式，否则后面在创建DataNode的时候会校验不通过抛异常
         List<String> dataNodes = new InlineExpressionParser(tableRuleConfig.getActualDataNodes()).splitAndEvaluate();
         dataNodeIndexMap = new HashMap<>(dataNodes.size(), 1);
         actualDataNodes = isEmptyDataNodes(dataNodes)
-            ? generateDataNodes(tableRuleConfig.getLogicTable(), shardingDataSourceNames.getDataSourceNames()) : generateDataNodes(dataNodes, shardingDataSourceNames.getDataSourceNames());
+            ? generateDataNodes(tableRuleConfig.getLogicTable(), shardingDataSourceNames.getDataSourceNames())
+            : generateDataNodes(dataNodes, shardingDataSourceNames.getDataSourceNames());
         actualTables = getActualTables();
-        databaseShardingStrategy = null == tableRuleConfig.getDatabaseShardingStrategyConfig() ? null : ShardingStrategyFactory.newInstance(tableRuleConfig.getDatabaseShardingStrategyConfig());
-        tableShardingStrategy = null == tableRuleConfig.getTableShardingStrategyConfig() ? null : ShardingStrategyFactory.newInstance(tableRuleConfig.getTableShardingStrategyConfig());
+        databaseShardingStrategy = null == tableRuleConfig.getDatabaseShardingStrategyConfig() ?
+            null : ShardingStrategyFactory.newInstance(tableRuleConfig.getDatabaseShardingStrategyConfig());
+        tableShardingStrategy = null == tableRuleConfig.getTableShardingStrategyConfig() ?
+            null : ShardingStrategyFactory.newInstance(tableRuleConfig.getTableShardingStrategyConfig());
         generateKeyColumn = getGenerateKeyColumn(tableRuleConfig.getKeyGeneratorConfig(), defaultGenerateKeyColumn);
         shardingKeyGenerator = containsKeyGeneratorConfiguration(tableRuleConfig)
                 ? new ShardingKeyGeneratorServiceLoader().newService(tableRuleConfig.getKeyGeneratorConfig().getType(), tableRuleConfig.getKeyGeneratorConfig().getProperties()) : null;
@@ -169,6 +178,7 @@ public final class TableRule {
         List<DataNode> result = new LinkedList<>();
         int index = 0;
         for (String each : actualDataNodes) {
+            // 只能是xxx.yyy的形式，否则会报错
             DataNode dataNode = new DataNode(each);
             if (!dataSourceNames.contains(dataNode.getDataSourceName())) {
                 throw new ShardingException("Cannot find data source in sharding rule, invalid actual data node is: '%s'", each);

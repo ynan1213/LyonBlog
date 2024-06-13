@@ -37,12 +37,16 @@ public final class ShardingTablesConfigurationPrecise implements ExampleConfigur
     @Override
     public DataSource getDataSource() throws SQLException {
         ShardingRuleConfiguration shardingRuleConfig = new ShardingRuleConfiguration();
+        // t_order表
         shardingRuleConfig.getTableRuleConfigs().add(getOrderTableRuleConfiguration());
+        // t_order_item表
         shardingRuleConfig.getTableRuleConfigs().add(getOrderItemTableRuleConfiguration());
         shardingRuleConfig.getBindingTableGroups().add("t_order, t_order_item");
         shardingRuleConfig.getBroadcastTables().add("t_address");
         shardingRuleConfig.setDefaultTableShardingStrategyConfig(new StandardShardingStrategyConfiguration("order_id", new PreciseModuloShardingTableAlgorithm()));
-        return ShardingDataSourceFactory.createDataSource(createDataSourceMap(), shardingRuleConfig, new Properties());
+        Properties properties = new Properties();
+        properties.put("sql.show", "true");
+        return ShardingDataSourceFactory.createDataSource(createDataSourceMap(), shardingRuleConfig, properties);
     }
     
     private static TableRuleConfiguration getOrderTableRuleConfiguration() {

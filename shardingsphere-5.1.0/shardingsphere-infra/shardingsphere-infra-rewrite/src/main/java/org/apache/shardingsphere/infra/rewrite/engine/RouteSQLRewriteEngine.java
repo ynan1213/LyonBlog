@@ -50,11 +50,15 @@ public final class RouteSQLRewriteEngine {
      * @param sqlRewriteContext SQL rewrite context
      * @param routeContext route context
      * @return SQL rewrite result
+     *
+     * 详情见 https://ost.51cto.com/posts/17612
      */
     public RouteSQLRewriteResult rewrite(final SQLRewriteContext sqlRewriteContext, final RouteContext routeContext) {
         Map<RouteUnit, SQLRewriteUnit> result = new LinkedHashMap<>(routeContext.getRouteUnits().size(), 1);
+        // 先按照dataSourceName进行分组
         for (Entry<String, Collection<RouteUnit>> entry : aggregateRouteUnitGroups(routeContext.getRouteUnits()).entrySet()) {
             Collection<RouteUnit> routeUnits = entry.getValue();
+            // 只有当同一个数据源中的路由结果大于1，并且真实执行的 SQL 满足 SELECT * FROM table WHERE 结构时，才会进行 UNION ALL 改写。
             if (isNeedAggregateRewrite(sqlRewriteContext.getSqlStatementContext(), routeUnits)) {
                 result.put(routeUnits.iterator().next(), createSQLRewriteUnit(sqlRewriteContext, routeContext, routeUnits));
             } else {

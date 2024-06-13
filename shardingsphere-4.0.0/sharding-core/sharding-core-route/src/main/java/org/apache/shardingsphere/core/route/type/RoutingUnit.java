@@ -28,9 +28,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+
 /**
  * Routing unit.
- * 
+ *
  * @author zhangliang
  * @author maxiaoguang
  * @author panjuan
@@ -40,18 +41,21 @@ import java.util.Set;
 @EqualsAndHashCode
 @ToString
 public final class RoutingUnit {
-    
+
+    // 真实数据源名
     private final String dataSourceName;
-    
+
+    // 逻辑数据源名
     private final String masterSlaveLogicDataSourceName;
-    
+
+    // 表单元列表
     private final List<TableUnit> tableUnits = new LinkedList<>();
-    
+
     public RoutingUnit(final String dataSourceName) {
         this.dataSourceName = dataSourceName;
         masterSlaveLogicDataSourceName = dataSourceName;
     }
-    
+
     /**
      * Get routing table unit via data source name and actual table name.
      *
@@ -67,7 +71,7 @@ public final class RoutingUnit {
         }
         return Optional.absent();
     }
-    
+
     /**
      * Get actual tables' names via data source name.
      *
@@ -83,7 +87,7 @@ public final class RoutingUnit {
         }
         return result;
     }
-    
+
     /**
      * Get logic tables' names via data source name.
      *

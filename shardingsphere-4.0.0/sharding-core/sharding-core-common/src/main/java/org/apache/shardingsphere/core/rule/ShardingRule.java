@@ -148,6 +148,9 @@ public class ShardingRule implements BaseRule {
      * @return table rule
      */
     public Optional<TableRule> findTableRule(final String logicTableName) {
+        /**
+         * 如果一个logicTable配置了多个TableRule，只会取第一个
+         */
         for (TableRule each : tableRules) {
             if (each.getLogicTable().equalsIgnoreCase(logicTableName)) {
                 return Optional.of(each);
@@ -178,16 +181,30 @@ public class ShardingRule implements BaseRule {
      * @return table rule
      */
     public TableRule getTableRule(final String logicTableName) {
+        /**
+         * 如果一个logicTable配置了多个TableRule，只会取第一个
+         */
         Optional<TableRule> tableRule = findTableRule(logicTableName);
         if (tableRule.isPresent()) {
             return tableRule.get();
         }
+        /**
+         * 如果是广播表
+         */
         if (isBroadcastTable(logicTableName)) {
             return new TableRule(shardingDataSourceNames.getDataSourceNames(), logicTableName);
         }
+
+        /**
+         * 如果既未配置表分片策略，也不是广播表，选默认数据源
+         */
         if (!Strings.isNullOrEmpty(shardingDataSourceNames.getDefaultDataSourceName())) {
             return new TableRule(shardingDataSourceNames.getDefaultDataSourceName(), logicTableName);
         }
+
+        /**
+         * 如果既未配置表分片策略，也不是广播表，也未配置默认数据源，报错
+         */
         throw new ShardingConfigurationException("Cannot find table rule and default data source with logic table: '%s'", logicTableName);
     }
     

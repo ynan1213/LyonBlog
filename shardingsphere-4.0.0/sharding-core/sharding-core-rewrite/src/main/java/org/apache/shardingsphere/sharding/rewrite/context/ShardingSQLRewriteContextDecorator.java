@@ -26,6 +26,8 @@ import org.apache.shardingsphere.underlying.rewrite.context.SQLRewriteContext;
 import org.apache.shardingsphere.underlying.rewrite.context.SQLRewriteContextDecorator;
 import org.apache.shardingsphere.underlying.rewrite.parameter.rewriter.ParameterRewriter;
 
+import java.util.Collection;
+
 /**
  * SQL rewrite context decorator for sharding.
  * 
@@ -40,7 +42,14 @@ public final class ShardingSQLRewriteContextDecorator implements SQLRewriteConte
     
     @Override
     public void decorate(final SQLRewriteContext sqlRewriteContext) {
-        for (ParameterRewriter each : new ShardingParameterRewriterBuilder(shardingRule, sqlRouteResult).getParameterRewriters(sqlRewriteContext.getRelationMetas())) {
+        ShardingParameterRewriterBuilder shardingParameterRewriterBuilder = new ShardingParameterRewriterBuilder(shardingRule, sqlRouteResult);
+        Collection<ParameterRewriter> parameterRewriters = shardingParameterRewriterBuilder.getParameterRewriters(sqlRewriteContext.getRelationMetas());
+        /**
+         * 改写预处理参数，对于分片的场景有两个实现类，一个是分页、一个是需要补列
+         * 分页的例子：select * from t_order limit ?,? [1,2]  -> select * from t_order ?,? [0,3]
+         * 详情见 https://shardingsphere.apache.org/document/3.0.0.M4/cn/reference/sharding/rewrite/
+         */
+        for (ParameterRewriter each : parameterRewriters) {
             if (!sqlRewriteContext.getParameters().isEmpty() && each.isNeedRewrite(sqlRewriteContext.getSqlStatementContext())) {
                 each.rewrite(sqlRewriteContext.getParameterBuilder(), sqlRewriteContext.getSqlStatementContext(), sqlRewriteContext.getParameters());
             }

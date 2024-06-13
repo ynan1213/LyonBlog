@@ -41,11 +41,13 @@ import java.util.List;
  */
 @Getter
 public final class SQLRewriteContext {
-    
+
+    // 数据表和列的关系元数据
     private final RelationMetas relationMetas;
     
     private final SQLStatementContext sqlStatementContext;
-    
+
+    // 原始SQL
     private final String sql;
     
     private final List<Object> parameters;
@@ -64,7 +66,8 @@ public final class SQLRewriteContext {
         this.parameters = parameters;
         addSQLTokenGenerators(new DefaultTokenGeneratorBuilder().getSQLTokenGenerators());
         parameterBuilder = sqlStatementContext instanceof InsertSQLStatementContext
-                ? new GroupedParameterBuilder(((InsertSQLStatementContext) sqlStatementContext).getGroupedParameters()) : new StandardParameterBuilder(parameters);
+                ? new GroupedParameterBuilder(((InsertSQLStatementContext) sqlStatementContext).getGroupedParameters())
+                : new StandardParameterBuilder(parameters);
     }
     
     /**

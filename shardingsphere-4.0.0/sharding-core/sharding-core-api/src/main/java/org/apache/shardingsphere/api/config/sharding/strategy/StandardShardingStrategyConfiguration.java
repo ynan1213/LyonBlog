@@ -32,7 +32,8 @@ import org.apache.shardingsphere.api.sharding.standard.RangeShardingAlgorithm;
 public final class StandardShardingStrategyConfiguration implements ShardingStrategyConfiguration {
     
     private final String shardingColumn;
-    
+
+    // Precise精确
     private final PreciseShardingAlgorithm preciseShardingAlgorithm;
     
     private final RangeShardingAlgorithm rangeShardingAlgorithm;

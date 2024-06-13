@@ -54,6 +54,7 @@ public final class SQLParserExecutor {
     }
     
     private ParseASTNode twoPhaseParse(final String sql) {
+        // MySQLParserFacade 、 MySQLLexer 、 MySQLParser
         DatabaseTypedSQLParserFacade sqlParserFacade = DatabaseTypedSQLParserFacadeRegistry.getFacade(databaseType);
         SQLParser sqlParser = SQLParserFactory.newInstance(sql, sqlParserFacade.getLexerClass(), sqlParserFacade.getParserClass(), sqlCommentParseEnabled);
         try {

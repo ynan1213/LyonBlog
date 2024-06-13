@@ -39,7 +39,11 @@ public final class ShardingDatabasesConfigurationPrecise implements ExampleConfi
     
     @Override
     public DataSource getDataSource() throws SQLException {
-        return ShardingSphereDataSourceFactory.createDataSource(createModeConfiguration(), createDataSourceMap(), Collections.singleton(createShardingRuleConfiguration()), new Properties());
+        return ShardingSphereDataSourceFactory.createDataSource(
+            createModeConfiguration(),
+            createDataSourceMap(),
+            Collections.singleton(createShardingRuleConfiguration()),
+            new Properties());
     }
     
     private ShardingRuleConfiguration createShardingRuleConfiguration() {

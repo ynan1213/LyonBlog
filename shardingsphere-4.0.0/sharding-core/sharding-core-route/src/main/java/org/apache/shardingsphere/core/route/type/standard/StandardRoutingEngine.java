@@ -60,7 +60,11 @@ import java.util.List;
 public final class StandardRoutingEngine implements RoutingEngine {
     
     private final ShardingRule shardingRule;
-    
+
+    /**
+     * StandardRoutingEngine的适用场景：只支持分片操作只涉及一张表，或者涉及多张表但这些表是互为绑定表的关系
+     * 也就是StandardRoutingEngine和一个logicTableName绑定
+     */
     private final String logicTableName;
     
     private final SQLStatementContext sqlStatementContext;
@@ -69,10 +73,13 @@ public final class StandardRoutingEngine implements RoutingEngine {
     
     @Override
     public RoutingResult route() {
+        // 不支持多表DML操作
         if (isDMLForModify(sqlStatementContext.getSqlStatement()) && !sqlStatementContext.getTablesContext().isSingleTable()) {
             throw new ShardingException("Cannot support Multiple-Table for '%s'.", sqlStatementContext.getSqlStatement());
         }
-        return generateRoutingResult(getDataNodes(shardingRule.getTableRule(logicTableName)));
+        TableRule tableRule = shardingRule.getTableRule(logicTableName);
+        Collection<DataNode> dataNodes = getDataNodes(tableRule);
+        return generateRoutingResult(dataNodes);
     }
     
     private boolean isDMLForModify(final SQLStatement sqlStatement) {
@@ -88,19 +95,31 @@ public final class StandardRoutingEngine implements RoutingEngine {
         }
         return result;
     }
-    
+
+    /**
+     * 以下三条代码分支虽然处理方式有所不同，但本质上都是获取 RouteValue 的集合（RouteValue 保存的就是用于路由的表名和列名）。
+     * 在获取了所需的 RouteValue 之后，在 StandardRoutingEngine 中，以上三种场景最终都会调用 route0 基础方法进行路由，
+     * 该方法的作用就是根据这些 RouteValue 得出目标 DataNode（DataNode 中保存的就是具体的目标节点，包括 dataSourceName和tableName）的集合。
+     */
     private Collection<DataNode> getDataNodes(final TableRule tableRule) {
+        // 当 DatabaseShardingStrategy 和 TableShardingStrategy 都是 HintShardingStrategy时走该分支
+        // Hint是一种强制路由的方法
         if (isRoutingByHint(tableRule)) {
             return routeByHint(tableRule);
         }
+
+        // 当 DatabaseShardingStrategy 和 TableShardingStrategy 都不是 HintShardingStrategy 时走该分支
         if (isRoutingByShardingConditions(tableRule)) {
             return routeByShardingConditions(tableRule);
         }
+
+        // 当 DatabaseShardingStrategy 或 TableShardingStrategy 中任意一个是 HintShardingStrategy 时走该分支
         return routeByMixedConditions(tableRule);
     }
     
     private boolean isRoutingByHint(final TableRule tableRule) {
-        return shardingRule.getDatabaseShardingStrategy(tableRule) instanceof HintShardingStrategy && shardingRule.getTableShardingStrategy(tableRule) instanceof HintShardingStrategy;
+        return shardingRule.getDatabaseShardingStrategy(tableRule) instanceof HintShardingStrategy
+            && shardingRule.getTableShardingStrategy(tableRule) instanceof HintShardingStrategy;
     }
     
     private Collection<DataNode> routeByHint(final TableRule tableRule) {
@@ -113,14 +132,17 @@ public final class StandardRoutingEngine implements RoutingEngine {
     
     private Collection<DataNode> routeByShardingConditions(final TableRule tableRule) {
         return shardingConditions.getConditions().isEmpty()
-                ? route0(tableRule, Collections.<RouteValue>emptyList(), Collections.<RouteValue>emptyList()) : routeByShardingConditionsWithCondition(tableRule);
+                ? route0(tableRule, Collections.<RouteValue>emptyList(), Collections.<RouteValue>emptyList())
+                : routeByShardingConditionsWithCondition(tableRule);
     }
     
     private Collection<DataNode> routeByShardingConditionsWithCondition(final TableRule tableRule) {
         Collection<DataNode> result = new LinkedList<>();
         for (ShardingCondition each : shardingConditions.getConditions()) {
-            Collection<DataNode> dataNodes = route0(tableRule, getShardingValuesFromShardingConditions(shardingRule.getDatabaseShardingStrategy(tableRule).getShardingColumns(), each),
-                    getShardingValuesFromShardingConditions(shardingRule.getTableShardingStrategy(tableRule).getShardingColumns(), each));
+            Collection<DataNode> dataNodes = route0(
+                tableRule,
+                getShardingValuesFromShardingConditions(shardingRule.getDatabaseShardingStrategy(tableRule).getShardingColumns(), each),
+                getShardingValuesFromShardingConditions(shardingRule.getTableShardingStrategy(tableRule).getShardingColumns(), each));
             each.getDataNodes().addAll(dataNodes);
             result.addAll(dataNodes);
         }
@@ -128,7 +150,9 @@ public final class StandardRoutingEngine implements RoutingEngine {
     }
     
     private Collection<DataNode> routeByMixedConditions(final TableRule tableRule) {
-        return shardingConditions.getConditions().isEmpty() ? routeByMixedConditionsWithHint(tableRule) : routeByMixedConditionsWithCondition(tableRule);
+        return shardingConditions.getConditions().isEmpty()
+            ? routeByMixedConditionsWithHint(tableRule)
+            : routeByMixedConditionsWithCondition(tableRule);
     }
     
     private Collection<DataNode> routeByMixedConditionsWithCondition(final TableRule tableRule) {
@@ -188,7 +212,11 @@ public final class StandardRoutingEngine implements RoutingEngine {
         return result;
     }
     
-    private Collection<DataNode> route0(final TableRule tableRule, final List<RouteValue> databaseShardingValues, final List<RouteValue> tableShardingValues) {
+    private Collection<DataNode> route0(
+        final TableRule tableRule,
+        final List<RouteValue> databaseShardingValues,
+        final List<RouteValue> tableShardingValues) {
+        // 路由DataSource
         Collection<String> routedDataSources = routeDataSources(tableRule, databaseShardingValues);
         Collection<DataNode> result = new LinkedList<>();
         for (String each : routedDataSources) {
@@ -198,18 +226,29 @@ public final class StandardRoutingEngine implements RoutingEngine {
     }
     
     private Collection<String> routeDataSources(final TableRule tableRule, final List<RouteValue> databaseShardingValues) {
+        // 如果databaseShardingValues为空，直接返回所有的数据源
         if (databaseShardingValues.isEmpty()) {
             return tableRule.getActualDatasourceNames();
         }
-        Collection<String> result = new LinkedHashSet<>(shardingRule.getDatabaseShardingStrategy(tableRule).doSharding(tableRule.getActualDatasourceNames(), databaseShardingValues));
+        // 否则调用ShardingStrategy进行处理
+        ShardingStrategy databaseShardingStrategy = shardingRule.getDatabaseShardingStrategy(tableRule);
+        Collection<String> shardingResult = databaseShardingStrategy.doSharding(tableRule.getActualDatasourceNames(), databaseShardingValues);
+        Collection<String> result = new LinkedHashSet<>(shardingResult);
         Preconditions.checkState(!result.isEmpty(), "no database route info");
         Preconditions.checkState(tableRule.getActualDatasourceNames().containsAll(result), 
                 "Some routed data sources do not belong to configured data sources. routed data sources: `%s`, configured data sources: `%s`", result, tableRule.getActualDatasourceNames());
         return result;
     }
     
-    private Collection<DataNode> routeTables(final TableRule tableRule, final String routedDataSource, final List<RouteValue> tableShardingValues) {
+    private Collection<DataNode> routeTables(
+        final TableRule tableRule,
+        final String routedDataSource,
+        final List<RouteValue> tableShardingValues) {
+
+        // 获取routedDataSource数据源下的表
         Collection<String> availableTargetTables = tableRule.getActualTableNames(routedDataSource);
+
+        // 如果tableShardingValues为空，直接返回数据源下的所有表，否则按照ShardingStrategy进行处理
         Collection<String> routedTables = new LinkedHashSet<>(tableShardingValues.isEmpty() ? availableTargetTables
                 : shardingRule.getTableShardingStrategy(tableRule).doSharding(availableTargetTables, tableShardingValues));
         Preconditions.checkState(!routedTables.isEmpty(), "no table route info");

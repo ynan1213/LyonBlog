@@ -43,11 +43,15 @@ public final class SQLParserEngineTest {
         SQLParserExecutor sqlParserExecutor = mock(SQLParserExecutor.class);
         when(sqlParserExecutor.parse(SQL)).thenReturn(mock(ParseContext.class));
         CacheOption cacheOption = new CacheOption(128, 1024L, 4);
+
         SQLParserEngine sqlParserEngine = new SQLParserEngine("H2", cacheOption, false);
+
+        // 移除SQLParserEngine对象的sqlParserExecutor final修饰权限
         Field sqlParserExecutorFiled = sqlParserEngine.getClass().getDeclaredField("sqlParserExecutor");
         Field modifiersField = Field.class.getDeclaredField("modifiers");
         modifiersField.setAccessible(true);
         modifiersField.setInt(sqlParserExecutorFiled, sqlParserExecutorFiled.getModifiers() & ~Modifier.FINAL);
+        // // 移除SQLParserEngine对象的parseTreeCache final修饰权限
         Field modifiersField2 = Field.class.getDeclaredField("modifiers");
         modifiersField2.setAccessible(true);
         Field parseTreeCacheField = sqlParserEngine.getClass().getDeclaredField("parseTreeCache");
@@ -64,6 +68,7 @@ public final class SQLParserEngineTest {
                     }
                 });
         parseTreeCacheField.set(sqlParserEngine, parseTreeCache);
+
         sqlParserEngine.parse(SQL, true);
         verify(sqlParserExecutor, times(1)).parse(SQL);
         sqlParserEngine.parse(SQL, true);

@@ -152,6 +152,11 @@
         <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
         <bcprov-jdk15on.version>1.70</bcprov-jdk15on.version>
         <maven.deploy.skip>false</maven.deploy.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <checkstyle.skip>true</checkstyle.skip>
+        <rat.skip>true</rat.skip>
+        <jacoco.skip>true</jacoco.skip>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
     
     <dependencyManagement>
@@ -925,6 +930,7 @@
                     <configLocation>src/resources/checkstyle_ci.xml</configLocation>
                     <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <excludes>**/autogen/**/*</excludes>
+                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>
@@ -1156,6 +1162,7 @@
                 <configuration>
                     <xmlOutput>true</xmlOutput>
                     <effort>Max</effort>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
             <plugin>

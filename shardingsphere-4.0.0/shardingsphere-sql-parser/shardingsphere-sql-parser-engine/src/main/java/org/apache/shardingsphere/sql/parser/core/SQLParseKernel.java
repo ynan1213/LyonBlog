@@ -36,11 +36,14 @@ import java.util.Map;
  * @author zhangliang
  */
 public final class SQLParseKernel {
-    
+
+    // SQL解析器引擎
     private final SQLParserEngine parserEngine;
-    
+
+    // SQLSegment提取器引擎
     private final SQLSegmentsExtractorEngine extractorEngine;
-    
+
+    // SQLStatement填充器引擎
     private final SQLStatementFillerEngine fillerEngine;
     
     public SQLParseKernel(final ParseRuleRegistry parseRuleRegistry, final String databaseTypeName, final String sql) {
@@ -55,9 +58,15 @@ public final class SQLParseKernel {
      * @return SQL statement
      */
     public SQLStatement parse() {
+        // 利用ANTLR4 解析SQL的抽象语法树
+        // AST: Abstract Syntax Tree 抽象语法树
         SQLAST ast = parserEngine.parse();
+
+        // 提取AST中的Token，封装成对应的TableSegment、IndexSegment 等各种Segment
         Collection<SQLSegment> sqlSegments = extractorEngine.extract(ast);
         Map<ParserRuleContext, Integer> parameterMarkerIndexes = ast.getParameterMarkerIndexes();
+
+        // 填充SQLStatement并返回
         return fillerEngine.fill(sqlSegments, parameterMarkerIndexes.size(), ast.getSqlStatementRule());
     }
 }

@@ -32,7 +32,10 @@ import java.util.Optional;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RuleConfigurationCheckerFactory {
-    
+
+    /**
+     * ShardingRuleConfigurationChecker --- ShardingRuleConfiguration
+     */
     static {
         ShardingSphereServiceLoader.register(RuleConfigurationChecker.class);
     }

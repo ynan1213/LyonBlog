@@ -51,7 +51,9 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     @Override
     public RoutingResult route() {
         RoutingResult result = new RoutingResult();
-        for (Entry<String, Set<String>> entry : getDataSourceLogicTablesMap().entrySet()) {
+        // 对数据源取交集
+        Map<String, Set<String>> dataSourceLogicTablesMap = getDataSourceLogicTablesMap();
+        for (Entry<String, Set<String>> entry : dataSourceLogicTablesMap.entrySet()) {
             List<Set<String>> actualTableGroups = getActualTableGroups(entry.getKey(), entry.getValue());
             List<Set<TableUnit>> routingTableGroups = toRoutingTableGroups(entry.getKey(), actualTableGroups);
             result.getRoutingUnits().addAll(getRoutingUnits(entry.getKey(), Sets.cartesianProduct(routingTableGroups)));
@@ -60,6 +62,7 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     }
     
     private Map<String, Set<String>> getDataSourceLogicTablesMap() {
+        // 取数据源交集
         Collection<String> intersectionDataSources = getIntersectionDataSources();
         Map<String, Set<String>> result = new HashMap<>(routingResults.size());
         for (RoutingResult each : routingResults) {
@@ -80,6 +83,7 @@ public final class CartesianRoutingEngine implements RoutingEngine {
             if (result.isEmpty()) {
                 result.addAll(each.getDataSourceNames());
             }
+            // 取交集
             result.retainAll(each.getDataSourceNames());
         }
         return result;

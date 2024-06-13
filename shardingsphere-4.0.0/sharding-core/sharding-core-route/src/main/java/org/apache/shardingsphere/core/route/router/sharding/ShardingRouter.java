@@ -96,24 +96,40 @@ public final class ShardingRouter {
      */
     @SuppressWarnings("unchecked")
     public SQLRouteResult route(final String logicSQL, final List<Object> parameters, final SQLStatement sqlStatement) {
+        // 校验
         Optional<ShardingStatementValidator> shardingStatementValidator = ShardingStatementValidatorFactory.newInstance(sqlStatement);
         if (shardingStatementValidator.isPresent()) {
             shardingStatementValidator.get().validate(shardingRule, sqlStatement, parameters);
         }
+
+        // 获取sqlStatementContext
         SQLStatementContext sqlStatementContext = SQLStatementContextFactory.newInstance(metaData.getRelationMetas(), logicSQL, parameters, sqlStatement);
+
+        // 如果是insert，自动生成主键
         Optional<GeneratedKey> generatedKey = sqlStatement instanceof InsertStatement
-                ? GeneratedKey.getGenerateKey(shardingRule, metaData.getTables(), parameters, (InsertStatement) sqlStatement) : Optional.<GeneratedKey>absent();
+            ? GeneratedKey.getGenerateKey(shardingRule, metaData.getTables(), parameters, (InsertStatement) sqlStatement)
+            : Optional.<GeneratedKey>absent();
+
+        // 创建分片条件，分片条件的主要目的就是提取用于路由的目标数据库、表和列之间的关系
+        // 例如：insert into(id, name) values(?, ?)，传入的id=3，id又是分片键，所以需要将id=3提取出来作为condition
+        // 例如：select * from xxx where id = ?，传入id=4，id也是分片键，也需要将id=4提取出来作为condition
         ShardingConditions shardingConditions = getShardingConditions(parameters, sqlStatementContext, generatedKey.orNull(), metaData.getRelationMetas());
         boolean needMergeShardingValues = isNeedMergeShardingValues(sqlStatementContext);
         if (sqlStatementContext.getSqlStatement() instanceof DMLStatement && needMergeShardingValues) {
+            // 剔除重复的sharding条件信息，主要针对包含子查询的情况
             checkSubqueryShardingValues(sqlStatementContext, shardingConditions);
             mergeShardingConditions(shardingConditions);
         }
+
+        // 创建路由执行器
         RoutingEngine routingEngine = RoutingEngineFactory.newInstance(shardingRule, metaData, sqlStatementContext, shardingConditions);
+        // 执行路由
         RoutingResult routingResult = routingEngine.route();
         if (needMergeShardingValues) {
             Preconditions.checkState(1 == routingResult.getRoutingUnits().size(), "Must have one sharding with subquery.");
         }
+
+        // 构建Result
         SQLRouteResult result = new SQLRouteResult(sqlStatementContext, shardingConditions, generatedKey.orNull());
         result.setRoutingResult(routingResult);
         if (sqlStatementContext instanceof InsertSQLStatementContext) {
@@ -123,9 +139,11 @@ public final class ShardingRouter {
     }
     
     private ShardingConditions getShardingConditions(final List<Object> parameters, final SQLStatementContext sqlStatementContext, final GeneratedKey generatedKey, final RelationMetas relationMetas) {
+        // DMLStatement：INSERT、UPDATE、DELETE、SELECT，所以基本上都会进入if
         if (sqlStatementContext.getSqlStatement() instanceof DMLStatement) {
             if (sqlStatementContext instanceof InsertSQLStatementContext) {
                 InsertSQLStatementContext shardingInsertStatement = (InsertSQLStatementContext) sqlStatementContext;
+                // Insert语句没有where，所以需要单独处理？
                 return new ShardingConditions(new InsertClauseShardingConditionEngine(shardingRule).createShardingConditions(shardingInsertStatement, generatedKey, parameters));
             }
             return new ShardingConditions(new WhereClauseShardingConditionEngine(shardingRule, relationMetas).createShardingConditions(sqlStatementContext.getSqlStatement(), parameters));

@@ -71,11 +71,24 @@ public final class ShardingSQLRewriterParameterizedTest extends AbstractSQLRewri
     
     @Override
     protected Collection<SQLRewriteResult> createSQLRewriteResults() throws IOException {
+        /**
+         * t_account:
+         *      t_account_0、t_account_1
+         *      shardingColumn: account_id
+         *      algorithmExpression: t_account_${account_id % 2}
+         *
+         * t_account_detail:
+         *      t_account_detail_0、t_account_detail_1
+         *      shardingColumn: order_id
+         *      algorithmExpression: t_account_detail_${account_id % 2}
+         */
         YamlRootShardingConfiguration ruleConfiguration = createRuleConfiguration();
         ShardingRule shardingRule = new ShardingRule(new ShardingRuleConfigurationYamlSwapper().swap(ruleConfiguration.getShardingRule()), ruleConfiguration.getDataSources().keySet());
         SQLParseEngine parseEngine = SQLParseEngineFactory.getSQLParseEngine(null == getTestParameters().getDatabaseType() ? "SQL92" : getTestParameters().getDatabaseType());
         ShardingRouter shardingRouter = new ShardingRouter(shardingRule, createShardingSphereMetaData(), parseEngine);
         SQLStatement sqlStatement = shardingRouter.parse(getTestParameters().getInputSQL(), false);
+        System.out.println("①：SQL:  " + getTestParameters().getInputSQL());
+        System.out.println("②：inputParameters:  " + getTestParameters().getInputParameters());
         SQLRouteResult sqlRouteResult = shardingRouter.route(getTestParameters().getInputSQL(), getTestParameters().getInputParameters(), sqlStatement);
         SQLRewriteContext sqlRewriteContext = new SQLRewriteContext(
                 mock(RelationMetas.class), sqlRouteResult.getSqlStatementContext(), getTestParameters().getInputSQL(), getTestParameters().getInputParameters());
@@ -85,6 +98,11 @@ public final class ShardingSQLRewriterParameterizedTest extends AbstractSQLRewri
         for (RoutingUnit each : sqlRouteResult.getRoutingResult().getRoutingUnits()) {
             result.add(new ShardingSQLRewriteEngine(shardingRule, sqlRouteResult.getShardingConditions(), each).rewrite(sqlRewriteContext));
         }
+        for (SQLRewriteResult sqlRewriteResult : result) {
+            System.out.println("③：改写结果：" + sqlRewriteResult.getSql());
+            System.out.println("③：改写结果参数：" + sqlRewriteResult.getParameters());
+        }
+        System.out.println("=============================");
         return result;
     }
     

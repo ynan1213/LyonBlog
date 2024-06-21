@@ -121,11 +121,15 @@ public class BlockJUnit4ClassRunner extends ParentRunner<FrameworkMethod> {
 
     @Override
     protected void collectInitializationErrors(List<Throwable> errors) {
+        // 解析@BeforeClass、@AfterClass、@ClassRule、@ValidateWith
         super.collectInitializationErrors(errors);
-
+        // 如果是内部类，必须是static类型
         validateNoNonStaticInnerClass(errors);
+        // 有且仅有一个无参构造
         validateConstructor(errors);
+        // @After、@Before、@Test方法不能是static类型
         validateInstanceMethods(errors);
+        // @Rule相关
         validateFields(errors);
         validateMethods(errors);
     }
@@ -260,6 +264,7 @@ public class BlockJUnit4ClassRunner extends ParentRunner<FrameworkMethod> {
     protected Statement methodBlock(FrameworkMethod method) {
         Object test;
         try {
+            // ???@Test?????????@Test?????????
             test = new ReflectiveCallable() {
                 @Override
                 protected Object runReflectiveCall() throws Throwable {
@@ -271,10 +276,15 @@ public class BlockJUnit4ClassRunner extends ParentRunner<FrameworkMethod> {
         }
 
         Statement statement = methodInvoker(method, test);
+        // ??@Test??? expected ??
         statement = possiblyExpectingExceptions(method, test, statement);
+        // ??@Test??? timeout ??
         statement = withPotentialTimeout(method, test, statement);
+        // ??@Before??
         statement = withBefores(method, test, statement);
+        // ??@After??
         statement = withAfters(method, test, statement);
+        // ??@Rule??
         statement = withRules(method, test, statement);
         return statement;
     }

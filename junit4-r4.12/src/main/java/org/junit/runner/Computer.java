@@ -23,14 +23,14 @@ public class Computer {
      * Create a suite for {@code classes}, building Runners with {@code builder}.
      * Throws an InitializationError if Runner construction fails
      */
-    public Runner getSuite(final RunnerBuilder builder,
-            Class<?>[] classes) throws InitializationError {
-        return new Suite(new RunnerBuilder() {
+    public Runner getSuite(final RunnerBuilder defaultRunnerBuilder, Class<?>[] classes) throws InitializationError {
+        RunnerBuilder runnerBuilder = new RunnerBuilder() {
             @Override
             public Runner runnerForClass(Class<?> testClass) throws Throwable {
-                return getRunner(builder, testClass);
+                return getRunner(defaultRunnerBuilder, testClass);
             }
-        }, classes);
+        };
+        return new Suite(runnerBuilder, classes);
     }
 
     /**

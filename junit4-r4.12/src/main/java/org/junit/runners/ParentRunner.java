@@ -156,11 +156,6 @@ public abstract class ParentRunner<T> extends Runner implements Filterable,
         }
     }
 
-    private void validateClassRules(List<Throwable> errors) {
-        CLASS_RULE_VALIDATOR.validate(getTestClass(), errors);
-        CLASS_RULE_METHOD_VALIDATOR.validate(getTestClass(), errors);
-    }
-
     /**
      * Constructs a {@code Statement} to run all of the tests in the test class.
      * Override to add pre-/post-processing. Here is an outline of the
@@ -194,6 +189,11 @@ public abstract class ParentRunner<T> extends Runner implements Filterable,
             statement = withClassRules(statement);
         }
         return statement;
+    }
+
+    private void validateClassRules(List<Throwable> errors) {
+        CLASS_RULE_VALIDATOR.validate(getTestClass(), errors);
+        CLASS_RULE_METHOD_VALIDATOR.validate(getTestClass(), errors);
     }
 
     private boolean areAllChildrenIgnored() {
@@ -376,6 +376,7 @@ public abstract class ParentRunner<T> extends Runner implements Filterable,
 
     public void filter(Filter filter) throws NoTestsRemainException {
         synchronized (childrenLock) {
+            // 做过滤
             List<T> children = new ArrayList<T>(getFilteredChildren());
             for (Iterator<T> iter = children.iterator(); iter.hasNext(); ) {
                 T each = iter.next();

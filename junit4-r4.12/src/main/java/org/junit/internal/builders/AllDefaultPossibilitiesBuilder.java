@@ -16,11 +16,11 @@ public class AllDefaultPossibilitiesBuilder extends RunnerBuilder {
     @Override
     public Runner runnerForClass(Class<?> testClass) throws Throwable {
         List<RunnerBuilder> builders = Arrays.asList(
-                ignoredBuilder(),
-                annotatedBuilder(),
-                suiteMethodBuilder(),
-                junit3Builder(),
-                junit4Builder());
+                ignoredBuilder(),// ??????????????@Ignore?????IgnoredClassRunner
+                annotatedBuilder(),// ????????@RunWith??
+                suiteMethodBuilder(),// ?????suite?method????JUnit3???
+                junit3Builder(),// ???????TestCase????????JUnit3
+                junit4Builder());// ??????????????BlockJUnit4ClassRunner??
 
         for (RunnerBuilder each : builders) {
             Runner runner = each.safeRunnerForClass(testClass);

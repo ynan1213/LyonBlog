@@ -10,6 +10,7 @@ package org.junit.runners.model;
 public abstract class Statement {
     /**
      * Run the action, throwing a {@code Throwable} if anything goes wrong.
+     * evaluate: 评价;评估;估计
      */
     public abstract void evaluate() throws Throwable;
 }

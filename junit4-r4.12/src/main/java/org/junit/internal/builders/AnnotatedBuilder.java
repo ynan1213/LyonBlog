@@ -79,6 +79,7 @@ public class AnnotatedBuilder extends RunnerBuilder {
 
     @Override
     public Runner runnerForClass(Class<?> testClass) throws Exception {
+        // 也会查找父类上的@RunWith注解
         for (Class<?> currentTestClass = testClass; currentTestClass != null;
              currentTestClass = getEnclosingClassForNonStaticMemberClass(currentTestClass)) {
             RunWith annotation = currentTestClass.getAnnotation(RunWith.class);

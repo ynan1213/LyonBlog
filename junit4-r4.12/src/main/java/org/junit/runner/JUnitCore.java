@@ -44,6 +44,10 @@ public class JUnitCore {
      *
      * @param classes Classes in which to find tests
      * @return a {@link Result} describing the details of the test run and the failed tests.
+     *
+     * runClasses方法可以接收多个classes类，内部默认会对每个classes创建一个Runner，还会创建一个Suite对象，持有Runner集合
+     * Suite也是一个Runner，内部持有的是一个Runner集合
+     * Suite: 一套;套
      */
     public static Result runClasses(Class<?>... classes) {
         return runClasses(defaultComputer(), classes);
@@ -102,7 +106,8 @@ public class JUnitCore {
      * @return a {@link Result} describing the details of the test run and the failed tests.
      */
     public Result run(Computer computer, Class<?>... classes) {
-        return run(Request.classes(computer, classes));
+        Request request = Request.classes(computer, classes);
+        return run(request);
     }
 
     /**
@@ -112,7 +117,8 @@ public class JUnitCore {
      * @return a {@link Result} describing the details of the test run and the failed tests.
      */
     public Result run(Request request) {
-        return run(request.getRunner());
+        Runner runner = request.getRunner();
+        return run(runner);
     }
 
     /**
@@ -131,6 +137,9 @@ public class JUnitCore {
     public Result run(Runner runner) {
         Result result = new Result();
         RunListener listener = result.createListener();
+        /**
+         * RunNotifier用于发布通知，监听者模式
+         */
         notifier.addFirstListener(listener);
         try {
             notifier.fireTestRunStarted(runner.getDescription());

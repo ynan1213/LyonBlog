@@ -21,6 +21,7 @@ public class ExpectException extends Statement {
         } catch (AssumptionViolatedException e) {
             throw e;
         } catch (Throwable e) {
+            // 如果异常匹配了，是不会继续往外抛的
             if (!expected.isAssignableFrom(e.getClass())) {
                 String message = "Unexpected exception, expected<"
                         + expected.getName() + "> but was<"

@@ -220,6 +220,8 @@ public @interface ContextConfiguration {
 	 * }
 	 * </pre>
 	 * @since 2.5
+	 *
+	 * 是否要继承父测试用例类中的 Spring 配置文件，默认为 true
 	 */
 	boolean inheritLocations() default true;
 

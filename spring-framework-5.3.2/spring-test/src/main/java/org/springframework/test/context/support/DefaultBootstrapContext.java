@@ -38,6 +38,8 @@ public class DefaultBootstrapContext implements BootstrapContext {
 	 * @param testClass the test class for this bootstrap context; never {@code null}
 	 * @param cacheAwareContextLoaderDelegate the context loader delegate to use for
 	 * transparent interaction with the {@code ContextCache}; never {@code null}
+	 * testClass：就是我们的测试类
+	 * cacheAwareContextLoaderDelegate：默认类型是DefaultCacheAwareContextLoaderDelegate
 	 */
 	public DefaultBootstrapContext(Class<?> testClass, CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate) {
 		Assert.notNull(testClass, "Test class must not be null");

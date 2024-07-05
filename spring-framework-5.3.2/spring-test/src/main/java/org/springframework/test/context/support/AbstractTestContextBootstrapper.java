@@ -104,8 +104,22 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 	 */
 	@Override
 	public TestContext buildTestContext() {
-		return new DefaultTestContext(getBootstrapContext().getTestClass(), buildMergedContextConfiguration(),
-				getCacheAwareContextLoaderDelegate());
+		// 测试类
+		Class<?> testClass = getBootstrapContext().getTestClass();
+
+		/**
+		 * 解析测试上的 @ContextConfiguration 注解和 @ContextHierarchy 注解
+		 * 注意：@ContextConfiguration和@ContextHierarchy不能同时配置在同一个测试类上
+		 * 该类名称有Merged，原因：
+		 * 1.如果是@ContextConfiguration注解，因为父类及外部类也可以配置，会做属性合并；
+		 * 2.如果是@ContextHierarchy注解，返回的是具有父子结构的对象，内部有parent
+		 */
+		MergedContextConfiguration mergedContextConfiguration = buildMergedContextConfiguration();
+
+		// 只有一个实现类
+		CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
+
+		return new DefaultTestContext(testClass, mergedContextConfiguration, cacheAwareContextLoaderDelegate);
 	}
 
 	@Override
@@ -257,11 +271,13 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		Class<?> testClass = getBootstrapContext().getTestClass();
 		CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = getCacheAwareContextLoaderDelegate();
 
+		// 测试类上既没有 @ContextConfiguration 也没有 @ContextHierarchy 注解
 		if (TestContextAnnotationUtils.findAnnotationDescriptorForTypes(
 				testClass, ContextConfiguration.class, ContextHierarchy.class) == null) {
 			return buildDefaultMergedContextConfiguration(testClass, cacheAwareContextLoaderDelegate);
 		}
 
+		// 测试类上有 @ContextHierarchy 注解
 		if (TestContextAnnotationUtils.findAnnotationDescriptor(testClass, ContextHierarchy.class) != null) {
 			Map<String, List<ContextConfigurationAttributes>> hierarchyMap =
 					ContextLoaderUtils.buildContextHierarchyMap(testClass);
@@ -288,9 +304,11 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 			return mergedConfig;
 		}
 		else {
-			return buildMergedContextConfiguration(testClass,
-					ContextLoaderUtils.resolveContextConfigurationAttributes(testClass),
-					null, cacheAwareContextLoaderDelegate, true);
+			// 测试类上只有 @ContextConfiguration的情况
+			// 一个ContextConfigurationAttributes对象对应一个@ContextConfiguration注解
+			// 这里返回list集合，因为父类及外部类上都可能有
+			List<ContextConfigurationAttributes> contextConfigurationAttributesList = ContextLoaderUtils.resolveContextConfigurationAttributes(testClass);
+			return buildMergedContextConfiguration(testClass, contextConfigurationAttributesList, null, cacheAwareContextLoaderDelegate, true);
 		}
 	}
 
@@ -342,6 +360,7 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 
 		Assert.notEmpty(configAttributesList, "ContextConfigurationAttributes list must not be null or empty");
 
+		// 一般都是默认的，非web环境 DelegatingSmartContextLoader，web环境 WebDelegatingSmartContextLoader
 		ContextLoader contextLoader = resolveContextLoader(testClass, configAttributesList);
 		List<String> locations = new ArrayList<>();
 		List<Class<?>> classes = new ArrayList<>();
@@ -379,11 +398,13 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 				"or ContextCustomizers were declared for context configuration attributes %s",
 				contextLoader.getClass().getSimpleName(), configAttributesList));
 
+		// 解析 @TestPropertySource 注解
 		MergedTestPropertySources mergedTestPropertySources =
 				TestPropertySourceUtils.buildMergedTestPropertySources(testClass);
 		MergedContextConfiguration mergedConfig = new MergedContextConfiguration(testClass,
 				StringUtils.toStringArray(locations), ClassUtils.toClassArray(classes),
 				ApplicationContextInitializerUtils.resolveInitializerClasses(configAttributesList),
+				// 解析 @ActiveProfiles 注解
 				ActiveProfilesUtils.resolveActiveProfiles(testClass),
 				mergedTestPropertySources.getLocations(),
 				mergedTestPropertySources.getProperties(),
@@ -443,8 +464,10 @@ public abstract class AbstractTestContextBootstrapper implements TestContextBoot
 		Assert.notNull(testClass, "Class must not be null");
 		Assert.notNull(configAttributesList, "ContextConfigurationAttributes list must not be null");
 
+		// 如果 @ContextConfiguration 注解指定了 loader 类型，则用指定的类型
 		Class<? extends ContextLoader> contextLoaderClass = resolveExplicitContextLoaderClass(configAttributesList);
 		if (contextLoaderClass == null) {
+			// 如果未指定，则用默认的，和@WebAppConfiguration有关
 			contextLoaderClass = getDefaultContextLoaderClass(testClass);
 		}
 		if (logger.isTraceEnabled()) {

@@ -46,6 +46,7 @@ public final class SpringRunner extends SpringJUnit4ClassRunner {
 	 * @see #createTestContextManager(Class)
 	 */
 	public SpringRunner(Class<?> clazz) throws InitializationError {
+		// 传入的是@RunWith所在的测试类
 		super(clazz);
 	}
 

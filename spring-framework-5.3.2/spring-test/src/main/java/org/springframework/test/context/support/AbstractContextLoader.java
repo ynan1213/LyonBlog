@@ -132,9 +132,12 @@ public abstract class AbstractContextLoader implements SmartContextLoader {
 	 * @see ConfigurableApplicationContext#setId
 	 */
 	protected void prepareContext(ConfigurableApplicationContext context, MergedContextConfiguration mergedConfig) {
+		// 对应测试类上的@ActiveProfiles注解
 		context.getEnvironment().setActiveProfiles(mergedConfig.getActiveProfiles());
+		// 对应测试类上的@TestPropertySource注解
 		TestPropertySourceUtils.addPropertiesFilesToEnvironment(context, mergedConfig.getPropertySourceLocations());
 		TestPropertySourceUtils.addInlinedPropertiesToEnvironment(context, mergedConfig.getPropertySourceProperties());
+		// 对应测试类上 @ContextConfiguration 注解的 initializers 属性
 		invokeApplicationContextInitializers(context, mergedConfig);
 	}
 

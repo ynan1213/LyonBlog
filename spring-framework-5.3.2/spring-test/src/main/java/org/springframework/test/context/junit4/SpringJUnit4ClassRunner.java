@@ -134,10 +134,12 @@ public class SpringJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	 * @see #createTestContextManager(Class)
 	 */
 	public SpringJUnit4ClassRunner(Class<?> clazz) throws InitializationError {
+		// 传入的是@RunWith所在的类，也就是我们的测试类
 		super(clazz);
 		if (logger.isDebugEnabled()) {
 			logger.debug("SpringJUnit4ClassRunner constructor called with [" + clazz + "]");
 		}
+		// SpringClassRule和SpringMethodRule已废弃
 		ensureSpringRulesAreNotPresent(clazz);
 		this.testContextManager = createTestContextManager(clazz);
 	}
@@ -166,7 +168,9 @@ public class SpringJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	 */
 	@Override
 	public Description getDescription() {
+		// @IfProfileValue和@ProfileValueSourceConfiguration是否匹配
 		if (!ProfileValueUtils.isTestEnabledInThisEnvironment(getTestClass().getJavaClass())) {
+			// 如果不匹配，返回一个简单的Description
 			return Description.createSuiteDescription(getTestClass().getJavaClass());
 		}
 		return super.getDescription();
@@ -223,7 +227,9 @@ public class SpringJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	 */
 	@Override
 	protected Object createTest() throws Exception {
+		// 调用父类JUnit原生的方法进行实例化，到这一步，并未进行属性注入
 		Object testInstance = super.createTest();
+		// 该方法会创建Spring容器并进行依赖注入
 		getTestContextManager().prepareTestInstance(testInstance);
 		return testInstance;
 	}
@@ -237,6 +243,10 @@ public class SpringJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	@Override
 	protected void runChild(FrameworkMethod frameworkMethod, RunNotifier notifier) {
 		Description description = describeChild(frameworkMethod);
+
+		// 是否跳过该方法：
+		// 1.方法上是否有@Ignore注解；
+		// 2.解析方法上的@IfProfileValue注解；
 		if (isTestMethodIgnored(frameworkMethod)) {
 			notifier.fireTestIgnored(description);
 		}
@@ -283,6 +293,7 @@ public class SpringJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 	protected Statement methodBlock(FrameworkMethod frameworkMethod) {
 		Object testInstance;
 		try {
+			// 创建测试类实例，获取Spring容器并进行依赖注入
 			testInstance = new ReflectiveCallable() {
 				@Override
 				protected Object runReflectiveCall() throws Throwable {
@@ -301,7 +312,9 @@ public class SpringJUnit4ClassRunner extends BlockJUnit4ClassRunner {
 		statement = withBefores(frameworkMethod, testInstance, statement);
 		statement = withAfters(frameworkMethod, testInstance, statement);
 		statement = withRulesReflectively(frameworkMethod, testInstance, statement);
+		// 解析方法上的 @Repeat 注解
 		statement = withPotentialRepeat(frameworkMethod, testInstance, statement);
+		// 解析方法上的 @Timed 注解
 		statement = withPotentialTimeout(frameworkMethod, testInstance, statement);
 		return statement;
 	}

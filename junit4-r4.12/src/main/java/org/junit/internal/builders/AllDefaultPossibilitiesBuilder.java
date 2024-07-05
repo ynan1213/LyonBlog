@@ -16,11 +16,11 @@ public class AllDefaultPossibilitiesBuilder extends RunnerBuilder {
     @Override
     public Runner runnerForClass(Class<?> testClass) throws Throwable {
         List<RunnerBuilder> builders = Arrays.asList(
-                ignoredBuilder(),// ??????????????@Ignore?????IgnoredClassRunner
-                annotatedBuilder(),// ????????@RunWith??
-                suiteMethodBuilder(),// ?????suite?method????JUnit3???
-                junit3Builder(),// ???????TestCase????????JUnit3
-                junit4Builder());// ??????????????BlockJUnit4ClassRunner??
+                ignoredBuilder(),// 处理测试类上有@Ignore注解的情况，实际类型IgnoredClassRunner
+                annotatedBuilder(),// 处理@RunWith注解
+                suiteMethodBuilder(),// 处理测试类如果有suite方法，主要是为了兼容JUnit3
+                junit3Builder(),// 处理测试类实现了TestCase类型，兼容JUnit3
+                junit4Builder());// 默认类型BlockJUnit4ClassRunner
 
         for (RunnerBuilder each : builders) {
             Runner runner = each.safeRunnerForClass(testClass);

@@ -115,7 +115,10 @@ public class DependencyInjectionTestExecutionListener extends AbstractTestExecut
 	protected void injectDependencies(TestContext testContext) throws Exception {
 		Object bean = testContext.getTestInstance();
 		Class<?> clazz = testContext.getTestClass();
+		// 先以MergedContextConfiguration作为key从缓存中获取，MergedContextConfiguration代表测试类上的@ContextConfiguration配置
+		// 如果运行同一个测试类下的不同方法，因为MergedContextConfiguration是同一个对象，所以容器会复用
 		AutowireCapableBeanFactory beanFactory = testContext.getApplicationContext().getAutowireCapableBeanFactory();
+		// 只做依赖注入和回调初始化方法，并不会添加到容器中
 		beanFactory.autowireBeanProperties(bean, AutowireCapableBeanFactory.AUTOWIRE_NO, false);
 		beanFactory.initializeBean(bean, clazz.getName() + AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX);
 		testContext.removeAttribute(REINJECT_DEPENDENCIES_ATTRIBUTE);

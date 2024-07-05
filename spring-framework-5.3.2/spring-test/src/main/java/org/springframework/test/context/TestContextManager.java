@@ -99,6 +99,7 @@ public class TestContextManager {
 			new Supplier<TestContext>() {
 				@Override
 				public TestContext get() {
+					// 每个线程都是新的 TestContext 对象，但是内部的引用不变，只有attributes是新的
 					return copyTestContext(TestContextManager.this.testContext);
 				}
 			});
@@ -132,6 +133,11 @@ public class TestContextManager {
 	 * @see TestContextBootstrapper#buildTestContext
 	 * @see TestContextBootstrapper#getTestExecutionListeners
 	 * @see #registerTestExecutionListeners
+	 *
+	 * TestContextBootstrapper的实际类型：
+	 *  1.如果测试类上有 @BootstrapWith 注解，则是注解的value值；
+	 *  2.如果测试类上有 @WebAppConfiguration 注解，则是WebTestContextBootstrapper类型；
+	 *  3.否则是DefaultTestContextBootstrapper类型
 	 */
 	public TestContextManager(TestContextBootstrapper testContextBootstrapper) {
 		this.testContext = testContextBootstrapper.buildTestContext();

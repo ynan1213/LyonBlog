@@ -92,4 +92,5 @@ include '23-构造器注入'
 include '24-@ComponentScan'
 include '25-依赖注入'
 include '_26-scope'
+include '_27-JUint'
 

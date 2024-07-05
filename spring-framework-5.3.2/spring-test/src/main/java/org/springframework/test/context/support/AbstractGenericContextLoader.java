@@ -111,12 +111,24 @@ public abstract class AbstractGenericContextLoader extends AbstractContextLoader
 		validateMergedContextConfiguration(mergedConfig);
 
 		GenericApplicationContext context = createContext();
+		/**
+		 * 如果是@ContextHierarchy这种形式，会创建父子容器
+		 * @ContextHierarchy({
+		 *     @ContextConfiguration(classes = ParentConfig.class),
+		 *     @ContextConfiguration(classes = RootConfig.class)
+		 * })
+		 */
 		ApplicationContext parent = mergedConfig.getParentApplicationContext();
 		if (parent != null) {
 			context.setParent(parent);
 		}
 
 		prepareContext(context);
+		/**
+		 * 1、处理@ActiveProfiles注解；
+		 * 2、处理@TestPropertySource注解；
+		 * 3、回调@ContextConfiguration 注解的 initializers 属性；
+		 */
 		prepareContext(context, mergedConfig);
 		customizeBeanFactory(context.getDefaultListableBeanFactory());
 		loadBeanDefinitions(context, mergedConfig);

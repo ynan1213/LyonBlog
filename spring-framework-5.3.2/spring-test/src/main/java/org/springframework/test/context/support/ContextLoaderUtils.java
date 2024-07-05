@@ -237,10 +237,13 @@ abstract class ContextLoaderUtils {
 
 		Class<ContextConfiguration> annotationType = ContextConfiguration.class;
 		AnnotationDescriptor<ContextConfiguration> descriptor = findAnnotationDescriptor(testClass, annotationType);
+		// 类上的注解不能为空
 		Assert.notNull(descriptor, () -> String.format(
 					"Could not find an 'annotation declaring class' for annotation type [%s] and class [%s]",
 					annotationType.getName(), testClass.getName()));
 
+		// 一个ContextConfigurationAttributes对象对应一个@ContextConfiguration注解
+		// 这里是个list集合，因为父类及外部类上都可能有
 		List<ContextConfigurationAttributes> attributesList = new ArrayList<>();
 		ContextConfiguration previousAnnotation = null;
 		Class<?> previousDeclaringClass = null;
@@ -257,11 +260,13 @@ abstract class ContextLoaderUtils {
 				}
 			}
 			else {
+				// 将@ContextConfiguration注解的属性值封装为ContextConfigurationAttributes对象，并添加到集合中
 				convertContextConfigToConfigAttributesAndAddToList(currentAnnotation,
 						descriptor.getRootDeclaringClass(), attributesList);
 			}
 			previousAnnotation = currentAnnotation;
 			previousDeclaringClass = descriptor.getRootDeclaringClass();
+			// 继续寻找父类或者外部类上的 @ContextConfiguration 注解
 			descriptor = descriptor.next();
 		}
 		return attributesList;

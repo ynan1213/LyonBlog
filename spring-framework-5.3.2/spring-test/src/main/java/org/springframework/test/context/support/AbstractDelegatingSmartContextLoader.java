@@ -235,6 +235,8 @@ public abstract class AbstractDelegatingSmartContextLoader implements SmartConte
 				"declare either 'locations' or 'classes' but not both.", name(getXmlLoader()),
 				name(getAnnotationConfigLoader()), mergedConfig));
 
+		// getXmlLoader()处理 @ContextConfiguration 注解上的 locations 属性
+		// getAnnotationConfigLoader()处理 @ContextConfiguration 注解上的 classes 属性
 		SmartContextLoader[] candidates = {getXmlLoader(), getAnnotationConfigLoader()};
 		for (SmartContextLoader loader : candidates) {
 			// Determine if each loader can load a context from the mergedConfig. If it

@@ -264,7 +264,7 @@ public class BlockJUnit4ClassRunner extends ParentRunner<FrameworkMethod> {
     protected Statement methodBlock(FrameworkMethod method) {
         Object test;
         try {
-            // ???@Test?????????@Test?????????
+            // 实例化@Test所在的测试类，每个@Test方法之前都会实例化一次
             test = new ReflectiveCallable() {
                 @Override
                 protected Object runReflectiveCall() throws Throwable {
@@ -276,15 +276,15 @@ public class BlockJUnit4ClassRunner extends ParentRunner<FrameworkMethod> {
         }
 
         Statement statement = methodInvoker(method, test);
-        // ??@Test??? expected ??
+        // 解析@Test注解上 expected 属性
         statement = possiblyExpectingExceptions(method, test, statement);
-        // ??@Test??? timeout ??
+        // 解析@Test注解上 timeout 属性
         statement = withPotentialTimeout(method, test, statement);
-        // ??@Before??
+        // 解析@Before
         statement = withBefores(method, test, statement);
-        // ??@After??
+        // 解析@After
         statement = withAfters(method, test, statement);
-        // ??@Rule??
+        // 解析@Rule
         statement = withRules(method, test, statement);
         return statement;
     }

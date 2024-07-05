@@ -71,9 +71,11 @@ abstract class BootstrapUtils {
 	 */
 	@SuppressWarnings("unchecked")
 	static BootstrapContext createBootstrapContext(Class<?> testClass) {
+		// 默认类型 DefaultCacheAwareContextLoaderDelegate
 		CacheAwareContextLoaderDelegate cacheAwareContextLoaderDelegate = createCacheAwareContextLoaderDelegate();
 		Class<? extends BootstrapContext> clazz = null;
 		try {
+			// 默认类型 DefaultBootstrapContext
 			clazz = (Class<? extends BootstrapContext>) ClassUtils.forName(
 					DEFAULT_BOOTSTRAP_CONTEXT_CLASS_NAME, BootstrapUtils.class.getClassLoader());
 			Constructor<? extends BootstrapContext> constructor = clazz.getConstructor(
@@ -123,12 +125,17 @@ abstract class BootstrapUtils {
 	 * @return a fully configured {@code TestContextBootstrapper}
 	 */
 	static TestContextBootstrapper resolveTestContextBootstrapper(BootstrapContext bootstrapContext) {
+		// 测试类
 		Class<?> testClass = bootstrapContext.getTestClass();
 
 		Class<?> clazz = null;
 		try {
+			// Explicit: 明确的
+			// 如果测试类上有 @BootstrapWith 注解，获取注解配置的value值
 			clazz = resolveExplicitTestContextBootstrapper(testClass);
 			if (clazz == null) {
+				// 如果testClass上有 @WebAppConfiguration 注解，返回 WebTestContextBootstrapper类型
+				// 否则 DefaultTestContextBootstrapper类型
 				clazz = resolveDefaultTestContextBootstrapper(testClass);
 			}
 			if (logger.isDebugEnabled()) {
@@ -153,6 +160,8 @@ abstract class BootstrapUtils {
 	@Nullable
 	private static Class<?> resolveExplicitTestContextBootstrapper(Class<?> testClass) {
 		Set<BootstrapWith> annotations = new LinkedHashSet<>();
+
+		// 查找测试类及父类上的 @BootstrapWith 注解
 		AnnotationDescriptor<BootstrapWith> descriptor =
 				TestContextAnnotationUtils.findAnnotationDescriptor(testClass, BootstrapWith.class);
 		while (descriptor != null) {
@@ -164,21 +173,25 @@ abstract class BootstrapUtils {
 			return null;
 		}
 		if (annotations.size() == 1) {
+			// 如果只有一个，直接返回
 			return annotations.iterator().next().value();
 		}
 
 		// Allow directly-present annotation to override annotations that are meta-present.
+		// 到这里说明有有多个 @BootstrapWith 注解，因为父类可能也有，如果当前类上有，以当前类的为准
 		BootstrapWith bootstrapWith = testClass.getDeclaredAnnotation(BootstrapWith.class);
 		if (bootstrapWith != null) {
 			return bootstrapWith.value();
 		}
 
+		// 如果当前类上没有，但是有多个 @BootstrapWith 注解，抛异常
 		throw new IllegalStateException(String.format(
 				"Configuration error: found multiple declarations of @BootstrapWith for test class [%s]: %s",
 				testClass.getName(), annotations));
 	}
 
 	private static Class<?> resolveDefaultTestContextBootstrapper(Class<?> testClass) throws Exception {
+		// testClass上是否有 @WebAppConfiguration 注解
 		boolean webApp = (TestContextAnnotationUtils.findMergedAnnotation(testClass, webAppConfigurationClass) != null);
 		String bootstrapperClassName = (webApp ? DEFAULT_WEB_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME :
 				DEFAULT_TEST_CONTEXT_BOOTSTRAPPER_CLASS_NAME);

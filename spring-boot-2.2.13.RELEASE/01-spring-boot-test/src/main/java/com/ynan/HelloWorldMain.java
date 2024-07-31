@@ -1,6 +1,5 @@
 package com.ynan;
 
-import com.ctrip.framework.apollo.spring.annotation.EnableApolloConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -11,7 +10,6 @@ import org.springframework.core.env.ConfigurableEnvironment;
  * @Date 2021/11/17 20:13
  */
 @SpringBootApplication
-@EnableApolloConfig({"ddgy-wms-service.global-config", "application", "app_config"})
 public class HelloWorldMain {
 
 	public static void main(String[] args) {

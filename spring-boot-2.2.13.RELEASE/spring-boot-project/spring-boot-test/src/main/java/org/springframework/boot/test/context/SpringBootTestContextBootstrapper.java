@@ -124,13 +124,21 @@ public class SpringBootTestContextBootstrapper extends DefaultTestContextBootstr
 	@Override
 	protected ContextLoader resolveContextLoader(Class<?> testClass,
 			List<ContextConfigurationAttributes> configAttributesList) {
+		// 获取 @SpringBootTest 注解的 classes 属性值
 		Class<?>[] classes = getClasses(testClass);
 		if (!ObjectUtils.isEmpty(classes)) {
+			// 如果 classes属性不为空，设置进去，相当于 @ContextConfiguration(classes = RootConfig.class)
 			for (ContextConfigurationAttributes configAttributes : configAttributesList) {
 				addConfigAttributesClasses(configAttributes, classes);
 			}
 		}
+		// 默认提供了 SpringBootContextLoader
 		return super.resolveContextLoader(testClass, configAttributesList);
+	}
+
+	@Override
+	protected Class<? extends ContextLoader> getDefaultContextLoaderClass(Class<?> testClass) {
+		return SpringBootContextLoader.class;
 	}
 
 	private void addConfigAttributesClasses(ContextConfigurationAttributes configAttributes, Class<?>[] classes) {
@@ -142,13 +150,10 @@ public class SpringBootTestContextBootstrapper extends DefaultTestContextBootstr
 	}
 
 	@Override
-	protected Class<? extends ContextLoader> getDefaultContextLoaderClass(Class<?> testClass) {
-		return SpringBootContextLoader.class;
-	}
-
-	@Override
 	protected MergedContextConfiguration processMergedContextConfiguration(MergedContextConfiguration mergedConfig) {
+		// 获取 @SpringBootTest 注解的 classes 属性值，如果为空，则读取测试类上有@SpringBootConfiguration注解，把测试类当做配置类
 		Class<?>[] classes = getOrFindConfigurationClasses(mergedConfig);
+		// 读取 @SpringBootTest 注解的 properties 属性值
 		List<String> propertySourceProperties = getAndProcessPropertySourceProperties(mergedConfig);
 		mergedConfig = createModifiedConfig(mergedConfig, classes, StringUtils.toStringArray(propertySourceProperties));
 		WebEnvironment webEnvironment = getWebEnvironment(mergedConfig.getTestClass());

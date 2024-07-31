@@ -16,6 +16,7 @@
         <module>06-ComponentScan</module>
         <module>07-tomcat</module>
         <module>08-stock</module>
+        <module>_09-JUnit</module>
     </modules>
 	<packaging>pom</packaging>
 	<name>Spring Boot Build</name>

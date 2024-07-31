@@ -221,8 +221,18 @@ public class SpringBootContextLoader extends AbstractContextLoader {
 
 	@Override
 	public void processContextConfiguration(ContextConfigurationAttributes configAttributes) {
+		/**
+		 * 先交给父类处理，父类的逻辑是，如果没有配置@ContextConfiguration注解，或者有注解但是没有维护locations属性，也就是没有配置扫描路径，则用默认的路径，通常为空
+		 */
 		super.processContextConfiguration(configAttributes);
+		/**
+		 * 在SpringBoot test环境中，通常不会配置 @ContextConfiguration
+		 * 但是如果配置了 @SpringBootTest(classes = RootMain.class)，classes属性是会被设置到 configAttributes 的classes属性中，也就不会进入if了
+		 */
 		if (!configAttributes.hasResources()) {
+			/**
+			 * 如果 @SpringBootTest 没有维护classes属性，则使用默认逻辑：获取测试类内部带有@Configuration注解的内部类
+			 */
 			Class<?>[] defaultConfigClasses = detectDefaultConfigurationClasses(configAttributes.getDeclaringClass());
 			configAttributes.setClasses(defaultConfigClasses);
 		}

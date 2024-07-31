@@ -37,6 +37,18 @@ class AbstractTestDescriptorTests {
 
 	@BeforeEach
 	void initTree() {
+		/**
+		 * 					     testEngine
+		 * 				    	/	       \
+		 * 				      /	  	        \
+		 * 				   group1           group2
+		 * 			     	/  \				\
+		 * 		 	      /     \				 \
+		 * 		 	 group11  leaf1-1、leaf1-2   leaf2-1
+		 * 		 	  /
+		 * 		 	 /
+		 * 		 leaf11-1
+		 */
 		engineDescriptor = new EngineDescriptor(UniqueId.forEngine("testEngine"), "testEngine");
 		var group1 = new GroupDescriptor(UniqueId.root("group", "group1"));
 		engineDescriptor.addChild(group1);

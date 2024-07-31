@@ -77,8 +77,16 @@ class EngineDiscoveryRequestResolution {
 	}
 
 	void run() {
+		// 筛选出DiscoverySelector类型
 		remainingSelectors.addAll(request.getSelectorsByType(DiscoverySelector.class));
 		while (!remainingSelectors.isEmpty()) {
+			/**
+			 * ArrayDeque: 先进先出
+			 * remove()：移除并返回队首的元素，如果队列为空则抛出异常。
+			 * poll()：移除并返回队首的元素，如果队列为空则返回 null。
+			 * element()：返回队首的元素，但不移除它，如果队列为空则抛出异常。
+			 * peek()：返回队首的元素，但不移除它，如果队列为空则返回 null。
+			 */
 			resolveCompletely(remainingSelectors.poll());
 		}
 		visitors.forEach(engineDescriptor::accept);
@@ -106,6 +114,7 @@ class EngineDiscoveryRequestResolution {
 	private void enqueueAdditionalSelectors(Resolution resolution) {
 		remainingSelectors.addAll(resolution.getSelectors());
 		resolution.getMatches().stream().filter(Match::isExact).forEach(match -> {
+			// 解析测试类的 @Test 方法包装成 MethodSelector
 			Set<? extends DiscoverySelector> childSelectors = match.expand();
 			if (!childSelectors.isEmpty()) {
 				remainingSelectors.addAll(childSelectors);
@@ -116,12 +125,23 @@ class EngineDiscoveryRequestResolution {
 	}
 
 	private Optional<Resolution> resolve(DiscoverySelector selector) {
+		// resolvedSelectors 缓存了解析结果，已解析过则直接返回
 		if (resolvedSelectors.containsKey(selector)) {
 			return Optional.of(resolvedSelectors.get(selector));
 		}
 		if (selector instanceof UniqueIdSelector) {
 			return resolveUniqueId((UniqueIdSelector) selector);
 		}
+		/**
+		 * 依次使用 SelectorResolver 对 DiscoverySelector 进行解析，如果解析不通过或者不解析，SelectorResolver 返回 UNRESOLVED（未解决的）
+		 * 当碰到第一个不是 UNRESOLVED 结果时立即返回，并将结果存储到 resolvedSelectors 缓存中。
+		 *
+		 *  VintageTestEngine预设了三个 SelectorResolver:
+		 *   1.ClassContainerSelectorResolver: 处理 ClasspathRootSelector、PackageSelector 类型
+		 *   2.ClassSelectorResolver: 处理 ClassSelector 类型
+		 * 	 3.MethodSelectorResolver: 处理 MethodSelector 类型
+		 *
+		 */
 		return resolve(selector, resolver -> {
 			Context context = getContext(selector);
 			if (selector instanceof ClasspathResourceSelector) {

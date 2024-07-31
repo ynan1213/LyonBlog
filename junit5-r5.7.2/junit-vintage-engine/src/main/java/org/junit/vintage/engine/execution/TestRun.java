@@ -59,7 +59,9 @@ class TestRun {
 		ArrayDeque::new);
 
 	TestRun(RunnerTestDescriptor runnerTestDescriptor) {
+		// 对应测试类
 		this.runnerTestDescriptor = runnerTestDescriptor;
+		// 对应测试类的@Test方法
 		runnerDescendants = new LinkedHashSet<>(runnerTestDescriptor.getDescendants());
 		// @formatter:off
 		descriptionToDescriptors = concat(Stream.of(runnerTestDescriptor), runnerDescendants.stream())

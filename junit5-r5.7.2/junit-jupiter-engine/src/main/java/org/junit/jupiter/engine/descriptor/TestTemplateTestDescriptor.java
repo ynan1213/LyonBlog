@@ -95,12 +95,16 @@ public class TestTemplateTestDescriptor extends MethodBasedTestDescriptor implem
 			DynamicTestExecutor dynamicTestExecutor) throws Exception {
 
 		ExtensionContext extensionContext = context.getExtensionContext();
+		// @TestTemplate 须配合 @ExtendWith 至少注册一个 TestTemplateInvocationContextProvider 类型
 		List<TestTemplateInvocationContextProvider> providers = validateProviders(extensionContext,
 			context.getExtensionRegistry());
 		AtomicInteger invocationIndex = new AtomicInteger();
 		// @formatter:off
 		providers.stream()
+				// 执行回调，返回一个 Stream<TestTemplateInvocationContext>，也就是多个 TestTemplateInvocationContext
 				.flatMap(provider -> provider.provideTestTemplateInvocationContexts(extensionContext))
+				// 每个 TestTemplateInvocationContext 创建一个对应的 TestTemplateInvocationTestDescriptor
+				// 一个 TestTemplateInvocationContext 用于创建提供 Extension
 				.map(invocationContext -> createInvocationTestDescriptor(invocationContext, invocationIndex.incrementAndGet()))
 				.filter(Optional::isPresent)
 				.map(Optional::get)

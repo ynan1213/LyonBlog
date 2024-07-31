@@ -50,6 +50,7 @@ public class UniqueIdStringifier implements Function<Serializable, String> {
 			out.writeObject(uniqueId);
 		}
 		catch (IOException e) {
+			// 如果抛异常，则用toString代替
 			return uniqueId.toString().getBytes(CHARSET);
 		}
 		return byteStream.toByteArray();

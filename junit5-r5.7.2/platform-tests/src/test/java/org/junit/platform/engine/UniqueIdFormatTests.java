@@ -114,6 +114,7 @@ class UniqueIdFormatTests {
 
 		@Test
 		default void parseMalformedUid() {
+			// 默认情况下必须是 [engine:junit-jupiter] 这种格式
 			Throwable throwable = assertThrows(JUnitException.class, () -> getFormat().parse("malformed UID"));
 			assertTrue(throwable.getMessage().contains("malformed UID"));
 		}

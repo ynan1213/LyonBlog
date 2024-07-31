@@ -83,6 +83,7 @@ class MethodSelectorResolver implements SelectorResolver {
 		if (!testClassPredicate.test(testClass)) {
 			return unresolved();
 		}
+		// @Test/@@TestFactory/@TestTemplate 方法
 		Method method = methodSupplier.get();
 		// @formatter:off
 		Set<Match> matches = Arrays.stream(MethodType.values())

@@ -76,6 +76,21 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 	public void execute() {
 		try {
 			throwableCollector = taskContext.getThrowableCollectorFactory().create();
+			/**
+			 * 一、对于Root JupiterEngineDescriptor 包装成的 NodeTestTask 的逻辑：
+			 *
+			 * 二、对于测试类对应的 ClassTestDescriptor 包装成的 NodeTestTask 的逻辑：
+			 *  1.读取类上的 @ExtendWith 注解;
+			 *  2.读取带有 @RegisterExtension 注解的字段，字段类型必须是Extension类型
+			 *  3.检索并包装@BeforeAll、@AfterAll、@BeforeEach、@AfterEach方法
+			 *
+			 * 三、对于@Test方法对应的 TestMethodTestDescriptor 包装成的 NodeTestTask 的逻辑：
+			 *  1.读取方法上 @ExtendWith 注解；
+			 *  2.实例化测试类对象，和@TestInstance有关；
+			 *
+			 * 四、对于@TestTemplate方法对应的 TestTemplateTestDescriptor 包装成的 NodeTestTask 的逻辑：
+			 *  1.读取方法上 @ExtendWith 注解；
+			 */
 			prepare();
 			if (throwableCollector.isEmpty()) {
 				checkWhetherSkipped();
@@ -132,10 +147,38 @@ class NodeTestTask<C extends EngineExecutionContext> implements TestTask {
 							.map(descriptor -> new NodeTestTask<C>(taskContext, descriptor))
 							.collect(toCollection(ArrayList::new));
 					// @formatter:on
-
+					/**
+					 * 一、对于Root JupiterEngineDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *
+					 * 二、对于测试类对应的 ClassTestDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *  1.如果测试类是 @TestInstance(Lifecycle.PER_CLASS)，也就是每个测试类只实例化一次，则执行实例化
+					 *  2.执行BeforeAllCallback类型的Extension，注意不是@BeforeAll方法，系统预设的有 @TempDir 和 @Timeout 注解；
+					 *  3.执行@BeforeAll注解的方法；
+					 *
+					 * 三、对于@Test方法对应的 TestMethodTestDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *
+					 * 四、对于@TestTemplate方法对应的 TestTemplateTestDescriptor 包装成的 NodeTestTask 的逻辑：
+					 */
 					context = node.before(context);
 
 					final DynamicTestExecutor dynamicTestExecutor = new DefaultDynamicTestExecutor();
+					/**
+					 * 一、对于Root JupiterEngineDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *
+					 * 二、对于测试类对应的 ClassTestDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *
+					 * 三、对于@Test方法对应的 TestMethodTestDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *  1.执行 BeforeEachCallback 类型的Extension，注意不是@BeforeEach方法，系统预设的有 @TempDir 和 @Timeout 注解；
+					 *  2.执行 @BeforeEach 注解的方法；
+					 *  3.执行 BeforeTestExecutionCallback 类型的Extension，系统没有预设；
+					 *  4.执行 @Test 方法；
+					 *  5.执行 AfterTestExecutionCallback 类型的Extension，系统没有预设；
+					 *  6.执行 @AfterEach 注解的方法；
+					 *  7.执行 AfterEachCallback 类型的Extension，注意不是@BeforeEach方法，系统预设的有 @TempDir 和 @Timeout 注解；
+					 *
+					 * 四、对于@TestTemplate方法对应的 TestTemplateTestDescriptor 包装成的 NodeTestTask 的逻辑：
+					 *  1.
+					 */
 					context = node.execute(context, dynamicTestExecutor);
 
 					if (!children.isEmpty()) {

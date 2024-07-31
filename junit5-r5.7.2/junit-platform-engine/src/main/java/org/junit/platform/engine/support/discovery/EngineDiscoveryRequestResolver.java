@@ -108,9 +108,17 @@ public class EngineDiscoveryRequestResolver<T extends TestDescriptor> {
 		Preconditions.notNull(request, "request must not be null");
 		Preconditions.notNull(engineDescriptor, "engineDescriptor must not be null");
 		InitializationContext<T> initializationContext = new DefaultInitializationContext<>(request, engineDescriptor);
+		/**
+		 * VintageDiscoverer预设了三个SelectorResolver:
+		 * 	 1.ClassContainerSelectorResolver
+		 * 	 2.ClassSelectorResolver
+		 * 	 3.MethodSelectorResolver
+		 */
 		List<SelectorResolver> resolvers = instantiate(resolverCreators, initializationContext);
 		List<TestDescriptor.Visitor> visitors = instantiate(visitorCreators, initializationContext);
-		new EngineDiscoveryRequestResolution(request, engineDescriptor, resolvers, visitors).run();
+		// Resolution: 决议;
+		EngineDiscoveryRequestResolution resolution = new EngineDiscoveryRequestResolution(request, engineDescriptor, resolvers, visitors);
+		resolution.run();
 	}
 
 	private <R> List<R> instantiate(List<Function<InitializationContext<T>, R>> creators,

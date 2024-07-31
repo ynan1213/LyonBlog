@@ -67,6 +67,7 @@ class ClassSelectorResolver implements SelectorResolver {
 		if (runner == null) {
 			return unresolved();
 		}
+		// 将Runner包装成RunnerTestDescriptor，并添加到 VintageEngineDescriptor 的children中
 		return context.addToParent(parent -> Optional.of(createRunnerTestDescriptor(parent, testClass, runner))).map(
 			runnerTestDescriptor -> Match.exact(runnerTestDescriptor, () -> {
 				runnerTestDescriptor.clearFilters();

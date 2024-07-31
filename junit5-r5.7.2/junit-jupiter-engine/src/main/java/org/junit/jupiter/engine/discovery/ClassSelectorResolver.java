@@ -64,13 +64,19 @@ class ClassSelectorResolver implements SelectorResolver {
 	@Override
 	public Resolution resolve(ClassSelector selector, Context context) {
 		Class<?> testClass = selector.getJavaClass();
+		// IsTestClassWithTests校验：class必须是非private、非abstract、非匿名、如果是内部类必须是静态的
+		// 且必须至少有一个 @Test方法 或 @TestFactory方法 或 @TestTemplate方法 或 至少有一个@Nested注解的非静态内部类
 		if (isTestClassWithTests.test(testClass)) {
 			// Nested tests are never filtered out
 			if (classNameFilter.test(testClass.getName())) {
-				return toResolution(
-					context.addToParent(parent -> Optional.of(newClassTestDescriptor(parent, testClass))));
+				// parent 是 JupiterEngineDescriptor
+				// newClassTestDescriptor 是将测试类包装成 ClassTestDescriptor，但是并未解析@Test方法
+				Optional<ClassTestDescriptor> optional = context.addToParent(parent -> Optional.of(newClassTestDescriptor(parent, testClass)));
+				// 解析@Test方法在该方法的回调中
+				return toResolution(optional);
 			}
 		}
+		//
 		else if (isNestedTestClass.test(testClass)) {
 			return toResolution(context.addToParent(() -> DiscoverySelectors.selectClass(testClass.getEnclosingClass()),
 				parent -> Optional.of(newNestedClassTestDescriptor(parent, testClass))));
@@ -115,9 +121,8 @@ class ClassSelectorResolver implements SelectorResolver {
 	}
 
 	private ClassTestDescriptor newClassTestDescriptor(TestDescriptor parent, Class<?> testClass) {
-		return new ClassTestDescriptor(
-			parent.getUniqueId().append(ClassTestDescriptor.SEGMENT_TYPE, testClass.getName()), testClass,
-			configuration);
+		UniqueId append = parent.getUniqueId().append(ClassTestDescriptor.SEGMENT_TYPE, testClass.getName());
+		return new ClassTestDescriptor(append, testClass, configuration);
 	}
 
 	private NestedClassTestDescriptor newNestedClassTestDescriptor(TestDescriptor parent, Class<?> testClass) {
@@ -133,6 +138,7 @@ class ClassSelectorResolver implements SelectorResolver {
 			testClasses.add(testClass);
 			// @formatter:off
 			return Resolution.match(Match.exact(it, () -> {
+				// 检索@Test方法和@Nested内部类的@Test方法
 				Stream<DiscoverySelector> methods = findMethods(testClass, isTestOrTestFactoryOrTestTemplateMethod).stream()
 						.map(method -> selectMethod(testClasses, method));
 				Stream<NestedClassSelector> nestedClasses = findNestedClasses(testClass, isNestedTestClass).stream()

@@ -208,8 +208,9 @@ public interface TestDescriptor {
 	 */
 	static boolean containsTests(TestDescriptor testDescriptor) {
 		Preconditions.notNull(testDescriptor, "TestDescriptor must not be null");
-		return testDescriptor.isTest() || testDescriptor.mayRegisterTests()
-				|| testDescriptor.getChildren().stream().anyMatch(TestDescriptor::containsTests);
+		return testDescriptor.isTest()
+			|| testDescriptor.mayRegisterTests()
+			|| testDescriptor.getChildren().stream().anyMatch(TestDescriptor::containsTests);
 	}
 
 	/**

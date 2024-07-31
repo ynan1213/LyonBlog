@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Nested;
 @API(status = INTERNAL, since = "5.0")
 public class IsNestedTestClass implements Predicate<Class<?>> {
 
+	// 只有非静态内部类才返回true
 	private static final IsInnerClass isInnerClass = new IsInnerClass();
 
 	@Override

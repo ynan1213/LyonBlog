@@ -101,6 +101,7 @@ public class EngineDiscoveryOrchestrator {
 		try {
 			discoveryListener.engineDiscoveryStarted(uniqueEngineId);
 			TestDescriptor engineRoot = testEngine.discover(discoveryRequest, uniqueEngineId);
+			// 校验 engineRoot 非空且不能是循环的
 			discoveryResultValidator.validate(testEngine, engineRoot);
 			discoveryListener.engineDiscoveryFinished(uniqueEngineId, EngineDiscoveryResult.successful());
 			return engineRoot;

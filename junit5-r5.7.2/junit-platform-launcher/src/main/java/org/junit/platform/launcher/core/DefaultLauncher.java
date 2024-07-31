@@ -35,6 +35,10 @@ import org.junit.platform.launcher.TestPlan;
 class DefaultLauncher implements Launcher {
 
 	private final TestExecutionListenerRegistry listenerRegistry = new TestExecutionListenerRegistry();
+
+	/**
+	 * orchestrator: 编排器
+	 */
 	private final EngineExecutionOrchestrator executionOrchestrator = new EngineExecutionOrchestrator(listenerRegistry);
 	private final EngineDiscoveryOrchestrator discoveryOrchestrator;
 
@@ -64,7 +68,8 @@ class DefaultLauncher implements Launcher {
 	@Override
 	public TestPlan discover(LauncherDiscoveryRequest discoveryRequest) {
 		Preconditions.notNull(discoveryRequest, "LauncherDiscoveryRequest must not be null");
-		return InternalTestPlan.from(discover(discoveryRequest, "discovery"));
+		LauncherDiscoveryResult discoveryResult = discover(discoveryRequest, "discovery");
+		return InternalTestPlan.from(discoveryResult);
 	}
 
 	@Override
@@ -72,7 +77,15 @@ class DefaultLauncher implements Launcher {
 		Preconditions.notNull(discoveryRequest, "LauncherDiscoveryRequest must not be null");
 		Preconditions.notNull(listeners, "TestExecutionListener array must not be null");
 		Preconditions.containsNoNullElements(listeners, "individual listeners must not be null");
-		execute(InternalTestPlan.from(discover(discoveryRequest, "execution")), listeners);
+		LauncherDiscoveryResult discoveryResult = discover(discoveryRequest, "execution");
+		/**
+		 * 一个测试类的解析和包装：
+		 *  1.JUnit4是将测试类包装成Description，Description有一个children集合，一个children对应一个@Test方法；
+		 *  2.VintageDiscoverer是包装成 RunnerTestDescriptor(对应一个测试类)和VintageTestDescriptor(对应一个@Test方法)）；
+		 *  3.到这里，是将TestDescriptor解析成TestIdentifier，以层级关系存储在InternalTestPlan中
+		 */
+		InternalTestPlan testPlan = InternalTestPlan.from(discoveryResult);
+		execute(testPlan, listeners);
 	}
 
 	@Override

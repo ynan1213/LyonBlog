@@ -37,6 +37,7 @@ class EngineDiscoveryResultValidator {
 			() -> String.format(
 				"The discover() method for TestEngine with ID '%s' must return a non-null root TestDescriptor.",
 				testEngine.getId()));
+		// isAcyclic：是非循环的
 		Preconditions.condition(isAcyclic(root),
 			() -> String.format("The discover() method for TestEngine with ID '%s' returned a cyclic graph.",
 				testEngine.getId()));
@@ -51,7 +52,9 @@ class EngineDiscoveryResultValidator {
 		Queue<TestDescriptor> queue = new ArrayDeque<>();
 		queue.add(root);
 		while (!queue.isEmpty()) {
+			// remove会将元素移除并返回
 			for (TestDescriptor child : queue.remove().getChildren()) {
+				// add返回false，说明已存在
 				if (!visited.add(child.getUniqueId())) {
 					return false; // id already known: cycle detected!
 				}

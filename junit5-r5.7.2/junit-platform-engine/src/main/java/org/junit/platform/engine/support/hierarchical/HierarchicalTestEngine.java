@@ -18,6 +18,8 @@ import org.junit.platform.commons.JUnitException;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestEngine;
 
+import java.util.concurrent.Future;
+
 /**
  * Abstract base class for all {@link TestEngine} implementations that wish
  * to organize test suites hierarchically based on the {@link Node} abstraction.
@@ -44,11 +46,13 @@ public abstract class HierarchicalTestEngine<C extends EngineExecutionContext> i
 	 */
 	@Override
 	public final void execute(ExecutionRequest request) {
+		// 并发测试，默认情况下是单线程运行
 		try (HierarchicalTestExecutorService executorService = createExecutorService(request)) {
 			C executionContext = createExecutionContext(request);
 			ThrowableCollector.Factory throwableCollectorFactory = createThrowableCollectorFactory(request);
-			new HierarchicalTestExecutor<>(request, executionContext, executorService,
-				throwableCollectorFactory).execute().get();
+			HierarchicalTestExecutor<C> hierarchicalTestExecutor = new HierarchicalTestExecutor<>(request, executionContext, executorService, throwableCollectorFactory);
+			Future<Void> future = hierarchicalTestExecutor.execute();
+			future.get();
 		}
 		catch (Exception exception) {
 			throw new JUnitException("Error executing tests for engine " + getId(), exception);

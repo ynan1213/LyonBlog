@@ -39,11 +39,14 @@ class MethodArgumentsProvider implements ArgumentsProvider, AnnotationConsumer<M
 
 	@Override
 	public Stream<Arguments> provideArguments(ExtensionContext context) {
+		// 默认情况下返回null，说明@MethodSource指定的方法必须是static
+		// 但是当指定了 @TestInstance(TestInstance.Lifecycle.PER_CLASS)，也是可以不为static的
 		Object testInstance = context.getTestInstance().orElse(null);
 		// @formatter:off
 		return Arrays.stream(this.methodNames)
 				.map(factoryMethodName -> getMethod(context, factoryMethodName))
 				.map(method -> ReflectionUtils.invokeMethod(method, testInstance))
+				// 方法返回类型必须是 Stream 、Collection、Iterator、数组类型类型，详情见 MethodArgumentsProvider
 				.flatMap(CollectionUtils::toStream)
 				.map(MethodArgumentsProvider::toArguments);
 		// @formatter:on

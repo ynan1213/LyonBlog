@@ -85,6 +85,7 @@ include("junit-vintage-engine")
 include("platform-tests")
 include("platform-tooling-support-tests")
 include("junit-bom")
+include("demo-ynan")
 
 // check that every subproject has a custom build file
 // based on the project name
@@ -97,4 +98,3 @@ rootProject.children.forEach { project ->
 		"${project.buildFile} must exist"
 	}
 }
-include("demo-ynan")

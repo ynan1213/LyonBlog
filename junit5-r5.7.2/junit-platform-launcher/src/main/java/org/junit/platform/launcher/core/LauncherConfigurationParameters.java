@@ -83,6 +83,7 @@ class LauncherConfigurationParameters implements ConfigurationParameters {
 
 	static final class Builder {
 
+		// explicit: 明确的
 		private final Map<String, String> explicitParameters = new HashMap<>();
 		private boolean implicitProvidersEnabled = true;
 		private String configFileName = ConfigurationParameters.CONFIG_FILE_NAME;

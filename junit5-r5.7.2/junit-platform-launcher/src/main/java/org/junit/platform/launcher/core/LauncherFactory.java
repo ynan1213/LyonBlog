@@ -73,8 +73,8 @@ public class LauncherFactory {
 	 */
 	public static Launcher create() throws PreconditionViolationException {
 		return create(LauncherConfig.builder().build());
-	}
 
+	}
 	/**
 	 * Factory method for creating a new {@link Launcher} using the supplied
 	 * {@link LauncherConfig}.
@@ -92,12 +92,24 @@ public class LauncherFactory {
 
 		Set<TestEngine> engines = new LinkedHashSet<>();
 		if (config.isTestEngineAutoRegistrationEnabled()) {
+			/**
+			 * SPI机制检测 org.junit.platform.engine.TestEngine 类型的实现类
+			 * 默认有两个实现类：
+			 *  1.junit-jupiter-engine包提供了 JupiterTestEngine；
+			 *  2.junit-vintage-engine包提供了 VintageTestEngine；
+			 * 如果未引入对应的包，报错;
+			 * 如果同时引入两个包，优先级？
+			 */
 			new ServiceLoaderTestEngineRegistry().loadTestEngines().forEach(engines::add);
 		}
 		engines.addAll(config.getAdditionalTestEngines());
 
 		List<PostDiscoveryFilter> filters = new ArrayList<>();
 		if (config.isPostDiscoveryFilterAutoRegistrationEnabled()) {
+			/**
+			 * SPI机制检测 org.junit.platform.launcher.PostDiscoveryFilter 类型的实现类
+			 * 默认无实现类
+			 */
 			new ServiceLoaderPostDiscoveryFilterRegistry().loadPostDiscoveryFilters().forEach(filters::add);
 		}
 		filters.addAll(config.getAdditionalPostDiscoveryFilters());
@@ -105,6 +117,7 @@ public class LauncherFactory {
 		Launcher launcher = new DefaultLauncher(engines, filters);
 
 		if (config.isTestExecutionListenerAutoRegistrationEnabled()) {
+			// SPI机制加载 TestExecutionListener
 			loadAndFilterTestExecutionListeners().forEach(launcher::registerTestExecutionListeners);
 		}
 		config.getAdditionalTestExecutionListeners().forEach(launcher::registerTestExecutionListeners);

@@ -33,6 +33,8 @@ public class DiscoverySelectorResolver {
 
 	// @formatter:off
 	private static final EngineDiscoveryRequestResolver<JupiterEngineDescriptor> resolver = EngineDiscoveryRequestResolver.<JupiterEngineDescriptor>builder()
+			// IsTestClassWithTests要求：class必须是非private、非abstract、非匿名、如果是内部类必须是静态的
+			// 且必须至少有一个 @Test方法 或 @TestFactory方法 或 @TestTemplate方法 或 有一个@Nested注解的非静态内部类
 			.addClassContainerSelectorResolver(new IsTestClassWithTests())
 			.addSelectorResolver(context -> new ClassSelectorResolver(context.getClassNameFilter(), context.getEngineDescriptor().getConfiguration()))
 			.addSelectorResolver(context -> new MethodSelectorResolver(context.getEngineDescriptor().getConfiguration()))

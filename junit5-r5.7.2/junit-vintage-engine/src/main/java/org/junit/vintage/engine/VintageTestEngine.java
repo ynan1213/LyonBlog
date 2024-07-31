@@ -59,6 +59,7 @@ public final class VintageTestEngine implements TestEngine {
 
 	@Override
 	public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
+		// JUnit版本号不能低于4.12
 		JUnit4VersionCheck.checkSupported();
 		return new VintageDiscoverer().discover(discoveryRequest, uniqueId);
 	}
@@ -68,19 +69,23 @@ public final class VintageTestEngine implements TestEngine {
 		EngineExecutionListener engineExecutionListener = request.getEngineExecutionListener();
 		VintageEngineDescriptor engineDescriptor = (VintageEngineDescriptor) request.getRootTestDescriptor();
 		engineExecutionListener.executionStarted(engineDescriptor);
-		RunnerExecutor runnerExecutor = new RunnerExecutor(engineExecutionListener,
-			engineDescriptor.getTestSourceProvider());
+		RunnerExecutor runnerExecutor = new RunnerExecutor(engineExecutionListener, engineDescriptor.getTestSourceProvider());
 		executeAllChildren(runnerExecutor, engineDescriptor);
 		engineExecutionListener.executionFinished(engineDescriptor, successful());
 	}
 
 	private void executeAllChildren(RunnerExecutor runnerExecutor, TestDescriptor engineDescriptor) {
 		// @formatter:off
-		engineDescriptor.getChildren()
-				.stream()
-				.map(RunnerTestDescriptor.class::cast)
-				.forEach(runnerExecutor::execute);
+//		engineDescriptor.getChildren()
+//				.stream()
+//				.map(RunnerTestDescriptor.class::cast)
+//				.forEach(runnerExecutor::execute);
 		// @formatter:on
+		// 上面的不方便debug，改成下面
+		for (TestDescriptor child : engineDescriptor.getChildren()) {
+			RunnerTestDescriptor runnerTestDescriptor = (RunnerTestDescriptor) child;
+			runnerExecutor.execute(runnerTestDescriptor);
+		}
 	}
 
 }

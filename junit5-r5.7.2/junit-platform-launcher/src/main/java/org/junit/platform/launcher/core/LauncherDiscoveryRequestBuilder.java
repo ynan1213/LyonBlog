@@ -251,18 +251,31 @@ public final class LauncherDiscoveryRequestBuilder {
 	public LauncherDiscoveryRequest build() {
 		LauncherConfigurationParameters launcherConfigurationParameters = buildLauncherConfigurationParameters();
 		LauncherDiscoveryListener discoveryListener = getLauncherDiscoveryListener(launcherConfigurationParameters);
-		return new DefaultDiscoveryRequest(this.selectors, this.engineFilters, this.discoveryFilters,
-			this.postDiscoveryFilters, launcherConfigurationParameters, discoveryListener);
+		return new DefaultDiscoveryRequest(
+			this.selectors,
+			this.engineFilters,
+			this.discoveryFilters,
+			this.postDiscoveryFilters,
+			launcherConfigurationParameters,
+			discoveryListener
+		);
 	}
 
 	private LauncherConfigurationParameters buildLauncherConfigurationParameters() {
 		return LauncherConfigurationParameters.builder() //
+				// explicit: 明确的
 				.explicitParameters(this.configurationParameters) //
+				// Implicit: 隐式的; 隐含
 				.enableImplicitProviders(this.implicitConfigurationParametersEnabled) //
 				.build();
 	}
 
 	private LauncherDiscoveryListener getLauncherDiscoveryListener(ConfigurationParameters configurationParameters) {
+		/**
+		 * 系统预设两种类型：
+		 * logging: LoggingLauncherDiscoveryListener
+		 * abortOnFailure: AbortOnFailureLauncherDiscoveryListener   默认
+		 */
 		LauncherDiscoveryListener defaultDiscoveryListener = configurationParameters.get(
 			DEFAULT_DISCOVERY_LISTENER_CONFIGURATION_PROPERTY_NAME) //
 				.map(value -> LauncherDiscoveryListeners.fromConfigurationParameter(

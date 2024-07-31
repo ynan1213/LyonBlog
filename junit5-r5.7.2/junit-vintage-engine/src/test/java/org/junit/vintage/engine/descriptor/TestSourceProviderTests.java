@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.runner.Description;
 import org.junit.vintage.engine.samples.junit4.ConcreteJUnit4TestCase;
@@ -34,6 +35,21 @@ class TestSourceProviderTests {
 		MethodSource methodSource = (MethodSource) source;
 		assertEquals(ConcreteJUnit4TestCase.class.getName(), methodSource.getClassName());
 		assertEquals("theTest", methodSource.getMethodName());
+	}
+
+	/**
+	 * 自己写的测试
+	 */
+	@Test
+	void classTestSource() {
+		Description description = Description.createSuiteDescription(ConcreteJUnit4TestCase.class);
+
+		TestSource source = new TestSourceProvider().findTestSource(description);
+		assertThat(source).isInstanceOf(ClassSource.class);
+
+		ClassSource classSource = (ClassSource) source;
+		assertEquals(ConcreteJUnit4TestCase.class.getName(), classSource.getClassName());
+		// assertEquals("theTest", methodSource.getMethodName());
 	}
 
 }

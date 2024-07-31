@@ -95,6 +95,9 @@ public abstract class ClassBasedTestDescriptor extends JupiterTestDescriptor {
 
 		this.testClass = testClass;
 		this.tags = getTags(testClass);
+		// 解析测试类上的 @TestInstance 注解
+		// 如果测试类上未标注，则读取 junit.jupiter.testinstance.lifecycle.default 环境变量
+		// 如果环境变量未配置，使用 PER_METHOD 作为默认值
 		this.lifecycle = getTestInstanceLifecycle(testClass, configuration);
 		this.defaultChildExecutionMode = (this.lifecycle == Lifecycle.PER_CLASS ? ExecutionMode.SAME_THREAD : null);
 	}
@@ -140,11 +143,13 @@ public abstract class ClassBasedTestDescriptor extends JupiterTestDescriptor {
 
 	@Override
 	public JupiterEngineExecutionContext prepare(JupiterEngineExecutionContext context) {
+		// 读取类上的 @ExtendWith 注解
 		MutableExtensionRegistry registry = populateNewExtensionRegistryFromExtendWithAnnotation(
 			context.getExtensionRegistry(), this.testClass);
 
 		// Register extensions from static fields here, at the class level but
 		// after extensions registered via @ExtendWith.
+		// 读取带有 @RegisterExtension 注解的字段，字段类型必须是Extension类型
 		registerExtensionsFromFields(registry, this.testClass, null);
 
 		// Resolve the TestInstanceFactory at the class level in order to fail

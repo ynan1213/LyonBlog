@@ -84,6 +84,7 @@ class ParameterizedTestExtension implements TestTemplateInvocationContextProvide
 				.stream()
 				.map(ArgumentsSource::value)
 				.map(this::instantiateArgumentsProvider)
+				// 如果 provider 实现了AnnotationConsumer接口，做对应的回调
 				.map(provider -> AnnotationConsumerInitializer.initialize(templateMethod, provider))
 				.flatMap(provider -> arguments(provider, extensionContext))
 				.map(Arguments::get)

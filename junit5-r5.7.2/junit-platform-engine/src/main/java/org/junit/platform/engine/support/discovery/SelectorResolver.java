@@ -430,6 +430,9 @@ public interface SelectorResolver {
 
 		private static final Resolution UNRESOLVED = new Resolution(emptySet(), emptySet());
 
+		/**
+		 *
+		 */
 		private final Set<Match> matches;
 		private final Set<? extends DiscoverySelector> selectors;
 
@@ -647,7 +650,8 @@ public interface SelectorResolver {
 		}
 
 		private enum Type {
-			EXACT, PARTIAL
+			EXACT,  // 精确
+			PARTIAL // 部分
 		}
 
 	}

@@ -122,8 +122,10 @@ public class TestMethodTestDescriptor extends MethodBasedTestDescriptor {
 		ThrowableCollector throwableCollector = context.getThrowableCollector();
 
 		// @formatter:off
+		// @TempDir 和 @TimeOut 相关
 		invokeBeforeEachCallbacks(context);
 			if (throwableCollector.isEmpty()) {
+				// 执行 @BeforeEach 方法
 				invokeBeforeEachMethods(context);
 				if (throwableCollector.isEmpty()) {
 					invokeBeforeTestExecutionCallbacks(context);

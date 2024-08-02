@@ -532,14 +532,16 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
          final long maxLifetime = config.getMaxLifetime();
          if (maxLifetime > 0) {
             /**
-             * MaxLifetimeTask：检查连接是否达到了最大存活时间。  schedule:不会周期执行，只会执行一次
-             * 若达到了，则将连接 PoolEntry 设置为已驱逐状态：evit = true，如果连接不是使用中状态的话则关闭连接，调用 addBagItem(final int waiting) 方法；
-             * 当close的时候会cancel操作，这样MaxLifetimeTask就被取消了
+             * MaxLifetimeTask：检查连接是否达到了最大存活时间。
+             * schedule方法: 不会周期执行，只会执行一次
+             * 一个物理连接创建完就会和一个MaxLifetimeTask绑定，若达到了maxLifetime时间，则将连接 PoolEntry 设置为已驱逐状态：evit = true，
+             * 并且如果连接不是使用中状态的话还会关闭连接
+             *
+             * 如果还未达到最大存活时间，当close物理连接的的时候会cancel操作，这样MaxLifetimeTask就被取消了
              *
              * 注意：在注册延时任务时，增加了一定范围的时间变化（MaxLifetimeTask， 2.5%；KeepaliveTask：10%）。
              * 用来防止出现大面积的connection因maxLifetime同一时刻失效
              */
-            //
             // variance up to 2.5% of the maxlifetime
             final long variance = maxLifetime > 10_000 ? ThreadLocalRandom.current().nextLong( maxLifetime / 40 ) : 0;
             final long lifetime = maxLifetime - variance;
@@ -690,6 +692,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
          return true;
       }
       // 如果不关闭，什么时候会被关闭呢？
+      // 上面标记为evict了，后面在get的时候（是否有其它场景）会close
       return false;
    }
 
@@ -932,6 +935,7 @@ public final class HikariPool extends PoolBase implements HikariPoolMXBean, IBag
       {
          // 能走到这里，说明连接已经到了最大存活时间，标记为evict
          if (softEvictConnection(poolEntry, "(connection has passed maxLifetime)", false /* not owner */)) {
+            // 返回true，说明连接被关闭了，这个再创建一个新的补充上
             addBagItem(connectionBag.getWaitingThreadCount());
          }
       }

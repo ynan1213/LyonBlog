@@ -135,7 +135,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
    {
       /**
        * hikariCP为什么快，最主要就是该borrow和return模型
-       * ①：首先从ThreadLocal中获取，避免了加锁
+       * ①：首先从ThreadLocal中获取，避免了加锁。后来觉得这句话有误，因为是从ThreadLocal获取的竞争度小一些，cas成功概率大一些。
        */
       // Try the thread-local list first
       final List<Object> list = threadList.get();
@@ -244,6 +244,7 @@ public class ConcurrentBag<T extends IConcurrentBagEntry> implements AutoCloseab
          throw new IllegalStateException("ConcurrentBag has been closed, ignoring add()");
       }
 
+      // add内部使用了 ReentrantLock 保证一致性
       sharedList.add(bagEntry);
 
       // spin until a thread takes it or none are waiting

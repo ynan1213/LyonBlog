@@ -160,7 +160,7 @@ public class HikariConfig implements HikariConfigMXBean
 
    /**
     * 多久检查一次连接的活性
-    * 检查时会先把连接从池中拿出来（空闲的话），然后调用isValid()或执行connectionTestQuery来校验活性，如果通过校验，则放回池里。
+    * 检查时会判断连接是否空闲，如果不空闲则等待下一次，如果空闲则调用isValid()或执行connectionTestQuery来校验活性，如果通过不通过，废弃。
     * 默认 0 （不启用），最小值为 30000 ms，必须小于 maxLifetime。支持 JMX 动态修改
     */
    private long keepaliveTime;

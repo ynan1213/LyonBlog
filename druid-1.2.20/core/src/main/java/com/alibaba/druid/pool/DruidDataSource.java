@@ -88,37 +88,54 @@ public class DruidDataSource extends DruidAbstractDataSource
     private volatile long recycleErrorCount;
     private volatile long discardErrorCount;
     private volatile Throwable discardErrorLast;
-    // getConnectionInternal被调用之后就会增加，意味着连接被get的次数。
+    /**
+     * getConnectionInternal被调用之后就会增加，代表连接被get的次数。
+     */
     private long connectCount;
-    // 连接调用recycle中，包括回收、关闭等情况，成功之后会增加，标识连接关闭的次数。
+    /**
+     * 连接调用recycle中，包括回收、关闭等情况，成功之后会增加，标识连接关闭的次数。
+     */
     private long closeCount;
     private volatile long connectErrorCount;
-    // 连接调用recycle成功之后才会增加，不包括在回收过程中关闭的情况。标识连接真正回收的次数。
+    /**
+     * 连接调用recycle成功之后才会增加，不包括在回收过程中关闭的情况。标识连接真正回收的次数。
+     */
     private long recycleCount;
     private long removeAbandonedCount;
-    // 连接调用pollLast或者tackLast之后就会增加，实际上是触发notEmpty.await的的次数.
+    /**
+     * 连接调用pollLast或者tackLast之后就会增加，实际上是触发notEmpty.await的的次数.
+     */
     private long notEmptyWaitCount;
     private long notEmptySignalCount;
     private long notEmptyWaitNanos;
     private int keepAliveCheckCount;
-    // activeCount出现的峰值
+    /**
+     * activeCount出现的峰值
+     */
     private int activePeak;
     private long activePeakTime;
-    // poolingCount出现的峰值
+    /**
+     * poolingCount出现的峰值
+     */
     private int poolingPeak;
     private long poolingPeakTime;
     private volatile int keepAliveCheckErrorCount;
     private volatile Throwable keepAliveCheckErrorLast;
-    // store
-    private volatile DruidConnectionHolder[] connections;
-    // 池中连接数
+    /**
+     * 池中连接数
+     */
     private int poolingCount;
-    // 活跃连接数（个人理解：从池中取出连接后poolingCount-1，activeCount+1，所以poolingCount + activeCount是总连接数）
+    /**
+     * 活跃连接数
+     * 个人理解：从池中取出连接后 poolingCount-1，activeCount+1，所以poolingCount + activeCount是总连接数
+     */
     private int activeCount;
     private volatile long discardCount;
     private int notEmptyWaitThreadCount;
     private int notEmptyWaitThreadPeak;
 
+    // store
+    private volatile DruidConnectionHolder[] connections;
     /**
      * 失效、过期的连接，调用收缩方法shrink之后，要被驱逐的连接会暂时放在这个数组里面
      */
@@ -127,7 +144,13 @@ public class DruidDataSource extends DruidAbstractDataSource
      * 销毁线程会先检测线程，如果检测存活的线程放暂时放在这里，然后统一放回connections中。
      */
     private DruidConnectionHolder[] keepAliveConnections;
+    /**
+     * 连接数组的标志位，true代表对应下标的连接需要被销毁
+     */
     private boolean[] connectionsFlag;
+    /**
+     * shrink: 收缩
+     */
     private volatile DruidConnectionHolder[] shrinkBuffer;
 
     // threads
@@ -995,7 +1018,7 @@ public class DruidDataSource extends DruidAbstractDataSource
                 }
             }
 
-            // 初始化log打印线程，但是这个线程的条件timeBetweenLogStatsMillis大于0，如果这个参数没有配置，日志线程不会创建。
+            // 初始化log打印线程，前置条件是timeBetweenLogStatsMillis大于0，如果这个参数没有配置，日志线程不会创建。
             createAndLogThread();
             // 物理连接的创建和销毁是由异步线程进行的
             createAndStartCreatorThread();
@@ -1572,8 +1595,8 @@ public class DruidDataSource extends DruidAbstractDataSource
 
                 /**
                  * 如果testOnBorrow为false，则会走到testWhileIdle中，testWhileIdle默认为true
-                 * testWhileIdle和testOnBorrow的作用都是一样的，都是去检查连接有效性，而testWhileIdle多了个闲置时间的判断，判断闲置时间是否大于
-                 * timeBetweenEvictionRunsMillis，如果大于才会进行连接有效性的校验,这个参数是可配置的;两者都是在获取连接的时候去检查
+                 * testWhileIdle和testOnBorrow的作用都是一样的，都是在获取连接时检查连接有效性。
+                 * 不同之处是testWhileIdle多了个闲置时间的判断，只有当连接闲置时间大于timeBetweenEvictionRunsMillis，才会进行有效性的校验
                  */
                 if (testWhileIdle) {
                     final DruidConnectionHolder holder = poolableConnection.holder;
@@ -3326,13 +3349,23 @@ public class DruidDataSource extends DruidAbstractDataSource
     }
 
     /**
-     * 在shrink方法中，核心逻辑是遍历connections数组中的连接，并判断这些连接是需要销毁还是需要保活。
-     * 通常情况下，connections数组中的前checkCount（checkCount = poolingCount - minIdle） 个连接是危险的，
-     * 因为这些连接只要满足了：空闲时间 >= minEvictableIdleTimeMillis（允许的最小空闲时间），那么就需要被销毁，
-     * 而connections数组中的后minIdle个连接是相对安全的，因为这些连接只有在满足：空闲时间 > maxEvictableIdleTimeMillis（允许的最大空闲时间） 时，才会被销毁。
-     * 这么判断的原因，主要就是需要让连接池里能够保证至少有minIdle个空闲连接可以让应用线程获取。
+     * 在shrink方法中，核心逻辑是从下标0开始往后遍历connections数组中的连接，判断这些连接是需要销毁还是需要keepAlive保持连接有效性。
+     * 线程池的各项参数说明：
+     *   poolingCount: 池中所有连接数；
+     *   minIdle: 最小连接数，在该个数内的连接即使超过了最小可清除空闲时间，也不进行销毁；
+     *   checkCount: checkCount = poolingCount - minIdle，表示minIdle外的连接，如果超过了允许的清除最小空闲时间，需要被销毁；
+     * 情形一：如果连接的物理创建时间超过了phyTimeoutMillis（默认-1，表示不校验），二话不说回收该连接；
+     * 情形二：checkCount个数的连接，如果空闲时间 >= minEvictableIdleTimeMillis（允许的清除最小空闲时间，默认30分钟），那么就需要被销毁；
+     * 情形三：minIdle内的连接，如果空闲时间 >= minEvictableIdleTimeMillis（允许的清除最小空闲时间，默认30分钟），仍不会被销毁；
+     *       但是如果超过了maxEvictableIdleTimeMillis（最大允许的清除空闲时间，默认7小时）无论如何也会进行连接;
      *
-     * keepAlive是Druid用来保持连接有效性的：只有空闲时间大于keepAliveBetweenTimeMillis并且小于minEvictableIdleTimeMillis该参数才会有用；
+     * 如果 keepAlive 全局属性为true，keepAlive是保活的意思，用来保持连接有效性的，有两种方式：
+     *   1. usePingMethod，这种方式不会更新收包时间。网上看到一篇文章：https://www.jianshu.com/p/0fd3db17508c
+     *   2. validateQuery，执行sql方式，会更新收包时间。
+     * 这两种校验方式应该都会刷新物理连接吧，也就是能“保活”吧
+     * 情形四：经过上面三个情形剩下来的连接，如果空闲时间 >= keepAliveBetweenTimeMillis，说明要校验连接的有效性，如果校验成功，加入正常线程池，如果失败，进行销毁。
+     *
+     * 最后，经过上面的处理，线程池内的个数可能会小于minIdle，触发创建线程进行创建，保证至少有minIdle个空闲连接可以让应用线程获取。
      */
     public void shrink(boolean checkTime, boolean keepAlive) {
         final Lock lock = this.lock;
@@ -3366,7 +3399,7 @@ public class DruidDataSource extends DruidAbstractDataSource
                 DruidConnectionHolder connection = connections[i];
 
                 // 如果发生了致命错误（onFatalError == true）且致命错误发生时间（lastFatalErrorTimeMillis）在连接建立时间之后
-                // 把连接加入到保活连接数组中
+                // 把连接加入到保活连接数组中，不清楚什么情况下会进入if
                 if ((onFatalError || fatalErrorIncrement > 0) && (lastFatalErrorTimeMillis > connection.connectTimeMillis)) {
                     keepAliveConnections[keepAliveCount++] = connection;
                     connectionsFlag[i] = true;
@@ -3374,9 +3407,12 @@ public class DruidDataSource extends DruidAbstractDataSource
                 }
 
                 if (checkTime) {
+                    /**
+                     * connection.connectTimeMillis 代表物理连接的创建时间，如果超过了 phyTimeoutMillis，说明无论如何都进行回收
+                     * phyTimeoutMillis默认值-1，表示不校验
+                     */
                     if (phyTimeoutMillis > 0) {
                         long phyConnectTimeMillis = currentTimeMillis - connection.connectTimeMillis;
-                        // 连接的物理存活时间大于phyTimeoutMillis，说明超时了，则将这个连接放入evictConnections数组
                         if (phyConnectTimeMillis > phyTimeoutMillis) {
                             evictConnections[evictCount++] = connection;
                             connectionsFlag[i] = true;
@@ -3387,19 +3423,19 @@ public class DruidDataSource extends DruidAbstractDataSource
                     // idleMillis表示连接的空闲时间
                     long idleMillis = currentTimeMillis - connection.lastActiveTimeMillis;
 
-                    // 判断空闲时间是否超时
                     /**
-                     * minEvictableIdleTimeMillis表示连接允许的最小空闲时间，默认是30分钟
+                     * minEvictableIdleTimeMillis表示连接允许的最小可清除空闲时间，默认是30分钟
                      * keepAliveBetweenTimeMillis表示保活间隔时间，默认是2分钟
-                     * 如果连接的空闲时间小于minEvictableIdleTimeMillis且还小于keepAliveBetweenTimeMillis
-                     * 则connections数组中当前连接之后的连接都会满足空闲时间小于minEvictableIdleTimeMillis且还小于keepAliveBetweenTimeMillis
+                     * 如果连接的空闲时间均小于minEvictableIdleTimeMillis和keepAliveBetweenTimeMillis
+                     * 则说明connections数组中当前连接之后的连接都会满足空闲时间小于minEvictableIdleTimeMillis且还小于keepAliveBetweenTimeMillis
+                     * 因为不论是创建还是归还连接都是从末尾处添加的，前面满足了，后面一定会满足吗？ 、
                      * 此时跳出遍历，不再检查其余的连接
                      */
                     if (idleMillis < minEvictableIdleTimeMillis && idleMillis < keepAliveBetweenTimeMillis) {
                         break;
                     }
 
-                    // 连接的空闲时间大于等于允许的最小空闲时间
+                    // 连接的空闲时间大于等于允许清除的最小空闲时间
                     if (idleMillis >= minEvictableIdleTimeMillis) {
                         if (checkTime && i < checkCount) {
                             // i < checkCount这个条件的理解如下：
@@ -3409,7 +3445,7 @@ public class DruidDataSource extends DruidAbstractDataSource
                             connectionsFlag[i] = true;
                             continue;
                         } else if (idleMillis > maxEvictableIdleTimeMillis) {
-                            // 如果空闲时间过久，已经大于了允许的最大空闲时间（默认7小时）
+                            // 如果空闲时间过久，已经大于了允许的最大清除空闲时间（默认7小时）
                             // 那么无论如何都要销毁这个连接
                             evictConnections[evictCount++] = connection;
                             connectionsFlag[i] = true;
@@ -3429,29 +3465,29 @@ public class DruidDataSource extends DruidAbstractDataSource
                         evictConnections[evictCount++] = connection;
                         connectionsFlag[i] = true;
                     } else {
+                        // 销毁完前checkCount个连接后直接break，后面的数量是minIdle，不做处理
                         break;
                     }
                 }
             }
 
-            // removeCount = 销毁连接数 + 保活连接数
+            // removeCount = 需要销毁数 + 保活连接数
             // removeCount表示本次从connections数组中拿掉的连接数
             // 注：一定是从前往后拿，正常情况下最后minIdle个连接是安全的
             int removeCount = evictCount + keepAliveCount;
-            /**
-             * 这个逻辑实质上是将connections中计算出来的前N项都移除。 之前一直不理解这个逻辑，实际上需要详细看一下for循环中的逻辑。
-             * for循环中，如果checkTime为false,则直接将前面checkCount个连接都移除。 反之，由于connections中，通过recycle方法，
-             * 将放回的连接都放在connections数组的最后面。get的连接也是从connections的尾部获取，那么可以确保connections的连接，
-             * index小的连接最少被使用。 那么在这里确定了需要移除的连接数之后，直接就可以将connetions的前面checkCount个连接都移除。
-             */
+
             if (removeCount > 0) {
                 int remaining = 0;
                 for (int i = 0; i < connections.length; i++) {
+                    // 标志位为false的连接时正常的，为true的是需要销毁或keepAliva的
+                    // 将正常的连接存储到shrinkBuffer中
                     if (!connectionsFlag[i]) {
                         shrinkBuffer[remaining++] = connections[i];
                     }
                 }
+                // 清空connections数组
                 Arrays.fill(connections, 0, poolingCount, null);
+                // 将shrinkBuffer中正常的连接转存到connections中，这样connections中需要被清除和keepAlive的连接就被清除了
                 System.arraycopy(shrinkBuffer, 0, connections, 0, remaining);
                 Arrays.fill(shrinkBuffer, 0, remaining, null);
                 poolingCount -= removeCount;
@@ -3465,6 +3501,9 @@ public class DruidDataSource extends DruidAbstractDataSource
             lock.unlock();
         }
 
+        /**
+         * 超时需要被清除的连接
+         */
         if (evictCount > 0) {
             for (int i = 0; i < evictCount; ++i) {
                 DruidConnectionHolder item = evictConnections[i];
@@ -3475,8 +3514,15 @@ public class DruidDataSource extends DruidAbstractDataSource
             Arrays.fill(evictConnections, null);
         }
 
-        // 遍历keepAliveConnections数组，对其中的连接做可用性校验
-        // 校验通过连接就放入connections数组，没通过连接就销毁
+        /**
+         * keepAliveCount > 0，说明 keepAlive 全局属性为true
+         * keepAlive是保活的意思，validateConnection有两种校验方式：
+         *  1. usePingMethod，这种方式不会更新收包时间。网上看到一篇文章：https://www.jianshu.com/p/0fd3db17508c
+         *  2. validateQuery，执行sql方式，会更新收包时间。
+         * 这两种校验方式应该都会刷新物理连接吧，也就是能“保活”吧
+         *
+         * 遍历keepAliveConnections数组，对其中的连接做可用性校验，校验通过连接就放入connections数组，没通过连接就销毁
+         */
         if (keepAliveCount > 0) {
             // keep order
             for (int i = keepAliveCount - 1; i >= 0; --i) {

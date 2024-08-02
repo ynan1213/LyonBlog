@@ -51,6 +51,7 @@ import org.springframework.util.StringUtils;
  * @since 1.0.0
  */
 @Configuration(proxyBeanMethods = false)
+// EmbeddedDatabaseType说明必须引入spring-jdbc项目
 @ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class })
 @EnableConfigurationProperties(DataSourceProperties.class)
 @Import({ DataSourcePoolMetadataProvidersConfiguration.class, DataSourceInitializationConfiguration.class })

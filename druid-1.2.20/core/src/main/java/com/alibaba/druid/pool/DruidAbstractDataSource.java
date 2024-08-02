@@ -99,7 +99,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
 
     protected volatile PasswordCallback passwordCallback;
     protected volatile NameCallback userCallback;
-
+    /**
+     * 初始化数量，默认为0，如果>0，在init阶段就会创建initialSize个数的连接。
+     */
     protected volatile int initialSize = DEFAULT_INITIAL_SIZE;
 
     /**
@@ -119,10 +121,15 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
      * testOnBorrow：如果为true（默认为false），当应用向连接池申请连接时，连接池会判断这条连接是否是可用的。
      */
     protected volatile boolean testOnBorrow = DEFAULT_TEST_ON_BORROW;
+    /**
+     * testOnReturn：如果为true（默认为false），当应用向连接池归还连接时，连接池会判断这条连接是否是可用的。
+     */
     protected volatile boolean testOnReturn = DEFAULT_TEST_ON_RETURN;
     /**
-     * testWhileIdle和testOnBorrow的作用都是一样的，都是去检查连接有效性，而testWhileIdle多了个闲置时间的判断，判断闲置时间是否大于
-     * timeBetweenEvictionRunsMillis，如果大于才会进行连接有效性的校验,这个参数是可配置的;两者都是在获取连接的时候去检查
+     * Idle: 空闲的;闲置的;
+     * testWhileIdle和testOnBorrow的作用都是一样的，都是在获取连接时检查连接有效性。
+     * 不同之处是testWhileIdle多了个闲置时间的判断，只有当连接闲置时间大于timeBetweenEvictionRunsMillis，才会进行有效性的校验
+     * 默认为true
      */
     protected volatile boolean testWhileIdle = DEFAULT_WHILE_IDLE;
     protected volatile boolean poolPreparedStatements;
@@ -158,6 +165,9 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
      */
     protected volatile long timeBetweenEvictionRunsMillis = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS;
     protected volatile int numTestsPerEvictionRun = DEFAULT_NUM_TESTS_PER_EVICTION_RUN;
+    /**
+     * 最小可清除的空闲时间
+     */
     protected volatile long minEvictableIdleTimeMillis = DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLIS;
     protected volatile long maxEvictableIdleTimeMillis = DEFAULT_MAX_EVICTABLE_IDLE_TIME_MILLIS;
     protected volatile long keepAliveBetweenTimeMillis = DEFAULT_TIME_BETWEEN_EVICTION_RUNS_MILLIS * 2;
@@ -1427,13 +1437,6 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         }
     }
 
-    public void clearFilters() {
-        if (!isClearFiltersEnable()) {
-            return;
-        }
-        this.filters.clear();
-    }
-
     public void validateConnection(Connection conn) throws SQLException {
         String query = getValidationQuery();
         if (conn.isClosed()) {
@@ -1514,6 +1517,13 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         }
     }
 
+    public void clearFilters() {
+        if (!isClearFiltersEnable()) {
+            return;
+        }
+        this.filters.clear();
+    }
+
     /**
      * @deprecated
      */
@@ -1542,8 +1552,15 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
                 if (conn instanceof ConnectionProxyImpl) {
                     ((ConnectionProxyImpl) conn).setLastValidateTimeMillis(currentTimeMillis);
                 }
+                // 如果连接校验成功，并且是mysql数据库的话
                 if (valid && isMySql) { // unexcepted branch
-                    // 上一次收包时间
+                    /**
+                     * 上一次收包时间
+                     * 网上看到一篇文章：https://www.jianshu.com/p/0fd3db17508c
+                     * 在上面的validConnectionChecker.isValidConnection方法中，有两种valid方式：
+                     *  1. usePingMethod，这种方式不会更新收包时间。
+                     *  2. validateQuery，执行sql方式，会更新收包时间。
+                     */
                     long lastPacketReceivedTimeMs = MySqlUtils.getLastPacketReceivedTimeMs(conn);
                     if (lastPacketReceivedTimeMs > 0) {
                         long mysqlIdleMillis = currentTimeMillis - lastPacketReceivedTimeMs;

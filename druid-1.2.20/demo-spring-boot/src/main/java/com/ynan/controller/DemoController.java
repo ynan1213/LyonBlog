@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 @RestController
@@ -19,6 +20,7 @@ public class DemoController {
     @PostConstruct
     public void init() throws SQLException {
         Connection connection = dataSource.getConnection();
+        PreparedStatement preparedStatement = connection.prepareStatement("select 1");
         connection.close();
         Connection connection1 = dataSource.getConnection();
         connection1.close();
@@ -26,6 +28,9 @@ public class DemoController {
         connection2.close();
         Connection connection3 = dataSource.getConnection();
         connection3.close();
+
+        DruidDataSource druidDataSource = (DruidDataSource)dataSource;
+        druidDataSource.init();
     }
 
     @RequestMapping("/hello")

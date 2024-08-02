@@ -35,7 +35,7 @@ public class DruidDataSourceShrinkTest {
         for (int i = 0; i < 100; i++) {
             dataSource.fill();
             assertEquals(8, dataSource.getPoolingCount());
-            dataSource.shrink(false, false);
+            dataSource.shrink(true, false);
             assertEquals(dataSource.getMinIdle(), dataSource.getPoolingCount());
         }
     }

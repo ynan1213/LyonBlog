@@ -60,7 +60,7 @@ public final class DruidConnectionHolder {
     protected final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();
     protected final List<StatementEventListener> statementEventListeners = new CopyOnWriteArrayList<StatementEventListener>();
 
-    // 连接时间毫秒
+    // 创建物理连接的时刻
     protected final long connectTimeMillis;
     // 最后一次活跃时间
     protected volatile long lastActiveTimeMillis;

@@ -175,9 +175,13 @@ public abstract class ResourceServlet extends HttpServlet {
             this.resourcePath = resourcePath;
         }
 
+        protected String getFilePath(String fileName) {
+            return resourcePath + fileName;
+        }
+
         protected void returnResourceFile(String fileName, String uri, HttpServletResponse response)
-                throws ServletException,
-                IOException {
+            throws ServletException,
+            IOException {
             String filePath = getFilePath(fileName);
 
             if (filePath.endsWith(".html")) {
@@ -203,10 +207,6 @@ public abstract class ResourceServlet extends HttpServlet {
                 response.setContentType("text/javascript;charset=utf-8");
             }
             response.getWriter().write(text);
-        }
-
-        protected String getFilePath(String fileName) {
-            return resourcePath + fileName;
         }
 
         public boolean checkLoginParam(HttpServletRequest request) {

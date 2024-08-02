@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
+import java.sql.SQLException;
 import java.util.Arrays;
 
 @Configuration
@@ -22,7 +23,7 @@ public class DemoConfig {
 
     @Bean
     // @ConfigurationProperties(prefix = "spring.datasource")
-    public DataSource getDataSource() {
+    public DataSource getDataSource() throws SQLException {
         DruidDataSource dataSource = new DruidDataSource();
 
         /**
@@ -36,16 +37,18 @@ public class DemoConfig {
         //dataSource.setDriver(null);
         //dataSource.setDriverClassName("");
 
-        // 连接池允许最大连接数
+        // 连接池允许最大连接数，默认8
         dataSource.setMaxActive(2);
+        // 初始化数量，默认为0，如果>0，在init阶段就会创建对应个数的物理连接（druid是懒加载，正常情况下只有在getConnection时才会创建物理连接）
+//        dataSource.setInitialSize(1);
 
 
         /**
          * ------------------ 02:创建物理连接相关配置 ------------------
          */
-        // 创建物理连接的超时时间，默认10S，生效原理是由Driver直接使用
+        // 创建物理连接的超时时间，默认10S，生效原理是由java.sql.Driver#connect时使用
         dataSource.setConnectTimeout(10001);
-        // 连接的响应时间，默认10S，不是连接空闲超时时间，具体见文档
+        // 连接的响应时间，默认10S，不是连接空闲超时时间，具体见文档，java.sql.Connection#setNetworkTimeout时使用
         dataSource.setSocketTimeout(10001);
 
         // 验证连接的语句
@@ -69,7 +72,7 @@ public class DemoConfig {
          * ------------------ 03:获取连接相关配置 ------------------
          */
         // 获取连接时是否带超时时间，该值默认-1表示不带超时，目前发现当带超时时间且超时的情况下会抛出GetConnectionTimeoutException异常
-         dataSource.setMaxWait(1000);
+//         dataSource.setMaxWait(1000);
 
         // 获取连接时如果发生了超时失败的重试次数
         dataSource.setNotFullTimeoutRetryCount(3);
@@ -88,6 +91,8 @@ public class DemoConfig {
 
         // 默认false ？？？
         // dataSource.setKeepAlive();
+
+//        dataSource.setFilters("stat,slf4j,wall");
 
         return dataSource;
     }

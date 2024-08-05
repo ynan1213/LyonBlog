@@ -468,6 +468,10 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
         // 这里为什么不设置为非阻塞呢？为什么不注册到selector中呢？
         // 这里和netty的区别是netty只有一个线程进行循环，一个线程需要同时处理ACCEPT、CONNECT、READ、WRITE等事件，所以netty使用了selector
         // 而tomcat是使用一个线程单独处理Accept事件，所以无需设置非阻塞和selector
+
+        // 通过再次研究netty源码后发现上面说得不够严谨，netty的boosGroup通常只会用一个线程，该线程主要处理
+        // Accept事件，只有workGroup的线程才会既处理IO又处理非IO事件，感觉netty的workGroup线程也可以设计成像
+        // tomcat的一样，使用阻塞的方式也是可以的，但是为什么没有呢？可能是代码复用吧，和workGroup使用同一套代码
         SocketChannel result = serverSock.accept();
 
         // Bug does not affect Windows. Skip the check on that platform.

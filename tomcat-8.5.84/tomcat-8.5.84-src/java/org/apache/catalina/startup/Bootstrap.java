@@ -264,7 +264,13 @@ public final class Bootstrap {
          * 其中catalinaLoader、sharedLoader默认其实就是commonLoader
          */
         initClassLoaders();
+        Class<? extends ClassLoader> commonLoaderClass = commonLoader.getClass();
+        Class<? extends ClassLoader> sharedLoaderClass = sharedLoader.getClass();
 
+        /**
+         * 设置当前线程上下文的ClassLoader是 CatalinaLoader，其实就是CommonLoader
+         * 这样通过SPI机制的加载器就是 CommonLoader
+         */
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
         // 如果开启了SecurityManager，那么则要提前加载一些类
@@ -274,8 +280,21 @@ public final class Bootstrap {
         if (log.isDebugEnabled()) {
             log.debug("Loading startup class");
         }
+
+        /**
+         * 用 CatalinaLoader 加载 Catalina，
+         * 根据类加载机制特性，由Catalina触发的类加载优先使用Catalina的ClassLoader进行加载
+         * 这样后面执行Catalina的load和start方法加载的类都是用 CatalinaLoader
+         */
         Class<?> startupClass = catalinaLoader.loadClass("org.apache.catalina.startup.Catalina");
         Object startupInstance = startupClass.getConstructor().newInstance();
+
+        /**
+         * 没有弄明白，Catalina 的加载器是catalinaLoader，但是这里返回的是AppClassLoader？
+         * 后来发现：双亲委派机制，优先由catalinaLoader的parent也就是AppClassLoader加载，Catalina在classPath下
+         */
+        ClassLoader classLoader1 = startupClass.getClassLoader();
+        ClassLoader classLoader2 = startupInstance.getClass().getClassLoader();
 
         // Set the shared extensions class loader
         if (log.isDebugEnabled()) {

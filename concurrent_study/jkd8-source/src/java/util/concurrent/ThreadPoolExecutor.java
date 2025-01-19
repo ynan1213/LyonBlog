@@ -1208,6 +1208,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     w.unlock();
                 }
             }
+            // 走到这里有两点：1.线程运行完成，即将被销毁 2.线程运行没有抛出异常，可能是被interrupt，将completedAbruptly置为false
             completedAbruptly = false;
         } finally {
             processWorkerExit(w, completedAbruptly);

@@ -1,4 +1,4 @@
-package com.ynan._01.实现多线程方式;
+package com.ynan._01.createMultiThreadMethod;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
